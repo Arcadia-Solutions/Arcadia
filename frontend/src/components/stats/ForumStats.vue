@@ -86,9 +86,8 @@
 </template>
 
 <script setup lang="ts">
+import { defineAsyncComponent } from 'vue'
 import ContentContainer from '@/components/ContentContainer.vue'
-import { Chart } from 'highcharts-vue'
-import Highcharts from 'highcharts'
 import MultiSelect from 'primevue/multiselect'
 import ProgressSpinner from 'primevue/progressspinner'
 import Select from 'primevue/select'
@@ -98,6 +97,11 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { getForumStats, ForumStatsGroupBy, ForumStatsMetric, StatsInterval, type ForumStatsResponse } from '@/services/api-schema'
 import { baseChartOptions, CHART_COLORS, groupedAttributePieChartOptions, textColor } from '@/services/charts'
 import { formatDateToLocalString, formatDateTimeLabel, formatNumber } from '@/services/helpers'
+
+const Chart = defineAsyncComponent({
+  loader: () => import('highcharts-vue').then((m) => m.Chart),
+  loadingComponent: ProgressSpinner,
+})
 
 const { t } = useI18n()
 

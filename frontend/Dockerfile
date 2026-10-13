@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/root/.npm \
 # inlines in the bundle at build time. It is mounted as a secret rather than copied, so that the
 # rest of it (jwt secret, database password, api keys) does not end up in an image layer.
 RUN --mount=type=secret,id=arcadia_config,target=/home/node/app/config.yml \
-    npx vite build
+   rm -rf dist && npx vite build
 
 # ── 2a. Stub stage (Selected when WITH_KIWI=false) ──────
 FROM caddy:2-alpine AS kiwi-false

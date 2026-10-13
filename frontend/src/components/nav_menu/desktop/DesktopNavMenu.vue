@@ -71,7 +71,8 @@ import router from '@/router'
 import { setLoggedInCookie } from '@/services/helpers'
 import { useTitleGroupStore } from '@/stores/titleGroup'
 
-const Popover = shallowRef<Component | null>(null)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const Popover = shallowRef<any>(null)
 const op = ref<{ show: (event: Event) => void; hide: () => void } | null>(null)
 const userStore = useUserStore()
 const user = useUserStore()

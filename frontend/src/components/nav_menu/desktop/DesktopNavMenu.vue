@@ -70,7 +70,8 @@ import { nextTick, ref, shallowRef, type Component } from 'vue'
 import router from '@/router'
 import { useTitleGroupStore } from '@/stores/titleGroup'
 
-const Popover = shallowRef<Component | null>(null)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const Popover = shallowRef<any>(null)
 const op = ref<{ show: (event: Event) => void; hide: () => void } | null>(null)
 const userStore = useUserStore()
 const user = useUserStore()

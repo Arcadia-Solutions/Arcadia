@@ -104,12 +104,11 @@ const getAppReady = async (forceGetUser: boolean = false) => {
     if (token) {
       try {
         // refresh user on page reload or fetch user after registration
-        const profile = await getMe()
+        const [profile, publicArcadiaSettings] = await Promise.all([getMe(), getPublicArcadiaSettings()])
         localStorage.setItem('user', JSON.stringify(profile.user))
         const userStore = useUserStore()
         userStore.setUser(profile.user)
         // refresh public arcadia settings
-        const publicArcadiaSettings = await getPublicArcadiaSettings()
         usePublicArcadiaSettingsStore().setSettings(publicArcadiaSettings)
         // load custom css sheet
         const head = document.getElementsByTagName('head')[0]

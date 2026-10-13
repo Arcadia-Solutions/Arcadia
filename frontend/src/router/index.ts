@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory, type RouteRecordInfo } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
 import { endPageNavigation, startPageProgress } from '@/services/progressBar'
 
 export interface RouteNamedMap {
@@ -44,7 +43,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'Home',
-      component: HomeView,
+      component: () => import('../views/HomeView.vue'),
     },
     {
       path: '/title-group/:id',

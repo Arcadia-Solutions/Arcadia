@@ -6,11 +6,9 @@ import type { Plugin } from 'vite'
 const PRIMEFLEX_CSS = /[\\/]primeflex[\\/]primeflex\.css$/
 const PRIMEICONS_CSS = /[\\/]primeicons[\\/]primeicons\.css$/
 
-// Pull class tokens out of a selector, unescaping CSS escapes (e.g. `.md\:flex` -> `md:flex`).
-const selectorClassTokens = (selector: string): string[] => {
-  const unescaped = selector.replace(/\\(.)/g, '$1')
-  return [...unescaped.matchAll(/\.([A-Za-z0-9_:-]+)/g)].map((m) => m[1])
-}
+// Pull class tokens out of a selector, preserving escaped characters (e.g. `.md\:flex` -> `md:flex`).
+const selectorClassTokens = (selector: string): string[] =>
+  [...selector.matchAll(/\.((?:[A-Za-z0-9_-]|\\.)+)/g)].map((m) => m[1].replace(/\\(.)/g, '$1'))
 
 // Split stylesheet body into `prelude { body }` rules, supporting one level of nesting (e.g. @media).
 const splitTopLevelRules = (css: string): { prelude: string; body: string }[] =>
@@ -76,7 +74,10 @@ export const primeTrimPlugin = (): Plugin => {
       scan()
       if (primeflexId) {
         const mod = ctx.server.moduleGraph.getModuleById(primeflexId)
-        if (mod) ctx.server.moduleGraph.invalidateModule(mod)
+        if (mod) {
+          ctx.server.moduleGraph.invalidateModule(mod)
+          return [mod]
+        }
       }
     },
     load(id) {

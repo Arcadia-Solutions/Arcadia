@@ -66,16 +66,19 @@ import { logout } from '@/services/api-schema'
 import { Button } from 'primevue'
 import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
-import { nextTick, ref, shallowRef, type Component } from 'vue'
+import { nextTick, ref, shallowRef } from 'vue'
 import router from '@/router'
 import { useTitleGroupStore } from '@/stores/titleGroup'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Popover = shallowRef<any>(null)
-const op = ref<{ show: (event: Event) => void; hide: () => void } | null>(null)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const op = ref<{ show: (event: Event, target?: any) => void; hide: () => void } | null>(null)
 const userStore = useUserStore()
 const user = useUserStore()
 const isHoveringDropdown = ref(false)
+
+let isHoveringUserIcon = false
 
 const onLeavePopover = () => {
   isHoveringDropdown.value = false
@@ -83,17 +86,22 @@ const onLeavePopover = () => {
 }
 
 const show = async (event: Event) => {
+  isHoveringUserIcon = true
+  const target = event.currentTarget as HTMLElement
   if (!Popover.value) {
     const mod = await import('primevue/popover')
     Popover.value = mod.default ?? mod
     await nextTick()
   }
-  op.value?.show(event)
+  if (isHoveringUserIcon || isHoveringDropdown.value) {
+    op.value?.show(event, target)
+  }
 }
 
 // delay a bit so we can know if the user unhovered the user icon,
 // to hover the popover or not
 const onLeaveUserIcon = () => {
+  isHoveringUserIcon = false
   setTimeout(() => {
     if (!isHoveringDropdown.value) {
       op.value?.hide()

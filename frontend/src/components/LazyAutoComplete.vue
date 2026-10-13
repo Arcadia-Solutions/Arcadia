@@ -25,6 +25,7 @@
       class="p-inputtext p-component p-inputtext-sm p-inputfield-sm"
       :placeholder="placeholder"
       :value="modelValue"
+      v-bind="$attrs"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
       @focus="activate"
     />
@@ -53,8 +54,12 @@ let loading = false
 const activate = async () => {
   if (AutoCompleteComponent.value || loading) return
   loading = true
-  const mod = await import('primevue/autocomplete')
-  AutoCompleteComponent.value = markRaw(mod.default ?? mod)
+  try {
+    const mod = await import('primevue/autocomplete')
+    AutoCompleteComponent.value = markRaw(mod.default ?? mod)
+  } catch {
+    loading = false
+  }
 }
 
 // Move focus into the real AutoComplete once it has mounted.

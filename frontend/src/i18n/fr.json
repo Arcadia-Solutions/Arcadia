@@ -1,1 +1,10 @@
-{}
+{
+  "general": {
+    "not_available": "Indisponible"
+  },
+  "wiki": {
+    "article_metadata": "Métadonnées de l'article",
+    "created_by": "Créé par",
+    "updated_by": "Dernière modification par"
+  }
+}

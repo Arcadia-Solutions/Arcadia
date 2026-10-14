@@ -198,6 +198,29 @@ Not scripted. Restore a volume into a directory with
 `restic restore latest:/data/ergo_data --target /var/lib/ergo`, and load the dumps of
 `dump_dir` with `psql` and `mariadb`.
 
+## Telemetry
+
+When `telemetry.otlp_endpoint` is set (the same switch the backend and tracker use, see
+[Monitoring](./telemetry.md)), each run reports best-effort metrics over OTLP/HTTP: whether it
+succeeded, its wall-clock duration, and restic's snapshot stats (files and bytes added, processed
+totals, restic's own duration). The metrics are last-run gauges, labelled `status=ok|err`. Telemetry
+never changes the backup's outcome: a failed export is swallowed.
+
+The configured endpoint is a gRPC address (`host:4317`); the reporter reuses the host with the
+OTLP/HTTP port `4318`.
+
+The reporter is `arcadia-otlp` (the `backup/otlp` crate). In docker mode it is already baked into the
+backup image at `/usr/local/bin/arcadia-otlp`, nothing to do. In host mode it is optional and not
+installed by default: build and install it only if you want backup metrics, otherwise telemetry is
+skipped and the run is unaffected.
+
+```bash
+cargo build --release --manifest-path backup/otlp/Cargo.toml
+install backup/otlp/target/release/arcadia-otlp /usr/local/bin/arcadia-otlp
+```
+
+`backup.sh` finds it on `PATH` (falling back to `/usr/local/bin/arcadia-otlp`).
+
 ## Limits
 
 - Paths and volume names cannot contain spaces, the crontab of the `backup_cron` service included: the

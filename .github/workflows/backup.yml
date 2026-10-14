@@ -58,3 +58,23 @@ jobs:
           cat /root/.ssh/id_ed25519.pub >> /root/.ssh/authorized_keys && ssh-keyscan -H localhost >> /root/.ssh/known_hosts
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: backup/test.sh host
+
+  # The OTLP reporter is a standalone crate.
+  otlp:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backup/otlp
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: clippy
+          cache-workspaces: ./backup/otlp
+      - name: Build
+        run: cargo build --release
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+      - name: Self-test
+        run: cargo run --release -- --self-test

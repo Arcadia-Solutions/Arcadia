@@ -6,6 +6,9 @@
 cd "$(dirname "$0")/.." || exit 1
 . backup/lib.sh
 
+# The restic `backup --json` summary line of the last snapshot, reported to OTLP by report_otlp.
+RESTIC_SUMMARY_JSON=""
+
 dump_postgres() {
     local user name
     user=$(config_value database user)
@@ -56,12 +59,37 @@ stage_configs() {
 }
 
 snapshot() {
-    local targets
+    local targets raw rc
     mapfile -t targets < <(data_targets)
     restic cat config > /dev/null 2>&1 || restic init
-    restic backup --host arcadia --tag arcadia "$DUMP_DIR"/*.sql "$DUMP_DIR/config" "${targets[@]}"
+    # --json so the run's stats (files/bytes added, duration) can be reported to OTLP. The output is
+    # captured: on success keep the summary line for report_otlp, on failure print it so the container
+    # logs still show restic's error.
+    raw=$(mktemp)
+    if restic backup --json --host arcadia --tag arcadia "$DUMP_DIR"/*.sql "$DUMP_DIR/config" "${targets[@]}" > "$raw"; then
+        RESTIC_SUMMARY_JSON=$(grep '"message_type":"summary"' "$raw" | tail -1 || true)
+    else
+        rc=$?; cat "$raw" >&2; rm -f "$raw"; return "$rc"
+    fi
+    rm -f "$raw"
     # shellcheck disable=SC2046 # keep holds several flags
     restic forget --host arcadia --prune $(cfg keep)
+}
+
+# Best-effort OTLP metrics for the run: status, wall-clock duration, and restic's backup summary.
+# Reports only when telemetry.otlp_endpoint is set, and never fails the backup. $1: exit code, $2: wall duration in ms.
+# The configured endpoint is the backend's OTLP gRPC address (host:4317); arcadia-otlp speaks OTLP/HTTP,
+# so reuse the host and swap the port for 4318. Assumes the documented host:port form.
+# arcadia-otlp is the Rust reporter (see backup/otlp): baked into the backup image at /usr/local/bin in
+# docker mode, and on PATH in host mode (only when the operator installs it). If it is not present the
+# run is unaffected -- telemetry is simply skipped.
+report_otlp() {
+    local ep bin
+    ep=$(config_value telemetry otlp_endpoint)
+    [ -n "$ep" ] || return 0
+    bin=$(command -v arcadia-otlp || echo /usr/local/bin/arcadia-otlp)
+    [ -x "$bin" ] || return 0
+    printf '%s' "$RESTIC_SUMMARY_JSON" | ARCADIA_BACKUP_OTLP_HTTP="${ep%:*}:4318" "$bin" "$1" "$2" || true
 }
 
 push() {
@@ -78,7 +106,11 @@ push() {
 mkdir -p "$DUMP_DIR" "$REPO"
 umask 077
 clean_dumps
-trap clean_dumps EXIT
+_backup_started=$(date +%s)
+# Clean the dumps and report the run (status, exit code, duration) on any exit. $? first: it is the
+# script's exit code, which report_otlp turns into ok/err.
+# shellcheck disable=SC2154 # _code is assigned at the start of the same trap, before it is read
+trap '_code=$?; clean_dumps; report_otlp "$_code" "$(( ($(date +%s) - _backup_started) * 1000 ))"' EXIT
 dump_postgres
 dump_mariadb ergo_database "$(cfg ergo_db)" ERGO_DB
 dump_mariadb chevereto_database "$(cfg chevereto_db)" CHEVERETO_DB

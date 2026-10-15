@@ -2,7 +2,7 @@ import { config } from '@/config'
 import { showToast, i18n } from '@/main'
 import axios from 'axios'
 import { type SideEffect } from '../api-schema'
-import { formatBp } from '../helpers'
+import { formatBp, loginLocation } from '../helpers'
 import { refreshAccessToken } from './tokenRefresh'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 import { useUserStore } from '@/stores/user'
@@ -77,14 +77,14 @@ api.interceptors.response.use(
         console.error('Failed to refresh token:', refreshError)
         localStorage.removeItem('token')
         localStorage.removeItem('refreshToken')
-        window.location.replace('/login')
+        window.location.replace(loginLocation())
         return Promise.reject(refreshError)
       }
     }
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('token')
       localStorage.removeItem('refreshToken')
-      window.location.replace('/login')
+      window.location.replace(loginLocation())
       return new Promise(() => {})
     }
     if (error.response && error.response.data && error.response.data.error) {

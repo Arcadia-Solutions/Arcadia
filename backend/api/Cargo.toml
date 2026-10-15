@@ -49,6 +49,7 @@ arcadia-shared = { path = "../../shared" }
 serde_urlencoded = "0.7.1"
 serde_qs = "1.1"
 url = { version = "2", features = ["serde"] }
+sha2 = "0.10"
 
 [dev-dependencies]
 actix-multipart-rfc7578 = "0.11.0"

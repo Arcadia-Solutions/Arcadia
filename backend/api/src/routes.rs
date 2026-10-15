@@ -24,6 +24,7 @@ use crate::handlers::invitations::config as InvitationsConfig;
 use crate::handlers::maintenance_tools::config as MaintenanceToolsConfig;
 use crate::handlers::master_groups::config as MasterGroupsConfig;
 use crate::handlers::notifications::config as NotificationsConfig;
+use crate::handlers::oauth::config as OAuthConfig;
 use crate::handlers::related_forum_threads::config as RelatedForumThreadsConfig;
 use crate::handlers::search::config as SearchConfig;
 use crate::handlers::series::config as SeriesConfig;
@@ -51,6 +52,10 @@ use crate::middlewares::side_effects::side_effects_middleware;
 
 pub fn init<R: RedisPoolInterface + 'static>(cfg: &mut web::ServiceConfig) {
     cfg.route("/health", web::get().to(health_check));
+    // registered before /api so its middlewares (JWT authentication, side effects envelope) don't
+    // apply: these OAuth2 protocol endpoints authenticate the client or its opaque access token
+    // themselves, and answer the raw JSON the OAuth2 spec defines
+    cfg.service(scope("/api/oauth").configure(OAuthConfig::<R>));
     cfg.service(
         web::scope("/api")
             .wrap(actix_web::middleware::from_fn(side_effects_middleware::<R>))

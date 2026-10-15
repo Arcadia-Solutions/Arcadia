@@ -28,7 +28,7 @@ import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 import FooterBar from './components/FooterBar.vue'
 import PageProgressBar from './components/PageProgressBar.vue'
-import { isRouteProtected } from './services/helpers'
+import { isRouteProtected, loginLocation } from './services/helpers'
 import { getMe, getPublicArcadiaSettings } from './services/api-schema'
 import { usePublicArcadiaSettingsStore } from './stores/publicArcadiaSettings'
 import { connectNotificationStream, disconnectNotificationStream } from './services/notificationStream'
@@ -133,14 +133,14 @@ const getAppReady = async (forceGetUser: boolean = false) => {
         disconnectNotificationStream()
         localStorage.removeItem('token')
         localStorage.removeItem('user')
-        router.push('/login')
+        router.push(loginLocation())
       }
     } else {
       // no token is present
       if (config.enable_custom_front_page) {
         window.location.href = '/home/index.html'
       } else {
-        router.push('/login')
+        router.push(loginLocation())
       }
     }
   }

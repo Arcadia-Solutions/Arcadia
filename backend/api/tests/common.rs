@@ -39,8 +39,18 @@ pub async fn create_test_app_with_notifications<R: RedisPoolInterface + 'static>
     impl Service<Request, Response = ServiceResponse, Error = Error>,
     broadcast::Receiver<NotificationEvent>,
 ) {
-    let config = arcadia_shared::config::load::<Config>();
+    create_test_app_with_config(pool, redis_pool, arcadia_shared::config::load::<Config>()).await
+}
 
+// For tests needing configuration the test config file does not provide.
+pub async fn create_test_app_with_config<R: RedisPoolInterface + 'static>(
+    pool: Arc<ConnectionPool>,
+    redis_pool: R,
+    config: Config,
+) -> (
+    impl Service<Request, Response = ServiceResponse, Error = Error>,
+    broadcast::Receiver<NotificationEvent>,
+) {
     // Load settings from database for tests
     let settings = pool
         .get_arcadia_settings()

@@ -92,6 +92,10 @@
     "subscribe_on_reply": "Subscribe to new replies",
     "results": "{0} result | {0} results"
   },
+  "oauth": {
+    "signing_in": "Signing you in to Elysia…",
+    "failed": "Signing in to Elysia failed, the request is invalid."
+  },
   "auth": {
     "remember_me": "Remember me",
     "reset_password": "Reset password",

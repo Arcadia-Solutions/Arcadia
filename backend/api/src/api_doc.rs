@@ -105,6 +105,7 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         crate::handlers::auth::login::exec,
         crate::handlers::auth::logout::exec,
         crate::handlers::auth::refresh_token::exec,
+        crate::handlers::auth::oauth_authorize::exec,
         crate::handlers::users::get_user::exec,
         crate::handlers::users::edit_user::exec,
         crate::handlers::users::warn_user::exec,
@@ -490,6 +491,9 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         EmojiEnabledUpdate,
         ContentReaction,
         ForumPostReactionUsers,
+        crate::handlers::auth::oauth_authorize::OAuthAuthorize,
+        crate::handlers::auth::oauth_authorize::OAuthAuthorizeResponse,
+        crate::handlers::oauth::OAuthErrorResponse,
         // exported here for the scraper plugins to use
         crate::handlers::scrapers::ScrapedExternalData,
         crate::handlers::scrapers::ScrapedAffiliatedArtist,

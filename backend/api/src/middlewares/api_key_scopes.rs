@@ -125,8 +125,10 @@ const ENDPOINTS_ALLOWED_FOR_EVERY_SCOPE: &[(Method, &str)] = &[
 ];
 
 /// Endpoints that no API key can reach, whatever its scopes are, as managing API keys would
-/// let a key grant itself more scopes.
-const PATH_PREFIXES_FORBIDDEN_FOR_EVERY_SCOPE: &[&str] = &["/api/users/api-keys"];
+/// let a key grant itself more scopes, and authorizing OAuth2 clients would let a stolen key
+/// log into the external services (e.g. Elysia) as the owner of the key.
+const PATH_PREFIXES_FORBIDDEN_FOR_EVERY_SCOPE: &[&str] =
+    &["/api/users/api-keys", "/api/auth/oauth-authorize"];
 
 /// Individual endpoints that no API key can reach, whatever its scopes are. Unlike the
 /// prefixes above, both the method and the whole path must match, so the rest of the route

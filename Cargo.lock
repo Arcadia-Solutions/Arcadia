@@ -480,6 +480,7 @@ dependencies = [
  "serde_json",
  "serde_qs",
  "serde_urlencoded",
+ "sha2 0.10.9",
  "sqlx",
  "strum 0.28.0",
  "subtle",

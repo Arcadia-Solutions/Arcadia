@@ -78,18 +78,18 @@ snapshot() {
 
 # Best-effort OTLP metrics for the run: status, wall-clock duration, and restic's backup summary.
 # Reports only when telemetry.otlp_endpoint is set, and never fails the backup. $1: exit code, $2: wall duration in ms.
-# The configured endpoint is the backend's OTLP gRPC address (host:4317); arcadia-otlp speaks OTLP/HTTP,
+# The configured endpoint is the backend's OTLP gRPC address (host:4317); the metrics go over OTLP/HTTP,
 # so reuse the host and swap the port for 4318. Assumes the documented host:port form.
-# arcadia-otlp is the Rust reporter (see backup/otlp): baked into the backup image at /usr/local/bin in
-# docker mode, and on PATH in host mode (only when the operator installs it). If it is not present the
-# run is unaffected -- telemetry is simply skipped.
+# The payload is built by backup/otlp.jq and posted with curl, both in the backup image. In host mode,
+# a missing jq or curl skips telemetry and leaves the run unaffected.
 report_otlp() {
-    local ep bin
+    local ep
     ep=$(config_value telemetry otlp_endpoint)
-    [ -n "$ep" ] || return 0
-    bin=$(command -v arcadia-otlp || echo /usr/local/bin/arcadia-otlp)
-    [ -x "$bin" ] || return 0
-    printf '%s' "$RESTIC_SUMMARY_JSON" | ARCADIA_BACKUP_OTLP_HTTP="${ep%:*}:4318" "$bin" "$1" "$2" || true
+    [ -n "$ep" ] && command -v jq > /dev/null && command -v curl > /dev/null || return 0
+    printf '%s' "$RESTIC_SUMMARY_JSON" \
+        | jq -cRn --arg code "$1" --arg ms "$2" --arg now "$(date +%s)000000000" -f backup/otlp.jq \
+        | curl -sf -m 5 -o /dev/null -H 'Content-Type: application/json' --data-binary @- "${ep%:*}:4318/v1/metrics" \
+        || true
 }
 
 push() {

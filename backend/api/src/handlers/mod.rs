@@ -18,6 +18,7 @@ pub mod invitations;
 pub mod maintenance_tools;
 pub mod master_groups;
 pub mod notifications;
+pub mod oauth;
 pub mod related_forum_threads;
 pub mod search;
 pub mod series;

@@ -410,6 +410,12 @@ export const getHostname = () => {
 export const isRouteProtected = (path: string) => {
   return ['/login', '/register', '/apply', '/reset-password', '/home/index.html'].indexOf(path) < 0
 }
+// the login page, sending the user back to the current page once logged in. On the login page
+// itself, its own return target is kept.
+export const loginLocation = () => {
+  const { pathname, search } = window.location
+  return pathname === '/login' ? `/login${search}` : `/login?redirect=${encodeURIComponent(pathname + search)}`
+}
 export const isReleaseDateRequired = (contentType: ContentType): boolean => {
   const contentTypesRequiringReleaseDate: ContentType[] = [
     ContentType.Movie,

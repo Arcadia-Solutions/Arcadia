@@ -57,6 +57,16 @@ impl RedisInterface for MockRedis {
             .map(|v| str::from_utf8(v).unwrap().to_string()))
     }
 
+    async fn get_del<K: ToRedisArgs + Send>(&mut self, key: K) -> Result<Option<String>> {
+        let key = key.to_redis_args()[0].clone();
+        Ok(self
+            .inner
+            .write()
+            .unwrap()
+            .remove(&key)
+            .map(|v| str::from_utf8(&v).unwrap().to_string()))
+    }
+
     async fn delete<K: ToRedisArgs + Send>(&mut self, key: K) -> Result<()> {
         let key = key.to_redis_args()[0].clone();
         self.inner.write().unwrap().remove(&key);

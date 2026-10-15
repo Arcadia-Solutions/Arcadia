@@ -28,6 +28,35 @@ pub struct Config {
     /// External sources provided by plugins, declared by the instance administrator.
     #[serde(default)]
     pub scrapers: Vec<ExternalSourcePlugin>,
+    /// The service (Elysia) allowed to SSO its users via Arcadia's OpenID Connect provider.
+    #[serde(default)]
+    pub oidc: Option<OidcConfig>,
+}
+
+#[derive(Clone, Deserialize)]
+pub struct OidcConfig {
+    /// Public URL of `/api/oauth`, exactly as the client is configured with.
+    pub issuer: Url,
+    pub client_id: String,
+    pub client_secret: String,
+    /// The only redirect URI the client may use, matched exactly.
+    #[serde(deserialize_with = "deserialize_redirect_uri")]
+    pub redirect_uri: String,
+}
+
+/// Kept as the raw string for exact matching, but must be an absolute URL without a fragment,
+/// since the authorization code is appended as query parameters (RFC 6749 §3.1.2).
+fn deserialize_redirect_uri<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<String, D::Error> {
+    let redirect_uri = String::deserialize(deserializer)?;
+    let url = Url::parse(&redirect_uri).map_err(serde::de::Error::custom)?;
+    if url.fragment().is_some() {
+        return Err(serde::de::Error::custom(
+            "oidc.redirect_uri must not contain a fragment",
+        ));
+    }
+    Ok(redirect_uri)
 }
 
 fn default_host() -> String {

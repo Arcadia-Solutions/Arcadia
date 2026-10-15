@@ -290,6 +290,16 @@ frontend:
 #     url: http://anime-plugin:9000/scrape
 #     timeout_seconds: 30
 
+# Optional: lets Elysia SSO its users via Arcadia's OpenID Connect provider (authorization
+# code + PKCE + userinfo, no ID token). issuer is {public API url}/api/oauth, configured
+# identically in Elysia. Elysia also checks bans at {issuer}/users/{sub}/status. Generate the
+# secret with e.g. `openssl rand -hex 32`.
+# oidc:
+#   issuer: https://arcadia.example.com/api/oauth
+#   client_id: elysia
+#   client_secret: the_client_secret
+#   redirect_uri: https://elysia.example.com/auth/sso/callback
+
 # Backups, made by backup/backup.sh and restored by backup/restore.sh, see docs/src/backup.md.
 # Values are plain scalars without spaces, lists are space separated. Paths are absolute.
 backup:

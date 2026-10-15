@@ -15,7 +15,7 @@ import Password from 'primevue/password'
 import { Form } from '@primevue/forms'
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ref } from 'vue'
 import { login, type Login } from '@/services/api-schema'
@@ -27,6 +27,7 @@ const form = ref<Login>({
 })
 
 const router = useRouter()
+const route = useRoute()
 const loading = ref(false)
 const { t } = useI18n()
 
@@ -36,7 +37,9 @@ const handleLogin = async () => {
     .then(async (data) => {
       localStorage.setItem('token', data.token)
       localStorage.setItem('refreshToken', data.refresh_token)
-      router.push('/')
+      // honor a ?redirect target (e.g. the SSO authorize page sends the user here to log in)
+      const redirect = route.query.redirect
+      router.push(typeof redirect === 'string' ? redirect : '/')
     })
     .finally(() => {
       loading.value = false

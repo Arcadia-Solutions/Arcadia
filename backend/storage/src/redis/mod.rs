@@ -48,6 +48,12 @@ pub trait RedisInterface {
         key: K,
     ) -> impl Future<Output = Result<Option<String>>> + Send;
 
+    /// Gets the value and deletes the key atomically, so a value can only ever be read once.
+    fn get_del<K: ToRedisArgs + Send>(
+        &mut self,
+        key: K,
+    ) -> impl Future<Output = Result<Option<String>>> + Send;
+
     fn delete<K: ToRedisArgs + Send>(&mut self, key: K) -> impl Future<Output = Result<()>> + Send;
 }
 
@@ -90,6 +96,14 @@ impl RedisInterface for Redis {
     async fn get<K: ToRedisArgs + Send>(&mut self, key: K) -> Result<Option<String>> {
         cmd("GET")
             .arg(&[key])
+            .query_async(&mut self.0)
+            .await
+            .map_err(RedisError::CmdError)
+    }
+
+    async fn get_del<K: ToRedisArgs + Send>(&mut self, key: K) -> Result<Option<String>> {
+        cmd("GETDEL")
+            .arg(key)
             .query_async(&mut self.0)
             .await
             .map_err(RedisError::CmdError)

@@ -68,7 +68,10 @@ impl ConnectionPool {
         )
         .fetch_one(self.borrow())
         .await
-        .map_err(|_| Error::UserWithIdNotFound(*id))
+        .map_err(|error| match error {
+            sqlx::Error::RowNotFound => Error::UserWithIdNotFound(*id),
+            error => Error::GenericDatabaseError(error),
+        })
     }
 
     // this keeps track of when the user made a request for the last time

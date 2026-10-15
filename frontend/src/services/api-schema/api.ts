@@ -2151,6 +2151,28 @@ export interface Notifications {
     'torrent_deletions': Array<NotificationTorrentDeletion>;
     'torrent_request_comments': Array<NotificationTorrentRequestComment>;
 }
+export interface OAuthAuthorize {
+    /**
+     * Query string of the authorization request, as the frontend authorize page received it.
+     */
+    'authorization_query': string;
+}
+export interface OAuthAuthorize200Response {
+    'data': OAuthAuthorizeResponse;
+    'side_effects': Array<SideEffect>;
+}
+export interface OAuthAuthorizeResponse {
+    /**
+     * Where to send the browser: the client\'s redirect URI with a code, or with an error.
+     */
+    'redirect_url': string;
+}
+/**
+ * An OAuth2 error answer, shaped as `{error}`.
+ */
+export interface OAuthErrorResponse {
+    'error': string;
+}
 
 export const OrderByDirection = {
     Asc: 'asc',
@@ -3425,7 +3447,7 @@ export interface TitleGroupAndAssociatedData {
     'torrent_requests': Array<TorrentRequestHierarchyLite>;
 }
 /**
- * How many title groups share an attribute value, such as a content type or a source.
+ * How many title groups share an attribute value, such as a content type.
  */
 export interface TitleGroupAttributeCountDataPoint {
     'attribute_value': string;
@@ -3554,10 +3576,6 @@ export interface TitleGroupLite {
  */
 export interface TitleGroupStatsResponse {
     'content_types': Array<TitleGroupAttributeCountDataPoint>;
-    /**
-     * A title group is counted once per source it has an edition group in.
-     */
-    'sources': Array<TitleGroupAttributeCountDataPoint>;
     'title_groups_per_release_year': Array<TitleGroupsPerReleaseYearDataPoint>;
 }
 export interface TitleGroupTag {
@@ -6186,6 +6204,20 @@ export const markTorrentDeletionNotificationsAsRead = async (markTorrentDeletion
         ...options
     });
     return response.data;
+};
+
+
+
+
+
+export const oAuthAuthorize = async (oAuthAuthorize: OAuthAuthorize, options?: RawAxiosRequestConfig): Promise<OAuthAuthorize200Response['data']> => {
+    const response = await globalAxios.request<OAuthAuthorize200Response>({
+        url: '/api/auth/oauth-authorize',
+        method: 'POST',
+        data: oAuthAuthorize,
+        ...options
+    });
+    return response.data.data;
 };
 
 

@@ -1,6 +1,6 @@
 # Monitoring (OpenTelemetry & Grafana)
 
-Arcadia includes deep observability instrumentation with [OpenTelemetry](https://opentelemetry.io/). The backend, BitTorrent tracker, and periodic background scheduler emit structured metrics and distributed traces via OTLP gRPC.
+Arcadia includes deep observability instrumentation with [OpenTelemetry](https://opentelemetry.io/). The backend, BitTorrent tracker, and periodic background scheduler emit structured metrics and distributed traces via OTLP gRPC. The [backup](./backup.md#telemetry) job also reports per-run metrics (over OTLP/HTTP) when the same endpoint is set.
 
 ## Architecture
 
@@ -56,6 +56,7 @@ The imported dashboard provides real-time visibility into:
 - BitTorrent tracker announce and scrape request throughput.
 - Peer connection tracking, caching ratios, and active peer counts.
 - Periodic background tasks: execution intervals, durations, and rows affected.
+- Backup runs: last-run status, wall-clock and restic duration, data added, and files processed.
 - Host CPU, memory pressure, and network throughput.
 
 ## Production Reverse Proxy & HTTPS

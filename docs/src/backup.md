@@ -198,6 +198,20 @@ Not scripted. Restore a volume into a directory with
 `restic restore latest:/data/ergo_data --target /var/lib/ergo`, and load the dumps of
 `dump_dir` with `psql` and `mariadb`.
 
+## Telemetry
+
+When `telemetry.otlp_endpoint` is set (the same switch the backend and tracker use, see
+[Monitoring](./telemetry.md)), each run reports best-effort metrics over OTLP/HTTP: whether it
+succeeded, its wall-clock duration, and restic's snapshot stats (files and bytes added, processed
+totals, restic's own duration). The metrics are last-run gauges, labelled `status=ok|err`. Telemetry
+never changes the backup's outcome: a failed export is swallowed.
+
+The configured endpoint is a gRPC address (`host:4317`); the reporter reuses the host with the
+OTLP/HTTP port `4318`.
+
+The payload is built by `backup/otlp.jq` and posted with `curl`. Both are in the backup image. In host
+mode, telemetry is skipped if `jq` or `curl` is missing, and the run is unaffected.
+
 ## Limits
 
 - Paths and volume names cannot contain spaces, the crontab of the `backup_cron` service included: the

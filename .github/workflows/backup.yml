@@ -58,3 +58,15 @@ jobs:
           cat /root/.ssh/id_ed25519.pub >> /root/.ssh/authorized_keys && ssh-keyscan -H localhost >> /root/.ssh/known_hosts
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: backup/test.sh host
+
+  # The OTLP payload built by backup/otlp.jq: a successful run carries restic's stats, a failed one only its status.
+  otlp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          q='[.resourceMetrics[0].scopeMetrics[0].metrics[] | .name + "=" + (.gauge.dataPoints[0] | .asInt // .asDouble | tostring)] | join(" ")'
+          ok=$(echo '{"files_new":3,"data_added":4096,"total_duration":1.5}' | jq -cRn --arg code 0 --arg ms 1234 --arg now 1 -f backup/otlp.jq | jq -r "$q")
+          test "$ok" = "arcadia.backup.success=1 arcadia.backup.duration_ms=1234 arcadia.backup.files_new=3 arcadia.backup.data_added_bytes=4096 arcadia.backup.restic_duration_seconds=1.5"
+          err=$(printf '' | jq -cRn --arg code 2 --arg ms 50 --arg now 1 -f backup/otlp.jq | jq -r "$q")
+          test "$err" = "arcadia.backup.success=0 arcadia.backup.duration_ms=50"

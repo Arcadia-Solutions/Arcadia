@@ -4,9 +4,13 @@
 # Configured by the `backup` section of config.yml, see docs/src/backup.md.
 cd "$(dirname "$0")/.." || exit 1
 . backup/lib.sh
+# Host mode drops and creates the database as the postgres user (runuser) and restic restores the
+# data directories with their owners. Docker mode only needs access to docker.
+if [ "$MODE" = host ] && [ "$(id -u)" != 0 ]; then echo "run restore.sh as root in host mode" >&2; exit 1; fi
 
 SNAP=latest
 YES=
+RESET=
 SERVICES=
 for arg in "$@"; do
     case $arg in -y) YES=1 ;; *) SNAP=$arg ;; esac
@@ -54,6 +58,26 @@ confirm() {
     local answer
     read -rp "Overwrite the databases, data and configuration files with snapshot $SNAP? Type yes: " answer
     [ "$answer" = yes ] || exit 1
+    if [ "$MODE" = docker ]; then
+        read -rp "Also recreate the database volumes ($DB_VOLUMES), so they take the passwords of .env? [y/N] " answer
+        case $answer in y | Y | yes) RESET=1 ;; esac
+    fi
+}
+
+# Docker: postgres and mariadb apply the passwords of .env only when their volume is first created, so
+# a volume created before .env was edited refuses them (mariadb root during the restore, the backend
+# afterwards). The dumps hold the databases only, so nothing else is lost. Asked in confirm, skipped
+# with -y.
+DB_VOLUMES="db_data ergo_database chevereto_database"
+reset_db_volumes() {
+    [ -n "$RESET" ] || return 0
+    local v
+    # by volume rather than by service: the mariadb services may sit in a profile that is not enabled
+    for v in $DB_VOLUMES; do
+        v=${COMPOSE_PROJECT_NAME}_$v
+        docker ps -aq --filter volume="$v" | xargs -r docker rm -f
+        docker volume rm -f "$v"
+    done
 }
 
 # Docker: stops every running service, profiles included, to start them again at the end (redis and
@@ -95,7 +119,15 @@ restore_files() {
     local f dest owner
     # restic (in docker mode, run from its image) writes to DUMP_DIR, which lands on the host at
     # DUMP_DIR_HOST through the BACKUP_DIR bind mount; the host-side reads below use DUMP_DIR_HOST.
-    restic restore "$SNAP:$DUMP_DIR" --target "$DUMP_DIR"
+    # SELinux labels are skipped (here and in restore_data): the snapshot carries the old host's, a
+    # container may not set them, and restic exits non zero on that.
+    restic restore "$SNAP:$DUMP_DIR" --target "$DUMP_DIR" --exclude-xattr security.selinux
+    # The restic container restores them root owned, the mariadb dumps 0600 (mktemp): hand them to
+    # the user running this script, who reads and cleans them up from the host.
+    if [ "$MODE" = docker ]; then
+        docker run --rm -v "$BACKUP_DIR:$BACKUP_MOUNT" --entrypoint chown "$RESTIC_IMAGE" \
+            -R "$(id -u):$(id -g)" "$DUMP_DIR"
+    fi
     # staged with --parents, so ergo/ and kiwiirc/ are directories of configuration files: they are
     # restored file by file, the checkout holds more in them than the snapshot (the examples), and
     # find leaves the loop empty when the snapshot holds no configuration file at all.
@@ -110,7 +142,7 @@ restore_files() {
 
 restore_data() {
     local t
-    for t in $(data_targets); do restic restore "$SNAP:$t" --target "$t" --delete; done
+    for t in $(data_targets); do restic restore "$SNAP:$t" --target "$t" --delete --exclude-xattr security.selinux; done
 }
 
 restore_postgres() {
@@ -160,6 +192,7 @@ confirm
 clean_dumps
 trap clean_dumps EXIT
 stop_services
+reset_db_volumes
 check_postgres
 restore_files
 restore_data

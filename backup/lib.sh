@@ -89,9 +89,11 @@ restic() {
         # and bind-mounting the host BACKUP_DIR and password file at the same fixed points compose uses,
         # so the restic paths (repo, dump_dir) match an in-container backup. repo and dump_dir live
         # under BACKUP_MOUNT, so the single BACKUP_DIR mount covers both.
-        local mounts=() v
+        # A tty when there is one, otherwise restic prints no progress during long restores.
+        local mounts=() v tty=()
         for v in $VOLUMES; do mounts+=(-v "${COMPOSE_PROJECT_NAME}_$v:/data/$v"); done
-        docker run --rm -e RESTIC_REPOSITORY="$REPO" -e RESTIC_PASSWORD_FILE="$PASSWORD_FILE" \
+        if [ -t 1 ]; then tty=(-t); fi
+        docker run --rm "${tty[@]}" -e RESTIC_REPOSITORY="$REPO" -e RESTIC_PASSWORD_FILE="$PASSWORD_FILE" \
             -e RESTIC_FROM_PASSWORD_FILE="$PASSWORD_FILE" -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
             -v "$PASSWORD_FILE_HOST:$PASSWORD_FILE:ro" -v "$BACKUP_DIR:$BACKUP_MOUNT" "${mounts[@]}" \
             "$RESTIC_IMAGE" --retry-lock 30m "$@"

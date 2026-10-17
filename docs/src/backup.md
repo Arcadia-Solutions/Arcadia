@@ -42,7 +42,8 @@ dumps and password file live inside them and `config.yml` does not repeat their 
 
 - `BACKUP_DIR` (default `/var/backups/arcadia`): host directory holding the repo and dumps,
   bind-mounted at the fixed path `/var/backups/arcadia` in the container. `restore.sh` runs on the host
-  and reads `BACKUP_DIR` from `.env` to find the repository and dumps.
+  and reads `BACKUP_DIR` from `.env` to find the repository and dumps. Point it at the parent of the
+  restic repository, which must be named `repo` (`$BACKUP_DIR/repo`).
 - `RESTIC_PASSWORD_FILE`: host path of the password file, kept outside of `BACKUP_DIR`. It is
   bind-mounted at the fixed path `/root/.arcadia-restic-password`.
 
@@ -176,7 +177,10 @@ the middle and `latest` changes.
 
 Restore is run on the host, in both modes (in docker mode it uses the host's docker and restores the
 volumes through the pinned restic image). It restores the configuration files, the volumes (or data directories) and the databases. In docker
-mode it stops the running services first and starts them again at the end. In host mode, stop
+mode it stops the running services first and starts them again at the end, and offers to recreate
+the database volumes (`db_data`, `ergo_database`, `chevereto_database`): postgres and mariadb only
+apply the passwords of `.env` when their volume is created, so a volume created before `.env` was
+edited refuses them. Answer yes on a new server; `-y` leaves the volumes alone. In host mode, stop
 arcadia, ergo and redis yourself first, and create the postgres role of the `database` section on a
 new server. Run `backup/restore.sh` from the deployment checkout (the same directory the stack was started from), because in docker mode the restore derives the compose project name from the directory to locate the real data volumes.
 

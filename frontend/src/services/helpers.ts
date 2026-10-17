@@ -520,3 +520,25 @@ export const onFormKeydown = (event: KeyboardEvent) => {
     event.preventDefault()
   }
 }
+
+// TMDB serves images at a fixed set of widths. Posters imported from TMDB are stored at w500 by the
+// backend, but the preview grids render them far smaller, so expose the other widths via srcset and
+// let the browser download the smallest suitable file. Non-TMDB (user supplied) cover URLs are left
+// untouched.
+const TMDB_IMAGE_URL_RE = /^https:\/\/image\.tmdb\.org\/t\/p\/(?:original|w\d+|h\d+)(\/.+)$/
+
+/** Rewrite a TMDB image URL to the requested width. Non-TMDB URLs are returned unchanged. */
+export const tmdbImageAtWidth = (url: string | undefined, width: number): string | undefined => {
+  if (!url) return url
+  const match = url.match(TMDB_IMAGE_URL_RE)
+  if (!match) return url
+  return `https://image.tmdb.org/t/p/w${width}${match[1]}`
+}
+
+/** Build a responsive `srcset` for a TMDB image. Returns undefined for non-TMDB URLs. */
+export const tmdbImageSrcset = (url: string | undefined, widths: number[]): string | undefined => {
+  if (!url) return undefined
+  const match = url.match(TMDB_IMAGE_URL_RE)
+  if (!match) return undefined
+  return widths.map((width) => `${tmdbImageAtWidth(url, width)} ${width}w`).join(', ')
+}

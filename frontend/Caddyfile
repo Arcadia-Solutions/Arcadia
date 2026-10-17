@@ -1,4 +1,7 @@
 :80 {
+	# Compress responses on the fly. Caddy serves files uncompressed unless this is set.
+	encode zstd gzip
+
 	handle /api* {
 		reverse_proxy backend:8080
 	}
@@ -16,6 +19,17 @@
 
 	handle {
 		root * /srv/arcadia
+
+		# Vite emits content-hashed filenames under /assets, so they never change
+		# for a given name and can be cached forever.
+		@hashed path /assets/*
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+
+		# Everything else (index.html, SPA fallback, unhashed static files) must be
+		# revalidated so deploys are picked up immediately.
+		@unhashed not path /assets/*
+		header @unhashed Cache-Control "no-cache"
+
 		try_files {path} /index.html
 		file_server
 	}

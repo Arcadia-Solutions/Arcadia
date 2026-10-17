@@ -3,6 +3,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 import { defineConfig, type Plugin } from 'vite'
+import { primeTrimPlugin } from './vite-plugins/prime-trim'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import { parse } from 'yaml'
@@ -114,6 +115,7 @@ export default defineConfig({
     vueJsx(),
     kiwiDevServer(),
     customIconsPlugin(),
+    primeTrimPlugin(),
     // vueDevTools(),
     {
       name: 'arcadia-site-name',

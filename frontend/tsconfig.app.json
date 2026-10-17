@@ -6,7 +6,7 @@
     "lib": ["es2022", "dom", "dom.iterable"],
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "types": ["vue", "node"],
 
     "paths": {

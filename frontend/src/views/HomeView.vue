@@ -2,11 +2,12 @@
   <div id="home-page">
     <div class="main">
       <LatestTorrents
-        v-if="latestUploads"
+        :titleGroups="latestUploads ?? []"
+        :loading="!latestUploads"
         containerTitleLink="/torrents"
         :containerTitle="t('torrent.latest_uploads')"
-        :titleGroups="latestUploads"
         showUploader
+        priority
       />
       <KiwiIrcChat v-if="userStore.id && publicSettings.irc_enabled && publicSettings.irc_webchat_enabled" containerTitleLink="/wiki/article/3" />
       <Tabs value="0" size="small" style="margin: 10px 0">
@@ -156,6 +157,10 @@ onMounted(() => {
   display: block;
   width: 100%;
   height: auto;
+  /* Site highlights are TMDB posters/profiles (2:3); reserve the box so the remote image
+     loading does not grow the sidebar and shift the content below it. */
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
   border-radius: 7px;
 }
 .announcement {

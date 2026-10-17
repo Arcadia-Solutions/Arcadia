@@ -22,17 +22,17 @@
 </template>
 
 <script setup lang="ts">
+import { defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import Tabs from 'primevue/tabs'
 import TabList from 'primevue/tablist'
 import Tab from 'primevue/tab'
 import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
-import TorrentStats from '@/components/stats/TorrentStats.vue'
-import ForumStats from '@/components/stats/ForumStats.vue'
-import UserStats from '@/components/stats/UserStats.vue'
+const TorrentStats = defineAsyncComponent(() => import('@/components/stats/TorrentStats.vue'))
+const ForumStats = defineAsyncComponent(() => import('@/components/stats/ForumStats.vue'))
+const UserStats = defineAsyncComponent(() => import('@/components/stats/UserStats.vue'))
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { onMounted, ref, watch } from 'vue'
 
 const { t } = useI18n()
 const router = useRouter()

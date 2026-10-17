@@ -37,6 +37,7 @@ eslint.config.js
 playwright.config.js
 vite.config.js
 vitest.config.js
+vite-plugins/*.js
 
 CLAUDE.md
 

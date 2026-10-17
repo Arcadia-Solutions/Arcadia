@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE users\n                SET warned = false, banned = false\n                WHERE id = $1\n                RETURNING id, passkey, max_snatches_per_day\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "passkey",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "passkey"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "max_snatches_per_day",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "max_snatches_per_day"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "d46ce4fa7620b122585631fd8aeb7a3847572a4605cdbd3b126e940a8c5e597f"
+}

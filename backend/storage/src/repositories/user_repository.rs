@@ -14,10 +14,16 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use arcadia_shared::tracker::models::user::APIUpdateUserMaxSnatchesPerDay;
+use arcadia_shared::tracker::models::user::{APIInsertUser, APIUpdateUserMaxSnatchesPerDay};
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use std::borrow::Borrow;
+
+struct UnbannedUser {
+    id: i32,
+    passkey: String,
+    max_snatches_per_day: Option<i32>,
+}
 
 impl ConnectionPool {
     pub async fn find_user_profile(&self, id: &i32) -> Result<PublicUser> {
@@ -317,19 +323,22 @@ impl ConnectionPool {
             .await?;
 
         // Unban users whose ban-warnings have all expired
-        sqlx::query!(
+        let unbanned_users = sqlx::query_as!(
+            UnbannedUser,
             r#"
             UPDATE users
             SET banned = false
-            WHERE id IN (
+            WHERE banned = true
+            AND id IN (
                 SELECT user_id FROM user_warnings
                 WHERE ban = true AND removed_at IS NULL
                 GROUP BY user_id
                 HAVING COUNT(*) FILTER (WHERE expires_at IS NULL OR expires_at > NOW()) = 0
             )
+            RETURNING id, passkey, max_snatches_per_day
             "#,
         )
-        .execute(&mut *tx)
+        .fetch_all(&mut *tx)
         .await?;
 
         // Set warned = false for users who have no active (non-expired) warnings
@@ -351,6 +360,8 @@ impl ConnectionPool {
         let cleared_count = result.rows_affected();
 
         tx.commit().await?;
+
+        self.notify_tracker_users_unbanned(&unbanned_users).await;
 
         Ok(cleared_count)
     }
@@ -376,20 +387,55 @@ impl ConnectionPool {
         .execute(&mut *tx)
         .await?;
 
-        sqlx::query!(
+        let unbanned_user = sqlx::query_as!(
+            UnbannedUser,
             r#"
                 UPDATE users
                 SET warned = false, banned = false
                 WHERE id = $1
+                RETURNING id, passkey, max_snatches_per_day
             "#,
             user_id
         )
-        .execute(&mut *tx)
+        .fetch_one(&mut *tx)
         .await?;
 
         tx.commit().await?;
 
+        // tracker upsert is idempotent, so notifying a user that was only warned is harmless
+        self.notify_tracker_users_unbanned(&[unbanned_user]).await;
+
         Ok(())
+    }
+
+    /// The tracker drops banned users' passkeys when it (re)loads its state,
+    /// so unbanned users must be (re)inserted for their announces to be accepted.
+    async fn notify_tracker_users_unbanned(&self, users: &[UnbannedUser]) {
+        for user in users {
+            let mut url = self.tracker_config.url_internal.clone();
+            url.path_segments_mut().unwrap().push("api").push("users");
+
+            let payload = APIInsertUser {
+                id: user.id as u32,
+                passkey: user.passkey.parse().expect("invalid passkey format"),
+                max_snatches_per_day: user.max_snatches_per_day.map(|x| x as u32),
+            };
+
+            if let Err(e) = self
+                .internal_http_client
+                .put(url)
+                .header("x-api-key", self.tracker_config.api_key.clone())
+                .json(&payload)
+                .send()
+                .await
+            {
+                log::warn!(
+                    "Failed to insert unbanned user {} in tracker: {}",
+                    user.id,
+                    e
+                );
+            }
+        }
     }
 
     pub async fn is_user_banned(&self, user_id: i32) -> Result<bool> {

@@ -1,0 +1,50 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE users\n            SET banned = false\n            WHERE banned = true\n            AND id IN (\n                SELECT user_id FROM user_warnings\n                WHERE ban = true AND removed_at IS NULL\n                GROUP BY user_id\n                HAVING COUNT(*) FILTER (WHERE expires_at IS NULL OR expires_at > NOW()) = 0\n            )\n            RETURNING id, passkey, max_snatches_per_day\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "passkey",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "passkey"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "max_snatches_per_day",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "max_snatches_per_day"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "e7d4e3f0ad120453dd76ea0baa96a173c4847b075027033371eb6406ba752574"
+}

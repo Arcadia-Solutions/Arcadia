@@ -95,6 +95,34 @@ impl ConnectionPool {
         .await?;
 
         sqlx::query!(
+            "UPDATE forum_threads
+             SET posts_amount = (
+                 SELECT COUNT(*)
+                 FROM forum_posts
+                 WHERE forum_posts.forum_thread_id = forum_threads.id
+             )"
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        sqlx::query!(
+            "UPDATE forum_sub_categories
+             SET threads_amount = (
+                     SELECT COUNT(*)
+                     FROM forum_threads
+                     WHERE forum_threads.forum_sub_category_id = forum_sub_categories.id
+                 ),
+                 posts_amount = (
+                     SELECT COUNT(*)
+                     FROM forum_posts
+                     JOIN forum_threads ON forum_posts.forum_thread_id = forum_threads.id
+                     WHERE forum_threads.forum_sub_category_id = forum_sub_categories.id
+                 )"
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        sqlx::query!(
             "UPDATE users
              SET title_group_comments = (
                  SELECT COUNT(*)

@@ -54,6 +54,38 @@ async fn test_staff_can_delete_empty_sub_category(pool: PgPool) {
         "with_test_users",
         "with_test_forum_category",
         "with_test_forum_sub_category",
+        "with_test_forum_thread",
+        "with_test_forum_post"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_delete_thread_decrements_author_forum_posts(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    pool.recompute_cached_amounts().await.unwrap();
+    let (service, staff) = create_test_app_and_login(
+        pool.clone(),
+        MockRedisPool::default(),
+        TestUser::DeleteForumThread,
+    )
+    .await;
+
+    let req = test::TestRequest::delete()
+        .uri("/api/forum/thread?id=100")
+        .insert_header(auth_header(&staff.token))
+        .to_request();
+    let resp = test::call_service(&service, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    // user 100 authored the 4 fixture posts, one of them in thread 100
+    let author = pool.find_user_profile(&100).await.unwrap();
+    assert_eq!(author.forum_posts, Some(3));
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_forum_category",
+        "with_test_forum_sub_category",
         "with_test_forum_thread"
     ),
     migrations = "../storage/migrations"

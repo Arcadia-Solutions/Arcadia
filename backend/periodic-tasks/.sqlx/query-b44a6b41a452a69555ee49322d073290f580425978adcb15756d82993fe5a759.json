@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE forum_threads\n             SET posts_amount = (\n                 SELECT COUNT(*)\n                 FROM forum_posts\n                 WHERE forum_posts.forum_thread_id = forum_threads.id\n             )",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "b44a6b41a452a69555ee49322d073290f580425978adcb15756d82993fe5a759"
+}

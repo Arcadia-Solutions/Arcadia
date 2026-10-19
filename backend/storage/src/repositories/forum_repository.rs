@@ -1582,9 +1582,17 @@ impl ConnectionPool {
             _ => Error::CouldNotDeleteForumThread(e),
         })?;
 
-        // Delete all posts in the thread (cascade delete)
+        // Delete all posts in the thread and decrement their authors' forum_posts counters
         sqlx::query!(
-            r#"DELETE FROM forum_posts WHERE forum_thread_id = $1"#,
+            r#"
+            WITH deleted AS (
+                DELETE FROM forum_posts WHERE forum_thread_id = $1 RETURNING created_by_id
+            )
+            UPDATE users
+            SET forum_posts = forum_posts - d.amount
+            FROM (SELECT created_by_id, COUNT(*) AS amount FROM deleted GROUP BY created_by_id) d
+            WHERE users.id = d.created_by_id
+            "#,
             thread_id
         )
         .execute(&mut *tx)

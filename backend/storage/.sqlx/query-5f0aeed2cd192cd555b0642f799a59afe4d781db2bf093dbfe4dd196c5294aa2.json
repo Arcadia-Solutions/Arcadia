@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            WITH deleted AS (\n                DELETE FROM forum_posts WHERE forum_thread_id = $1 RETURNING created_by_id\n            )\n            UPDATE users\n            SET forum_posts = forum_posts - d.amount\n            FROM (SELECT created_by_id, COUNT(*) AS amount FROM deleted GROUP BY created_by_id) d\n            WHERE users.id = d.created_by_id\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5f0aeed2cd192cd555b0642f799a59afe4d781db2bf093dbfe4dd196c5294aa2"
+}

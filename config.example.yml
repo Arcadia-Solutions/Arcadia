@@ -73,6 +73,39 @@ api:
   # Internal requests (tracker, irc, image host, etc.) are not affected.
   # http_proxy: socks5://127.0.0.1:9050
 
+  # Optional: services checking where the registration ip of the users comes from (geolocation,
+  # vpn, proxy, tor, datacenter). The ip is checked in the background on registration (the
+  # result is stored), and on demand by the users with the view_registration_ips permission
+  # (the result is only stored if they choose to). The users whose ip was never checked can be
+  # checked with a maintenance tool.
+  # A provider is enabled when its entry is present. They are tried from the lowest priority
+  # number to the highest one, the next one being used when a provider fails (down, rate
+  # limited, quota exhausted, etc.). Their requests go through http_proxy when it is set.
+  # Private addresses (e.g. when the client ip is not forwarded by the reverse proxy) are not
+  # checked.
+  # ip_check_providers:
+  #   # proxycheck.io: 100 requests per day without a key, 1000 with a free account's key.
+  #   proxycheck:
+  #     priority: 1
+  #     api_key: your_proxycheck_api_key
+  #   # ipapi.is: 1000 requests per day with a free account's key (required).
+  #   ipapi_is:
+  #     priority: 2
+  #     api_key: your_ipapi_is_api_key
+  #   # IPQualityScore: 1000 requests per month with a free account's key (required).
+  #   ipqualityscore:
+  #     priority: 3
+  #     api_key: your_ipqualityscore_api_key
+  #   # vpnapi.io: 1000 requests per day with a free account's key (required). No datacenter flag.
+  #   vpnapi:
+  #     priority: 4
+  #     api_key: your_vpnapi_api_key
+  #   # ip-api.com: no key, 45 requests per minute, free for non-commercial use only. Its proxy
+  #   # flag also covers vpns and tor.
+  #   # WARNING: its free tier is http only, the ips of the users are sent unencrypted.
+  #   ip_api:
+  #     priority: 5
+
 tracker:
   # Address the tracker listens on.
   host: 0.0.0.0

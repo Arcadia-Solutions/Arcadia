@@ -106,7 +106,8 @@ CREATE TYPE user_permissions_enum AS ENUM (
     'view_foreign_invitations',
     'write_user_staff_note',
     'edit_user_staff_notes',
-    'view_foreign_user_staff_notes'
+    'view_foreign_user_staff_notes',
+    'view_registration_ips'
 );
 CREATE TABLE user_classes (
     name VARCHAR(30) UNIQUE NOT NULL,
@@ -180,6 +181,13 @@ CREATE TYPE displayable_user_lists_enum AS ENUM (
     'title_group_comments',
     'request_comments'
 );
+CREATE TYPE ip_check_provider_enum AS ENUM (
+    'ip_api',
+    'proxycheck',
+    'ipapi_is',
+    'ipqualityscore',
+    'vpnapi'
+);
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(15) UNIQUE NOT NULL,
@@ -187,6 +195,22 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     registered_from_ip INET NOT NULL,
+    -- what an ip check provider told about registered_from_ip on registration, every column is
+    -- NULL when it could not be checked, and the ones the provider does not report stay NULL
+    registration_ip_check_provider ip_check_provider_enum,
+    -- ISO 3166-1 alpha-2
+    registration_ip_country_code TEXT,
+    registration_ip_country TEXT,
+    registration_ip_region TEXT,
+    registration_ip_city TEXT,
+    registration_ip_latitude DOUBLE PRECISION,
+    registration_ip_longitude DOUBLE PRECISION,
+    registration_ip_asn TEXT,
+    registration_ip_organization TEXT,
+    registration_ip_is_vpn BOOLEAN,
+    registration_ip_is_proxy BOOLEAN,
+    registration_ip_is_tor BOOLEAN,
+    registration_ip_is_hosting BOOLEAN,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     description TEXT NOT NULL DEFAULT '',
     uploaded BIGINT NOT NULL DEFAULT 0,

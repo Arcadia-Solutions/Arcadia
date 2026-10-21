@@ -7,7 +7,7 @@ use std::collections::BTreeMap;
 
 use arcadia_storage::models::title_group::ContentType;
 
-use crate::handlers::scrapers::ExternalSource;
+use crate::{handlers::scrapers::ExternalSource, services::ip_check::IpCheckProvidersConfig};
 
 /// Sections of the `config.yml` file used by the API. The other ones are ignored.
 #[derive(Clone, Deserialize)]
@@ -88,6 +88,8 @@ pub struct ApiConfig {
     pub http_proxy: Option<String>,
     /// Biggest `page_size` accepted on the paginated endpoints. Bigger values are capped to it.
     pub max_page_size: u32,
+    #[serde(default)]
+    pub ip_check_providers: IpCheckProvidersConfig,
 }
 
 fn default_redis_port() -> u16 {

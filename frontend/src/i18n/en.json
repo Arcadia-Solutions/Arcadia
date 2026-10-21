@@ -1077,7 +1077,22 @@
     "view_foreign_invitations": "See the invitations sent by other users",
     "write_user_staff_note": "Write notes on user profiles",
     "edit_user_staff_notes": "Edit and remove any user staff note",
-    "view_foreign_user_staff_notes": "See the staff notes written by other users"
+    "view_foreign_user_staff_notes": "See the staff notes written by other users",
+    "view_registration_ips": "See, check and update where the registration IP of users comes from"
+  },
+  "user_registration_ip": {
+    "registration_ip": "Registration IP",
+    "check_now": "Check the IP now",
+    "not_checked": "This IP has not been checked yet",
+    "current_check": "Current check of the IP",
+    "save_check": "Save as the IP check",
+    "provider": "Provider",
+    "location": "Location",
+    "network": "Network",
+    "is_vpn": "VPN",
+    "is_proxy": "Proxy",
+    "is_tor": "Tor",
+    "is_hosting": "Hosting"
   },
   "user_staff_note": {
     "staff_notes": "Staff notes",
@@ -1445,7 +1460,10 @@
     "rehash_torrents_success": "{amount} torrents updated",
     "recompute_cached_amounts": "Recompute cached amounts",
     "recompute_cached_amounts_description": "Recompute every cached count (artists, users and torrents stats) from its source tables. Useful if they drifted out of sync after manual database edits. This operation may take a while, you can retry it safely if it fails.",
-    "recompute_cached_amounts_success": "Cached amounts recomputed"
+    "recompute_cached_amounts_success": "Cached amounts recomputed",
+    "check_missing_registration_ips": "Check missing registration IPs",
+    "check_missing_registration_ips_description": "Check where the registration IP comes from for every user whose IP was never checked (e.g. registered before the IP check providers were configured, or when they all failed), with the configured IP check providers. Private IPs are skipped. This operation may take a while and uses the quotas of the providers, you can retry it safely if it fails.",
+    "check_missing_registration_ips_success": "{amount} users checked"
   },
   "reaction": {
     "add_reaction": "Add a reaction",

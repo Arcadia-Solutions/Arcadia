@@ -153,6 +153,7 @@ pub enum TestUser {
     EditUserStaffNotes,
     ViewForeignUserStaffNotes,
     RequestReseed,
+    ViewRegistrationIps,
 }
 
 impl TestUser {
@@ -238,6 +239,7 @@ impl TestUser {
             TestUser::EditUserStaffNotes => "user_ed_notes",
             TestUser::ViewForeignUserStaffNotes => "user_frgn_notes",
             TestUser::RequestReseed => "user_reseed",
+            TestUser::ViewRegistrationIps => "user_reg_ips",
         };
 
         Login {

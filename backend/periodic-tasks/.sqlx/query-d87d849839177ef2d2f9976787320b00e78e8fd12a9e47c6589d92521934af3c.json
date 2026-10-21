@@ -1,0 +1,197 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT registered_from_ip,\n                       registration_ip_check_provider AS \"provider: IpCheckProvider\",\n                       registration_ip_country_code AS country_code,\n                       registration_ip_country AS country,\n                       registration_ip_region AS region,\n                       registration_ip_city AS city,\n                       registration_ip_latitude AS latitude,\n                       registration_ip_longitude AS longitude,\n                       registration_ip_asn AS asn,\n                       registration_ip_organization AS organization,\n                       registration_ip_is_vpn AS is_vpn,\n                       registration_ip_is_proxy AS is_proxy,\n                       registration_ip_is_tor AS is_tor,\n                       registration_ip_is_hosting AS is_hosting\n                FROM users\n                WHERE id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "registered_from_ip",
+        "type_info": "Inet",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "registered_from_ip"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "provider: IpCheckProvider",
+        "type_info": {
+          "Custom": {
+            "name": "ip_check_provider_enum",
+            "kind": {
+              "Enum": [
+                "ip_api",
+                "proxycheck",
+                "ipapi_is",
+                "ipqualityscore",
+                "vpnapi"
+              ]
+            }
+          }
+        },
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "registration_ip_check_provider"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "country_code",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "registration_ip_country_code"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "country",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "registration_ip_country"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "region",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "registration_ip_region"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "city",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "registration_ip_city"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "latitude",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "registration_ip_latitude"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "longitude",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "registration_ip_longitude"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "asn",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "registration_ip_asn"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "organization",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "registration_ip_organization"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "is_vpn",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "registration_ip_is_vpn"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "is_proxy",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "registration_ip_is_proxy"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "is_tor",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "registration_ip_is_tor"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "is_hosting",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "registration_ip_is_hosting"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "d87d849839177ef2d2f9976787320b00e78e8fd12a9e47c6589d92521934af3c"
+}

@@ -97,6 +97,12 @@
           />
         </template>
       </LatestTorrents>
+      <UserRegistrationIp
+        v-if="userStore.permissions.includes('view_registration_ips')"
+        :key="`registration-ip-${user.id}`"
+        :userId="user.id"
+        class="section"
+      />
       <UserStaffNotes v-if="userStore.permissions.includes('write_user_staff_note')" :key="user.id" :userId="user.id" class="section" />
     </div>
     <UserSidebar :user class="sidebar" />
@@ -165,6 +171,7 @@ import SetCustomTitleDialog from '@/components/user/SetCustomTitleDialog.vue'
 import SendGiftDialog from '@/components/user/SendGiftDialog.vue'
 import PasswordResetLinkDialog from '@/components/user/PasswordResetLinkDialog.vue'
 import UserStaffNotes from '@/components/user/UserStaffNotes.vue'
+import UserRegistrationIp from '@/components/user/UserRegistrationIp.vue'
 import {
   getMe,
   getUser,

@@ -359,6 +359,17 @@ export interface BuyFreeleechTokensRequest {
 export interface BuyUploadRequest {
     'bytes': number;
 }
+export interface CheckMissingRegistrationIps200Response {
+    'data': CheckMissingRegistrationIpsResponse;
+    'side_effects': Array<SideEffect>;
+}
+export interface CheckMissingRegistrationIpsResponse {
+    'checked_users_amount': number;
+}
+export interface CheckUserRegistrationIp200Response {
+    'data': IpCheck;
+    'side_effects': Array<SideEffect>;
+}
 export interface Collage {
     'category': CollageCategory;
     'cover'?: string | null;
@@ -1732,6 +1743,10 @@ export interface GetUserPermissions200Response {
     'data': Array<UserPermission>;
     'side_effects': Array<SideEffect>;
 }
+export interface GetUserRegistrationIp200Response {
+    'data': UserRegistrationIp;
+    'side_effects': Array<SideEffect>;
+}
 export interface GetUserSettings200Response {
     'data': UserSettingsResponse;
     'side_effects': Array<SideEffect>;
@@ -1860,6 +1875,53 @@ export const InvitationSearchOrderByColumn = {
 export type InvitationSearchOrderByColumn = typeof InvitationSearchOrderByColumn[keyof typeof InvitationSearchOrderByColumn];
 
 
+export interface IpCheck {
+    'provider': IpCheckProvider;
+    'result': IpCheckResult;
+}
+
+
+/**
+ * The services an ip address can be checked with.
+ */
+
+export const IpCheckProvider = {
+    IpApi: 'ip_api',
+    Proxycheck: 'proxycheck',
+    IpapiIs: 'ipapi_is',
+    Ipqualityscore: 'ipqualityscore',
+    Vpnapi: 'vpnapi'
+} as const;
+
+export type IpCheckProvider = typeof IpCheckProvider[keyof typeof IpCheckProvider];
+
+
+/**
+ * What a provider tells about an ip address. Each field is `None` when the provider does not report it.
+ */
+export interface IpCheckResult {
+    /**
+     * e.g. `AS15169`
+     */
+    'asn'?: string | null;
+    'city'?: string | null;
+    'country'?: string | null;
+    /**
+     * ISO 3166-1 alpha-2
+     */
+    'country_code'?: string | null;
+    /**
+     * The address belongs to a datacenter or a hosting company.
+     */
+    'is_hosting'?: boolean | null;
+    'is_proxy'?: boolean | null;
+    'is_tor'?: boolean | null;
+    'is_vpn'?: boolean | null;
+    'latitude'?: number | null;
+    'longitude'?: number | null;
+    'organization'?: string | null;
+    'region'?: string | null;
+}
 export interface IrcAccountResponse {
     'irc_password': string;
 }
@@ -4781,7 +4843,8 @@ export const UserPermission = {
     ViewForeignInvitations: 'view_foreign_invitations',
     WriteUserStaffNote: 'write_user_staff_note',
     EditUserStaffNotes: 'edit_user_staff_notes',
-    ViewForeignUserStaffNotes: 'view_foreign_user_staff_notes'
+    ViewForeignUserStaffNotes: 'view_foreign_user_staff_notes',
+    ViewRegistrationIps: 'view_registration_ips'
 } as const;
 
 export type UserPermission = typeof UserPermission[keyof typeof UserPermission];
@@ -4797,6 +4860,27 @@ export const UserPermissionMatchMode = {
 } as const;
 
 export type UserPermissionMatchMode = typeof UserPermissionMatchMode[keyof typeof UserPermissionMatchMode];
+
+
+/**
+ * The registration ip of a user and its stored check, every check field is `None` when it was not checked.
+ */
+export interface UserRegistrationIp {
+    'asn'?: string | null;
+    'city'?: string | null;
+    'country'?: string | null;
+    'country_code'?: string | null;
+    'is_hosting'?: boolean | null;
+    'is_proxy'?: boolean | null;
+    'is_tor'?: boolean | null;
+    'is_vpn'?: boolean | null;
+    'latitude'?: number | null;
+    'longitude'?: number | null;
+    'organization'?: string | null;
+    'provider'?: IpCheckProvider | null;
+    'region'?: string | null;
+    'registered_from_ip': string;
+}
 
 
 export interface UserResetPassword {
@@ -6121,6 +6205,17 @@ export const searchSentInvitations = async (request: SearchSentInvitationsReques
 };
 
 
+
+
+
+export const checkMissingRegistrationIps = async (options?: RawAxiosRequestConfig): Promise<CheckMissingRegistrationIps200Response['data']> => {
+    const response = await globalAxios.request<CheckMissingRegistrationIps200Response>({
+        url: '/api/maintenance-tools/check-missing-registration-ips',
+        method: 'POST',
+        ...options
+    });
+    return response.data.data;
+};
 
 
 
@@ -7886,6 +7981,18 @@ export const changeUserPassword = async (userChangedPassword: UserChangedPasswor
 
 
 
+export const checkUserRegistrationIp = async (id: number, options?: RawAxiosRequestConfig): Promise<CheckUserRegistrationIp200Response['data']> => {
+    const response = await globalAxios.request<CheckUserRegistrationIp200Response>({
+        url: `/api/users/{id}/registration-ip/check`.replace('{' + 'id' + '}', String(id)),
+        method: 'GET',
+        ...options
+    });
+    return response.data.data;
+};
+
+
+
+
 export const createAPIKey = async (userCreatedAPIKey: UserCreatedAPIKey, options?: RawAxiosRequestConfig): Promise<CreateAPIKey201Response['data']> => {
     const response = await globalAxios.request<CreateAPIKey201Response>({
         url: '/api/users/api-keys',
@@ -8097,6 +8204,18 @@ export const getUserPermissions = async (id: number, options?: RawAxiosRequestCo
 
 
 
+export const getUserRegistrationIp = async (id: number, options?: RawAxiosRequestConfig): Promise<GetUserRegistrationIp200Response['data']> => {
+    const response = await globalAxios.request<GetUserRegistrationIp200Response>({
+        url: `/api/users/{id}/registration-ip`.replace('{' + 'id' + '}', String(id)),
+        method: 'GET',
+        ...options
+    });
+    return response.data.data;
+};
+
+
+
+
 
 export const getUserSettings = async (options?: RawAxiosRequestConfig): Promise<GetUserSettings200Response['data']> => {
     const response = await globalAxios.request<GetUserSettings200Response>({
@@ -8219,6 +8338,24 @@ export const setUserCustomTitle = async (request: SetUserCustomTitleRequest, opt
         url: `/api/users/{id}/custom-title`.replace('{' + 'id' + '}', String(request['id'])),
         method: 'PUT',
         data: request['UpdateUserCustomTitle'],
+        ...options
+    });
+    return response.data;
+};
+
+
+export interface SetUserRegistrationIpCheckRequest {
+    'id': number;
+    'IpCheck': IpCheck;
+}
+
+
+
+export const setUserRegistrationIpCheck = async (request: SetUserRegistrationIpCheckRequest, options?: RawAxiosRequestConfig): Promise<void> => {
+    const response = await globalAxios.request<void>({
+        url: `/api/users/{id}/registration-ip`.replace('{' + 'id' + '}', String(request['id'])),
+        method: 'PUT',
+        data: request['IpCheck'],
         ...options
     });
     return response.data;

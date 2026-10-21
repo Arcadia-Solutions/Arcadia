@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT id, registered_from_ip\n                FROM users\n                WHERE registration_ip_check_provider IS NULL\n                ORDER BY id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "registered_from_ip",
+        "type_info": "Inet",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "registered_from_ip"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "9aafd739eb498fabc9835f2915a87802c1dbc2f06c70a1b00a0c8e6604dff983"
+}

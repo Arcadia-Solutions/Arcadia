@@ -769,6 +769,12 @@ pub enum Error {
     #[error("user staff note not found")]
     UserStaffNoteNotFound,
 
+    #[error("no ip check provider could check the ip address")]
+    IpCheckFailed,
+
+    #[error("only public ip addresses can be checked")]
+    IpNotPublic,
+
     #[error("could not create site highlight")]
     CouldNotCreateSiteHighlight(#[source] sqlx::Error),
 
@@ -887,7 +893,8 @@ impl actix_web::ResponseError for Error {
             | Error::EmojiMustHaveExactlyOneRepresentation
             | Error::EmojiNameAlreadyExists
             | Error::InvalidEmojiName
-            | Error::EmojiDisabled => StatusCode::BAD_REQUEST,
+            | Error::EmojiDisabled
+            | Error::IpNotPublic => StatusCode::BAD_REQUEST,
 
             // 401 Unauthorized
             Error::InvalidOrExpiredRefreshToken | Error::InvalidatedToken => {
@@ -967,7 +974,7 @@ impl actix_web::ResponseError for Error {
             }
 
             // 503 Service Unavailable
-            Error::IrcNotEnabled => StatusCode::SERVICE_UNAVAILABLE,
+            Error::IrcNotEnabled | Error::IpCheckFailed => StatusCode::SERVICE_UNAVAILABLE,
 
             // 500 Internal Server Error
             _ => StatusCode::INTERNAL_SERVER_ERROR,

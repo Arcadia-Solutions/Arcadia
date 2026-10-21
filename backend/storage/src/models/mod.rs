@@ -14,6 +14,7 @@ pub mod forum_stats;
 pub mod gift;
 pub mod home_stats;
 pub mod invitation;
+pub mod ip_check;
 pub mod master_group;
 pub mod notification;
 pub mod peer;

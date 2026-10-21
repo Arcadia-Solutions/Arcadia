@@ -176,6 +176,7 @@ pub enum UserPermission {
     WriteUserStaffNote,
     EditUserStaffNotes,
     ViewForeignUserStaffNotes,
+    ViewRegistrationIps,
 }
 
 /// User information displayed as a list, that a user can hide with their paranoia settings.

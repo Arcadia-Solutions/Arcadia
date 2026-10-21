@@ -6,5 +6,6 @@ pub mod email_service;
 pub mod external_db_service;
 pub mod image_host_service;
 pub mod image_service;
+pub mod ip_check;
 pub mod irc_service;
 pub mod oauth;

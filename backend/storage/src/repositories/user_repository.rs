@@ -5,6 +5,7 @@ use crate::{
         bonus_points_log::BonusPointsLogAction,
         common::PaginatedResults,
         conversation::MassMessageRecipient,
+        ip_check::{IpCheck, IpCheckProvider, UserRegistrationIp},
         user::{
             EditedUser, EditedUserClass, HideableUserList, PublicUser, SearchUsersQuery, UserClass,
             UserCreatedUserClass, UserCreatedUserWarning, UserLite, UserMinimal,
@@ -16,7 +17,7 @@ use crate::{
 use arcadia_common::error::{Error, Result};
 use arcadia_shared::tracker::models::user::{APIInsertUser, APIUpdateUserMaxSnatchesPerDay};
 use chrono::{DateTime, Utc};
-use sqlx::PgPool;
+use sqlx::{types::ipnetwork::IpNetwork, PgPool};
 use std::borrow::Borrow;
 
 struct UnbannedUser {
@@ -251,6 +252,97 @@ impl ConnectionPool {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn update_user_registration_ip_check(
+        &self,
+        user_id: i32,
+        registration_ip_check: &IpCheck,
+    ) -> Result<()> {
+        let result = &registration_ip_check.result;
+        sqlx::query!(
+            r#"
+                UPDATE users
+                SET registration_ip_check_provider = $2,
+                    registration_ip_country_code = $3,
+                    registration_ip_country = $4,
+                    registration_ip_region = $5,
+                    registration_ip_city = $6,
+                    registration_ip_latitude = $7,
+                    registration_ip_longitude = $8,
+                    registration_ip_asn = $9,
+                    registration_ip_organization = $10,
+                    registration_ip_is_vpn = $11,
+                    registration_ip_is_proxy = $12,
+                    registration_ip_is_tor = $13,
+                    registration_ip_is_hosting = $14
+                WHERE id = $1
+            "#,
+            user_id,
+            registration_ip_check.provider as _,
+            result.country_code,
+            result.country,
+            result.region,
+            result.city,
+            result.latitude,
+            result.longitude,
+            result.asn,
+            result.organization,
+            result.is_vpn,
+            result.is_proxy,
+            result.is_tor,
+            result.is_hosting
+        )
+        .execute(self.borrow())
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn find_user_registration_ip(&self, user_id: i32) -> Result<UserRegistrationIp> {
+        sqlx::query_as!(
+            UserRegistrationIp,
+            r#"
+                SELECT registered_from_ip,
+                       registration_ip_check_provider AS "provider: IpCheckProvider",
+                       registration_ip_country_code AS country_code,
+                       registration_ip_country AS country,
+                       registration_ip_region AS region,
+                       registration_ip_city AS city,
+                       registration_ip_latitude AS latitude,
+                       registration_ip_longitude AS longitude,
+                       registration_ip_asn AS asn,
+                       registration_ip_organization AS organization,
+                       registration_ip_is_vpn AS is_vpn,
+                       registration_ip_is_proxy AS is_proxy,
+                       registration_ip_is_tor AS is_tor,
+                       registration_ip_is_hosting AS is_hosting
+                FROM users
+                WHERE id = $1
+            "#,
+            user_id
+        )
+        .fetch_one(self.borrow())
+        .await
+        .map_err(|_| Error::UserWithIdNotFound(user_id))
+    }
+
+    pub async fn find_users_without_registration_ip_check(&self) -> Result<Vec<(i32, IpNetwork)>> {
+        let users = sqlx::query!(
+            r#"
+                SELECT id, registered_from_ip
+                FROM users
+                WHERE registration_ip_check_provider IS NULL
+                ORDER BY id
+            "#
+        )
+        .fetch_all(self.borrow())
+        .await?;
+
+        Ok(users
+            .into_iter()
+            .map(|user| (user.id, user.registered_from_ip))
+            .collect())
     }
 
     pub async fn create_user_warning(

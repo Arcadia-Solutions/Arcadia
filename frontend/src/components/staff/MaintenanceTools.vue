@@ -14,6 +14,13 @@
       </div>
       <Button size="small" :label="t('maintenance_tools.run')" :loading="recomputingCachedAmounts" @click="recomputeCachedAmountsTool" />
     </div>
+    <div class="tool">
+      <div class="tool-info">
+        <h3>{{ t('maintenance_tools.check_missing_registration_ips') }}</h3>
+        <p>{{ t('maintenance_tools.check_missing_registration_ips_description') }}</p>
+      </div>
+      <Button size="small" :label="t('maintenance_tools.run')" :loading="checkingRegistrationIps" @click="checkMissingRegistrationIpsTool" />
+    </div>
   </div>
 </template>
 
@@ -21,13 +28,14 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
-import { rehashTorrentsWithSourceTag, recomputeCachedAmounts } from '@/services/api-schema'
+import { rehashTorrentsWithSourceTag, recomputeCachedAmounts, checkMissingRegistrationIps } from '@/services/api-schema'
 import { showToast } from '@/main'
 
 const { t } = useI18n()
 
 const rehashing = ref(false)
 const recomputingCachedAmounts = ref(false)
+const checkingRegistrationIps = ref(false)
 
 const rehashTorrents = () => {
   rehashing.value = true
@@ -50,6 +58,18 @@ const recomputeCachedAmountsTool = () => {
     })
     .finally(() => {
       recomputingCachedAmounts.value = false
+    })
+}
+
+const checkMissingRegistrationIpsTool = () => {
+  checkingRegistrationIps.value = true
+  // No timeout: every check is a request to a provider.
+  checkMissingRegistrationIps({ timeout: 0 })
+    .then((data) => {
+      showToast('Success', t('maintenance_tools.check_missing_registration_ips_success', { amount: data.checked_users_amount }), 'success', 5000)
+    })
+    .finally(() => {
+      checkingRegistrationIps.value = false
     })
 }
 </script>

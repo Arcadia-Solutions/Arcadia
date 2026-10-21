@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE users\n                SET registration_ip_check_provider = $2,\n                    registration_ip_country_code = $3,\n                    registration_ip_country = $4,\n                    registration_ip_region = $5,\n                    registration_ip_city = $6,\n                    registration_ip_latitude = $7,\n                    registration_ip_longitude = $8,\n                    registration_ip_asn = $9,\n                    registration_ip_organization = $10,\n                    registration_ip_is_vpn = $11,\n                    registration_ip_is_proxy = $12,\n                    registration_ip_is_tor = $13,\n                    registration_ip_is_hosting = $14\n                WHERE id = $1\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        {
+          "Custom": {
+            "name": "ip_check_provider_enum",
+            "kind": {
+              "Enum": [
+                "ip_api",
+                "proxycheck",
+                "ipapi_is",
+                "ipqualityscore",
+                "vpnapi"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Float8",
+        "Float8",
+        "Text",
+        "Text",
+        "Bool",
+        "Bool",
+        "Bool",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "da997c38b821249d3c12161ab992109edb9501108014126e065e7e3468e0b341"
+}

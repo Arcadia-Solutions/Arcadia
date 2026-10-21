@@ -317,3 +317,7 @@ VALUES (196, 'user_mass_perm', 'test_user_send_mass_pm_with_permissions@testdoma
 -- User with request_reseed permission
 INSERT INTO users (id, username, email, password_hash, registered_from_ip, passkey, class_name, css_sheet_name, permissions)
 VALUES (197, 'user_reseed', 'test_user_request_reseed@testdomain.com', '$argon2id$v=19$m=19456,t=2,p=1$WM6V9pJ2ya7+N+NNIUtolg$n128u9idizCHLwZ9xhKaxOttLaAVZZgvfRZlRAnfyKk', '10.10.4.88', 'd2037c66dd3e13044e0d2f9b891c38f7', 'newbie', 'arcadia', '{request_reseed}');
+
+-- User with view_registration_ips permission
+INSERT INTO users (id, username, email, password_hash, registered_from_ip, passkey, class_name, css_sheet_name, permissions)
+VALUES (198, 'user_reg_ips', 'test_user_view_registration_ips@testdomain.com', '$argon2id$v=19$m=19456,t=2,p=1$WM6V9pJ2ya7+N+NNIUtolg$n128u9idizCHLwZ9xhKaxOttLaAVZZgvfRZlRAnfyKk', '10.10.4.88', 'd2037c66dd3e13044e0d2f9b891c38f8', 'newbie', 'arcadia', '{view_registration_ips}');

@@ -4,6 +4,7 @@ use crate::{
             validate_email, validate_password, validate_password_verification, validate_username,
         },
         email_service::EmailService,
+        ip_check,
     },
     Arcadia,
 };
@@ -97,6 +98,28 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
             &arcadia_settings,
         )
         .await?;
+
+    if arc.api.ip_check_providers.is_enabled() && ip_check::is_public(client_ip.ip()) {
+        let ip_check_providers = arc.api.ip_check_providers.clone();
+        let pool = arc.pool.clone();
+        let http_client = arc.http_client.clone();
+        let user_id = user.id;
+        tokio::spawn(async move {
+            let result = match ip_check_providers
+                .check_ip(&http_client, client_ip.ip())
+                .await
+            {
+                Ok(check) => {
+                    pool.update_user_registration_ip_check(user_id, &check)
+                        .await
+                }
+                Err(error) => Err(error),
+            };
+            if let Err(error) = result {
+                log::warn!("Could not check the registration ip of user {user_id}: {error}");
+            }
+        });
+    }
 
     // Mark existing announcements as read so they don't trigger notifications
     if let Err(e) = arc.pool.mark_all_announcements_as_read(user.id).await {

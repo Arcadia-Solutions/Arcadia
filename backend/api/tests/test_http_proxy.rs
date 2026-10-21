@@ -77,3 +77,25 @@ async fn test_build_no_proxy_http_client_bypasses_proxy() {
         "No-proxy HTTP client should NOT route through any proxy"
     );
 }
+
+/// The ip checks go through the proxy, for the http (ip-api.com) and https providers.
+#[tokio::test]
+async fn test_ip_checks_route_through_proxy() {
+    let (proxy_address, connection_count) = spawn_connection_counter();
+    let client = arcadia_api::build_http_client(Some(&format!("http://{proxy_address}")));
+    let config: arcadia_api::services::ip_check::IpCheckProvidersConfig =
+        serde_json::from_str(r#"{"ip_api": {"priority": 1}, "proxycheck": {"priority": 2}}"#)
+            .unwrap();
+
+    // every provider fails, the fake proxy not being a real one
+    assert!(config
+        .check_ip(&client, "8.8.8.8".parse().unwrap())
+        .await
+        .is_err());
+    tokio::time::sleep(Duration::from_millis(100)).await;
+
+    assert!(
+        connection_count.load(Ordering::SeqCst) >= 2,
+        "every ip check provider should be requested through the proxy"
+    );
+}

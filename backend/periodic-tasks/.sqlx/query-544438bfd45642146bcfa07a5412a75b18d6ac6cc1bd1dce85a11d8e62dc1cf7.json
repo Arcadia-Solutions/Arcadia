@@ -285,7 +285,8 @@
                       "view_foreign_invitations",
                       "write_user_staff_note",
                       "edit_user_staff_notes",
-                      "view_foreign_user_staff_notes"
+                      "view_foreign_user_staff_notes",
+                      "view_registration_ips"
                     ]
                   }
                 }

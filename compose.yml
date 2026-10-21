@@ -174,7 +174,7 @@ services:
 
   chevereto_php:
     profiles: [full, images]
-    image: chevereto/chevereto:4.4.0
+    image: chevereto/chevereto:4.5.7
     volumes:
       - chevereto_storage:/var/www/html/images/
     restart: always
@@ -182,7 +182,7 @@ services:
       chevereto_database:
         condition: service_healthy
     ports:
-      - 8083:80
+      - 8083:8080
     environment:
       CHEVERETO_DB_HOST: chevereto_database
       CHEVERETO_DB_PORT: 3306

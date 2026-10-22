@@ -4,7 +4,7 @@ use arcadia_api::routes::init;
 use arcadia_api::{api_doc::ApiDoc, config::Config, Arcadia};
 use arcadia_periodic_tasks::periodic_tasks::scheduler::run_periodic_tasks;
 use arcadia_storage::connection_pool::ConnectionPool;
-use arcadia_storage::redis::RedisPool;
+use arcadia_storage::redis::{RedisPool, RedisPoolInterface};
 use std::sync::Arc;
 use tracing_actix_web::TracingLogger;
 use utoipa::OpenApi;
@@ -82,6 +82,11 @@ async fn main() -> std::io::Result<()> {
         &config.redis.password,
         config.redis.port,
     ));
+    // Opening a connection authenticates, so wrong host or credentials fail here instead of at first request
+    redis_pool
+        .connection()
+        .await
+        .expect("failed to connect to redis, check the redis configuration");
 
     // Load settings from database on startup
     let settings = pool

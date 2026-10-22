@@ -1,0 +1,47 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "automerge": false,
+  "schedule": ["before 6am on monday"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^rust-toolchain$/"],
+      "matchStrings": ["channel = \"(?<currentValue>[\\d.]+)\""],
+      "depNameTemplate": "rust",
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)Dockerfile$/"],
+      "matchStrings": ["cargo-chef:latest-rust-(?<currentValue>[\\d.]+)"],
+      "depNameTemplate": "rust",
+      "datasourceTemplate": "docker"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "npm non-major"
+    },
+    {
+      "matchManagers": ["cargo"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "cargo non-major"
+    },
+    {
+      "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "docker images non-major"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    },
+    {
+      "matchDepNames": ["rust"],
+      "groupName": "rust toolchain"
+    }
+  ]
+}

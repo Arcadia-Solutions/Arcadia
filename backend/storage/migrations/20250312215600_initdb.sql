@@ -1769,19 +1769,20 @@ SELECT
     t.extra_text,
     t.bonus_points_snatch_cost,
     t.upload_method,
-    (EXISTS (
-        SELECT 1
-        FROM torrent_reports tr
-        WHERE tr.reported_torrent_id = t.id
-    )) AS reported,
-    CASE
-        WHEN EXISTS (SELECT 1 FROM torrent_reports WHERE reported_torrent_id = t.id) THEN json_agg(row_to_json(tr))
-        ELSE '[]'::json
-    END AS reports
+    COUNT(tr.id) > 0 AS reported,
+    COALESCE(json_agg(json_build_object(
+        'id', tr.id,
+        'reported_at', tr.reported_at,
+        'reported_torrent_id', tr.reported_torrent_id,
+        'description', tr.description,
+        'reported_by', json_build_object('id', ru.id, 'username', ru.username, 'warned', ru.warned, 'banned', ru.banned)
+    )) FILTER (WHERE tr.id IS NOT NULL), '[]'::json) AS reports
     FROM
         torrents t
     LEFT JOIN
         torrent_reports tr ON t.id = tr.reported_torrent_id
+    LEFT JOIN
+        users ru ON tr.reported_by_id = ru.id
     LEFT JOIN
         users u ON t.created_by_id = u.id
     WHERE t.deleted_at IS NULL

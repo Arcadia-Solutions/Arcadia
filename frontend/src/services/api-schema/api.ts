@@ -3963,7 +3963,7 @@ export interface TorrentReport {
     'description': string;
     'id': number;
     'reported_at': string;
-    'reported_by_id': number;
+    'reported_by': UserLite;
     'reported_torrent_id': number;
 }
 export interface TorrentRequest {

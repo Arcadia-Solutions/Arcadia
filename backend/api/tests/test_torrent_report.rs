@@ -39,13 +39,12 @@ async fn test_create_and_delete_torrent_report(pool: PgPool) {
         common::call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
 
     assert_eq!(report.reported_torrent_id, 1);
-    assert_eq!(report.reported_by_id, 100);
+    assert_eq!(report.reported_by.id, 100);
     assert_eq!(report.description, "Test torrent report description");
 
     // Verify report exists in database
-    let report_in_database = pool.get_torrent_report_by_id(report.id).await.unwrap();
     assert!(
-        report_in_database.is_some(),
+        pool.torrent_report_exists(report.id).await.unwrap(),
         "torrent report should exist in database"
     );
 
@@ -69,9 +68,8 @@ async fn test_create_and_delete_torrent_report(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::OK);
 
     // Verify report no longer exists in database
-    let report_in_database = pool.get_torrent_report_by_id(report.id).await.unwrap();
     assert!(
-        report_in_database.is_none(),
+        !pool.torrent_report_exists(report.id).await.unwrap(),
         "torrent report should no longer exist in database"
     );
 }

@@ -1,0 +1,154 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                ROW(u.id, u.username, u.warned, u.banned) AS \"user!: UserLite\",\n                ta.grabbed_at, ta.completed_at, ta.first_seen_seeding_at, ta.last_seen_seeding_at,\n                ta.total_seed_time, ta.bonus_points, ta.uploaded, ta.real_uploaded,\n                ta.downloaded, ta.real_downloaded,\n                peer_status.seeder AS \"seeder!\"\n            FROM torrent_activities ta\n            JOIN users u ON u.id = ta.user_id\n            CROSS JOIN LATERAL (\n                SELECT EXISTS (\n                    SELECT 1 FROM peers p\n                    WHERE p.torrent_id = ta.torrent_id\n                      AND p.user_id = ta.user_id\n                      AND p.seeder = true\n                      AND p.active = true\n                ) AS seeder\n            ) peer_status\n            WHERE ta.torrent_id = $1\n            ORDER BY\n                CASE WHEN $4 = 'username' AND $5 = 'asc' THEN u.username END ASC,\n                CASE WHEN $4 = 'username' AND $5 = 'desc' THEN u.username END DESC,\n                CASE WHEN $4 = 'seeder' AND $5 = 'asc' THEN peer_status.seeder END ASC,\n                CASE WHEN $4 = 'seeder' AND $5 = 'desc' THEN peer_status.seeder END DESC,\n                CASE WHEN $4 = 'uploaded' AND $5 = 'asc' THEN ta.uploaded END ASC,\n                CASE WHEN $4 = 'uploaded' AND $5 = 'desc' THEN ta.uploaded END DESC,\n                CASE WHEN $4 = 'real_uploaded' AND $5 = 'asc' THEN ta.real_uploaded END ASC,\n                CASE WHEN $4 = 'real_uploaded' AND $5 = 'desc' THEN ta.real_uploaded END DESC,\n                CASE WHEN $4 = 'downloaded' AND $5 = 'asc' THEN ta.downloaded END ASC,\n                CASE WHEN $4 = 'downloaded' AND $5 = 'desc' THEN ta.downloaded END DESC,\n                CASE WHEN $4 = 'real_downloaded' AND $5 = 'asc' THEN ta.real_downloaded END ASC,\n                CASE WHEN $4 = 'real_downloaded' AND $5 = 'desc' THEN ta.real_downloaded END DESC,\n                CASE WHEN $4 = 'total_seed_time' AND $5 = 'asc' THEN ta.total_seed_time END ASC,\n                CASE WHEN $4 = 'total_seed_time' AND $5 = 'desc' THEN ta.total_seed_time END DESC,\n                CASE WHEN $4 = 'bonus_points' AND $5 = 'asc' THEN ta.bonus_points END ASC,\n                CASE WHEN $4 = 'bonus_points' AND $5 = 'desc' THEN ta.bonus_points END DESC,\n                CASE WHEN $4 = 'grabbed_at' AND $5 = 'asc' THEN ta.grabbed_at END ASC NULLS LAST,\n                CASE WHEN $4 = 'grabbed_at' AND $5 = 'desc' THEN ta.grabbed_at END DESC NULLS LAST,\n                CASE WHEN $4 = 'completed_at' AND $5 = 'asc' THEN ta.completed_at END ASC NULLS LAST,\n                CASE WHEN $4 = 'completed_at' AND $5 = 'desc' THEN ta.completed_at END DESC NULLS LAST,\n                CASE WHEN $4 = 'first_seen_seeding_at' AND $5 = 'asc' THEN ta.first_seen_seeding_at END ASC NULLS LAST,\n                CASE WHEN $4 = 'first_seen_seeding_at' AND $5 = 'desc' THEN ta.first_seen_seeding_at END DESC NULLS LAST,\n                CASE WHEN $4 = 'last_seen_seeding_at' AND $5 = 'asc' THEN ta.last_seen_seeding_at END ASC NULLS LAST,\n                CASE WHEN $4 = 'last_seen_seeding_at' AND $5 = 'desc' THEN ta.last_seen_seeding_at END DESC NULLS LAST,\n                ta.id DESC\n            LIMIT $2 OFFSET $3\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user!: UserLite",
+        "type_info": "Record",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "grabbed_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "torrent_activities",
+            "name": "grabbed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "completed_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "torrent_activities",
+            "name": "completed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "first_seen_seeding_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "torrent_activities",
+            "name": "first_seen_seeding_at"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "last_seen_seeding_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "torrent_activities",
+            "name": "last_seen_seeding_at"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "total_seed_time",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "torrent_activities",
+            "name": "total_seed_time"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "bonus_points",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "torrent_activities",
+            "name": "bonus_points"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "uploaded",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "torrent_activities",
+            "name": "uploaded"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "real_uploaded",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "torrent_activities",
+            "name": "real_uploaded"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "downloaded",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "torrent_activities",
+            "name": "downloaded"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "real_downloaded",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "torrent_activities",
+            "name": "real_downloaded"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "seeder!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int8",
+        "Int8",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "8ec2b896b06627de1a1acc78676e20a702b29e17be08bab6624efcacaf511dae"
+}

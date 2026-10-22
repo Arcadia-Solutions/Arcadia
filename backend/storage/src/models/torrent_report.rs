@@ -1,14 +1,17 @@
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
-use sqlx::prelude::FromRow;
+use sqlx::{prelude::FromRow, types::Json};
 use utoipa::ToSchema;
+
+use super::user::UserLite;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct TorrentReport {
     pub id: i64,
     #[schema(value_type = String, format = DateTime)]
     pub reported_at: DateTime<Local>,
-    pub reported_by_id: i32,
+    #[schema(value_type = UserLite)]
+    pub reported_by: Json<UserLite>,
     pub reported_torrent_id: i32,
     pub description: String,
 }

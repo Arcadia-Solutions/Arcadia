@@ -1,0 +1,71 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT tr.id, tr.reported_at, tr.reported_torrent_id, tr.description,\n                    json_build_object('id', u.id, 'username', u.username, 'warned', u.warned, 'banned', u.banned) AS \"reported_by!: Json<UserLite>\"\n                FROM torrent_reports tr\n                JOIN users u ON u.id = tr.reported_by_id\n                WHERE tr.reported_torrent_id IN (\n                    SELECT t.id FROM torrents t\n                    JOIN edition_groups eg ON eg.id = t.edition_group_id\n                    WHERE eg.title_group_id = $1 AND t.deleted_at IS NULL\n                )\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "torrent_reports",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "reported_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "torrent_reports",
+            "name": "reported_at"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "reported_torrent_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "torrent_reports",
+            "name": "reported_torrent_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "torrent_reports",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "reported_by!: Json<UserLite>",
+        "type_info": "Json",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "50bc03faa752a30e8a98838c1759a8310de3d5a858fd0b0928db0492b5ddf2af"
+}

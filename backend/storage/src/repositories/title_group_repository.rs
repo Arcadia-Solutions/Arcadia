@@ -25,6 +25,7 @@ use crate::{
 use arcadia_common::error::{Error, Result};
 use chrono::Local;
 use serde_json::{json, Value};
+use sqlx::types::Json;
 use std::{borrow::Borrow, collections::HashMap};
 
 impl ConnectionPool {
@@ -208,8 +209,10 @@ impl ConnectionPool {
             sqlx::query_as!(
                 TorrentReport,
                 r#"
-                SELECT tr.id, tr.reported_at, tr.reported_by_id, tr.reported_torrent_id, tr.description
+                SELECT tr.id, tr.reported_at, tr.reported_torrent_id, tr.description,
+                    json_build_object('id', u.id, 'username', u.username, 'warned', u.warned, 'banned', u.banned) AS "reported_by!: Json<UserLite>"
                 FROM torrent_reports tr
+                JOIN users u ON u.id = tr.reported_by_id
                 WHERE tr.reported_torrent_id IN (
                     SELECT t.id FROM torrents t
                     JOIN edition_groups eg ON eg.id = t.edition_group_id

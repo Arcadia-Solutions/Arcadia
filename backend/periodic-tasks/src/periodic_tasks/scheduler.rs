@@ -126,7 +126,7 @@ pub async fn run_periodic_tasks(
     sched.add(artist_peer_stats_job).await?;
 
     let pool_materialized_views = Arc::clone(&store.pool);
-    let materialized_view_refresh_job = Job::new_repeated_async(
+    let mut materialized_view_refresh_job = Job::new_repeated_async(
         Duration::from_secs(store.config.materialized_view_refresh_seconds),
         move |_uuid, _l| {
             let pool = Arc::clone(&pool_materialized_views);
@@ -137,6 +137,10 @@ pub async fn run_periodic_tasks(
             ))
         },
     )?;
+    // first tick on startup instead of one interval after it
+    let mut materialized_view_refresh_job_data = materialized_view_refresh_job.job_data()?;
+    materialized_view_refresh_job_data.next_tick = chrono::Utc::now().timestamp() as u64;
+    materialized_view_refresh_job.set_job_data(materialized_view_refresh_job_data)?;
     sched.add(materialized_view_refresh_job).await?;
 
     let pool_user_badges = Arc::clone(&store.pool);

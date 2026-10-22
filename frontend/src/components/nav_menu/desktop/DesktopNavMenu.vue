@@ -8,7 +8,7 @@
     <!-- <Button icon="pi pi-moon" @click="toggleDarkMode()" severity="secondary" size="small" /> -->
     <RouterLink :to="`/user/${user.id}`">
       <Button :onmouseenter="show" :onmouseleave="onLeaveUserIcon" icon="pi pi-user" size="small" />
-      <Popover :onmouseleave="onLeavePopover" :onmouseenter="() => (isHoveringDropdown = true)" :dismissable="false" ref="op">
+      <Popover v-if="Popover" :onmouseleave="onLeavePopover" :onmouseenter="() => (isHoveringDropdown = true)" :dismissable="false" ref="op">
         <RouterLink to="/conversations">
           <div class="user-action flex gap-2 px-2">
             <i class="pi pi-envelope" />
@@ -64,31 +64,44 @@
 import { useUserStore } from '@/stores/user'
 import { logout } from '@/services/api-schema'
 import { Button } from 'primevue'
-import Popover from 'primevue/popover'
 import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
-import { ref } from 'vue'
+import { nextTick, ref, shallowRef } from 'vue'
 import router from '@/router'
 import { useTitleGroupStore } from '@/stores/titleGroup'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const Popover = shallowRef<any>(null)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const op = ref<{ show: (event: Event, target?: any) => void; hide: () => void } | null>(null)
 const userStore = useUserStore()
-
-const op = ref<InstanceType<typeof Popover> & HTMLAnchorElement>()
 const user = useUserStore()
 const isHoveringDropdown = ref(false)
+
+let isHoveringUserIcon = false
 
 const onLeavePopover = () => {
   isHoveringDropdown.value = false
   op.value?.hide()
 }
 
-const show = (event: Event) => {
-  op.value?.show(event)
+const show = async (event: Event) => {
+  isHoveringUserIcon = true
+  const target = event.currentTarget as HTMLElement
+  if (!Popover.value) {
+    const mod = await import('primevue/popover')
+    Popover.value = mod.default ?? mod
+    await nextTick()
+  }
+  if (isHoveringUserIcon || isHoveringDropdown.value) {
+    op.value?.show(event, target)
+  }
 }
 
 // delay a bit so we can know if the user unhovered the user icon,
 // to hover the popover or not
 const onLeaveUserIcon = () => {
+  isHoveringUserIcon = false
   setTimeout(() => {
     if (!isHoveringDropdown.value) {
       op.value?.hide()

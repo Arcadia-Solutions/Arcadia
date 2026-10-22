@@ -14,6 +14,7 @@ use crate::{
         },
         torrent_activity::{
             GetTorrentActivitiesQuery, TorrentActivity, TorrentActivityAndTitleGroup,
+            TorrentActivityAndUser, TorrentActivityOfTorrentOrderByColumn,
             TorrentActivityOrderByColumn,
         },
         user::UserLite,
@@ -1452,6 +1453,87 @@ impl ConnectionPool {
             .collect();
 
         Ok(peers)
+    }
+
+    pub async fn get_torrent_activities_of_torrent(
+        &self,
+        torrent_id: i32,
+        page: u32,
+        page_size: u32,
+        order_by_column: TorrentActivityOfTorrentOrderByColumn,
+        order_by_direction: OrderByDirection,
+    ) -> Result<PaginatedResults<TorrentActivityAndUser>> {
+        let results = sqlx::query_as!(
+            TorrentActivityAndUser,
+            r#"
+            SELECT
+                ROW(u.id, u.username, u.warned, u.banned) AS "user!: UserLite",
+                ta.grabbed_at, ta.completed_at, ta.first_seen_seeding_at, ta.last_seen_seeding_at,
+                ta.total_seed_time, ta.bonus_points, ta.uploaded, ta.real_uploaded,
+                ta.downloaded, ta.real_downloaded,
+                peer_status.seeder AS "seeder!"
+            FROM torrent_activities ta
+            JOIN users u ON u.id = ta.user_id
+            CROSS JOIN LATERAL (
+                SELECT EXISTS (
+                    SELECT 1 FROM peers p
+                    WHERE p.torrent_id = ta.torrent_id
+                      AND p.user_id = ta.user_id
+                      AND p.seeder = true
+                      AND p.active = true
+                ) AS seeder
+            ) peer_status
+            WHERE ta.torrent_id = $1
+            ORDER BY
+                CASE WHEN $4 = 'username' AND $5 = 'asc' THEN u.username END ASC,
+                CASE WHEN $4 = 'username' AND $5 = 'desc' THEN u.username END DESC,
+                CASE WHEN $4 = 'seeder' AND $5 = 'asc' THEN peer_status.seeder END ASC,
+                CASE WHEN $4 = 'seeder' AND $5 = 'desc' THEN peer_status.seeder END DESC,
+                CASE WHEN $4 = 'uploaded' AND $5 = 'asc' THEN ta.uploaded END ASC,
+                CASE WHEN $4 = 'uploaded' AND $5 = 'desc' THEN ta.uploaded END DESC,
+                CASE WHEN $4 = 'real_uploaded' AND $5 = 'asc' THEN ta.real_uploaded END ASC,
+                CASE WHEN $4 = 'real_uploaded' AND $5 = 'desc' THEN ta.real_uploaded END DESC,
+                CASE WHEN $4 = 'downloaded' AND $5 = 'asc' THEN ta.downloaded END ASC,
+                CASE WHEN $4 = 'downloaded' AND $5 = 'desc' THEN ta.downloaded END DESC,
+                CASE WHEN $4 = 'real_downloaded' AND $5 = 'asc' THEN ta.real_downloaded END ASC,
+                CASE WHEN $4 = 'real_downloaded' AND $5 = 'desc' THEN ta.real_downloaded END DESC,
+                CASE WHEN $4 = 'total_seed_time' AND $5 = 'asc' THEN ta.total_seed_time END ASC,
+                CASE WHEN $4 = 'total_seed_time' AND $5 = 'desc' THEN ta.total_seed_time END DESC,
+                CASE WHEN $4 = 'bonus_points' AND $5 = 'asc' THEN ta.bonus_points END ASC,
+                CASE WHEN $4 = 'bonus_points' AND $5 = 'desc' THEN ta.bonus_points END DESC,
+                CASE WHEN $4 = 'grabbed_at' AND $5 = 'asc' THEN ta.grabbed_at END ASC NULLS LAST,
+                CASE WHEN $4 = 'grabbed_at' AND $5 = 'desc' THEN ta.grabbed_at END DESC NULLS LAST,
+                CASE WHEN $4 = 'completed_at' AND $5 = 'asc' THEN ta.completed_at END ASC NULLS LAST,
+                CASE WHEN $4 = 'completed_at' AND $5 = 'desc' THEN ta.completed_at END DESC NULLS LAST,
+                CASE WHEN $4 = 'first_seen_seeding_at' AND $5 = 'asc' THEN ta.first_seen_seeding_at END ASC NULLS LAST,
+                CASE WHEN $4 = 'first_seen_seeding_at' AND $5 = 'desc' THEN ta.first_seen_seeding_at END DESC NULLS LAST,
+                CASE WHEN $4 = 'last_seen_seeding_at' AND $5 = 'asc' THEN ta.last_seen_seeding_at END ASC NULLS LAST,
+                CASE WHEN $4 = 'last_seen_seeding_at' AND $5 = 'desc' THEN ta.last_seen_seeding_at END DESC NULLS LAST,
+                ta.id DESC
+            LIMIT $2 OFFSET $3
+            "#,
+            torrent_id,
+            page_size as i64,
+            (page.saturating_sub(1) * page_size) as i64,
+            order_by_column.to_string(),
+            order_by_direction.to_string()
+        )
+        .fetch_all(self.borrow())
+        .await?;
+
+        let total_items = sqlx::query_scalar!(
+            r#"SELECT COUNT(*) AS "count!" FROM torrent_activities WHERE torrent_id = $1"#,
+            torrent_id
+        )
+        .fetch_one(self.borrow())
+        .await?;
+
+        Ok(PaginatedResults {
+            results,
+            page,
+            page_size,
+            total_items,
+        })
     }
 
     pub async fn update_torrent_up_down_factors(

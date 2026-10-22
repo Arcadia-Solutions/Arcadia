@@ -24896,6 +24896,45 @@ INSERT INTO public.torrent_activities (torrent_id, user_id, grabbed_at, complete
     (38, 2, '2025-06-29 09:00:00+00', '2025-06-29 09:40:00+00', '2025-06-29 10:00:00+00', '2026-02-07 12:00:00+00', 16000000, 800, 80000000, 80000000, 5000000, 5000000, DEFAULT),
     (100, 2, '2025-06-30 09:00:00+00', '2025-06-30 09:25:00+00', '2025-06-30 10:00:00+00', '2026-02-07 12:00:00+00', 15800000, 600, 60000000, 60000000, 3000000, 3000000, DEFAULT);
 
+-- Random activities on every torrent: ~40% of the users grabbed each torrent, 3/4 of them completed it,
+-- with random seed time, bonus points and upload amounts. ~30% of the completed ones are currently seeding.
+WITH random_activities AS (
+    SELECT
+        t.id AS torrent_id,
+        u.id AS user_id,
+        t.size,
+        t.created_at + random() * (NOW() - t.created_at) AS grabbed_at,
+        random() < 0.75 AS completed,
+        random() AS share
+    FROM public.torrents t
+    CROSS JOIN public.users u
+    WHERE t.deleted_at IS NULL AND random() < 0.4
+),
+inserted_activities AS (
+    INSERT INTO public.torrent_activities (torrent_id, user_id, grabbed_at, completed_at, first_seen_seeding_at, last_seen_seeding_at, total_seed_time, bonus_points, uploaded, real_uploaded, downloaded, real_downloaded)
+    SELECT
+        torrent_id,
+        user_id,
+        grabbed_at,
+        CASE WHEN completed THEN grabbed_at + INTERVAL '30 minutes' END,
+        CASE WHEN completed THEN grabbed_at + INTERVAL '1 hour' END,
+        CASE WHEN completed THEN LEAST(grabbed_at + INTERVAL '1 hour' + share * (NOW() - grabbed_at), NOW()) END,
+        CASE WHEN completed THEN (share * EXTRACT(EPOCH FROM NOW() - grabbed_at))::bigint ELSE 0 END,
+        CASE WHEN completed THEN (share * 100000)::bigint ELSE 0 END,
+        CASE WHEN completed THEN (share * 5 * size)::bigint ELSE 0 END,
+        CASE WHEN completed THEN (share * 4 * size)::bigint ELSE 0 END,
+        CASE WHEN completed THEN size ELSE 0 END,
+        CASE WHEN completed THEN size ELSE 0 END
+    FROM random_activities
+    ON CONFLICT (torrent_id, user_id) DO NOTHING
+    RETURNING torrent_id, user_id, completed_at
+)
+INSERT INTO public.peers (peer_id, ip, port, agent, uploaded, downloaded, "left", seeder, created_at, updated_at, torrent_id, user_id, active)
+SELECT decode(lpad(to_hex(user_id), 40, 'd'), 'hex'), '10.20.0.1', 50000 + user_id % 10000, '-qB4610-fixtures', 0, 0, 0, true, NOW(), NOW(), torrent_id, user_id, true
+FROM inserted_activities
+WHERE completed_at IS NOT NULL AND random() < 0.3
+ON CONFLICT DO NOTHING;
+
 --
 -- Data for Name: torrent_reports; Type: TABLE DATA; Schema: public; Owner: arcadia
 --
@@ -25119,7 +25158,7 @@ SELECT pg_catalog.setval('public.title_groups_id_seq', 420, true);
 -- Name: torrent_activities_id_seq; Type: SEQUENCE SET; Schema: public; Owner: arcadia
 --
 
-SELECT pg_catalog.setval('public.torrent_activities_id_seq', 1, false);
+SELECT pg_catalog.setval('public.torrent_activities_id_seq', (SELECT MAX(id) FROM public.torrent_activities));
 
 --
 -- Name: torrent_reports_id_seq; Type: SEQUENCE SET; Schema: public; Owner: arcadia

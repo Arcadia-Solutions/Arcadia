@@ -34,7 +34,11 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     user: Authdata,
 ) -> Result<HttpResponse> {
     arc.pool
-        .require_permission(user.sub, &UserPermission::ViewTorrentPeers, req.path())
+        .require_permission(
+            user.sub,
+            &UserPermission::ViewTorrentPeersAndActivities,
+            req.path(),
+        )
         .await?;
 
     let peers = arc

@@ -141,7 +141,7 @@ pub enum UserPermission {
     SearchUnauthorizedAccess,
     SearchUserEditChangeLogs,
     DeleteUserEditChangeLog,
-    ViewTorrentPeers,
+    ViewTorrentPeersAndActivities,
     EditTorrentUpDownFactors,
     DeleteCollageEntry,
     DeleteTorrentReport,

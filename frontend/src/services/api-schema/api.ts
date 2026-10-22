@@ -1700,6 +1700,10 @@ export interface GetTopTorrent200Response {
     'data': PaginatedResultsTorrentHierarchyLite;
     'side_effects': Array<SideEffect>;
 }
+export interface GetTorrentActivities200Response {
+    'data': PaginatedResultsTorrentActivityAndUser;
+    'side_effects': Array<SideEffect>;
+}
 export interface GetTorrentActivitiesOverview200Response {
     'data': TorrentActivitiesOverview;
     'side_effects': Array<SideEffect>;
@@ -2551,6 +2555,26 @@ export interface PaginatedResultsTorrentActivityAndTitleGroup {
 export interface PaginatedResultsTorrentActivityAndTitleGroupResultsInner {
     'title_group': TitleGroupHierarchyLite;
     'torrent_activity': TorrentActivity;
+}
+export interface PaginatedResultsTorrentActivityAndUser {
+    'page': number;
+    'page_size': number;
+    'results': Array<PaginatedResultsTorrentActivityAndUserResultsInner>;
+    'total_items': number;
+}
+export interface PaginatedResultsTorrentActivityAndUserResultsInner {
+    'bonus_points': number;
+    'completed_at'?: string | null;
+    'downloaded': number;
+    'first_seen_seeding_at'?: string | null;
+    'grabbed_at'?: string | null;
+    'last_seen_seeding_at'?: string | null;
+    'real_downloaded': number;
+    'real_uploaded': number;
+    'seeder': boolean;
+    'total_seed_time': number;
+    'uploaded': number;
+    'user': UserLite;
 }
 export interface PaginatedResultsTorrentHierarchyLite {
     'page': number;
@@ -3754,6 +3778,39 @@ export interface TorrentActivityAndTitleGroup {
     'title_group': TitleGroupHierarchyLite;
     'torrent_activity': TorrentActivity;
 }
+export interface TorrentActivityAndUser {
+    'bonus_points': number;
+    'completed_at'?: string | null;
+    'downloaded': number;
+    'first_seen_seeding_at'?: string | null;
+    'grabbed_at'?: string | null;
+    'last_seen_seeding_at'?: string | null;
+    'real_downloaded': number;
+    'real_uploaded': number;
+    'seeder': boolean;
+    'total_seed_time': number;
+    'uploaded': number;
+    'user': UserLite;
+}
+
+export const TorrentActivityOfTorrentOrderByColumn = {
+    Username: 'username',
+    Seeder: 'seeder',
+    Uploaded: 'uploaded',
+    RealUploaded: 'real_uploaded',
+    Downloaded: 'downloaded',
+    RealDownloaded: 'real_downloaded',
+    TotalSeedTime: 'total_seed_time',
+    BonusPoints: 'bonus_points',
+    GrabbedAt: 'grabbed_at',
+    CompletedAt: 'completed_at',
+    FirstSeenSeedingAt: 'first_seen_seeding_at',
+    LastSeenSeedingAt: 'last_seen_seeding_at'
+} as const;
+
+export type TorrentActivityOfTorrentOrderByColumn = typeof TorrentActivityOfTorrentOrderByColumn[keyof typeof TorrentActivityOfTorrentOrderByColumn];
+
+
 
 export const TorrentActivityOrderByColumn = {
     GrabbedAt: 'grabbed_at',
@@ -4809,7 +4866,7 @@ export const UserPermission = {
     SearchUnauthorizedAccess: 'search_unauthorized_access',
     SearchUserEditChangeLogs: 'search_user_edit_change_logs',
     DeleteUserEditChangeLog: 'delete_user_edit_change_log',
-    ViewTorrentPeers: 'view_torrent_peers',
+    ViewTorrentPeersAndActivities: 'view_torrent_peers_and_activities',
     EditTorrentUpDownFactors: 'edit_torrent_up_down_factors',
     DeleteCollageEntry: 'delete_collage_entry',
     DeleteTorrentReport: 'delete_torrent_report',
@@ -7751,6 +7808,27 @@ export const getTopTorrent = async (request: GetTopTorrentRequest, options?: Raw
         url: `/api/torrents/top`,
         method: 'GET',
         params: { 'period': request['period'], 'amount': request['amount'] },
+        ...options
+    });
+    return response.data.data;
+};
+
+
+export interface GetTorrentActivitiesRequest {
+    'torrent_id': number;
+    'page': number;
+    'page_size': number;
+    'order_by_column': TorrentActivityOfTorrentOrderByColumn;
+    'order_by_direction': OrderByDirection;
+}
+
+
+
+export const getTorrentActivities = async (request: GetTorrentActivitiesRequest, options?: RawAxiosRequestConfig): Promise<GetTorrentActivities200Response['data']> => {
+    const response = await globalAxios.request<GetTorrentActivities200Response>({
+        url: `/api/torrents/activities`,
+        method: 'GET',
+        params: { 'torrent_id': request['torrent_id'], 'page': request['page'], 'page_size': request['page_size'], 'order_by_column': request['order_by_column'], 'order_by_direction': request['order_by_direction'] },
         ...options
     });
     return response.data.data;

@@ -72,7 +72,7 @@ CREATE TYPE user_permissions_enum AS ENUM (
     'delete_title_group_comment',
     'delete_torrent_request_comment',
     'delete_torrent_request',
-    'view_torrent_peers',
+    'view_torrent_peers_and_activities',
     'edit_torrent_up_down_factors',
     'delete_collage_entry',
     'delete_torrent_report',

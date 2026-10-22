@@ -7,6 +7,7 @@ pub mod download_torrents_archive;
 pub mod edit_torrent;
 pub mod edit_torrent_up_down_factors;
 pub mod get_top_torrents;
+pub mod get_torrent_activities;
 pub mod get_torrent_peers;
 pub mod get_torrent_title_group;
 pub mod get_upload_information;
@@ -29,6 +30,7 @@ pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {
     cfg.service(resource("/upload-info").route(get().to(self::get_upload_information::exec::<R>)));
     cfg.service(resource("/top").route(get().to(self::get_top_torrents::exec::<R>)));
     cfg.service(resource("/peers").route(get().to(self::get_torrent_peers::exec::<R>)));
+    cfg.service(resource("/activities").route(get().to(self::get_torrent_activities::exec::<R>)));
     cfg.service(
         resource("/title-group-id").route(get().to(self::get_torrent_title_group::exec::<R>)),
     );

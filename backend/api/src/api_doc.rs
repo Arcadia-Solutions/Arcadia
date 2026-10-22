@@ -36,7 +36,7 @@ use arcadia_storage::models::title_group_tag::SearchTitleGroupTagsQuery;
 use arcadia_storage::models::torrent::{TorrentDeletionReason, TorrentSearch};
 use arcadia_storage::models::torrent_activity::{
     TorrentActivitiesOverview, TorrentActivity, TorrentActivityAndTitleGroup,
-    TorrentActivityOrderByColumn,
+    TorrentActivityAndUser, TorrentActivityOfTorrentOrderByColumn, TorrentActivityOrderByColumn,
 };
 use arcadia_storage::models::torrent_report::DeleteTorrentReportQuery;
 use arcadia_storage::models::torrent_request_comment::UserTorrentRequestCommentSearchQuery;
@@ -170,6 +170,7 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         crate::handlers::torrents::delete_torrent_report::exec,
         crate::handlers::torrents::set_torrent_staff_checked::exec,
         crate::handlers::torrents::get_torrent_peers::exec,
+        crate::handlers::torrents::get_torrent_activities::exec,
         crate::handlers::torrents::get_torrent_title_group::exec,
         crate::handlers::torrents::edit_torrent_up_down_factors::exec,
         crate::handlers::torrents::move_torrent_to_edition_group::exec,
@@ -412,7 +413,9 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         DeleteTorrentReportQuery,
         TorrentActivity,
         TorrentActivityAndTitleGroup,
+        TorrentActivityAndUser,
         TorrentActivityOrderByColumn,
+        TorrentActivityOfTorrentOrderByColumn,
         BonusPointsLog,
         BonusPointsLogAction,
         BonusPointsLogOrderByColumn,

@@ -117,11 +117,17 @@
             </DataTable>
           </AccordionContent>
         </AccordionPanel>
-        <AccordionPanel value="6" v-if="userStore.permissions.includes('view_torrent_peers')">
+        <AccordionPanel value="6" v-if="userStore.permissions.includes('view_torrent_peers_and_activities')">
           <AccordionHeader>{{ t('torrent.peers') }}</AccordionHeader>
           <AccordionContent>
             <!-- Only load the component when the accordion panel is open -->
             <TorrentPeerTable v-if="activeAccordionPanels[slotProps.data.id]?.includes('6')" :torrentId="slotProps.data.id" />
+          </AccordionContent>
+        </AccordionPanel>
+        <AccordionPanel value="7" v-if="userStore.permissions.includes('view_torrent_peers_and_activities')">
+          <AccordionHeader>{{ t('torrent.activities') }}</AccordionHeader>
+          <AccordionContent>
+            <TorrentActivityTable v-if="activeAccordionPanels[slotProps.data.id]?.includes('7')" :torrentId="slotProps.data.id" />
           </AccordionContent>
         </AccordionPanel>
       </Accordion>
@@ -216,6 +222,7 @@ import {
   VideoResolution,
 } from '@/services/api-schema'
 import TorrentPeerTable from '../torrent/TorrentPeerTable.vue'
+import TorrentActivityTable from '../torrent/TorrentActivityTable.vue'
 import EditTorrentFactorsDialog from '../torrent/EditTorrentFactorsDialog.vue'
 import MoveTorrentToEditionGroupDialog from '../torrent/MoveTorrentToEditionGroupDialog.vue'
 import TorrentReportsList from '../torrent/TorrentReportsList.vue'

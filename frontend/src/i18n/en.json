@@ -627,6 +627,9 @@
     "port": "Port",
     "user_agent": "User Agent",
     "no_peers": "No peers",
+    "activities": "Activities",
+    "first_seen_seeding": "First seen seeding",
+    "last_seen_seeding": "Last seen seeding",
     "uploaded_session": "Uploaded (session)",
     "downloaded_session": "Downloaded (session)",
     "upload_reward_awarded": "Thank you for your upload, you have been awarded {0} {1}"
@@ -1045,7 +1048,7 @@
     "move_torrent_to_other_edition_group": "Move torrent to another edition group",
     "remove_title_group_from_series": "Remove title group from series",
     "delete_user_edit_change_log": "Delete user edit change logs",
-    "view_torrent_peers": "View torrent peers",
+    "view_torrent_peers_and_activities": "View torrent peers and activities",
     "edit_torrent_up_down_factors": "Edit torrent upload/download factors",
     "delete_collage_entry": "Delete collage entries",
     "delete_torrent_report": "Delete torrent reports",

@@ -17,6 +17,7 @@ use arcadia_storage::{
         peer::PublicPeer,
         title_group::TitleGroupHierarchyLite,
         torrent::{TorrentSearch, TorrentSearchOrderByColumn},
+        torrent_activity::TorrentActivityAndUser,
         user::PublicProfile,
     },
 };
@@ -745,7 +746,7 @@ async fn test_get_torrent_peers_with_permission(pool: PgPool) {
     let (service, user) = common::create_test_app_and_login(
         pool,
         MockRedisPool::default(),
-        TestUser::ViewTorrentPeers,
+        TestUser::ViewTorrentPeersAndActivities,
     )
     .await;
 
@@ -800,6 +801,76 @@ async fn test_get_torrent_peers_without_permission(pool: PgPool) {
         StatusCode::FORBIDDEN,
     )
     .await;
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_title_group",
+        "with_test_edition_group",
+        "with_test_torrent",
+        "with_test_seeding_size",
+        "with_test_non_seeding_torrent_activity"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_get_torrent_activities_with_permission(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) = common::create_test_app_and_login(
+        pool,
+        MockRedisPool::default(),
+        TestUser::ViewTorrentPeersAndActivities,
+    )
+    .await;
+
+    // same grabbed_at for every activity, so they are ordered by most recent activity first
+    let req = test::TestRequest::get()
+        .uri("/api/torrents/activities?torrent_id=1&page=1&page_size=2&order_by_column=grabbed_at&order_by_direction=desc")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+
+    let first_page: PaginatedResults<TorrentActivityAndUser> =
+        common::call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
+
+    assert_eq!(first_page.total_items, 3);
+    let users_and_seeding: Vec<(i32, bool, bool)> = first_page
+        .results
+        .iter()
+        .map(|activity| {
+            (
+                activity.user.id,
+                activity.seeder,
+                activity.completed_at.is_some(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        users_and_seeding,
+        vec![(102, false, false), (101, true, true)]
+    );
+
+    let req = test::TestRequest::get()
+        .uri("/api/torrents/activities?torrent_id=1&page=2&page_size=2&order_by_column=grabbed_at&order_by_direction=desc")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+
+    let second_page: PaginatedResults<TorrentActivityAndUser> =
+        common::call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
+
+    assert_eq!(second_page.results.len(), 1);
+    assert_eq!(second_page.results[0].user.id, 100);
+    assert!(second_page.results[0].seeder);
+
+    let req = test::TestRequest::get()
+        .uri("/api/torrents/activities?torrent_id=1&page=1&page_size=3&order_by_column=seeder&order_by_direction=asc")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+
+    let sorted_by_seeder: PaginatedResults<TorrentActivityAndUser> =
+        common::call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
+
+    assert_eq!(sorted_by_seeder.results[0].user.id, 102);
+    assert!(!sorted_by_seeder.results[0].seeder);
 }
 
 #[sqlx::test(

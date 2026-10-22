@@ -12,7 +12,7 @@ use crate::{
     handlers::external_db::get_tmdb_data::get_tmdb_rating, middlewares::auth_middleware::Authdata,
     services::image_service::validate_image_urls, Arcadia,
 };
-use arcadia_common::error::Result;
+use arcadia_common::error::{Error, Result};
 
 #[utoipa::path(
     post,
@@ -31,6 +31,9 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     arc: Data<Arcadia<R>>,
     user: Authdata,
 ) -> Result<HttpResponse> {
+    if arc.settings.lock().unwrap().uploads_disabled {
+        return Err(Error::UploadsDisabled);
+    }
     let approved_image_hosts = arc.settings.lock().unwrap().approved_image_hosts.clone();
     validate_image_urls(&form.covers, &approved_image_hosts)?;
     validate_image_urls(&form.screenshots, &approved_image_hosts)?;

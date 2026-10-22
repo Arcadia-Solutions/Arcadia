@@ -37,5 +37,6 @@ pub async fn exec<R: RedisPoolInterface + 'static>(arc: Data<Arcadia<R>>) -> Res
         reseed_requestable_after_hours: settings.reseed_requestable_after_hours,
         custom_js_code: settings.custom_js_code,
         custom_footer: settings.custom_footer,
+        uploads_disabled: settings.uploads_disabled,
     }))
 }

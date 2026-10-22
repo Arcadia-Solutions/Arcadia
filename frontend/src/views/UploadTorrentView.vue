@@ -1,68 +1,72 @@
 <template>
   <div>
     <div class="title">{{ t('torrent.upload_torrent') }}</div>
-    <ContentContainer v-if="uploadInfo?.upload_page_top_text" style="margin-bottom: 20px">
-      <BBCodeRenderer :content="uploadInfo.upload_page_top_text" />
-    </ContentContainer>
-    <div class="announce-url">
-      <div class="explanation">{{ t('torrent.announce_url') }}:</div>
-      <div class="url" v-tooltip.top="t('general.click_to_copy')" @click="copyAnnounceUrl">{{ uploadInfo?.announce_url }}</div>
-    </div>
-    <Accordion :value="titleGroupAccordionValue" class="upload-step-accordion">
-      <AccordionPanel value="0" :disabled="titleGroupDisabled">
-        <AccordionHeader>
-          <div style="display: flex">
-            {{ t('title_group.title') }}
-            <div v-if="titleGroupStore.id !== 0" style="display: flex">
-              :<TitleGroupSlimHeader style="margin-left: 5px" :titleGroup="titleGroupStore" :affiliatedArtists="[]" />
+    <Message v-if="publicArcadiaSettings.uploads_disabled" severity="warn">{{ t('torrent.uploads_disabled') }}</Message>
+    <template v-else>
+      <ContentContainer v-if="uploadInfo?.upload_page_top_text" style="margin-bottom: 20px">
+        <BBCodeRenderer :content="uploadInfo.upload_page_top_text" />
+      </ContentContainer>
+      <div class="announce-url">
+        <div class="explanation">{{ t('torrent.announce_url') }}:</div>
+        <div class="url" v-tooltip.top="t('general.click_to_copy')" @click="copyAnnounceUrl">{{ uploadInfo?.announce_url }}</div>
+      </div>
+      <Accordion :value="titleGroupAccordionValue" class="upload-step-accordion">
+        <AccordionPanel value="0" :disabled="titleGroupDisabled">
+          <AccordionHeader>
+            <div style="display: flex">
+              {{ t('title_group.title') }}
+              <div v-if="titleGroupStore.id !== 0" style="display: flex">
+                :<TitleGroupSlimHeader style="margin-left: 5px" :titleGroup="titleGroupStore" :affiliatedArtists="[]" />
+              </div>
             </div>
-          </div>
-        </AccordionHeader>
-        <AccordionContent>
-          <!-- <CreateOrSelectTitleGroup @done="titleGroupDone" /> -->
-          <CreateOrSelectTitleGroup v-if="uploadInfo" :uploadInfo @editionGroupDataFound="editionGroupDataFound" @done="titleGroupDone" />
-        </AccordionContent>
-      </AccordionPanel>
-    </Accordion>
-    <Accordion
-      :value="editionGroupAccordionValue"
-      class="upload-step-accordion"
-      v-tooltip.top="{
-        value: t('edition_group.complete_title_group_first'),
-        disabled: titleGroupDisabled,
-      }"
-    >
-      <AccordionPanel value="0" :disabled="editionGroupDisabled || !titleGroupDisabled">
-        <AccordionHeader>
-          <span>
-            {{ t('torrent.edition') }}<span v-if="editionGroup" class="bold">: {{ getEditionGroupSlug(editionGroup) }}</span>
-          </span>
-        </AccordionHeader>
-        <AccordionContent>
-          <CreateOrSelectEditionGroup ref="editionRef" @done="editionGroupDone" />
-        </AccordionContent>
-      </AccordionPanel>
-    </Accordion>
-    <Accordion
-      :value="torrentAccordionValue"
-      class="upload-step-accordion"
-      v-tooltip.top="{
-        value: t('torrent.complete_edition_group_first'),
-        disabled: editionGroupDisabled,
-      }"
-    >
-      <AccordionPanel value="0" :disabled="!editionGroupDisabled">
-        <AccordionHeader>{{ t('torrent.torrent') }}</AccordionHeader>
-        <AccordionContent>
-          <CreateOrEditTorrent :uploadInfo="uploadInfo" @done="torrentDone" />
-        </AccordionContent>
-      </AccordionPanel>
-    </Accordion>
+          </AccordionHeader>
+          <AccordionContent>
+            <!-- <CreateOrSelectTitleGroup @done="titleGroupDone" /> -->
+            <CreateOrSelectTitleGroup v-if="uploadInfo" :uploadInfo @editionGroupDataFound="editionGroupDataFound" @done="titleGroupDone" />
+          </AccordionContent>
+        </AccordionPanel>
+      </Accordion>
+      <Accordion
+        :value="editionGroupAccordionValue"
+        class="upload-step-accordion"
+        v-tooltip.top="{
+          value: t('edition_group.complete_title_group_first'),
+          disabled: titleGroupDisabled,
+        }"
+      >
+        <AccordionPanel value="0" :disabled="editionGroupDisabled || !titleGroupDisabled">
+          <AccordionHeader>
+            <span>
+              {{ t('torrent.edition') }}<span v-if="editionGroup" class="bold">: {{ getEditionGroupSlug(editionGroup) }}</span>
+            </span>
+          </AccordionHeader>
+          <AccordionContent>
+            <CreateOrSelectEditionGroup ref="editionRef" @done="editionGroupDone" />
+          </AccordionContent>
+        </AccordionPanel>
+      </Accordion>
+      <Accordion
+        :value="torrentAccordionValue"
+        class="upload-step-accordion"
+        v-tooltip.top="{
+          value: t('torrent.complete_edition_group_first'),
+          disabled: editionGroupDisabled,
+        }"
+      >
+        <AccordionPanel value="0" :disabled="!editionGroupDisabled">
+          <AccordionHeader>{{ t('torrent.torrent') }}</AccordionHeader>
+          <AccordionContent>
+            <CreateOrEditTorrent :uploadInfo="uploadInfo" @done="torrentDone" />
+          </AccordionContent>
+        </AccordionPanel>
+      </Accordion>
+    </template>
   </div>
 </template>
 <script setup lang="ts">
 import { onUnmounted, ref } from 'vue'
 import Accordion from 'primevue/accordion'
+import Message from 'primevue/message'
 import AccordionPanel from 'primevue/accordionpanel'
 import AccordionHeader from 'primevue/accordionheader'
 import AccordionContent from 'primevue/accordioncontent'

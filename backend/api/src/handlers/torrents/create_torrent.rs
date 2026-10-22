@@ -35,6 +35,10 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .require_permission(user.sub, &UserPermission::UploadTorrent, req.path())
         .await?;
 
+    if arc.settings.lock().unwrap().uploads_disabled {
+        return Err(arcadia_common::error::Error::UploadsDisabled);
+    }
+
     let upload_method = req
         .headers()
         .get("X-Upload-Method")

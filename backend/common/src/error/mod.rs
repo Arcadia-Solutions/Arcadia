@@ -700,6 +700,9 @@ pub enum Error {
     #[error("shop item not available")]
     ShopItemNotAvailable,
 
+    #[error("uploads are temporarily disabled")]
+    UploadsDisabled,
+
     #[error("could not create user badge category")]
     CouldNotCreateUserBadgeCategory(#[source] sqlx::Error),
 
@@ -914,6 +917,7 @@ impl actix_web::ResponseError for Error {
             | Error::StaffPmResolved
             | Error::UserClassLocked
             | Error::ShopItemNotAvailable
+            | Error::UploadsDisabled
             | Error::APIKeyScopeNotAllowed => StatusCode::FORBIDDEN,
 
             // 404 Not Found

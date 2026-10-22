@@ -5,7 +5,7 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
-use arcadia_common::error::Result;
+use arcadia_common::error::{Error, Result};
 use arcadia_storage::{
     models::edition_group::{EditionGroup, UserCreatedEditionGroup},
     redis::RedisPoolInterface,
@@ -28,6 +28,9 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     arc: Data<Arcadia<R>>,
     user: Authdata,
 ) -> Result<HttpResponse> {
+    if arc.settings.lock().unwrap().uploads_disabled {
+        return Err(Error::UploadsDisabled);
+    }
     let approved_image_hosts = arc.settings.lock().unwrap().approved_image_hosts.clone();
     validate_image_urls(&form.covers, &approved_image_hosts)?;
 

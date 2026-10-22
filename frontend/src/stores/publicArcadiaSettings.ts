@@ -21,6 +21,7 @@ const initialState: PublicArcadiaSettings = {
   reseed_requestable_after_hours: 72,
   custom_js_code: null,
   custom_footer: null,
+  uploads_disabled: false,
 }
 
 export const usePublicArcadiaSettingsStore = defineStore('publicArcadiaSettings', {

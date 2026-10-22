@@ -361,7 +361,8 @@ CREATE TABLE arcadia_settings (
     custom_js_code TEXT DEFAULT NULL,
     custom_footer TEXT DEFAULT NULL,
     invitation_expiration_days INT NOT NULL DEFAULT 3,
-    automated_message_on_torrent_marked_trumpable TEXT DEFAULT NULL
+    automated_message_on_torrent_marked_trumpable TEXT DEFAULT NULL,
+    uploads_disabled BOOLEAN NOT NULL DEFAULT FALSE
 );
 INSERT INTO arcadia_settings (user_class_name_on_signup, default_css_sheet_name, open_signups, global_upload_factor, global_download_factor, bonus_points_given_on_upload, allow_uploader_set_torrent_bonus_points_cost, default_torrent_bonus_points_cost, automated_message_on_signup, automated_message_on_signup_sender_id, automated_message_on_signup_locked, automated_message_on_signup_conversation_name, automated_message_on_torrent_marked_trumpable)
 VALUES ('newbie', 'arcadia', TRUE, 100, 100, 100, FALSE, 0, 'Welcome to the site, {username}!', 1, FALSE, 'Welcome', 'You can fix your upload if you want to, but you are not obliged to.');

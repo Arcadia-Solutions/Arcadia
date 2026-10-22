@@ -27,11 +27,7 @@ use sqlx::PgPool;
 
 use crate::common::{auth_header, TestUser};
 
-async fn upload_test_torrent<S, T>(service: &S, token: &str, release_group: &str) -> T
-where
-    S: Service<Request, Response = ServiceResponse, Error = Error>,
-    T: DeserializeOwned,
-{
+async fn build_test_torrent_upload_request(token: &str, release_group: &str) -> Request {
     use actix_multipart_rfc7578::client::multipart;
 
     let mut form = multipart::Form::default();
@@ -72,13 +68,20 @@ where
         .await
         .unwrap();
 
-    let req = test::TestRequest::post()
+    test::TestRequest::post()
         .uri("/api/torrents")
         .insert_header(auth_header(token))
         .insert_header(("Content-Type", content_type))
         .set_payload(payload)
-        .to_request();
+        .to_request()
+}
 
+async fn upload_test_torrent<S, T>(service: &S, token: &str, release_group: &str) -> T
+where
+    S: Service<Request, Response = ServiceResponse, Error = Error>,
+    T: DeserializeOwned,
+{
+    let req = build_test_torrent_upload_request(token, release_group).await;
     common::call_and_read_body_json_with_status::<T, _>(service, req, StatusCode::CREATED).await
 }
 
@@ -2009,4 +2012,72 @@ async fn test_the_uploader_of_a_snatched_anonymous_torrent_stays_hidden(pool: Pg
     let torrent = &profile.last_five_snatched_torrents[0].edition_groups[0].torrents[0];
     assert!(torrent.uploaded_as_anonymous);
     assert!(torrent.created_by.is_none());
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_title_group",
+        "with_test_edition_group",
+        "with_uploads_disabled"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_cannot_create_title_group_edition_group_or_torrent_when_uploads_disabled(
+    pool: PgPool,
+) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        common::create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+
+    let title_group_request = test::TestRequest::post()
+        .uri("/api/title-groups")
+        .insert_header(auth_header(&user.token))
+        .set_json(serde_json::json!({
+            "name": "Abbey Road",
+            "name_aliases": [],
+            "description": "A title group created while uploads are disabled",
+            "original_language": null,
+            "country_from": null,
+            "covers": [],
+            "external_links": [],
+            "trailers": [],
+            "category": null,
+            "content_type": "music",
+            "tags": ["rock"],
+            "tagline": null,
+            "platform": null,
+            "original_release_date": null,
+            "original_release_date_only_year_known": false,
+            "affiliated_artists": [],
+            "series_id": null,
+            "screenshots": [],
+            "master_group_id": null
+        }))
+        .to_request();
+
+    let edition_group_request = test::TestRequest::post()
+        .uri("/api/edition-groups")
+        .insert_header(auth_header(&user.token))
+        .set_json(serde_json::json!({
+            "name": null,
+            "release_date": null,
+            "release_date_only_year_known": false,
+            "description": null,
+            "distributor": null,
+            "covers": [],
+            "external_links": [],
+            "source": null,
+            "additional_information": null,
+            "title_group_id": 1
+        }))
+        .to_request();
+
+    let torrent_request = build_test_torrent_upload_request(&user.token, "TESTGROUP").await;
+
+    for request in [title_group_request, edition_group_request, torrent_request] {
+        let path = request.path().to_string();
+        let response = test::call_service(&service, request).await;
+        assert_eq!(response.status(), StatusCode::FORBIDDEN, "{path}");
+    }
 }

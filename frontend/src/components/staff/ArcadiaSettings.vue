@@ -119,6 +119,11 @@
         <label for="charge_bonus_points_on_resnatch">{{ t('arcadia_settings.charge_bonus_points_on_resnatch') }}</label>
       </div>
 
+      <div style="margin-top: 10px; margin-bottom: 10px">
+        <Checkbox v-model="settings.uploads_disabled" name="uploads_disabled" :binary="true" inputId="uploads_disabled" style="margin-right: 5px" />
+        <label for="uploads_disabled">{{ t('arcadia_settings.uploads_disabled') }}</label>
+      </div>
+
       <FloatLabel>
         <Chips v-model="settings.approved_image_hosts" name="approved_image_hosts" separator="," size="small" style="width: 40em" />
         <label>{{ t('arcadia_settings.approved_image_hosts') }} {{ t('arcadia_settings.approved_image_hosts_hint') }}</label>

@@ -141,6 +141,8 @@ pub struct ArcadiaSettings {
     /// Appended to the message automatically sent to an uploader when their torrent is
     /// marked as trumpable after upload. Leave empty to send the notification without it.
     pub automated_message_on_torrent_marked_trumpable: Option<String>,
+    /// When enabled, creating new title groups, edition groups and torrents is rejected.
+    pub uploads_disabled: bool,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema, PartialEq)]
@@ -183,4 +185,5 @@ pub struct PublicArcadiaSettings {
     pub reseed_requestable_after_hours: i32,
     pub custom_js_code: Option<String>,
     pub custom_footer: Option<String>,
+    pub uploads_disabled: bool,
 }

@@ -152,6 +152,10 @@ export interface ArcadiaSettings {
     'torrent_max_release_date_allowed'?: string | null;
     'torrent_request_vote_currencies': Array<TorrentRequestVoteCurrency>;
     'upload_page_top_text'?: string | null;
+    /**
+     * When enabled, creating new title groups, edition groups and torrents is rejected.
+     */
+    'uploads_disabled': boolean;
     'user_class_name_on_signup': string;
 }
 
@@ -2863,6 +2867,7 @@ export interface PublicArcadiaSettings {
     'open_signups': boolean;
     'reseed_requestable_after_hours': number;
     'torrent_request_vote_currencies': Array<TorrentRequestVoteCurrency>;
+    'uploads_disabled': boolean;
 }
 export interface PublicPeer {
     'agent': string;

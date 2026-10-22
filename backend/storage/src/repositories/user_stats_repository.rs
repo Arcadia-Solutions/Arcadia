@@ -1,7 +1,8 @@
 use crate::{
     connection_pool::ConnectionPool,
     models::user_stats::{
-        TorrentClientStatsDataPoint, UserStatsDataPoint, UserStatsQuery, UserStatsResponse,
+        CountryStatsDataPoint, TorrentClientStatsDataPoint, UserStatsDataPoint, UserStatsQuery,
+        UserStatsResponse,
     },
 };
 use arcadia_common::error::Result;
@@ -52,16 +53,20 @@ impl ConnectionPool {
         let new_users = data.iter().map(|data_point| data_point.count).sum();
 
         // Users are counted once per client, whatever the number of torrents they seed
-        // with it.
+        // with it. Peers count if they announced at some point during the period.
         let torrent_clients = sqlx::query!(
             r#"
             SELECT
                 agent,
                 COUNT(DISTINCT user_id)::BIGINT AS count
             FROM peers
+            WHERE created_at < ($2::DATE + INTERVAL '1 day')
+              AND updated_at >= $1::DATE
             GROUP BY agent
             ORDER BY count DESC
             "#,
+            query.from,
+            query.to,
         )
         .fetch_all(self.borrow())
         .await?
@@ -72,10 +77,32 @@ impl ConnectionPool {
         })
         .collect();
 
+        // Users that registered during the period. Those whose registration ip could not
+        // be located are left out.
+        let countries = sqlx::query_as!(
+            CountryStatsDataPoint,
+            r#"
+            SELECT
+                registration_ip_country_code AS "country_code!",
+                COUNT(*)::BIGINT AS "count!"
+            FROM users
+            WHERE registration_ip_country_code IS NOT NULL
+              AND created_at >= $1::DATE
+              AND created_at < ($2::DATE + INTERVAL '1 day')
+            GROUP BY registration_ip_country_code
+            ORDER BY 2 DESC
+            "#,
+            query.from,
+            query.to,
+        )
+        .fetch_all(self.borrow())
+        .await?;
+
         Ok(UserStatsResponse {
             new_users,
             data,
             torrent_clients,
+            countries,
         })
     }
 }

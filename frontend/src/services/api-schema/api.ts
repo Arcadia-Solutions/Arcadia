@@ -534,6 +534,13 @@ export interface ConversationSearchResult {
     'sender_warned': boolean;
     'subject': string;
 }
+export interface CountryStatsDataPoint {
+    'count': number;
+    /**
+     * ISO 3166-1 alpha-2
+     */
+    'country_code': string;
+}
 export interface CreateAPIKey201Response {
     'data': CreatedAPIKey;
     'side_effects': Array<SideEffect>;
@@ -5028,6 +5035,10 @@ export interface UserStatsDataPoint {
     'period': string;
 }
 export interface UserStatsResponse {
+    /**
+     * users repartition per country, from their registration ip
+     */
+    'countries': Array<CountryStatsDataPoint>;
     /**
      * registrations per period
      */

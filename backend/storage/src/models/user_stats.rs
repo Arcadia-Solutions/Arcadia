@@ -27,6 +27,13 @@ pub struct TorrentClientStatsDataPoint {
     pub count: i64,
 }
 
+#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
+pub struct CountryStatsDataPoint {
+    /// ISO 3166-1 alpha-2
+    pub country_code: String,
+    pub count: i64,
+}
+
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct UserStatsResponse {
     /// users that registered during the period
@@ -35,4 +42,6 @@ pub struct UserStatsResponse {
     pub data: Vec<UserStatsDataPoint>,
     /// torrent clients repartition
     pub torrent_clients: Vec<TorrentClientStatsDataPoint>,
+    /// users repartition per country, from their registration ip
+    pub countries: Vec<CountryStatsDataPoint>,
 }

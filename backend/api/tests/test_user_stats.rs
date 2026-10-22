@@ -92,3 +92,67 @@ async fn test_user_stats_torrent_clients_count_each_user_once(pool: PgPool) {
     assert_eq!(clients["qBittorrent/4.5.0"], 1);
     assert_eq!(clients["Deluge/2.1.1"], 1);
 }
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_title_group",
+        "with_test_edition_group",
+        "with_test_torrent",
+        "with_test_user_stats_torrent_clients"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_user_stats_torrent_clients_only_counts_the_selected_period(pool: PgPool) {
+    // Only one of user 100's qBittorrent peers announced after the 16th of january, the
+    // Deluge peer stopped announcing on the 12th.
+    let response = get_stats(pool, "from=2025-01-16&to=2025-02-28&interval=month").await;
+
+    let clients: HashMap<&str, i64> = response
+        .torrent_clients
+        .iter()
+        .map(|client| (client.client.as_str(), client.count))
+        .collect();
+    assert_eq!(clients.len(), 1);
+    assert_eq!(clients["qBittorrent/4.5.0"], 1);
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_user_stats",
+        "with_test_user_stats_countries"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_user_stats_countries(pool: PgPool) {
+    let response = get_stats(pool, "from=2025-01-01&to=2025-02-28&interval=month").await;
+
+    // users with no located registration ip are left out
+    let countries: Vec<(&str, i64)> = response
+        .countries
+        .iter()
+        .map(|country| (country.country_code.as_str(), country.count))
+        .collect();
+    assert_eq!(countries, vec![("FR", 2), ("DE", 1)]);
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_user_stats",
+        "with_test_user_stats_countries"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_user_stats_countries_only_counts_the_selected_period(pool: PgPool) {
+    // user 102 (DE) registered in february
+    let response = get_stats(pool, "from=2025-01-01&to=2025-01-31&interval=month").await;
+
+    let countries: Vec<(&str, i64)> = response
+        .countries
+        .iter()
+        .map(|country| (country.country_code.as_str(), country.count))
+        .collect();
+    assert_eq!(countries, vec![("FR", 2)]);
+}

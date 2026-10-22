@@ -87,6 +87,66 @@ INSERT INTO public.users (id, username, avatar, email, password_hash, registered
     (4, 'test', NULL, 'test@test.tsttt', '$argon2id$v=19$m=19456,t=2,p=1$yaA+WqA4OfSyAqR3iXhDng$/Ngv7VeJvVNHli9rBgQG0d/O2W+qoI2yHhQxZSxxW2M', '127.0.0.1', '2025-04-10 19:15:51.036818+00', '', 979900000000, 0, 1, 1, '2025-09-17 09:15:44.322914+00', 'newbie', false, '{}', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 99999000, 0, '55555555555555555555555555555555', false, false, 'arcadia', DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT),
     (2, 'picolo', 'https://img.freepik.com/premium-vector/random-people-line-art-vector_567805-63.jpg', 'user1@example.com', '$argon2id$v=19$m=19456,t=2,p=1$s4XJtCUk9IrGgNsTfP6Ofw$ktoGbBEoFaVgdiTn19Gh9h45LjFiv7AUEL5KHhzm4d0', '192.168.1.1', '2025-03-30 16:24:57.388152+00', '', 10000, 0, 1, 1, '2025-11-28 17:29:24.968105+00', 'newbie', false, enum_range(NULL::user_permissions_enum), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 999999410, 0, '44444444444444444444444444444444', false, false, 'arcadia', DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT);
 
+-- Registration ip locations, for the users per country map of the stats. A few
+-- users stay unlocated, like when the ip check provider could not be reached.
+UPDATE public.users u SET
+    registration_ip_country_code = l.country_code,
+    registration_ip_country = l.country
+FROM (VALUES
+    (2, 'US', 'United States'),
+    (3, 'US', 'United States'),
+    (5, 'US', 'United States'),
+    (100, 'US', 'United States'),
+    (101, 'US', 'United States'),
+    (102, 'US', 'United States'),
+    (103, 'US', 'United States'),
+    (104, 'US', 'United States'),
+    (105, 'US', 'United States'),
+    (106, 'FR', 'France'),
+    (107, 'FR', 'France'),
+    (108, 'FR', 'France'),
+    (109, 'FR', 'France'),
+    (110, 'FR', 'France'),
+    (111, 'FR', 'France'),
+    (112, 'FR', 'France'),
+    (113, 'DE', 'Germany'),
+    (114, 'DE', 'Germany'),
+    (115, 'DE', 'Germany'),
+    (116, 'DE', 'Germany'),
+    (118, 'DE', 'Germany'),
+    (119, 'DE', 'Germany'),
+    (120, 'GB', 'United Kingdom'),
+    (121, 'GB', 'United Kingdom'),
+    (122, 'GB', 'United Kingdom'),
+    (123, 'GB', 'United Kingdom'),
+    (124, 'GB', 'United Kingdom'),
+    (125, 'CA', 'Canada'),
+    (126, 'CA', 'Canada'),
+    (127, 'CA', 'Canada'),
+    (128, 'CA', 'Canada'),
+    (129, 'NL', 'Netherlands'),
+    (130, 'NL', 'Netherlands'),
+    (131, 'NL', 'Netherlands'),
+    (132, 'NL', 'Netherlands'),
+    (133, 'BR', 'Brazil'),
+    (134, 'BR', 'Brazil'),
+    (135, 'BR', 'Brazil'),
+    (136, 'JP', 'Japan'),
+    (137, 'JP', 'Japan'),
+    (139, 'JP', 'Japan'),
+    (140, 'SE', 'Sweden'),
+    (141, 'SE', 'Sweden'),
+    (142, 'AU', 'Australia'),
+    (143, 'AU', 'Australia'),
+    (144, 'PL', 'Poland'),
+    (145, 'PL', 'Poland'),
+    (146, 'ES', 'Spain'),
+    (147, 'IT', 'Italy'),
+    (148, 'RU', 'Russia'),
+    (149, 'IN', 'India')
+) AS l(id, country_code, country)
+WHERE u.id = l.id;
+
 -- Demo users: no permissions, base user class, generated avatars.
 -- Avatars are spread over four providers, and dicebear, which rate limits at
 -- around 11 concurrent requests.

@@ -36,6 +36,8 @@
     <Chart class="chart" :options="userFluxChartOptions" />
     <h3>{{ t('stats.torrent_clients_repartition') }}</h3>
     <Chart class="chart" :options="torrentClientChartOptions" />
+    <h3>{{ t('stats.users_per_country') }}</h3>
+    <Chart class="map-chart" constructor-type="mapChart" :options="countriesChartOptions" />
   </div>
 </template>
 
@@ -43,6 +45,8 @@
 import ContentContainer from '@/components/ContentContainer.vue'
 import { Chart } from 'highcharts-vue'
 import Highcharts from 'highcharts'
+import 'highcharts/modules/map'
+import worldMap from '@/assets/world.topo.json'
 import ProgressSpinner from 'primevue/progressspinner'
 import Select from 'primevue/select'
 import FloatLabel from 'primevue/floatlabel'
@@ -183,6 +187,38 @@ const torrentClientChartOptions = computed<Highcharts.Options>(() => {
   }
 })
 
+const countriesChartOptions = computed<Highcharts.Options>(() => {
+  if (!userStats.value) return {}
+  return {
+    ...baseChartOptions,
+    chart: { ...baseChartOptions.chart, map: worldMap },
+    mapNavigation: { enabled: true, enableMouseWheelZoom: false },
+    colorAxis: {
+      min: 1,
+      type: 'logarithmic',
+      minColor: '#DBEAFE',
+      maxColor: CHART_COLORS[0],
+      labels: { style: { color: textColor() } },
+    },
+    legend: { enabled: true },
+    series: [
+      {
+        type: 'map',
+        name: t('stats.users'),
+        data: userStats.value.countries.map((c) => ({ code: c.country_code, value: c.count })),
+        joinBy: ['iso-a2', 'code'],
+        nullColor: 'rgba(128, 128, 128, 0.2)',
+        borderColor: 'rgba(128, 128, 128, 0.5)',
+        tooltip: { pointFormat: '{point.name}: <b>{point.value}</b>' },
+        // hover animations redraw the country paths on every mouse move, making the map laggy
+        animation: false,
+        states: { hover: { animation: { duration: 0 } }, inactive: { enabled: false } },
+      },
+    ],
+    tooltip: { animation: false, followPointer: false },
+  }
+})
+
 const fetchUserStats = () => {
   const { from, to } = dateRangeFromSelection.value
 
@@ -232,6 +268,10 @@ watch([timeRange, interval], () => {
 
 .chart {
   height: 30vh;
+}
+
+.map-chart {
+  height: 50vh;
 }
 
 h3 {

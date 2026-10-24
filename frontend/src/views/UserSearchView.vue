@@ -74,10 +74,10 @@
       </Column>
       <Column field="class_name" :header="t('user.class')" />
       <Column v-if="shouldStatBeDisplayed('joined_at')" field="created_at" :header="userStatLabel('joined_at')" sortable>
-        <template #body="slotProps">{{ slotProps.data.created_at ? timeAgo(slotProps.data.created_at) : '' }}</template>
+        <template #body="slotProps"><TimeAgo v-if="slotProps.data.created_at" :date="slotProps.data.created_at" /></template>
       </Column>
       <Column v-if="shouldStatBeDisplayed('last_seen')" field="last_seen" :header="userStatLabel('last_seen')" sortable>
-        <template #body="slotProps">{{ slotProps.data.last_seen ? timeAgo(slotProps.data.last_seen) : '' }}</template>
+        <template #body="slotProps"><TimeAgo v-if="slotProps.data.last_seen" :date="slotProps.data.last_seen" /></template>
       </Column>
       <Column v-if="shouldStatBeDisplayed('uploaded')" field="uploaded" :header="userStatLabel('uploaded')" sortable>
         <template #body="slotProps">{{ slotProps.data.uploaded != null ? bytesToReadable(slotProps.data.uploaded) : '' }}</template>
@@ -101,6 +101,7 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { onMounted, ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
@@ -117,7 +118,7 @@ import {
   UserPermissionMatchMode,
   type DisplayableUserStats,
 } from '@/services/api-schema'
-import { timeAgo, bytesToReadable, formatBp } from '@/services/helpers'
+import { bytesToReadable, formatBp } from '@/services/helpers'
 import { useUserStatLabel } from '@/composables/useUserStatLabel'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 import { useUserStore } from '@/stores/user'

@@ -21,10 +21,12 @@
         </template>
       </Column>
       <Column :header="t('user_settings.api_key_created_at')">
-        <template #body="{ data }">{{ timeAgo(data.created_at) }}</template>
+        <template #body="{ data }"><TimeAgo :date="data.created_at" /></template>
       </Column>
       <Column :header="t('user_settings.api_key_last_used_at')">
-        <template #body="{ data }">{{ data.last_used_at ? timeAgo(data.last_used_at) : t('user_settings.api_key_never_used') }}</template>
+        <template #body="{ data }"
+          ><TimeAgo v-if="data.last_used_at" :date="data.last_used_at" /><template v-else>{{ t('user_settings.api_key_never_used') }}</template></template
+        >
       </Column>
       <Column>
         <template #body="{ data }">
@@ -60,11 +62,11 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Button, Column, DataTable, Dialog, InputText, Message, MultiSelect, Tag } from 'primevue'
 import { APIKeyScope, createAPIKey, deleteAPIKey, getAPIKeys, type APIKey, type CreatedAPIKey } from '@/services/api-schema'
-import { timeAgo } from '@/services/helpers'
 import { showToast } from '@/main'
 
 const { t } = useI18n()

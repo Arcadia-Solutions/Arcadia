@@ -40,7 +40,7 @@
         </template>
         <Column field="created_at" :header="t('general.time')" sortable>
           <template #body="slotProps">
-            {{ timeAgo(slotProps.data.created_at) }}
+            <TimeAgo :date="slotProps.data.created_at" />
           </template>
         </Column>
         <Column field="action" :header="t('shop.action')" sortable>
@@ -72,6 +72,7 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
@@ -89,7 +90,7 @@ import {
 } from '@/services/api-schema'
 import UserSearchBar from '@/components/user/UserSearchBar.vue'
 import { useUserStore } from '@/stores/user'
-import { timeAgo, formatBp as formatBpShared } from '@/services/helpers'
+import { formatBp as formatBpShared } from '@/services/helpers'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 import type { DataTableSortEvent } from 'primevue/datatable'
 

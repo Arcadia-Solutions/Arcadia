@@ -25,7 +25,7 @@
         </Column>
         <Column field="donated_at" :header="t('donation.donated_at')">
           <template #body="slotProps">
-            {{ timeAgo(slotProps.data.donated_at) }}
+            <TimeAgo :date="slotProps.data.donated_at" />
           </template>
         </Column>
         <Column field="created_by.username" :header="t('general.created_by')">
@@ -35,7 +35,7 @@
         </Column>
         <Column field="created_at" :header="t('general.created_at')">
           <template #body="slotProps">
-            {{ timeAgo(slotProps.data.created_at) }}
+            <TimeAgo :date="slotProps.data.created_at" />
           </template>
         </Column>
         <Column field="note" :header="t('donation.note')">
@@ -62,6 +62,7 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
@@ -72,7 +73,6 @@ import DonationSearchForm from '@/components/staff/DonationSearchForm.vue'
 import PaginatedResults from '@/components/PaginatedResults.vue'
 import { useUserStore } from '@/stores/user'
 import type { VNodeRef } from 'vue'
-import { timeAgo } from '@/services/helpers'
 import UsernameEnriched from '../user/UsernameEnriched.vue'
 
 const { t } = useI18n()

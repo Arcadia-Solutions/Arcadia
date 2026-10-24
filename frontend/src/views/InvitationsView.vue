@@ -55,11 +55,11 @@
         <template #body="slotProps">{{ slotProps.data.inviter_notes }}</template>
       </Column>
       <Column field="created_at" :header="t('invitation.sent_at')" sortable>
-        <template #body="slotProps">{{ timeAgo(slotProps.data.created_at) }}</template>
+        <template #body="slotProps"><TimeAgo :date="slotProps.data.created_at" /></template>
       </Column>
       <Column field="expires_at" :header="t('invitation.expires_at')">
         <template #body="slotProps">
-          <span v-if="!slotProps.data.receiver">{{ timeAgo(slotProps.data.expires_at) }}</span>
+          <span v-if="!slotProps.data.receiver"><TimeAgo :date="slotProps.data.expires_at" /></span>
         </template>
       </Column>
     </DataTable>
@@ -70,6 +70,7 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { onMounted, ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
@@ -84,7 +85,7 @@ import {
   InvitationSearchOrderByColumn,
   OrderByDirection,
 } from '@/services/api-schema'
-import { timeAgo, formatNumber } from '@/services/helpers'
+import { formatNumber } from '@/services/helpers'
 import { useUserStore } from '@/stores/user'
 import type { DataTableSortEvent } from 'primevue/datatable'
 

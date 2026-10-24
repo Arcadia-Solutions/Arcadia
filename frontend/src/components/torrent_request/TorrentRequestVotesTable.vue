@@ -20,16 +20,17 @@
     </Column>
     <Column :header="t('torrent_request.voted_at')">
       <template #body="slotProps">
-        {{ timeAgo(slotProps.data.created_at) }}
+        <TimeAgo :date="slotProps.data.created_at" />
       </template>
     </Column>
   </DataTable>
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { Column, DataTable } from 'primevue'
 import UsernameEnriched from '../user/UsernameEnriched.vue'
-import { bytesToReadable, timeAgo, formatBp } from '@/services/helpers'
+import { bytesToReadable, formatBp } from '@/services/helpers'
 import { useI18n } from 'vue-i18n'
 import { TorrentRequestVoteCurrency, type TorrentRequestVoteHierarchy } from '@/services/api-schema'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'

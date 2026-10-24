@@ -1,7 +1,7 @@
 <template>
   <div class="report" v-for="report in reports" :key="report.id">
     <UsernameEnriched :user="report.reported_by" />
-    <span>({{ timeAgo(report.reported_at) }})</span>
+    <span>(<TimeAgo :date="report.reported_at" />)</span>
     : {{ report.description }}
     <i
       v-if="userStore.permissions.includes('delete_torrent_report')"
@@ -13,8 +13,8 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { useI18n } from 'vue-i18n'
-import { timeAgo } from '@/services/helpers'
 import { useUserStore } from '@/stores/user'
 import { deleteTorrentReport, type TorrentReport } from '@/services/api-schema'
 import { showToast } from '@/main'

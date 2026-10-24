@@ -44,7 +44,7 @@
       </Column>
       <Column v-for="dateField in dateFields" :key="dateField.field" :field="dateField.field" :header="dateField.header" sortable>
         <template #body="slotProps">
-          {{ slotProps.data[dateField.field] ? timeAgo(slotProps.data[dateField.field]) : '-' }}
+          <TimeAgo v-if="slotProps.data[dateField.field]" :date="slotProps.data[dateField.field]" /><template v-else>-</template>
         </template>
       </Column>
     </DataTable>
@@ -52,6 +52,7 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { computed, onMounted, ref } from 'vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -60,7 +61,7 @@ import { useI18n } from 'vue-i18n'
 import PaginatedResults from '@/components/PaginatedResults.vue'
 import UsernameEnriched from '@/components/user/UsernameEnriched.vue'
 import { getTorrentActivities, OrderByDirection, TorrentActivityOfTorrentOrderByColumn, type TorrentActivityAndUser } from '@/services/api-schema'
-import { bytesToReadable, formatBp, secondsToReadable, timeAgo } from '@/services/helpers'
+import { bytesToReadable, formatBp, secondsToReadable } from '@/services/helpers'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 
 const props = defineProps<{

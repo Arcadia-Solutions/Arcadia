@@ -56,7 +56,7 @@
           <DataTable :value="categories" :loading="loadingCategories" size="small" stripedRows>
             <Column field="name" :header="t('general.name')" />
             <Column field="created_at" :header="t('general.created_at')">
-              <template #body="{ data }">{{ timeAgo(data.created_at) }}</template>
+              <template #body="{ data }"><TimeAgo :date="data.created_at" /></template>
             </Column>
             <Column style="width: 80px">
               <template #body="{ data }">
@@ -115,6 +115,7 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Column, DataTable, Dialog, Button, Tabs, TabList, Tab, TabPanels, TabPanel } from 'primevue'
@@ -129,7 +130,6 @@ import {
 } from '@/services/api-schema'
 import { useUserStore } from '@/stores/user'
 import { showToast } from '@/main'
-import { timeAgo } from '@/services/helpers'
 import CreateOrEditUserBadgeDialog from '@/components/user/CreateOrEditUserBadgeDialog.vue'
 import CreateOrEditUserBadgeCategoryDialog from '@/components/user/CreateOrEditUserBadgeCategoryDialog.vue'
 

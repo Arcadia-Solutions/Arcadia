@@ -34,7 +34,7 @@
       </Column>
       <Column :header="t('notification.deleted_at')">
         <template #body="slotProps">
-          {{ timeAgo(slotProps.data.deleted_at) }}
+          <TimeAgo :date="slotProps.data.deleted_at" />
         </template>
       </Column>
     </DataTable>
@@ -45,11 +45,11 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { Button, Column, DataTable } from 'primevue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
-import { timeAgo } from '@/services/helpers'
 import { useNotificationsStore } from '@/stores/notifications'
 import { markTorrentDeletionNotificationsAsRead, type NotificationTorrentDeletion } from '@/services/api-schema'
 

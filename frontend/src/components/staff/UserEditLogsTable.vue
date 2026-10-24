@@ -41,7 +41,7 @@
         </Column>
         <Column field="edited_at" :header="t('user_edit_log.edited_at')">
           <template #body="slotProps">
-            {{ timeAgo(slotProps.data.edited_at) }}
+            <TimeAgo :date="slotProps.data.edited_at" />
           </template>
         </Column>
         <Column v-if="canDelete" :header="t('user_edit_log.actions')">
@@ -67,6 +67,7 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, RouterLink } from 'vue-router'
@@ -83,7 +84,6 @@ import PaginatedResults from '@/components/PaginatedResults.vue'
 import UserEditLogsSearchForm from '@/components/staff/UserEditLogsSearchForm.vue'
 import DiffViewer from '@/components/staff/DiffViewer.vue'
 import type { VNodeRef } from 'vue'
-import { timeAgo } from '@/services/helpers'
 import UsernameEnriched from '../user/UsernameEnriched.vue'
 import { useUserStore } from '@/stores/user'
 import { showToast } from '@/main'

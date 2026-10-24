@@ -18,7 +18,7 @@
     </Column>
     <Column :header="t('notification.notified_at')">
       <template #body="slotProps">
-        {{ timeAgo(slotProps.data.created_at) }}
+        <TimeAgo :date="slotProps.data.created_at" />
       </template>
     </Column>
   </DataTable>
@@ -28,11 +28,11 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { Column, DataTable } from 'primevue'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
-import { timeAgo } from '@/services/helpers'
 import { useNotificationsStore } from '@/stores/notifications'
 import type { NotificationArtistTitleGroup } from '@/services/api-schema'
 

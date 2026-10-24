@@ -19,23 +19,23 @@
     </Column>
     <Column :header="t('general.created_at')">
       <template #body="slotProps">
-        {{ timeAgo(slotProps.data.created_at) }}
+        <TimeAgo :date="slotProps.data.created_at" />
       </template>
     </Column>
     <Column :header="t('collage.last_entry_at')">
       <template #body="slotProps">
-        {{ slotProps.data.last_entry_at ? timeAgo(slotProps.data.last_entry_at) : null }}
+        <TimeAgo v-if="slotProps.data.last_entry_at" :date="slotProps.data.last_entry_at" />
       </template>
     </Column>
   </DataTable>
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { Column, DataTable } from 'primevue'
 import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import UsernameEnriched from '../user/UsernameEnriched.vue'
-import { timeAgo } from '@/services/helpers'
 import type { CollageSearchResult } from '@/services/api-schema'
 
 defineProps<{

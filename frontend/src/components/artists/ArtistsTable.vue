@@ -16,19 +16,19 @@
     <Column :header="t('artist.title_groups')" field="title_groups_amount" sortable />
     <Column :header="t('general.created_at')" field="created_at" sortable>
       <template #body="slotProps">
-        {{ timeAgo(slotProps.data.created_at) }}
+        <TimeAgo :date="slotProps.data.created_at" />
       </template>
     </Column>
   </DataTable>
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { Column, DataTable } from 'primevue'
 import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import ImagePreview from '../ImagePreview.vue'
 import type { ArtistSearchResult, ArtistSearchOrderByColumn } from '@/services/api-schema'
-import { timeAgo } from '@/services/helpers'
 import type { DataTableSortEvent } from 'primevue/datatable'
 
 defineProps<{

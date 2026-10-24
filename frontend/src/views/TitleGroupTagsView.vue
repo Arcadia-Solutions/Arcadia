@@ -48,7 +48,7 @@
       <Column :header="t('general.created_at')" field="created_at" sortable>
         <template #body="slotProps">
           <span>
-            {{ timeAgo(slotProps.data.created_at) }}
+            <TimeAgo :date="slotProps.data.created_at" />
           </span>
         </template>
       </Column>
@@ -60,7 +60,7 @@
       <Column v-if="deletedColumnsVisible" :header="t('general.deleted_at')" field="deleted_at" sortable>
         <template #body="slotProps">
           <span v-if="slotProps.data.deleted_at">
-            {{ timeAgo(slotProps.data.deleted_at) }}
+            <TimeAgo :date="slotProps.data.deleted_at" />
           </span>
         </template>
       </Column>
@@ -111,13 +111,13 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { onMounted, ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { Button, Checkbox, FloatLabel, InputText, DataTable, Column, Dialog } from 'primevue'
 import ContentContainer from '@/components/ContentContainer.vue'
 import PaginatedResults from '@/components/PaginatedResults.vue'
-import { timeAgo } from '@/services/helpers'
 import { useUserStore } from '@/stores/user'
 import EditTitleGroupTagDialog from '@/components/title_group_tag/EditTitleGroupTagDialog.vue'
 import DeleteTitleGroupTagDialog from '@/components/title_group_tag/DeleteTitleGroupTagDialog.vue'

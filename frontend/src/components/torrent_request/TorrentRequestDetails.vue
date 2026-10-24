@@ -37,7 +37,7 @@
     </table>
     <div v-if="torrentRequest.filled_by_torrent_id" class="filled-info">
       <RouterLink :to="`/torrent/${torrentRequest.filled_by_torrent_id}`">{{ t('torrent_request.filled') }}</RouterLink>
-      <span>{{ timeAgo(torrentRequest.filled_at) }} {{ t('general.by') }} <UsernameEnriched :user="filledByUser" /></span>
+      <span><TimeAgo :date="torrentRequest.filled_at" /> {{ t('general.by') }} <UsernameEnriched :user="filledByUser" /></span>
     </div>
     <template v-else>
       <div class="new-vote">
@@ -57,7 +57,7 @@
 import ContentContainer from '../ContentContainer.vue'
 import { useI18n } from 'vue-i18n'
 import { ref, computed } from 'vue'
-import { bytesToReadable, isAttributeUsed, timeAgo, formatBp } from '@/services/helpers'
+import { bytesToReadable, isAttributeUsed, formatBp } from '@/services/helpers'
 import { useUserStore } from '@/stores/user'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 import { showToast } from '@/main'

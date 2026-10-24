@@ -2,12 +2,12 @@
   <DataTable :value="clients">
     <Column field="first_seen_at" header="First seen">
       <template #body="slotProps">
-        {{ timeAgo(slotProps.data.first_seen_at) }}
+        <TimeAgo :date="slotProps.data.first_seen_at" />
       </template>
     </Column>
     <Column field="last_seen_at" header="Last seen">
       <template #body="slotProps">
-        {{ timeAgo(slotProps.data.last_seen_at) }}
+        <TimeAgo :date="slotProps.data.last_seen_at" />
       </template>
     </Column>
     <Column field="ip" header="IP"></Column>
@@ -27,9 +27,10 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
-import { bytesToReadable, timeAgo } from '@/services/helpers'
+import { bytesToReadable } from '@/services/helpers'
 import { useI18n } from 'vue-i18n'
 import type { TorrentClient } from '@/services/api-schema'
 

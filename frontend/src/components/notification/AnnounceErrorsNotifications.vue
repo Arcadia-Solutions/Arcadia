@@ -20,12 +20,12 @@
     <Column :header="t('notification.occurrences')" field="occurrences" />
     <Column :header="t('notification.first_seen_at')">
       <template #body="slotProps">
-        {{ timeAgo(slotProps.data.first_seen_at) }}
+        <TimeAgo :date="slotProps.data.first_seen_at" />
       </template>
     </Column>
     <Column :header="t('notification.last_seen_at')">
       <template #body="slotProps">
-        {{ timeAgo(slotProps.data.last_seen_at) }}
+        <TimeAgo :date="slotProps.data.last_seen_at" />
       </template>
     </Column>
   </DataTable>
@@ -35,10 +35,10 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { Column, DataTable, Message } from 'primevue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
-import { timeAgo } from '@/services/helpers'
 import type { NotificationAnnounceError } from '@/services/api-schema'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 

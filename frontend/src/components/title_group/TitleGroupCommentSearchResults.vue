@@ -26,14 +26,14 @@
     </Column>
     <Column :header="t('general.time')" style="width: 7em">
       <template #body="slotProps">
-        {{ timeAgo(slotProps.data.created_at) }}
+        <TimeAgo :date="slotProps.data.created_at" />
       </template>
     </Column>
   </DataTable>
 </template>
 
 <script setup lang="ts">
-import { timeAgo } from '@/services/helpers'
+import TimeAgo from '@/components/TimeAgo.vue'
 import { Column, DataTable } from 'primevue'
 import { useI18n } from 'vue-i18n'
 import type { TitleGroupCommentSearchResult } from '@/services/api-schema'

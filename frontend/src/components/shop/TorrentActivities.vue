@@ -128,7 +128,7 @@
         </Column>
         <Column field="grabbed_at" :header="t('shop.grabbed_at')" sortable>
           <template #body="slotProps">
-            {{ slotProps.data.torrent_activity.grabbed_at ? timeAgo(slotProps.data.torrent_activity.grabbed_at) : '-' }}
+            <TimeAgo v-if="slotProps.data.torrent_activity.grabbed_at" :date="slotProps.data.torrent_activity.grabbed_at" /><template v-else>-</template>
           </template>
         </Column>
       </DataTable>
@@ -137,6 +137,7 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DataTable from 'primevue/datatable'
@@ -157,7 +158,7 @@ import {
   type TorrentActivitiesOverview,
   type TorrentActivityAndTitleGroup,
 } from '@/services/api-schema'
-import { timeAgo, bytesToReadable, formatBp as formatBpShared, formatNumber } from '@/services/helpers'
+import { bytesToReadable, formatBp as formatBpShared, formatNumber } from '@/services/helpers'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 import type { DataTableSortEvent } from 'primevue/datatable'
 import ContentContainer from '../ContentContainer.vue'

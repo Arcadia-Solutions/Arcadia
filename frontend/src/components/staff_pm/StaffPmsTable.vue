@@ -9,14 +9,14 @@
     </Column>
     <Column :header="t('conversation.last_message')">
       <template #body="slotProps">
-        {{ timeAgo(slotProps.data.last_message.created_at) }}
+        <TimeAgo :date="slotProps.data.last_message.created_at" />
         {{ t('general.by') }}
         <UsernameEnriched :user="slotProps.data.last_message.created_by" displayAllInfo />
       </template>
     </Column>
     <Column :header="t('general.started')">
       <template #body="slotProps">
-        {{ timeAgo(slotProps.data.created_at) }}
+        <TimeAgo :date="slotProps.data.created_at" />
       </template>
     </Column>
     <Column :header="t('general.created_by')">
@@ -34,8 +34,8 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { listStaffPMs, type StaffPmOverview } from '@/services/api-schema'
-import { timeAgo } from '@/services/helpers'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useUserStore } from '@/stores/user'
 import { Column, DataTable } from 'primevue'

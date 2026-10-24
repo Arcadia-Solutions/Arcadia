@@ -49,7 +49,7 @@
       <Column style="width: 25%" field="latest_post_in_thread.created_at">
         <template #body="slotProps">
           <template v-if="slotProps.data.latest_post_in_thread">
-            {{ timeAgo(slotProps.data.latest_post_in_thread.created_at) }} {{ t('general.by') }}
+            <TimeAgo :date="slotProps.data.latest_post_in_thread.created_at" /> {{ t('general.by') }}
             <RouterLink :to="'/user/' + slotProps.data.latest_post_in_thread.created_by.id">
               {{ slotProps.data.latest_post_in_thread.created_by.username }}
             </RouterLink>
@@ -93,10 +93,11 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { useI18n } from 'vue-i18n'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
-import { timeAgo, formatNumber } from '@/services/helpers'
+import { formatNumber } from '@/services/helpers'
 import { RouterLink, useRouter } from 'vue-router'
 import { deleteForumCategory, deleteForumSubCategory, type ForumCategoryHierarchy } from '@/services/api-schema'
 import { useUserStore } from '@/stores/user'

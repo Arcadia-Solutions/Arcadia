@@ -33,14 +33,14 @@
     </Column>
     <Column :header="t('general.time')" style="width: 7em">
       <template #body="slotProps">
-        {{ timeAgo(slotProps.data.post_created_at) }}
+        <TimeAgo :date="slotProps.data.post_created_at" />
       </template>
     </Column>
   </DataTable>
 </template>
 
 <script setup lang="ts">
-import { timeAgo } from '@/services/helpers'
+import TimeAgo from '@/components/TimeAgo.vue'
 import { Column, DataTable } from 'primevue'
 import { useI18n } from 'vue-i18n'
 import ForumThreadName from './ForumThreadName.vue'

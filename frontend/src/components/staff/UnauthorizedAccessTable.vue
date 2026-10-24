@@ -27,7 +27,7 @@
         </Column>
         <Column field="created_at" :header="t('general.created_at')">
           <template #body="slotProps">
-            {{ timeAgo(slotProps.data.created_at) }}
+            <TimeAgo :date="slotProps.data.created_at" />
           </template>
         </Column>
       </DataTable>
@@ -36,6 +36,7 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
@@ -49,7 +50,6 @@ import {
 } from '@/services/api-schema'
 import PaginatedResults from '@/components/PaginatedResults.vue'
 import type { VNodeRef } from 'vue'
-import { timeAgo } from '@/services/helpers'
 import UsernameEnriched from '../user/UsernameEnriched.vue'
 import UnauthorizedAccessSearchForm from './UnauthorizedAccessSearchForm.vue'
 

@@ -21,7 +21,7 @@
     <template #top-left>
       <div class="top-left">
         <UsernameEnriched :user="comment.created_by" displayAllInfo />
-        <span> {{ timeAgo(comment.created_at) }}</span>
+        <span> <TimeAgo :date="comment.created_at" /></span>
         <i
           v-if="userStore.id !== comment.created_by.id"
           v-tooltip.top="t('user.gift.send_gift', [comment.created_by.username])"
@@ -56,10 +56,10 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import ContentContainer from '@/components/ContentContainer.vue'
 import BBCodeRenderer from '@/components/community/BBCodeRenderer.vue'
 import ContentReactions from '@/components/community/ContentReactions.vue'
-import { timeAgo } from '@/services/helpers'
 import UsernameEnriched from '../user/UsernameEnriched.vue'
 import type {
   ContentReaction,

@@ -8,7 +8,7 @@
         <div v-for="note in notes" :key="note.id" class="note">
           <div class="note-header">
             <RouterLink :to="`/user/${note.author_id}`">{{ note.author_username }}</RouterLink>
-            <span class="note-date">{{ timeAgo(note.created_at) }}</span>
+            <span class="note-date"><TimeAgo :date="note.created_at" /></span>
             <div v-if="canBeEdited(note)" class="note-actions">
               <i v-tooltip.top="t('general.edit')" class="cursor-pointer pi pi-pen-to-square" @click="editNote(note)" />
               <i v-tooltip.top="t('general.delete')" class="cursor-pointer pi pi-trash" @click="confirmRemoval(note)" />
@@ -47,6 +47,7 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { Dialog } from 'primevue'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -54,7 +55,6 @@ import { RouterLink } from 'vue-router'
 import ContentContainer from '@/components/ContentContainer.vue'
 import DeleteDialog from '@/components/DeleteDialog.vue'
 import { deleteUserStaffNote, getUserStaffNotes, type UserStaffNoteWithAuthor } from '@/services/api-schema'
-import { timeAgo } from '@/services/helpers'
 import { useUserStore } from '@/stores/user'
 import UserStaffNoteDialog from '@/components/user/UserStaffNoteDialog.vue'
 import BBCodeRenderer from '@/components/community/BBCodeRenderer.vue'

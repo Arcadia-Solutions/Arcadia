@@ -43,7 +43,7 @@
         </Column>
         <Column :header="t('conversation.last_message')" sortable :sortField="ConversationSearchOrderByColumn.LastMessage">
           <template #body="slotProps">
-            {{ timeAgo(slotProps.data.last_message_created_at) }}
+            <TimeAgo :date="slotProps.data.last_message_created_at" />
             {{ t('general.by') }}
             <UsernameEnriched
               :user="{ id: slotProps.data.last_message_created_by_id, username: slotProps.data.last_message_created_by_username, warned: false, banned: false }"
@@ -52,7 +52,7 @@
         </Column>
         <Column :header="t('general.started')" sortable :sortField="ConversationSearchOrderByColumn.CreatedAt">
           <template #body="slotProps">
-            {{ timeAgo(slotProps.data.conversation_created_at) }}
+            <TimeAgo :date="slotProps.data.conversation_created_at" />
           </template>
         </Column>
         <Column :header="t('conversation.correspondent')">
@@ -73,10 +73,10 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import { useI18n } from 'vue-i18n'
-import { timeAgo } from '@/services/helpers'
 import { RouterLink } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useNotificationsStore } from '@/stores/notifications'

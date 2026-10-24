@@ -15,7 +15,7 @@
       </div>
       <div class="item">
         <span>{{ t('general.sent') }}</span>
-        <div class="content">{{ timeAgo(userApplication.created_at) }}</div>
+        <div class="content"><TimeAgo :date="userApplication.created_at" /></div>
       </div>
       <div class="item" v-if="userApplication.user">
         <span>{{ t('user.user') }}</span>
@@ -36,12 +36,12 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { useI18n } from 'vue-i18n'
 import ContentContainer from '../ContentContainer.vue'
 import { Dialog } from 'primevue'
 import { Button } from 'primevue'
 import SendInvitationDialog from '../user/SendInvitationDialog.vue'
-import { timeAgo } from '@/services/helpers'
 import { ref } from 'vue'
 import { updateUserApplicationStatus, type PaginatedResultsUserApplicationHierarchyResultsInner, type UserApplicationStatus } from '@/services/api-schema'
 import UsernameEnriched from '../user/UsernameEnriched.vue'

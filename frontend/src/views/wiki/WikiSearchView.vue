@@ -25,16 +25,17 @@
         </template>
       </Column>
       <Column field="created_at" :header="t('general.created_at')">
-        <template #body="slotProps">{{ timeAgo(slotProps.data.created_at) }}</template>
+        <template #body="slotProps"><TimeAgo :date="slotProps.data.created_at" /></template>
       </Column>
       <Column field="updated_at" :header="t('general.updated_at')">
-        <template #body="slotProps">{{ timeAgo(slotProps.data.updated_at) }}</template>
+        <template #body="slotProps"><TimeAgo :date="slotProps.data.updated_at" /></template>
       </Column>
     </DataTable>
   </PaginatedResults>
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
@@ -42,7 +43,6 @@ import { Button, FloatLabel, InputText, DataTable, Column, Checkbox } from 'prim
 import ContentContainer from '@/components/ContentContainer.vue'
 import PaginatedResults from '@/components/PaginatedResults.vue'
 import { searchWikiArticles, type WikiSearchResult } from '@/services/api-schema'
-import { timeAgo } from '@/services/helpers'
 
 const { t } = useI18n()
 const router = useRouter()

@@ -5,7 +5,7 @@
     </RouterLink>
     <div class="latest-torrent-info">
       <template v-if="titleGroup.latest_torrent_uploaded_at">
-        {{ timeAgo(titleGroup.latest_torrent_uploaded_at) }}
+        <TimeAgo :date="titleGroup.latest_torrent_uploaded_at" />
       </template>
       <span v-if="showUploader" style="margin-left: 5px">
         {{ t('general.by') }}
@@ -15,10 +15,10 @@
   </div>
 </template>
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import type { TitleGroupLite } from '@/services/api-schema'
 import UsernameEnriched from '../user/UsernameEnriched.vue'
 import { useI18n } from 'vue-i18n'
-import { timeAgo } from '@/services/helpers'
 
 const { t } = useI18n()
 

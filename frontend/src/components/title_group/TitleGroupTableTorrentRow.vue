@@ -18,7 +18,7 @@
       </div>
     </div>
     <div class="cell cell-date">
-      {{ timeAgo(torrent.created_at) }} {{ t('general.by') }}
+      <TimeAgo :date="torrent.created_at" /> {{ t('general.by') }}
       <UsernameEnriched :user="torrent.created_by" />
       <span v-if="torrent.uploaded_as_anonymous && torrent.created_by"> ({{ t('general.anonymous') }})</span>
     </div>
@@ -89,10 +89,11 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import TorrentSlug from '../torrent/TorrentSlug.vue'
 import UsernameEnriched from '../user/UsernameEnriched.vue'
 import { RouterLink } from 'vue-router'
-import { bytesToReadable, timeAgo, formatBp, formatNumber } from '@/services/helpers'
+import { bytesToReadable, formatBp, formatNumber } from '@/services/helpers'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'

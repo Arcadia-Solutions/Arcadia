@@ -54,7 +54,7 @@
       </Column>
       <Column field="latest_post" :header="t('forum.latest_post')">
         <template #body="slotProps">
-          {{ timeAgo(slotProps.data.latest_post.created_at) }} {{ t('general.by') }}
+          <TimeAgo :date="slotProps.data.latest_post.created_at" /> {{ t('general.by') }}
           <UsernameEnriched :user="slotProps.data.latest_post.created_by" />
         </template>
       </Column>
@@ -80,11 +80,12 @@
 </template>
 
 <script setup lang="ts">
+import TimeAgo from '@/components/TimeAgo.vue'
 import { config } from '@/config'
 import { useI18n } from 'vue-i18n'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
-import { timeAgo, formatNumber } from '@/services/helpers'
+import { formatNumber } from '@/services/helpers'
 import { RouterLink, useRouter } from 'vue-router'
 import { useRoute } from 'vue-router'
 import { onMounted } from 'vue'

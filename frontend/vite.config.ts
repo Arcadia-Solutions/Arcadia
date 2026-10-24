@@ -1,5 +1,5 @@
 import { fileURLToPath, URL } from 'node:url'
-import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 import { defineConfig, type Plugin } from 'vite'
@@ -87,9 +87,7 @@ const kiwiDevServer = (): Plugin => ({
     }
 
     // Live reload workspace config and plugin during development
-    const kiwiConfig = existsSync(resolve(__dirname, '../kiwiirc/config.json'))
-      ? 'config.json'
-      : 'config.json.example'
+    const kiwiConfig = existsSync(resolve(__dirname, '../kiwiirc/config.json')) ? 'config.json' : 'config.json.example'
 
     server.middlewares.use('/kiwiirc', (req, res, next) => {
       if (req.url === '/static/config.json') {
@@ -122,6 +120,36 @@ export default defineConfig({
           '%SITE_NAME%',
           String(configuration.frontend.site_name).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!),
         ),
+    },
+    {
+      // the web server serves the custom front page whenever the file exists
+      name: 'arcadia-custom-front-page',
+      apply: 'build',
+      closeBundle() {
+        if (!configuration.frontend.enable_custom_front_page) {
+          rmSync(resolve(__dirname, 'dist/home'), { recursive: true, force: true })
+        }
+      },
+    },
+    {
+      // same as the Caddyfile: logged out visitors get the custom front page at /
+      name: 'arcadia-custom-front-page-dev',
+      apply: 'serve',
+      configureServer(server) {
+        const frontPage = resolve(__dirname, 'public/home/index.html')
+        server.middlewares.use((req, res, next) => {
+          if (
+            !configuration.frontend.enable_custom_front_page ||
+            req.url?.split('?')[0] !== '/' ||
+            /(^|;\s*)arcadia_logged_in=1(;|$)/.test(req.headers.cookie ?? '') ||
+            !existsSync(frontPage)
+          ) {
+            return next()
+          }
+          res.setHeader('Content-Type', 'text/html; charset=utf-8')
+          res.end(readFileSync(frontPage))
+        })
+      },
     },
   ],
   server: {

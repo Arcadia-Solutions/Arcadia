@@ -69,6 +69,7 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 import { ref } from 'vue'
 import router from '@/router'
+import { setLoggedInCookie } from '@/services/helpers'
 import { useTitleGroupStore } from '@/stores/titleGroup'
 
 const userStore = useUserStore()
@@ -105,6 +106,7 @@ const handleLogout = async () => {
   localStorage.removeItem('token')
   localStorage.removeItem('refreshToken')
   localStorage.removeItem('user')
+  await setLoggedInCookie(false)
   user.removeUser()
   router.push('/login')
 }

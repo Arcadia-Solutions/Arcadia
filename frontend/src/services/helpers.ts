@@ -416,6 +416,17 @@ export const loginLocation = () => {
   const { pathname, search } = window.location
   return pathname === '/login' ? `/login${search}` : `/login?redirect=${encodeURIComponent(pathname + search)}`
 }
+// tells the web server whether to serve the app or the custom front page at /, see docs/src/customization.md
+// (lax, so it is also sent when following a link to the site from elsewhere)
+// cookieStore only exists in secure contexts (https/localhost), hence the optional chaining
+export const setLoggedInCookie = async (loggedIn: boolean) => {
+  if (loggedIn) {
+    await window.cookieStore?.set({ name: 'arcadia_logged_in', value: '1', path: '/', sameSite: 'lax', expires: Date.now() + 365 * 24 * 3600 * 1000 })
+  } else {
+    await window.cookieStore?.delete({ name: 'arcadia_logged_in', path: '/' })
+  }
+}
+export const hasLoggedInCookie = () => /(^|;\s*)arcadia_logged_in=1(;|$)/.test(document.cookie)
 export const isReleaseDateRequired = (contentType: ContentType): boolean => {
   const contentTypesRequiringReleaseDate: ContentType[] = [
     ContentType.Movie,

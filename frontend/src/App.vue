@@ -28,7 +28,7 @@ import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 import FooterBar from './components/FooterBar.vue'
 import PageProgressBar from './components/PageProgressBar.vue'
-import { isRouteProtected, loginLocation } from './services/helpers'
+import { hasLoggedInCookie, isRouteProtected, loginLocation, setLoggedInCookie } from './services/helpers'
 import { getMe, getPublicArcadiaSettings } from './services/api-schema'
 import { usePublicArcadiaSettingsStore } from './stores/publicArcadiaSettings'
 import { connectNotificationStream, disconnectNotificationStream } from './services/notificationStream'
@@ -126,19 +126,24 @@ const getAppReady = async (forceGetUser: boolean = false) => {
           head.append(script)
         }
 
+        await setLoggedInCookie(true)
         isAppReady.value = true
         connectNotificationStream()
       } catch {
         // token is invalid, redirect to login
         disconnectNotificationStream()
+        await setLoggedInCookie(false)
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         router.push(loginLocation())
       }
     } else {
       // no token is present
-      if (config.enable_custom_front_page) {
-        window.location.href = '/home/index.html'
+      // the web server serves the custom front page at / once the cookie is gone. If it was already gone
+      // and the app was still served at /, there is no front page to show
+      if (config.enable_custom_front_page && (window.location.pathname !== '/' || hasLoggedInCookie())) {
+        await setLoggedInCookie(false)
+        window.location.href = '/'
       } else {
         router.push(loginLocation())
       }

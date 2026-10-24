@@ -46,6 +46,7 @@
 import Drawer from 'primevue/drawer'
 import { Button, Divider, PanelMenu } from 'primevue'
 import router from '@/router'
+import { setLoggedInCookie } from '@/services/helpers'
 import { ref } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { logout } from '@/services/api-schema'
@@ -69,6 +70,7 @@ const handleLogout = async () => {
   localStorage.removeItem('token')
   localStorage.removeItem('refreshToken')
   localStorage.removeItem('user')
+  await setLoggedInCookie(false)
   user.removeUser()
   router.push('/login')
 }

@@ -7,7 +7,7 @@ export interface ArcadiaFrontendConfig {
   api_base_url: string
   /** Name of the site, displayed in the interface. */
   site_name: string
-  /** When true, unauthenticated users are served public/home/index.html. */
+  /** When true, unauthenticated users are served public/home/index.html at /. */
   enable_custom_front_page: boolean
   /** Label displayed on the big input of /apply. */
   apply_input_message: string

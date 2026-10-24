@@ -283,7 +283,7 @@ frontend:
   api_base_url: ""
   # Name of the site, displayed in the interface.
   site_name: Arcadia
-  # When true, unauthenticated users are served public/home/index.html.
+  # When true, unauthenticated users are served public/home/index.html at /.
   enable_custom_front_page: false
   # Label displayed on the big input of /apply.
   apply_input_message: Why should we let you in

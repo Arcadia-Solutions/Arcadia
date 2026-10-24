@@ -16,6 +16,13 @@
 
 	handle {
 		root * /srv/arcadia
+		# logged out visitors get the custom front page (if any) at /, see docs/src/customization.md
+		@customFrontPage {
+			path /
+			not header_regexp Cookie (^|;\s*)arcadia_logged_in=1(;|$)
+			file /home/index.html
+		}
+		rewrite @customFrontPage /home/index.html
 		try_files {path} /index.html
 		file_server
 	}

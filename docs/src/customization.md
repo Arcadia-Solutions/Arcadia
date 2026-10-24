@@ -12,7 +12,12 @@ By default, visiting the root URL of an Arcadia instance displays the login view
      enable_custom_front_page: true
    ```
 2. Place your custom HTML file at `public/home/index.html` (inside the frontend directory or container).
-3. When enabled, non-logged-in visitors landing on `/` are served this page, while authenticated users are directed to the home page (`HomeView.vue`).
+3. When enabled, non-logged-in visitors landing on `/` are served this page directly (none of Arcadia's files are loaded), while authenticated users get the home page (`HomeView.vue`).
+
+The page is served at `/`, so links to its own assets must be absolute (e.g. `/home/style.css`, not `style.css`).
+
+> [!NOTE]
+> The bundled Caddy server tells both apart with the `arcadia_logged_in` cookie, set by the frontend once a user is signed in. If you serve the frontend with another web server, serve `home/index.html` for requests to `/` that don't carry the `arcadia_logged_in=1` cookie (see `frontend/Caddyfile`). The cookie is set through the Cookie Store API, which browsers only expose over HTTPS (or `localhost`), so the custom front page requires HTTPS.
 
 ## Unauthenticated Pages (Custom CSS & JS)
 

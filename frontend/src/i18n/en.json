@@ -64,6 +64,7 @@
     "reset": "Reset",
     "sent": "Sent",
     "any": "Any",
+    "not_available": "Not available",
     "created_by": "Created by",
     "deleted_by": "Deleted by",
     "deleted_at": "Deleted at",
@@ -817,6 +818,9 @@
     "code": "Code"
   },
   "wiki": {
+    "article_metadata": "Article metadata",
+    "created_by": "Created by",
+    "updated_by": "Last edited by",
     "article_body": "Article body",
     "edit_article": "Edit article",
     "create_article": "Create article",

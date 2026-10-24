@@ -16,6 +16,18 @@
       </template>
       <BBCodeRenderer :content="wikiArticle.body" />
     </ContentContainer>
+    <ContentContainer :containerTitle="t('wiki.article_metadata')" class="sidebar">
+      <dl class="metadata-list">
+        <dt>{{ t('general.created_at') }}</dt>
+        <dd>{{ wikiArticle.created_at ? formatDate(wikiArticle.created_at) : t('general.not_available') }}</dd>
+        <dt>{{ t('wiki.created_by') }}</dt>
+        <dd><UsernameEnriched :user="wikiArticle.created_by" /></dd>
+        <dt>{{ t('general.updated_at') }}</dt>
+        <dd>{{ wikiArticle.updated_at ? formatDate(wikiArticle.updated_at) : t('general.not_available') }}</dd>
+        <dt>{{ t('wiki.updated_by') }}</dt>
+        <dd><UsernameEnriched :user="wikiArticle.updated_by" /></dd>
+      </dl>
+    </ContentContainer>
     <ContentContainer
       v-if="wikiArticle.similar_wiki_articles.length > 0 || canLinkSimilarArticles"
       :containerTitle="t('wiki.similar_articles')"
@@ -51,12 +63,14 @@
 <script setup lang="ts">
 import BBCodeRenderer from '@/components/community/BBCodeRenderer.vue'
 import ContentContainer from '@/components/ContentContainer.vue'
+import UsernameEnriched from '@/components/user/UsernameEnriched.vue'
 import LinkSimilarWikiArticleDialog from '@/components/wiki/LinkSimilarWikiArticleDialog.vue'
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useI18n } from 'vue-i18n'
-import { getWikiArticle, unlinkSimilarWikiArticles, type WikiArticle, type WikiSearchResult } from '@/services/api-schema'
+import { getWikiArticle, unlinkSimilarWikiArticles, type UserLite, type WikiArticle, type WikiSearchResult } from '@/services/api-schema'
+import { formatDate } from '@/services/helpers'
 import { showToast } from '@/main'
 
 interface SimilarWikiArticle {
@@ -66,19 +80,23 @@ interface SimilarWikiArticle {
 type WikiArticleWithSimilar = WikiArticle & {
   similar_wiki_articles: SimilarWikiArticle[]
 }
+type WikiArticleWithMetadata = WikiArticleWithSimilar & {
+  created_by?: UserLite | null
+  updated_by?: UserLite | null
+}
 
 const { t } = useI18n()
 const route = useRoute()
 const userStore = useUserStore()
 
-const wikiArticle = ref<WikiArticleWithSimilar>()
+const wikiArticle = ref<WikiArticleWithMetadata>()
 const linkDialogVisible = ref(false)
 
 const canLinkSimilarArticles = computed(() => userStore.permissions.includes('link_similar_wiki_articles'))
 
 const fetchWikiArticle = () => {
   getWikiArticle(parseInt(route.params.id as string)).then((article) => {
-    wikiArticle.value = article as WikiArticleWithSimilar
+    wikiArticle.value = article as WikiArticleWithMetadata
   })
 }
 
@@ -121,6 +139,20 @@ watch(() => route.params.id, fetchWikiArticle, { immediate: true })
 .similar-list {
   margin: 0;
   padding-left: 20px;
+}
+.metadata-list {
+  margin: 0;
+}
+.metadata-list dt {
+  font-weight: bold;
+  margin-top: 8px;
+}
+.metadata-list dt:first-child {
+  margin-top: 0;
+}
+.metadata-list dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
 }
 .similar-list li {
   margin: 4px 0;

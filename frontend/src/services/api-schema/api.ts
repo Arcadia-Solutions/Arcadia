@@ -1749,7 +1749,7 @@ export interface GetUserTorrentActivities200Response {
     'side_effects': Array<SideEffect>;
 }
 export interface GetWikiArticle200Response {
-    'data': WikiArticle;
+    'data': WikiArticleResponse;
     'side_effects': Array<SideEffect>;
 }
 export interface Gift {
@@ -4975,6 +4975,20 @@ export interface WikiArticle {
     'title': string;
     'updated_at': string;
     'updated_by_id': number;
+}
+export interface WikiArticleResponse {
+    'body': string;
+    'created_at': string;
+    'created_by': UserLite;
+    'id': number;
+    'similar_wiki_articles': Array<SimilarWikiArticle>;
+    'title': string;
+    'updated_at': string;
+    'updated_by': UserLite;
+}
+export interface SimilarWikiArticle {
+    'id': number;
+    'title': string;
 }
 export interface WikiSearchResult {
     'created_at': string;
@@ -8574,6 +8588,5 @@ export const unlinkSimilarWikiArticles = async (similarWikiArticlesLink: Similar
     });
     return response.data;
 };
-
 
 

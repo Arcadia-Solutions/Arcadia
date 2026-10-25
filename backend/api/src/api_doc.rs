@@ -44,7 +44,7 @@ use arcadia_storage::models::user::{
     APIKey, APIKeyScope, CreatedAPIKey, SearchUsersQuery, UserCreatedAPIKey,
     UserPermissionMatchMode, UserSearchOrderBy,
 };
-use arcadia_storage::models::wiki::SimilarWikiArticlesLink;
+use arcadia_storage::models::wiki::{SimilarWikiArticlesLink, WikiArticleResponse};
 use arcadia_storage::models::{collage::SearchCollagesQuery, forum::GetForumThreadPostsQuery};
 use utoipa::{
     openapi::{
@@ -447,6 +447,7 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         TorrentDeletionReason,
         MarkTorrentDeletionsAsReadForm,
         SimilarWikiArticlesLink,
+        WikiArticleResponse,
         arcadia_storage::models::title_group::SimilarTitleGroupsLink,
         arcadia_storage::models::title_group::SimilarTitleGroupLite,
         ConversationSearchQuery,

@@ -69,34 +69,22 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useI18n } from 'vue-i18n'
-import { getWikiArticle, unlinkSimilarWikiArticles, type UserLite, type WikiArticle, type WikiSearchResult } from '@/services/api-schema'
+import { getWikiArticle, unlinkSimilarWikiArticles, type WikiArticleResponse, type WikiSearchResult } from '@/services/api-schema'
 import { formatDate } from '@/services/helpers'
 import { showToast } from '@/main'
-
-interface SimilarWikiArticle {
-  id: number
-  title: string
-}
-type WikiArticleWithSimilar = WikiArticle & {
-  similar_wiki_articles: SimilarWikiArticle[]
-}
-type WikiArticleWithMetadata = WikiArticleWithSimilar & {
-  created_by?: UserLite | null
-  updated_by?: UserLite | null
-}
 
 const { t } = useI18n()
 const route = useRoute()
 const userStore = useUserStore()
 
-const wikiArticle = ref<WikiArticleWithMetadata>()
+const wikiArticle = ref<WikiArticleResponse>()
 const linkDialogVisible = ref(false)
 
 const canLinkSimilarArticles = computed(() => userStore.permissions.includes('link_similar_wiki_articles'))
 
 const fetchWikiArticle = () => {
   getWikiArticle(parseInt(route.params.id as string)).then((article) => {
-    wikiArticle.value = article as WikiArticleWithMetadata
+    wikiArticle.value = article
   })
 }
 

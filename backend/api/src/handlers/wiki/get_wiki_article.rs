@@ -4,7 +4,7 @@ use actix_web::{
     HttpResponse,
 };
 use arcadia_common::error::Result;
-use arcadia_storage::{models::wiki::WikiArticle, redis::RedisPoolInterface};
+use arcadia_storage::{models::wiki::WikiArticleResponse, redis::RedisPoolInterface};
 use serde::Deserialize;
 use utoipa::IntoParams;
 
@@ -23,7 +23,7 @@ pub struct GetWikiArticleQuery {
       ("http" = ["Bearer"])
     ),
     responses(
-        (status = 200, description = "Successfully found the wiki article", body=WikiArticle),
+        (status = 200, description = "Successfully found the wiki article", body=WikiArticleResponse),
     )
 )]
 pub async fn exec<R: RedisPoolInterface + 'static>(

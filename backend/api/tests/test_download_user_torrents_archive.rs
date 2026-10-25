@@ -22,7 +22,7 @@ fn read_archive_entries(body: &[u8]) -> Vec<(String, Vec<u8>)> {
     (0..archive.len())
         .map(|index| {
             let mut entry = archive.by_index(index).expect("zip entry can be read");
-            let name = entry.name().to_string();
+            let name = entry.name().expect("zip entry name").to_string();
             let mut contents = Vec::new();
             entry.read_to_end(&mut contents).expect("zip entry content");
             (name, contents)

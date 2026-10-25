@@ -1,0 +1,38 @@
+name: Audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+  push:
+    paths:
+      - "Cargo.lock"
+      - "deny.toml"
+      - "frontend/package-lock.json"
+      - ".github/workflows/audit.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "Cargo.lock"
+      - "deny.toml"
+      - "frontend/package-lock.json"
+      - ".github/workflows/audit.yml"
+
+jobs:
+  cargo-deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check advisories bans sources
+
+  npm-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm audit

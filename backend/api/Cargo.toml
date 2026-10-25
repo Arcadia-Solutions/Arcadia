@@ -5,7 +5,7 @@ edition = "2024"
 license = "AGPL-3.0"
 
 [dependencies]
-actix-web = "4"
+actix-web.workspace = true
 async-stream = "0.3"
 async_zip = { version = "0.0.17", features = ["tokio"] }
 base64 = "0.22"
@@ -30,9 +30,9 @@ actix-http = "3.12.1"
 tracing = "0.1"
 tracing-actix-web = "0.7"
 thiserror = "2.0.18"
-utoipa = { version = "5.5.0", features = ["actix_extras"] }
-utoipa-swagger-ui = { version = "9.0.2", features = ["actix-web", "debug-embed"] }
-utoipa-actix-web = "0.1.2"
+utoipa = { version = "6", features = ["actix_extras"] }
+utoipa-swagger-ui = { version = "10", features = ["actix-web"] }
+utoipa-actix-web = "0.2"
 serde_bencode = "0.2.4"
 actix-web-httpauth = "0.8.2"
 strum = { version = "0.28", features = ["derive"] }
@@ -57,4 +57,4 @@ bytes = "1.11.1"
 sqlx = { version = "0.9", features = [ "runtime-tokio", "postgres", "chrono", "ipnetwork" ] }
 redis = "1.2.1"
 urlencoding = "2.1"
-zip = { version = "3", default-features = false, features = ["deflate"] }
+zip = { version = "9", default-features = false, features = ["deflate"] }

@@ -15,6 +15,12 @@ const OTEL_SERVICE_NAME: &str = "arcadia-api";
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
+    // `arcadia-api openapi` prints the spec without needing a config or database,
+    // so CI can check the generated frontend client against it.
+    if std::env::args().nth(1).as_deref() == Some("openapi") {
+        println!("{}", ApiDoc::openapi().to_pretty_json()?);
+        return Ok(());
+    }
     let config = arcadia_shared::config::load::<Config>();
 
     arcadia_shared::telemetry::init_telemetry(

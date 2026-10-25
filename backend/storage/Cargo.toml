@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-actix-web = "4"
+actix-web.workspace = true
 actix-multipart = "0.7.2"
 arcadia-common = { path = "../common"}
 argon2 = "0.5.3"
@@ -22,7 +22,7 @@ sha2 = "0.10"
 strum = { version = "0.28", features = ["derive"] }
 musicbrainz_rs = "0.13.0"
 rand = "0.10.1"
-utoipa = { version = "5.5.0", features = ["actix_extras"] }
+utoipa = { version = "6", features = ["actix_extras"] }
 indexmap = { version = "2.14.0", default-features = false, features = ["std", "serde"] }
 regex = "1.12.3"
 log = "0.4"

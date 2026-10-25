@@ -38,7 +38,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 ) -> HttpResponse {
     let client = match authenticate_client(&request, &arc) {
         Ok(client) => client,
-        Err(response) => return response,
+        Err(response) => return *response,
     };
     let Ok(token_request) = serde_urlencoded::from_bytes::<TokenRequest>(&body) else {
         return HttpResponse::BadRequest().json(OAuthErrorResponse::new("invalid_request"));

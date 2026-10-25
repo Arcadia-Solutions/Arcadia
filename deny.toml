@@ -1,0 +1,16 @@
+[advisories]
+ignore = [
+    # rsa and crypto-bigint come from jsonwebtoken's rust_crypto backend. Arcadia only
+    # signs HS256 tokens, so the RSA and elliptic curve code never runs. No fixed rsa
+    # release exists yet.
+    { id = "RUSTSEC-2023-0071", reason = "RSA unused, only HS256 JWTs" },
+    { id = "RUSTSEC-2026-0387", reason = "EC unused, only HS256 JWTs" },
+    # Old crates pulled by bip_util through the vendored bip_metainfo, which is going to be replaced.
+    { id = "RUSTSEC-2020-0159", reason = "chrono 0.2 via bip_util, bip_metainfo to be replaced" },
+    { id = "RUSTSEC-2020-0071", reason = "time 0.1 via bip_util, bip_metainfo to be replaced" },
+    { id = "RUSTSEC-2016-0005", reason = "rust-crypto via bip_util, bip_metainfo to be replaced" },
+    { id = "RUSTSEC-2022-0011", reason = "rust-crypto AES unused, only SHA-1 is used" },
+    { id = "RUSTSEC-2022-0004", reason = "rustc-serialize JSON unused, via bip_util" },
+    { id = "RUSTSEC-2025-0025", reason = "rustc-serialize via bip_util, bip_metainfo to be replaced" },
+    { id = "RUSTSEC-2025-0121", reason = "gcc build dep of rust-crypto, bip_metainfo to be replaced" },
+]

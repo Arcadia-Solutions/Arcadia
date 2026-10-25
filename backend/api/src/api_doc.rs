@@ -610,7 +610,7 @@ impl Modify for SideEffectsResponseModifier {
                         continue;
                     };
 
-                    let Some(content) = response.content.get("application/json") else {
+                    let Some(RefOr::T(content)) = response.content.get("application/json") else {
                         continue;
                     };
 

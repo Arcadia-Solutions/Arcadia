@@ -34,7 +34,7 @@ impl OAuthErrorResponse {
 pub fn authenticate_client<'a, R: RedisPoolInterface>(
     request: &HttpRequest,
     arc: &'a Arcadia<R>,
-) -> Result<&'a OidcConfig, HttpResponse> {
+) -> Result<&'a OidcConfig, Box<HttpResponse>> {
     basic_auth_credentials(request)
         .and_then(|(client_id, client_secret)| {
             arc.oidc.as_ref().filter(|client| {
@@ -42,7 +42,9 @@ pub fn authenticate_client<'a, R: RedisPoolInterface>(
                     && secrets_match(&client_secret, &client.client_secret)
             })
         })
-        .ok_or_else(|| HttpResponse::Unauthorized().json(OAuthErrorResponse::new("invalid_client")))
+        .ok_or_else(|| {
+            Box::new(HttpResponse::Unauthorized().json(OAuthErrorResponse::new("invalid_client")))
+        })
 }
 
 fn basic_auth_credentials(request: &HttpRequest) -> Option<(String, String)> {

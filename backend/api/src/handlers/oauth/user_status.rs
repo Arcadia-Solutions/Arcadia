@@ -22,7 +22,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 ) -> HttpResponse {
     // the client is configured by the admins, so it is trusted to check any user id
     if let Err(response) = authenticate_client(&request, &arc) {
-        return response;
+        return *response;
     }
     // only a missing user is inactive: a database failure must not end the user's sessions
     let active = match arc.pool.find_user_with_id(user_id.into_inner()).await {

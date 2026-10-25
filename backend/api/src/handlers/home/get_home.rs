@@ -32,7 +32,7 @@ pub struct HomePage {
     tag = "Home",
     path = "/api/home",
     responses(
-        (status = 200, description = "", body=HomePage),
+        (status = 200, description = "Successfully got the home page", body=HomePage),
     )
 )]
 pub async fn exec<R: RedisPoolInterface + 'static>(arc: Data<Arcadia<R>>) -> Result<HttpResponse> {

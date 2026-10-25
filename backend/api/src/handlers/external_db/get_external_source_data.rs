@@ -45,7 +45,7 @@ pub struct GetExternalSourceDataPath {
       ("http" = ["Bearer"])
     ),
     responses(
-        (status = 200, description = "", body=ExternalDBData),
+        (status = 200, description = "Successfully got the external source data", body=ExternalDBData),
     )
 )]
 pub async fn exec<R: RedisPoolInterface + 'static>(

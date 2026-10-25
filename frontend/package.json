@@ -16,7 +16,8 @@
     "lint": "run-s lint:*",
     "format": "prettier --write src/",
     "check-format": "prettier --check src",
-    "kiwi:setup": "docker build --target kiwi-true -t arcadia-kiwi-builder -f Dockerfile .. && docker run --rm -v $(pwd)/../kiwiirc/dist:/out arcadia-kiwi-builder cp -r /kiwi/dist/. /out/"
+    "kiwi:setup": "docker build --target kiwi-true -t arcadia-kiwi-builder -f Dockerfile .. && docker run --rm -v $(pwd)/../kiwiirc/dist:/out arcadia-kiwi-builder cp -r /kiwi/dist/. /out/",
+    "gen:api": "openapi-generator-cli generate -g typescript-axios -i ${OPENAPI_SPEC:-http://127.0.0.1:8080/swagger-json/openapi.json} -o ./src/services/api-schema -t .openapi-generator/templates --config .openapi-generator/openapi-generator.config.json --global-property=apiDocs=false,modelDocs=false,skipFormModel=false"
   },
   "dependencies": {
     "@bbob/html": "^4.4.1",
@@ -48,7 +49,7 @@
     "@types/node": "^22.13.10",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vitejs/plugin-vue-jsx": "^4.1.1",
-    "@vitest/eslint-plugin": "^1.1.36",
+    "@vitest/eslint-plugin": "1.6.27",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.5.0",
     "@vue/runtime-dom": "^3.5.13",
@@ -57,7 +58,7 @@
     "eslint": "^9.21.0",
     "eslint-plugin-oxlint": "^0.15.13",
     "eslint-plugin-playwright": "^2.2.0",
-    "eslint-plugin-vue": "~10.0.0",
+    "eslint-plugin-vue": "^10.11.1",
     "jiti": "^2.4.2",
     "jsdom": "^26.0.0",
     "npm-run-all2": "^7.0.2",
@@ -69,8 +70,11 @@
     "typescript": "~5.9.3",
     "vite": "^6.2.1",
     "vite-plugin-vue-devtools": "^7.7.2",
-    "vitest": "^3.0.8",
+    "vitest": "^4.1.12",
     "vue-tsc": "^2.2.8",
     "yaml": "^2.9.0"
+  },
+  "overrides": {
+    "basic-ftp": "^6.2.3"
   }
 }

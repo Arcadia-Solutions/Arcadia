@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-actix-web = "4"
+actix-web.workspace = true
 actix-web-lab = "0.26.0"
 chrono = { version = "0.4", features = ["serde"] }
 jsonwebtoken = { version = "10.4.0", features = ["rust_crypto"] }

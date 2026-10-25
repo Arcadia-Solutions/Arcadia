@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-actix-web = "4"
-utoipa = { version = "5.5.0", features = ["actix_extras"] }
-utoipa-swagger-ui = { version = "9.0.2", features = ["actix-web", "debug-embed"] }
-utoipa-actix-web = "0.1.2"
+actix-web.workspace = true
+utoipa = { version = "6", features = ["actix_extras"] }
+utoipa-swagger-ui = { version = "10", features = ["actix-web"] }
+utoipa-actix-web = "0.2"
 tokio = { version = "1.52.3", default-features = false, features = ["rt-multi-thread", "macros", "signal", "sync"] }
 tracing = "0.1"
 tracing-actix-web = "0.7"

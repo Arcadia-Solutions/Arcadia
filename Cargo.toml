@@ -8,6 +8,10 @@ members = [
 
 resolver = "2"
 
+# http2 is left out: it pulls the vulnerable h2 0.3 and the backends sit behind a reverse proxy.
+[workspace.dependencies]
+actix-web = { version = "4", default-features = false, features = ["macros", "compress-brotli", "compress-gzip", "compress-zstd", "cookies", "unicode", "compat"] }
+
 [profile.release]
 lto = true
 debug = false

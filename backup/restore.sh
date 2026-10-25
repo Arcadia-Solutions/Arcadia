@@ -48,6 +48,8 @@ check_current_state() {
     fi
     mariadb_state ergo_database "$(cfg ergo_db)"
     mariadb_state chevereto_database "$(cfg chevereto_db)"
+    echo "--- Postgres elysia_database ---"
+    elysia_psql "" -qAt -c "SELECT pg_size_pretty(pg_database_size(current_database()))" 2> /dev/null || echo "(unavailable)"
     echo "=========================================="
 }
 
@@ -68,7 +70,7 @@ confirm() {
 # a volume created before .env was edited refuses them (mariadb root during the restore, the backend
 # afterwards). The dumps hold the databases only, so nothing else is lost. Asked in confirm, skipped
 # with -y.
-DB_VOLUMES="db_data ergo_database chevereto_database"
+DB_VOLUMES="db_data ergo_database chevereto_database elysia_database"
 reset_db_volumes() {
     [ -n "$RESET" ] || return 0
     local v
@@ -187,6 +189,32 @@ restore_mariadb() {
     mariadb_cli "$1" "$db" < "$DUMP_DIR_HOST/$1.sql"
 }
 
+# psql on Elysia's postgres as its superuser (docker) or the postgres user (host). $1: database,
+# empty = Elysia's (fails in host mode when backup.elysia_db is empty).
+elysia_psql() {
+    local db=$1
+    shift
+    if [ "$MODE" = docker ]; then
+        docker compose exec -T elysia_database sh -c 'd=$1; shift; exec psql -U "$POSTGRES_USER" -d "${d:-$POSTGRES_DB}" "$@"' - "$db" "$@"
+    else
+        db=${db:-$(cfg elysia_db)}
+        [ -n "$db" ] || return 1
+        runuser -u postgres -- psql -d "$db" "$@"
+    fi
+}
+
+# The dump holds CREATE DATABASE (pg_dump -C), so it is replayed from the postgres database.
+restore_elysia() {
+    [ -f "$DUMP_DIR_HOST/elysia_database.sql" ] || return 0
+    if [ "$MODE" = docker ]; then
+        docker compose up -d --wait elysia_database
+        docker compose exec -T elysia_database sh -c 'dropdb -U "$POSTGRES_USER" --if-exists --force "$POSTGRES_DB"'
+    else
+        runuser -u postgres -- dropdb --if-exists --force "$(cfg elysia_db)"
+    fi
+    elysia_psql postgres -q -v ON_ERROR_STOP=1 < "$DUMP_DIR_HOST/elysia_database.sql"
+}
+
 mkdir -p "$DUMP_DIR_HOST"
 confirm
 clean_dumps
@@ -199,4 +227,5 @@ restore_data
 restore_postgres
 restore_mariadb ergo_database "$(cfg ergo_db)"
 restore_mariadb chevereto_database "$(cfg chevereto_db)"
+restore_elysia
 if [ -n "$SERVICES" ]; then docker compose up -d $SERVICES; fi

@@ -2,24 +2,73 @@ use std::time::Duration;
 
 use arcadia_common::error::{Error, Result};
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
-use reqwest::Client;
-use serde::Deserialize;
+use reqwest::{multipart, Client, RequestBuilder};
+use serde::{de::DeserializeOwned, Deserialize};
 
 use crate::{
-    config::ImageHostConfig,
+    config::Config,
     services::{image_service::is_public_url, ip_check::is_public},
 };
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
+/// Where images are uploaded.
+#[derive(Clone)]
+pub enum ImageHost {
+    /// Uploads are made on behalf of the user, authenticated with the OIDC client credentials.
+    Elysia {
+        url: String,
+        client_id: String,
+        client_secret: String,
+    },
+    /// Deprecated: every upload is made with the same API key, the uploader is not kept.
+    Chevereto { api_url: String, api_key: String },
+}
+
+/// The configured image host: Elysia when `image_host.elysia_url` and `oidc` are both set,
+/// otherwise Chevereto.
+pub fn configured_image_host(config: &Config) -> Option<ImageHost> {
+    if let (Some(url), Some(oidc)) = (&config.image_host.elysia_url, &config.oidc) {
+        return Some(ImageHost::Elysia {
+            url: url.trim_end_matches('/').to_string(),
+            client_id: oidc.client_id.clone(),
+            client_secret: oidc.client_secret.clone(),
+        });
+    }
+    match (
+        &config.image_host.chevereto_api_url,
+        &config.image_host.chevereto_api_key,
+    ) {
+        (Some(api_url), Some(api_key)) => Some(ImageHost::Chevereto {
+            api_url: api_url.clone(),
+            api_key: api_key.clone(),
+        }),
+        _ => None,
+    }
+}
+
+/// The Arcadia user an image is uploaded for.
+#[derive(Clone)]
+pub struct Uploader {
+    pub id: i32,
+    pub username: String,
+}
+
+/// What to upload: the image itself with its file name, or a link to an image to rehost.
+enum ImageSource<'a> {
+    Bytes(&'a [u8], &'a str),
+    Url(&'a str),
+}
+
+/// Elysia's upload response, also the `image` object of Chevereto's.
 #[derive(Deserialize)]
-struct CheveretoResponse {
-    image: CheveretoImage,
+struct UploadedImage {
+    url: String,
 }
 
 #[derive(Deserialize)]
-struct CheveretoImage {
-    url: String,
+struct CheveretoResponse {
+    image: UploadedImage,
 }
 
 fn build_client() -> Result<Client> {
@@ -30,7 +79,11 @@ fn build_client() -> Result<Client> {
         .map_err(|e| Error::ImageHostUploadFailed(e.to_string()))
 }
 
-async fn parse_chevereto_response(response: reqwest::Response) -> Result<String> {
+async fn send<T: DeserializeOwned>(request: RequestBuilder) -> Result<T> {
+    let response = request
+        .send()
+        .await
+        .map_err(|e| Error::ImageHostUploadFailed(e.to_string()))?;
     if !response.status().is_success() {
         let status = response.status();
         let body = response
@@ -41,31 +94,71 @@ async fn parse_chevereto_response(response: reqwest::Response) -> Result<String>
             "status {status}: {body}"
         )));
     }
-
-    let chevereto_response: CheveretoResponse = response
+    response
         .json()
         .await
-        .map_err(|e| Error::ImageHostUploadFailed(e.to_string()))?;
-
-    Ok(chevereto_response.image.url)
+        .map_err(|e| Error::ImageHostUploadFailed(e.to_string()))
 }
 
-pub async fn upload_image_to_chevereto(
-    api_url: &str,
-    api_key: &str,
-    image_bytes: &[u8],
+/// Uploads the image, returning its URL on the image host.
+async fn upload_with_client(
+    client: &Client,
+    image_host: &ImageHost,
+    uploader: &Uploader,
+    source: ImageSource<'_>,
 ) -> Result<String> {
-    let client = build_client()?;
-    let encoded = BASE64.encode(image_bytes);
+    match image_host {
+        ImageHost::Elysia {
+            url,
+            client_id,
+            client_secret,
+        } => {
+            let request = match source {
+                ImageSource::Bytes(bytes, file_name) => client
+                    .post(format!("{url}/api/upload"))
+                    .multipart(multipart::Form::new().part(
+                        "file",
+                        multipart::Part::bytes(bytes.to_vec()).file_name(file_name.to_string()),
+                    )),
+                ImageSource::Url(image_url) => client
+                    .post(format!("{url}/api/upload-url"))
+                    .json(&serde_json::json!({ "url": image_url })),
+            };
+            let request = request
+                .basic_auth(client_id, Some(client_secret))
+                .header("On-Behalf-Of-Sub", uploader.id.to_string())
+                .header("On-Behalf-Of-Username", &uploader.username);
+            Ok(send::<UploadedImage>(request).await?.url)
+        }
+        ImageHost::Chevereto { api_url, api_key } => {
+            let source = match source {
+                ImageSource::Bytes(bytes, _) => BASE64.encode(bytes),
+                ImageSource::Url(image_url) => image_url.to_string(),
+            };
+            let request = client.post(api_url).form(&[
+                ("key", api_key.as_str()),
+                ("source", &source),
+                ("format", "json"),
+            ]);
+            Ok(send::<CheveretoResponse>(request).await?.image.url)
+        }
+    }
+}
 
-    let response = client
-        .post(api_url)
-        .form(&[("key", api_key), ("source", &encoded), ("format", "json")])
-        .send()
-        .await
-        .map_err(|e| Error::ImageHostUploadFailed(e.to_string()))?;
-
-    parse_chevereto_response(response).await
+/// Uploads the image, returning its URL on the image host.
+pub async fn upload_image(
+    image_host: &ImageHost,
+    uploader: &Uploader,
+    image_bytes: &[u8],
+    file_name: &str,
+) -> Result<String> {
+    upload_with_client(
+        &build_client()?,
+        image_host,
+        uploader,
+        ImageSource::Bytes(image_bytes, file_name),
+    )
+    .await
 }
 
 /// The image host fetches the url itself, from inside the internal network, so it must only be
@@ -89,16 +182,7 @@ async fn can_be_rehosted(url: &str) -> bool {
 
 /// Rehosts all non-empty URLs in the slice, one by one.
 /// Failures are logged and the original URL is kept.
-pub async fn rehost_image_urls(config: &ImageHostConfig, urls: &mut [String]) {
-    if !config.rehost_external_images {
-        return;
-    }
-
-    let (Some(api_url), Some(api_key)) = (&config.chevereto_api_url, &config.chevereto_api_key)
-    else {
-        return;
-    };
-
+pub async fn rehost_image_urls(image_host: &ImageHost, uploader: &Uploader, urls: &mut [String]) {
     let Ok(client) = build_client() else {
         return;
     };
@@ -111,22 +195,8 @@ pub async fn rehost_image_urls(config: &ImageHostConfig, urls: &mut [String]) {
             log::warn!("Not rehosting image {url}: it does not point to a public address");
             continue;
         }
-        let result = client
-            .post(api_url.as_str())
-            .form(&[
-                ("key", api_key.as_str()),
-                ("source", url.as_str()),
-                ("format", "json"),
-            ])
-            .send()
-            .await
-            .map_err(|e| Error::ImageHostUploadFailed(e.to_string()));
-
-        match result {
-            Ok(response) => match parse_chevereto_response(response).await {
-                Ok(new_url) => *url = new_url,
-                Err(e) => log::warn!("Failed to rehost image {url}: {e}"),
-            },
+        match upload_with_client(&client, image_host, uploader, ImageSource::Url(url)).await {
+            Ok(new_url) => *url = new_url,
             Err(e) => log::warn!("Failed to rehost image {url}: {e}"),
         }
     }

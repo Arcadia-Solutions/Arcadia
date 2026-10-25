@@ -96,7 +96,7 @@ Docker Compose automatically propagates credentials from `.env` across the stack
 ### Reverse Proxy & HTTPS (Production)
 
 The `frontend` container serves the static frontend files and proxies access to all other containers using [Caddy](https://caddyserver.com/).  
-To make Arcadia accessible via HTTPS with automatic Let's Encrypt certificates across all services (Web UI, API, BitTorrent tracker, Chevereto image host, and Grafana monitoring), copy the tracked production templates:
+To make Arcadia accessible via HTTPS with automatic Let's Encrypt certificates across all services (Web UI, API, BitTorrent tracker, Elysia image host, and Grafana monitoring), copy the tracked production templates:
 
 ```bash
 cp compose.override.yml.example compose.override.yml

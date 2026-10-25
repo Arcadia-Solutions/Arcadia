@@ -10,7 +10,13 @@ use std::{
 };
 use tokio::sync::broadcast;
 
-use crate::{config::Config, services::auth::Auth};
+use crate::{
+    config::Config,
+    services::{
+        auth::Auth,
+        image_host_service::{configured_image_host, ImageHost},
+    },
+};
 
 pub mod api_doc;
 pub mod config;
@@ -31,6 +37,8 @@ pub struct Arcadia<R: RedisPoolInterface> {
     pub http_client: reqwest::Client,
     /// HTTP client for internal services (tracker, IRC, etc.), always bypasses proxy.
     pub internal_http_client: reqwest::Client,
+    /// Where images are uploaded, resolved once from `config.image_host` and `config.oidc`.
+    pub image_host: Option<ImageHost>,
     /// Every section is reachable directly on `Arcadia`, through its `Deref`.
     pub config: Config,
 }
@@ -81,6 +89,16 @@ impl<R: RedisPoolInterface> Arcadia<R> {
 
         let internal_http_client = pool.internal_http_client.clone();
 
+        let image_host = configured_image_host(&config);
+        if config.image_host.elysia_url.is_some() && config.oidc.is_none() {
+            log::warn!("image_host.elysia_url is set but the oidc section is missing, Elysia uploads are disabled");
+        }
+        if matches!(image_host, Some(ImageHost::Chevereto { .. })) {
+            log::warn!(
+                "Chevereto image hosting is deprecated, switch to Elysia (image_host.elysia_url)"
+            );
+        }
+
         Self {
             pool,
             auth: Auth::new(Arc::clone(&redis_pool)),
@@ -90,7 +108,15 @@ impl<R: RedisPoolInterface> Arcadia<R> {
             notification_streams: Arc::new(Mutex::new(HashMap::new())),
             http_client,
             internal_http_client,
+            image_host,
             config,
         }
+    }
+
+    /// Where scraped images are rehosted, `None` when `image_host.rehost_external_images` is off.
+    pub fn rehost_image_host(&self) -> Option<&ImageHost> {
+        self.image_host
+            .as_ref()
+            .filter(|_| self.config.image_host.rehost_external_images)
     }
 }

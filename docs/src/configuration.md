@@ -14,7 +14,7 @@ cp example.env .env
 - `# Development:` Settings useful during local testing (e.g. verbose logging).
 - `# Optional:` Optional integrations and external plugins.
 
-[`.env`](https://github.com/Arcadia-Solutions/arcadia/blob/main/example.env) is used by Docker Compose to configure passwords and tokens shared across multiple services (such as PostgreSQL, Redis, Chevereto, and Ergo IRC).
+[`.env`](https://github.com/Arcadia-Solutions/arcadia/blob/main/example.env) is used by Docker Compose to configure passwords and tokens shared across multiple services (such as PostgreSQL, Redis, Elysia, and Ergo IRC).
 
 For a local test with Docker Compose, the default credentials work out of the box, except `api.jwt_secret` and `tracker.api_key` which must be generated (`openssl rand -hex 32`): services refuse to start with a secret shorter than 32 characters. For a [production environment](run-docker.md#production-deployment), change all secrets and URLs.
 
@@ -47,5 +47,5 @@ For configuring the site logo, favicon, custom landing pages, and unauthenticate
 
 Some services bundled with Arcadia require additional configuration:
 - **IRC Server (Ergo & KiwiIRC)**: See [IRC Server](irc-server.md).
-- **Image Hosting (Chevereto)**: See [Image Host](image-host.md).
+- **Image Hosting (Elysia)**: See [Image Host](image-host.md).
 - **Telemetry & Monitoring**: See [OpenTelemetry](telemetry.md).

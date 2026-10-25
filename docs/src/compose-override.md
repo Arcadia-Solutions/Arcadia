@@ -4,7 +4,7 @@ Docker Compose automatically detects and merges `compose.override.yml` with `com
 
 The repository provides ready-to-use example configurations tracked directly in git:
 - [`compose.override.yml.example`](https://github.com/Arcadia-Solutions/arcadia/blob/main/compose.override.yml.example): Configures port forwarding (80/443), Caddy volume mounts, and service tweaks.
-- [`Caddyfile.example`](https://github.com/Arcadia-Solutions/arcadia/blob/main/Caddyfile.example): Complete reverse proxy configuration routing the Web UI, API, IRC, BitTorrent Tracker, Chevereto image host, and Grafana monitoring.
+- [`Caddyfile.example`](https://github.com/Arcadia-Solutions/arcadia/blob/main/Caddyfile.example): Complete reverse proxy configuration routing the Web UI, API, IRC, BitTorrent Tracker, Elysia image host (or the deprecated Chevereto), and Grafana monitoring.
 
 To get started:
 ```bash

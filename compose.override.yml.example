@@ -24,7 +24,7 @@ services:
       - caddy_config:/config
 
   # ----------------------------------------------------------------------------
-  # Chevereto Image Hosting (Optional - enabled with --profile images)
+  # Chevereto Image Hosting (Deprecated - enabled with --profile chevereto)
   # ----------------------------------------------------------------------------
   # chevereto_php:
   #   environment:

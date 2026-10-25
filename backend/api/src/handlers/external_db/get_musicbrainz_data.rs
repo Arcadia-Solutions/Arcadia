@@ -1,5 +1,6 @@
 use crate::{
     handlers::scrapers::ExternalDBData,
+    middlewares::auth_middleware::Authdata,
     services::external_db_service::{
         check_if_existing_title_group_with_link_exists, respond_with_scraped_data,
     },
@@ -123,6 +124,7 @@ pub enum MusicBrainzResourceType {
 pub async fn exec<R: RedisPoolInterface + 'static>(
     url: &str,
     arc: &Data<Arcadia<R>>,
+    user: Authdata,
 ) -> Result<HttpResponse> {
     let (entity_type, id) = Regex::new(r"musicbrainz.org/(release|release-group)/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})")
         .expect("Regex error")
@@ -169,5 +171,11 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         existing_title_group_id: None,
     };
 
-    respond_with_scraped_data(&arc.pool, &arc.image_host, external_db_data).await
+    respond_with_scraped_data(
+        &arc.pool,
+        arc.rehost_image_host(),
+        user.sub,
+        external_db_data,
+    )
+    .await
 }

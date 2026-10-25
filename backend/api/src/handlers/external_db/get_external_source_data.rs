@@ -59,8 +59,8 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     match path.source_id.as_str() {
         "isbn" => get_isbn_data::exec(&query.url, &arc, user).await,
         "tmdb" => get_tmdb_data::exec(&query.url, &arc, user).await,
-        "comic-vine" => get_comic_vine_data::exec(&query.url, &arc).await,
-        "musicbrainz" => get_musicbrainz_data::exec(&query.url, &arc).await,
+        "comic-vine" => get_comic_vine_data::exec(&query.url, &arc, user).await,
+        "musicbrainz" => get_musicbrainz_data::exec(&query.url, &arc, user).await,
         source_id => {
             get_plugin_data::exec(
                 source_id,

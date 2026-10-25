@@ -3,7 +3,7 @@
 Backups are made with [restic](https://restic.net): every run is an encrypted, deduplicated snapshot,
 so only what changed is stored and transferred.
 
-- `backup/backup.sh` runs on the arcadia server. It dumps the databases (arcadia, ergo, chevereto), then
+- `backup/backup.sh` runs on the arcadia server. It dumps the databases (arcadia, ergo, elysia, chevereto), then
   snapshots the dumps, the configuration files (`config.yml`, `ergo/ergo-conf.yaml`, `ergo/ergo.motd`,
   `kiwiirc/config.json`, `compose.override.yml`) and the volumes (docker) or data directories (bare
   metal) into a local repository, and prunes it.
@@ -29,8 +29,9 @@ dumps cover them.
 ## Configuration
 
 Everything is in the `backup` section of `config.yml`, documented in `config.example.yml`. The
-database credentials are read from the `database` section, and in docker mode the ergo and chevereto
-credentials come from the environment of the `backup_cron` service.
+database credentials are read from the `database` section, and in docker mode the ergo, elysia and
+chevereto credentials come from the environment of the `backup_cron` service. In host mode Elysia's
+database (`backup.elysia_db`) is dumped and restored as the `postgres` user.
 
 Environment variables named `ARCADIA_<SECTION>__<KEY>` (upper-cased, `-` replaced by `_`, e.g.
 `ARCADIA_DATABASE__PASSWORD`) override the values of `config.yml`. The `ARCADIA_` prefix and `__`
@@ -74,9 +75,9 @@ docker compose --profile backup up -d backup_cron
 
 `backup.cron` holds the schedule in cron syntax, read in `backup.cron_timezone` (containers have no
 timezone of their own). The job is `backup/backup.sh` itself, so everything the sections above
-describe applies. The container joins the compose network and dumps `db` (postgres) and
-`ergo_database`/`chevereto_database` (mariadb) over TCP, the mariadb ones as their per-database user,
-not root. restic runs inside the container. There is no docker socket and no docker CLI: the image is
+describe applies. The container joins the compose network and dumps `db`/`elysia_database`
+(postgres) and `ergo_database`/`chevereto_database` (mariadb) over TCP, the mariadb ones as their
+per-database user, not root. restic runs inside the container. There is no docker socket and no docker CLI: the image is
 based on `postgres:18-alpine` (so `pg_dump` matches the `db` service) plus restic and the mariadb
 client.
 
@@ -178,11 +179,11 @@ the middle and `latest` changes.
 Restore is run on the host, in both modes (in docker mode it uses the host's docker and restores the
 volumes through the pinned restic image). It restores the configuration files, the volumes (or data directories) and the databases. In docker
 mode it stops the running services first and starts them again at the end, and offers to recreate
-the database volumes (`db_data`, `ergo_database`, `chevereto_database`): postgres and mariadb only
+the database volumes (`db_data`, `ergo_database`, `chevereto_database`, `elysia_database`): postgres and mariadb only
 apply the passwords of `.env` when their volume is created, so a volume created before `.env` was
 edited refuses them. Answer yes on a new server; `-y` leaves the volumes alone. In host mode, stop
-arcadia, ergo and redis yourself first, and create the postgres role of the `database` section on a
-new server. Run `backup/restore.sh` from the deployment checkout (the same directory the stack was started from), because in docker mode the restore derives the compose project name from the directory to locate the real data volumes.
+arcadia, elysia, ergo and redis yourself first, and create the postgres role of the `database` section
+(and Elysia's database owner) on a new server. Run `backup/restore.sh` from the deployment checkout (the same directory the stack was started from), because in docker mode the restore derives the compose project name from the directory to locate the real data volumes.
 
 ### On a new server
 
@@ -226,5 +227,5 @@ mode, telemetry is skipped if `jq` or `curl` is missing, and the run is unaffect
   `/data/<name>` in the `backup_cron` service of `compose.yml`: it is a two-place edit.
 - A volume listed in `backup.volumes` but never populated is backed up empty: nothing checks that it
   exists.
-- The mariadb dump is skipped only when the service is unreachable. A reachable service whose dump fails
+- The mariadb and elysia dumps are skipped only when the service is unreachable. A reachable service whose dump fails
   (bad credentials, for instance) fails the run.

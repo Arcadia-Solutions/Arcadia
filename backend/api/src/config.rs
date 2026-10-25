@@ -174,6 +174,11 @@ impl ErgoConfig {
 
 #[derive(Clone, Default, Deserialize)]
 pub struct ImageHostConfig {
+    /// Base URL of Elysia, which also needs the `oidc` section: uploads are authenticated with
+    /// its client credentials and kept under the uploading user's identity.
+    #[serde(default)]
+    pub elysia_url: Option<String>,
+    /// Deprecated: use Elysia instead. Ignored when Elysia is configured.
     #[serde(default)]
     pub chevereto_api_url: Option<String>,
     #[serde(default)]

@@ -119,6 +119,9 @@ services:
       # the repository root, so that the build can read config.yml
       context: ./
       dockerfile: frontend/Dockerfile
+      # Elysia's web UI, served under /elysia. Empty when the `elysia` submodule is not checked out.
+      additional_contexts:
+        elysia: ./elysia/frontend
       secrets:
         - arcadia_config
     ports:
@@ -160,8 +163,49 @@ services:
       otel-lgtm:
         condition: service_started
 
-  chevereto_database:
+  # Elysia, the image host. It has no published image: it is built from the `elysia` git submodule
+  # (`git submodule update --init`), and reads elysia/config.yml, see docs/src/image-host.md.
+  elysia_database:
     profiles: [full, images]
+    image: postgres:18.0
+    restart: always
+    volumes:
+      - elysia_database:/var/lib/postgresql/
+    environment:
+      POSTGRES_USER: ${ELYSIA_DB_USER:-elysia}
+      POSTGRES_PASSWORD: ${ELYSIA_DB_PASSWORD:-password}
+      POSTGRES_DB: ${ELYSIA_DB_NAME:-elysia}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ELYSIA_DB_USER:-elysia} -d ${ELYSIA_DB_NAME:-elysia}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  elysia:
+    profiles: [full, images]
+    build:
+      context: ./elysia/backend
+      dockerfile: Dockerfile
+    restart: always
+    # Overrides the database section of elysia/config.yml.
+    environment:
+      ELYSIA_DATABASE__HOST: elysia_database
+      ELYSIA_DATABASE__PORT: 5432
+      ELYSIA_DATABASE__USER: ${ELYSIA_DB_USER:-elysia}
+      ELYSIA_DATABASE__PASSWORD: ${ELYSIA_DB_PASSWORD:-password}
+      ELYSIA_DATABASE__NAME: ${ELYSIA_DB_NAME:-elysia}
+    volumes:
+      - ./elysia/config.yml:/app/config.yml:ro
+      # Keep storage.upload_dir at its default (./data/uploads) in elysia/config.yml.
+      - elysia_storage:/app/data/uploads
+    depends_on:
+      elysia_database:
+        condition: service_healthy
+
+  # Deprecated: use Elysia (profile `images`) instead. Still in `full` so upgrades keep serving the
+  # images already hosted there.
+  chevereto_database:
+    profiles: [full, chevereto]
     image: mariadb:jammy
     volumes:
       - chevereto_database:/var/lib/mysql
@@ -179,7 +223,7 @@ services:
 
 
   chevereto_php:
-    profiles: [full, images]
+    profiles: [full, chevereto]
     image: chevereto/chevereto:4.5.7
     volumes:
       - chevereto_storage:/var/www/html/images/
@@ -262,6 +306,9 @@ services:
       CHEVERETO_DB_NAME: ${CHEVERETO_DB_NAME:-chevereto}
       CHEVERETO_DB_USER: ${CHEVERETO_DB_USER:-chevereto}
       CHEVERETO_DB_PASSWORD: ${CHEVERETO_DB_PASS:-arcadia}
+      ELYSIA_DB_NAME: ${ELYSIA_DB_NAME:-elysia}
+      ELYSIA_DB_USER: ${ELYSIA_DB_USER:-elysia}
+      ELYSIA_DB_PASSWORD: ${ELYSIA_DB_PASSWORD:-password}
     volumes:
       # Read only: the job backs the installation up, it does not change it.
       - .:/arcadia:ro
@@ -270,6 +317,7 @@ services:
       - redis_data:/data/redis_data:ro
       - ergo_data:/data/ergo_data:ro
       - chevereto_storage:/data/chevereto_storage:ro
+      - elysia_storage:/data/elysia_storage:ro
 
 secrets:
   # Read by the frontend build, which inlines the `frontend` section in the bundle.
@@ -282,5 +330,7 @@ volumes:
   lgtm_data:
   chevereto_database:
   chevereto_storage:
+  elysia_database:
+  elysia_storage:
   ergo_data:
   ergo_database:

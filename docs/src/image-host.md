@@ -1,54 +1,76 @@
-# Image Hosting (Chevereto)
+# Image Hosting (Elysia)
 
-Arcadia bundles [Chevereto](https://chevereto.com/) to host images on your site.
+Arcadia uses [Elysia](https://github.com/Arcadia-Solutions/Elysia) to host images on your site.
 
-The service is optional and runs in dedicated containers enabled via the `images` or `full` Docker Compose profiles.
+The service is optional and runs in dedicated containers enabled via the `images` or `full` Docker Compose profiles (see the Elysia services in `compose.yml`).
+
+Uploaded images are attributed to the Arcadia user who uploaded them: Arcadia uploads on their behalf, so in Elysia each image belongs to the same account the user gets when logging in to Elysia with Arcadia.
 
 ## Setup Guide
 
-### 1. Configure Credentials and Start Containers
+### 1. Get Elysia and Start Containers
 
-In `.env`, define secure passwords for the MariaDB instance:
-
-```bash
-CHEVERETO_DB_PASS=your_secure_chevereto_password
-CHEVERETO_DB_ROOT_PASS=very_secure_chevereto_root_password
-```
-
-Launch the image hosting services:
+Elysia has no published image: it is built from the `elysia` git submodule of the Arcadia repository.
 
 ```bash
-docker compose --profile images up -d
+git submodule update --init elysia
+cp elysia/config.example.yml elysia/config.yml
 ```
 
-### 2. Run the Initial Web Installer & Generate API Key
+After pulling a new Arcadia version, run `git submodule update elysia` again so Elysia follows it.
 
-1. Open your browser and navigate to `http://localhost:8083` (or your configured domain).
-2. Complete the initial installation wizard to create your administrator account and initialize tables.
-3. Once logged in as administrator, navigate to **Dashboard** &rarr; **Settings** &rarr; **API**.
-4. Generate and copy the **API v1 key**.
+In `.env`, define a secure password for Elysia's database:
 
-### 3. Connect Arcadia to Chevereto
+```bash
+ELYSIA_DB_PASSWORD=your_secure_elysia_password
+```
 
-In `config.yml`, configure the `image_host:` section:
+In `elysia/config.yml`, set `server.public_url` to where users reach Elysia: Arcadia's frontend serves it under `/elysia` (e.g. `https://arcadia.example.com/elysia`, or `http://localhost:5173/elysia` locally), before the first upload, since links already stored in Arcadia keep the old value, and set `auth.jwt_secret` to a long random value (e.g. `openssl rand -hex 32`).
+
+### 2. Connect Elysia and Arcadia
+
+Arcadia is Elysia's login provider, and uploads to Elysia with the same client credentials. Generate a client secret (e.g. `openssl rand -hex 32`) and set it on both sides.
+
+In `elysia/config.yml`, uncomment `auth.sso`:
 
 ```yaml
+auth:
+  sso:
+    name: "Arcadia"
+    issuer: "https://arcadia.example.com/api/oauth"
+    client_id: "elysia"
+    client_secret: "the_client_secret"
+    redirect_uri: "https://arcadia.example.com/elysia/auth/sso/callback"
+    status_endpoint: "https://arcadia.example.com/api/oauth/users/{sub}/status"
+```
+
+The issuer must be reachable from the `elysia` container.
+
+In Arcadia's `config.yml`, configure the `oidc` section with the same values, and point `image_host` at Elysia's backend:
+
+```yaml
+oidc:
+  issuer: https://arcadia.example.com/api/oauth
+  client_id: elysia
+  client_secret: the_client_secret
+  redirect_uri: https://arcadia.example.com/elysia/auth/sso/callback
+
 image_host:
-  chevereto_api_url: http://chevereto_php/api/1/upload
-  chevereto_api_key: your_generated_chevereto_api_key
+  elysia_url: http://elysia:8090
   # Automatically rehost posters and covers retrieved by scrapers (TMDB, MusicBrainz)
   rehost_external_images: true
 ```
 
-*(Alternatively, inject the API key via environment variable: `ARCADIA_IMAGE_HOST__CHEVERETO_API_KEY=your_key`).*
+Uploads need both `image_host.elysia_url` and `oidc`.
 
-Restart the backend container to apply the configuration:
+Launch the image hosting services and restart the backend to apply the configuration:
 
 ```bash
+docker compose --profile images up -d --build
 docker compose restart backend
 ```
 
-### 4. Enable Image Uploader in Staff Dashboard
+### 3. Enable Image Uploader in Staff Dashboard
 
 By default, the frontend drag-and-drop uploader is disabled. To activate it:
 
@@ -56,8 +78,31 @@ By default, the frontend drag-and-drop uploader is disabled. To activate it:
 2. In the top navbar, navigate to **Staff Dashboard** &rarr; **Arcadia Settings**.
 3. Enable **Display image upload drag and drop** and save changes.
 
-The image upload widget will now appear when creating or editing torrents, editions, and artists. If you enforce an **Approved Image Hosts** whitelist in site settings, add your image hosting domain to the list.
+The image upload widget will now appear when creating or editing torrents, editions, and artists. If you enforce an **Approved Image Hosts** whitelist in site settings, add Arcadia's own domain (e.g. `arcadia.example.com`) to the list, since Elysia is served under it.
 
 ## Production Reverse Proxy & HTTPS
 
-To expose Chevereto on a dedicated subdomain in production, configure `CHEVERETO_HOSTNAME` in `compose.override.yml` and enable the Chevereto block in `Caddyfile` (both pre-configured in [`compose.override.yml.example`](https://github.com/Arcadia-Solutions/arcadia/blob/main/compose.override.yml.example) and [`Caddyfile.example`](https://github.com/Arcadia-Solutions/arcadia/blob/main/Caddyfile.example)).
+Elysia is served under `/elysia` of Arcadia's domain by the main block of [`Caddyfile.example`](https://github.com/Arcadia-Solutions/arcadia/blob/main/Caddyfile.example), so it needs no domain or port of its own.
+
+## Migrating from Chevereto
+
+Elysia ships an importer that copies every Chevereto image, keeping its uploader, and rewrites the Chevereto links stored in Arcadia's database: see [Importing from Chevereto](https://github.com/Arcadia-Solutions/Elysia/blob/main/backend/README.md#importing-from-chevereto).
+
+## Chevereto (deprecated)
+
+[Chevereto](https://chevereto.com/) is still supported but deprecated. Its containers (`chevereto_php`, `chevereto_database`) start with the `chevereto` and `full` profiles. When `image_host.elysia_url` and `oidc` are set, the Chevereto settings are ignored.
+
+1. In `.env`, set `CHEVERETO_DB_PASS` and `CHEVERETO_DB_ROOT_PASS`, then run `docker compose --profile chevereto up -d`.
+2. Open `http://localhost:8083`, complete the installation wizard, then generate an **API v1 key** in **Dashboard** &rarr; **Settings** &rarr; **API**.
+3. In `config.yml`, configure the `image_host:` section and restart the backend:
+
+   ```yaml
+   image_host:
+     chevereto_api_url: http://chevereto_php/api/1/upload
+     chevereto_api_key: your_generated_chevereto_api_key
+     rehost_external_images: true
+   ```
+
+   *(Alternatively, inject the API key via environment variable: `ARCADIA_IMAGE_HOST__CHEVERETO_API_KEY=your_key`).*
+
+All uploads are made with the same API key, so Chevereto does not know which user uploaded an image. In production, set `CHEVERETO_HOSTNAME` and `CHEVERETO_HTTPS` in `compose.override.yml` and use the Chevereto block of `Caddyfile.example` instead of the Elysia one.

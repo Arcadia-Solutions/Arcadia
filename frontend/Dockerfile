@@ -37,9 +37,17 @@ COPY kiwiirc/arcadia-plugin.js /kiwi/dist/static/plugins/arcadia-plugin.js
 # ── 2c. Dynamic Selector ────────────────────────────────
 FROM kiwi-${WITH_KIWI} AS kiwi-assets
 
+# ── 2d. Elysia Web UI, served under /elysia (the `elysia` build context, empty without the submodule)
+FROM node:${NODE_VERSION}-slim AS build-elysia
+WORKDIR /elysia
+COPY --from=elysia . .
+RUN --mount=type=cache,target=/root/.npm \
+    if [ -f package.json ]; then npm ci --no-audit && npm run build -- --base=/elysia/; else mkdir dist; fi
+
 # ── 3. Final Caddy Runtime ──────────────────────────────
 FROM caddy:2-alpine
 
 COPY --from=build-frontend /home/node/app/frontend/dist/ /srv/arcadia/
 COPY --from=kiwi-assets /kiwi/dist/ /srv/kiwiirc/
+COPY --from=build-elysia /elysia/dist/ /srv/elysia/
 COPY frontend/Caddyfile /etc/caddy/Caddyfile

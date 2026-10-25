@@ -19,7 +19,7 @@
     </div>
     <div class="cell cell-date">
       <TimeAgo :date="torrent.created_at" /> {{ t('general.by') }}
-      <UsernameEnriched :user="torrent.created_by" />
+      <UsernameEnriched :user="torrent.created_by" noStatus />
       <span v-if="torrent.uploaded_as_anonymous && torrent.created_by"> ({{ t('general.anonymous') }})</span>
     </div>
     <div class="cell cell-actions">

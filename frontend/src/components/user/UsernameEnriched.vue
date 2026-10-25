@@ -6,8 +6,8 @@
     <template v-else>
       {{ user.username }}
     </template>
-    <i v-if="user.banned" v-tooltip.top="t('user.banned')" class="danger pi pi-ban" />
-    <i v-if="!user.banned && user.warned" v-tooltip.top="t('user.warned')" class="warning pi pi-exclamation-triangle" />
+    <i v-if="!noStatus && user.banned" v-tooltip.top="t('user.banned')" class="danger pi pi-ban" />
+    <i v-if="!noStatus && !user.banned && user.warned" v-tooltip.top="t('user.warned')" class="warning pi pi-exclamation-triangle" />
     <template v-if="displayAllInfo">
       <span class="bold"> ({{ (user as UserLiteAvatar).class_name }}) </span>
       <span v-if="(user as UserLiteAvatar).custom_title"> ({{ (user as UserLiteAvatar).custom_title }}) </span>
@@ -29,11 +29,13 @@ defineProps<
       /* Cannot be true if user is UserLite since some properties are missing */
       displayAllInfo?: false
       noLink?: boolean
+      noStatus?: boolean
     }
   | {
       user: UserLiteAvatar | null | undefined
       displayAllInfo?: boolean
       noLink?: boolean
+      noStatus?: boolean
     }
 >()
 </script>

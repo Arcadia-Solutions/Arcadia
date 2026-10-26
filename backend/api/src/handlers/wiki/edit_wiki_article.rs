@@ -4,6 +4,7 @@ use actix_web::{
     HttpRequest, HttpResponse,
 };
 use arcadia_common::error::Result;
+use arcadia_storage::utils::compute_diff;
 use arcadia_storage::{
     models::{
         user::UserPermission,
@@ -37,7 +38,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 
     let original_article = arc.pool.find_wiki_article_raw(article.id).await?;
 
-    if let Some(edits) = original_article.diff(&article) {
+    if let Some(edits) = compute_diff(&original_article, &article, &["id"]) {
         arc.pool
             .create_user_edit_change_log(&NewUserEditChangeLog {
                 item_type: "wiki_article".to_string(),

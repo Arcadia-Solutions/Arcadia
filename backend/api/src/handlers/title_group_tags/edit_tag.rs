@@ -4,6 +4,7 @@ use actix_web::{
     HttpRequest, HttpResponse,
 };
 use arcadia_common::error::Result;
+use arcadia_storage::utils::compute_diff;
 use arcadia_storage::{
     models::{
         title_group_tag::{EditedTitleGroupTag, TitleGroupTag},
@@ -37,7 +38,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 
     let original_tag = arc.pool.find_title_group_tag(tag.id).await?;
 
-    if let Some(edits) = original_tag.diff(&tag) {
+    if let Some(edits) = compute_diff(&original_tag, &tag, &["id"]) {
         arc.pool
             .create_user_edit_change_log(&NewUserEditChangeLog {
                 item_type: "title_group_tag".to_string(),

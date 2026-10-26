@@ -2,6 +2,7 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
+use arcadia_storage::utils::compute_diff;
 use arcadia_storage::{
     models::{
         torrent_request::{EditedTorrentRequest, TorrentRequest},
@@ -46,7 +47,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         )));
     }
 
-    if let Some(edits) = torrent_request.diff(&form) {
+    if let Some(edits) = compute_diff(&torrent_request, &form, &["id", "initial_vote"]) {
         arc.pool
             .create_user_edit_change_log(&NewUserEditChangeLog {
                 item_type: "torrent_request".to_string(),

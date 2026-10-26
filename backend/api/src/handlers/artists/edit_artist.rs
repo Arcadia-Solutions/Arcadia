@@ -6,6 +6,7 @@ use arcadia_common::error::{Error, Result};
 use arcadia_storage::models::artist::Artist;
 use arcadia_storage::models::user::UserPermission;
 use arcadia_storage::models::user_edit_change_log::NewUserEditChangeLog;
+use arcadia_storage::utils::compute_diff;
 use arcadia_storage::{models::artist::EditedArtist, redis::RedisPoolInterface};
 
 const GRACE_PERIOD_IN_DAYS: i64 = 7;
@@ -49,7 +50,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         }
     }
 
-    if let Some(edits) = artist.diff(&form) {
+    if let Some(edits) = compute_diff(&artist, &form, &["id"]) {
         arc.pool
             .create_user_edit_change_log(&NewUserEditChangeLog {
                 item_type: "artist".to_string(),

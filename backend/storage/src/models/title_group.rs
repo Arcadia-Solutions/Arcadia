@@ -15,7 +15,6 @@ use crate::models::{
     collage::CollageSearchResult, entity::AffiliatedEntityHierarchy, torrent::Language,
     torrent_request::TorrentRequestHierarchyLite, user::UserLite,
 };
-use crate::utils::compute_diff;
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type, ToSchema, Clone, PartialEq, Eq)]
 #[sqlx(type_name = "content_type_enum", rename_all = "snake_case")]
@@ -347,11 +346,5 @@ impl From<ReleaseGroupPrimaryType> for TitleGroupCategory {
             ReleaseGroupPrimaryType::Ep => TitleGroupCategory::Ep,
             _ => TitleGroupCategory::Other,
         }
-    }
-}
-
-impl TitleGroup {
-    pub fn diff(&self, edited: &EditedTitleGroup) -> Option<Value> {
-        compute_diff(self, edited, &["id"])
     }
 }

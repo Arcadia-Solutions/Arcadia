@@ -2,6 +2,7 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
+use arcadia_storage::utils::compute_diff;
 use arcadia_storage::{
     models::{
         edition_group::{EditedEditionGroup, EditionGroup},
@@ -50,7 +51,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         )));
     }
 
-    if let Some(edits) = edition_group.diff(&form) {
+    if let Some(edits) = compute_diff(&edition_group, &form, &["id"]) {
         arc.pool
             .create_user_edit_change_log(&NewUserEditChangeLog {
                 item_type: "edition_group".to_string(),

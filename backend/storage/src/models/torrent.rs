@@ -4,12 +4,9 @@ use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{
-    models::{
-        edition_group::Source,
-        title_group::{ContentType, TitleGroupCategory},
-    },
-    utils::compute_diff,
+use crate::models::{
+    edition_group::Source,
+    title_group::{ContentType, TitleGroupCategory},
 };
 use sqlx::{prelude::FromRow, types::Json};
 use strum::{Display, EnumString};
@@ -658,10 +655,4 @@ pub struct TorrentToDelete {
     pub deletion_reason: TorrentDeletionReason,
     pub extra_information: Option<String>,
     pub replacement_torrent_id: Option<i32>,
-}
-
-impl Torrent {
-    pub fn diff(&self, edited: &EditedTorrent) -> Option<Value> {
-        compute_diff(self, edited, &["id"])
-    }
 }

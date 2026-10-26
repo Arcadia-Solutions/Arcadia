@@ -4,6 +4,7 @@ use actix_web::{
     HttpResponse,
 };
 use arcadia_common::error::{Error, Result};
+use arcadia_storage::utils::compute_diff;
 use arcadia_storage::{
     models::{
         donation::{Donation, EditedDonation},
@@ -55,7 +56,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         return Err(Error::DonationAmountMustBePositive);
     }
 
-    if let Some(edits) = existing_donation.diff(&request) {
+    if let Some(edits) = compute_diff(&existing_donation, &request, &["id"]) {
         arc.pool
             .create_user_edit_change_log(&NewUserEditChangeLog {
                 item_type: "donation".to_string(),

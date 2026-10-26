@@ -11,7 +11,6 @@ use crate::{
 };
 use arcadia_common::error::{Error, Result};
 use sqlx::types::ipnetwork::IpNetwork;
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     pub async fn create_user_application(
@@ -33,7 +32,7 @@ impl ConnectionPool {
             application.email,
             from_ip
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateUserApplication)?;
 
@@ -57,7 +56,7 @@ impl ConnectionPool {
             "#,
             status.clone() as Option<UserApplicationStatus>
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotGetUserApplications)?
         .unwrap_or(0);
@@ -81,7 +80,7 @@ impl ConnectionPool {
             offset,
             page_size
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetUserApplications)?;
 
@@ -140,7 +139,7 @@ impl ConnectionPool {
             application_id,
             status as UserApplicationStatus
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotUpdateUserApplication)?;
 

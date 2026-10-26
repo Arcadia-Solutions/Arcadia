@@ -13,8 +13,7 @@ use crate::{
 };
 use arcadia_common::error::{Error, Result};
 use serde_json::Value;
-use sqlx::{PgPool, Postgres, Transaction};
-use std::borrow::Borrow;
+use sqlx::{Postgres, Transaction};
 use tokio::sync::broadcast;
 
 impl ConnectionPool {
@@ -36,7 +35,7 @@ impl ConnectionPool {
             current_user_id,
             conversation.receiver_id,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateConversation)?;
 
@@ -117,7 +116,7 @@ impl ConnectionPool {
             current_user_id,
             message.content,
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await
         .map_err(Error::CouldNotCreateConversation)?;
 
@@ -149,7 +148,7 @@ impl ConnectionPool {
                     current_user_id,
                     msg.id
                 )
-                .fetch_one(self.borrow())
+                .fetch_one(&self.pool)
                 .await
                 .map_err(Error::CouldNotFindConversation)?;
 
@@ -167,7 +166,7 @@ impl ConnectionPool {
                     r#"SELECT locked FROM conversations WHERE id = $1"#,
                     message.conversation_id,
                 )
-                .fetch_optional(self.borrow())
+                .fetch_optional(&self.pool)
                 .await
                 .map_err(Error::CouldNotFindConversation)?;
 
@@ -266,7 +265,7 @@ impl ConnectionPool {
             order_by_column,
             order_by_direction,
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotSearchConversations)?;
 
@@ -295,7 +294,7 @@ impl ConnectionPool {
             bypass_membership_check,
             query.user_id,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotSearchConversations)?
         .unwrap_or(0);
@@ -381,7 +380,7 @@ impl ConnectionPool {
             current_user_id,
             bypass_membership_check
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindConversation)?;
 
@@ -403,7 +402,7 @@ impl ConnectionPool {
             conversation_id,
             current_user_id,
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(conversation_with_messages.conversation_details.unwrap())
@@ -462,9 +461,7 @@ impl ConnectionPool {
         content: &str,
         locked: bool,
     ) -> Result<()> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         Self::send_batch_messages_tx(&mut tx, sender_id, recipient_ids, subject, content, locked)
             .await?;

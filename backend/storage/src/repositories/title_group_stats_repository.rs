@@ -9,7 +9,6 @@ use crate::{
 };
 use arcadia_common::error::Result;
 use sqlx::types::Json;
-use std::borrow::Borrow;
 
 // Postgres truncates a column alias to 63 bytes, so the sqlx type overrides below have to stay
 // short: a truncated override arrives unparseable instead of failing with a clear error.
@@ -75,7 +74,7 @@ impl ConnectionPool {
             catalog.to_string(),
             catalog_id,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         Ok(TitleGroupStatsResponse {

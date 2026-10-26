@@ -6,7 +6,6 @@ use crate::{
     },
 };
 use arcadia_common::error::Result;
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     /// returns results either from the beginning of the selected period or from the first uploaded torrent (whichever is the earliest)
@@ -96,7 +95,7 @@ impl ConnectionPool {
             &query.interval.to_string(),
             &query.group_by.to_string(),
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         let unique_uploaders: i64 = sqlx::query_scalar!(
@@ -110,7 +109,7 @@ impl ConnectionPool {
             query.from,
             query.to,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         let total_seeding_size: i64 = sqlx::query_scalar!(
@@ -119,7 +118,7 @@ impl ConnectionPool {
             FROM users
             "#
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         let title_groups_per_release_year = if matches!(query.group_by, TorrentStatsGroupBy::None) {
@@ -138,7 +137,7 @@ impl ConnectionPool {
                 query.from,
                 query.to,
             )
-            .fetch_all(self.borrow())
+            .fetch_all(&self.pool)
             .await?
         } else {
             Vec::new()
@@ -188,7 +187,7 @@ impl ConnectionPool {
                 query.to,
                 &query.interval.to_string(),
             )
-            .fetch_all(self.borrow())
+            .fetch_all(&self.pool)
             .await?
         } else {
             Vec::new()

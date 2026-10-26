@@ -3,7 +3,6 @@ use crate::{
     models::{user::UserPermission, user_staff_note::UserStaffNoteWithAuthor},
 };
 use arcadia_common::error::{Error, Result};
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     /// The notes of a user, from the most recent to the oldest one. A user with the
@@ -31,7 +30,7 @@ impl ConnectionPool {
             can_view_foreign_notes,
             requesting_user_id,
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindUserStaffNotes)
     }
@@ -49,7 +48,7 @@ impl ConnectionPool {
             "#,
             staff_note_id
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await
         .map_err(Error::CouldNotFindUserStaffNotes)?
         .ok_or(Error::UserStaffNoteNotFound)
@@ -108,7 +107,7 @@ impl ConnectionPool {
             created_by_id,
             content
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateUserStaffNote)
     }
@@ -123,7 +122,7 @@ impl ConnectionPool {
             staff_note_id,
             content
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotEditUserStaffNote)?;
 
@@ -139,7 +138,7 @@ impl ConnectionPool {
             r#"DELETE FROM user_staff_notes WHERE id = $1"#,
             staff_note_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteUserStaffNote)?;
 

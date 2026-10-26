@@ -16,7 +16,6 @@ use arcadia_common::{
     error::{Error, Result},
     services::torrent_service::looks_like_url,
 };
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     pub async fn create_user_badge_category(
@@ -38,7 +37,7 @@ impl ConnectionPool {
             category.name,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateUserBadgeCategory)?;
 
@@ -64,7 +63,7 @@ impl ConnectionPool {
             edited.name,
             edited.id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|e| match e {
             sqlx::Error::RowNotFound => Error::UserBadgeCategoryNotFound,
@@ -79,7 +78,7 @@ impl ConnectionPool {
             r#"SELECT COUNT(*) FROM user_badges WHERE category_id = $1"#,
             category_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteUserBadgeCategory)?
         .unwrap_or(0);
@@ -92,7 +91,7 @@ impl ConnectionPool {
             r#"DELETE FROM user_badge_categories WHERE id = $1"#,
             category_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteUserBadgeCategory)?;
 
@@ -112,7 +111,7 @@ impl ConnectionPool {
                 ORDER BY name ASC
             "#
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindUserBadgeCategories)?;
 
@@ -153,7 +152,7 @@ impl ConnectionPool {
             badge.criteria.as_ref(),
             current_user_id,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateUserBadge)?;
 
@@ -190,7 +189,7 @@ impl ConnectionPool {
             edited.criteria.as_ref(),
             edited.id,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|e| match e {
             sqlx::Error::RowNotFound => Error::UserBadgeNotFound,
@@ -202,7 +201,7 @@ impl ConnectionPool {
 
     pub async fn delete_user_badge(&self, badge_id: i32) -> Result<()> {
         let result = sqlx::query!(r#"DELETE FROM user_badges WHERE id = $1"#, badge_id)
-            .execute(self.borrow())
+            .execute(&self.pool)
             .await
             .map_err(Error::CouldNotDeleteUserBadge)?;
 
@@ -229,7 +228,7 @@ impl ConnectionPool {
                 ORDER BY name ASC
             "#
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindUserBadges)?;
 
@@ -263,7 +262,7 @@ impl ConnectionPool {
                 ORDER BY id ASC
             "#
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindUserBadges)?;
 
@@ -293,7 +292,7 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindUserBadges)?;
 
@@ -320,7 +319,7 @@ impl ConnectionPool {
             awarded_by_id,
             note,
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await
         .map_err(Error::CouldNotAwardUserBadge)?;
 
@@ -335,7 +334,7 @@ impl ConnectionPool {
             r#"DELETE FROM user_earned_badges WHERE id = $1"#,
             user_earned_badge_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotRevokeUserBadge)?;
 
@@ -355,7 +354,7 @@ impl ConnectionPool {
             user_id,
             badge_id,
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotRevokeUserBadge)?;
 
@@ -371,7 +370,7 @@ impl ConnectionPool {
             "#,
             badge_id
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindUserBadges)?;
 
@@ -482,7 +481,7 @@ impl ConnectionPool {
             minimum_title_group_amount,
             form.torrent_trumpable,
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(|e| Error::ErrorSearchingForTorrents(e.to_string()))?;
 
@@ -509,7 +508,7 @@ impl ConnectionPool {
             required_substring,
             i64::from(minimum_post_amount),
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindUserBadges)?;
 
@@ -536,7 +535,7 @@ impl ConnectionPool {
             required_substring,
             i64::from(minimum_thread_amount),
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindUserBadges)?;
 

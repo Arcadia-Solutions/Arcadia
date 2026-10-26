@@ -7,7 +7,6 @@ use crate::models::subscription::SearchSubscriptionsQuery;
 use crate::models::title_group::TitleGroupHierarchyLite;
 use arcadia_common::error::{Error, Result};
 use sqlx::types::Json;
-use std::borrow::Borrow;
 use std::collections::HashMap;
 
 impl ConnectionPool {
@@ -27,7 +26,7 @@ impl ConnectionPool {
             "#,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
 
@@ -49,7 +48,7 @@ impl ConnectionPool {
             offset,
             order_direction
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(PaginatedResults {
@@ -73,7 +72,7 @@ impl ConnectionPool {
             current_user_id,
             forum_sub_category_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotCreateSubscription)?;
 
@@ -93,7 +92,7 @@ impl ConnectionPool {
             forum_sub_category_id,
             current_user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -115,7 +114,7 @@ impl ConnectionPool {
             "#,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
 
@@ -137,7 +136,7 @@ impl ConnectionPool {
             offset,
             order_direction
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(PaginatedResults {
@@ -164,7 +163,7 @@ impl ConnectionPool {
             "#,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
 
@@ -197,7 +196,7 @@ impl ConnectionPool {
             page_size,
             offset,
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         self.enrich_title_groups_with_affiliated_artists(&mut results)
@@ -227,7 +226,7 @@ impl ConnectionPool {
             "#,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
 
@@ -260,7 +259,7 @@ impl ConnectionPool {
             page_size,
             offset,
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         self.enrich_title_groups_with_affiliated_artists(&mut results)
@@ -315,7 +314,7 @@ impl ConnectionPool {
             "#,
             &title_group_ids
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         let mut grouped_artists: HashMap<i32, Vec<AffiliatedArtistLite>> = HashMap::new();
@@ -358,7 +357,7 @@ impl ConnectionPool {
             current_user_id,
             thread_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotCreateSubscription)?;
 
@@ -378,7 +377,7 @@ impl ConnectionPool {
             thread_id,
             current_user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // TODO: check result.rows_affected()
@@ -398,7 +397,7 @@ impl ConnectionPool {
             current_user_id,
             title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotCreateSubscription)?;
 
@@ -418,7 +417,7 @@ impl ConnectionPool {
             title_group_id,
             current_user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // TODO: check result.rows_affected()
@@ -438,7 +437,7 @@ impl ConnectionPool {
             current_user_id,
             title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotCreateSubscription)?;
 
@@ -458,7 +457,7 @@ impl ConnectionPool {
             title_group_id,
             current_user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // TODO: check result.rows_affected()
@@ -481,7 +480,7 @@ impl ConnectionPool {
             "#,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
 
@@ -503,7 +502,7 @@ impl ConnectionPool {
             offset,
             order_direction
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(PaginatedResults {
@@ -527,7 +526,7 @@ impl ConnectionPool {
             current_user_id,
             artist_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotCreateSubscription)?;
 
@@ -547,7 +546,7 @@ impl ConnectionPool {
             artist_id,
             current_user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -568,7 +567,7 @@ impl ConnectionPool {
             "#,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
         let order_direction = query.order_by_direction.to_string();
@@ -589,7 +588,7 @@ impl ConnectionPool {
             offset,
             order_direction
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
         Ok(PaginatedResults {
             results,
@@ -611,7 +610,7 @@ impl ConnectionPool {
             current_user_id,
             collage_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotCreateSubscription)?;
         Ok(())
@@ -629,7 +628,7 @@ impl ConnectionPool {
             collage_id,
             current_user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
         Ok(())
     }
@@ -646,7 +645,7 @@ impl ConnectionPool {
             current_user_id,
             torrent_request_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotCreateSubscription)?;
 
@@ -666,7 +665,7 @@ impl ConnectionPool {
             torrent_request_id,
             current_user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // TODO: check result.rows_affected()

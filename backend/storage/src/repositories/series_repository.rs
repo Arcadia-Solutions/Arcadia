@@ -11,7 +11,6 @@ use crate::{
 };
 use arcadia_common::error::{Error, Result};
 use sqlx::{query_as_unchecked, query_scalar};
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     pub async fn create_series(&self, series: &UserCreatedSeries, user_id: i32) -> Result<Series> {
@@ -29,7 +28,7 @@ impl ConnectionPool {
             &series.banners,
             &series.tags
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateSeries)?;
 
@@ -45,7 +44,7 @@ impl ConnectionPool {
             "#,
             series_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::SeriesWithIdNotFound(*series_id))?;
 
@@ -75,7 +74,7 @@ impl ConnectionPool {
             "#,
             series_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::SeriesWithIdNotFound(series_id))?;
 
@@ -102,7 +101,7 @@ impl ConnectionPool {
             "#,
             form.name,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .unwrap()
         .unwrap();
@@ -141,7 +140,7 @@ impl ConnectionPool {
             order_by_column,
             order_by_direction
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(SeriesSearchResponse {
@@ -168,7 +167,7 @@ impl ConnectionPool {
             name,
             results_amount as i64
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(results)
@@ -196,7 +195,7 @@ impl ConnectionPool {
             &edited_series.banners,
             &edited_series.tags
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotUpdateSeries)?;
 
@@ -211,7 +210,7 @@ impl ConnectionPool {
             "#,
             series_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteSeries)?;
 

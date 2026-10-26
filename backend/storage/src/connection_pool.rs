@@ -1,5 +1,5 @@
 use sqlx::{postgres::PgPoolOptions, PgPool};
-use std::borrow::{Borrow, BorrowMut};
+use std::borrow::Borrow;
 use url::Url;
 
 #[derive(Clone)]
@@ -9,7 +9,7 @@ pub struct TrackerConfig {
 }
 
 pub struct ConnectionPool {
-    pool: PgPool,
+    pub(crate) pool: PgPool,
     pub tracker_config: TrackerConfig,
     pub internal_http_client: reqwest::Client,
 }
@@ -54,11 +54,5 @@ impl ConnectionPool {
 impl Borrow<PgPool> for ConnectionPool {
     fn borrow(&self) -> &PgPool {
         &self.pool
-    }
-}
-
-impl BorrowMut<PgPool> for ConnectionPool {
-    fn borrow_mut(&mut self) -> &mut PgPool {
-        &mut self.pool
     }
 }

@@ -14,8 +14,7 @@ use crate::{
 };
 use arcadia_common::error::{Error, Result};
 use arcadia_shared::tracker::models::announce_error_update::AnnounceErrorCode;
-use sqlx::{PgPool, Postgres, Transaction};
-use std::borrow::Borrow;
+use sqlx::{Postgres, Transaction};
 
 impl ConnectionPool {
     pub async fn find_all_notifications(
@@ -44,7 +43,7 @@ impl ConnectionPool {
             user_id,
             include_read
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetUnreadNotifications)?;
 
@@ -68,7 +67,7 @@ impl ConnectionPool {
             user_id,
             include_read
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetUnreadNotifications)?;
 
@@ -91,7 +90,7 @@ impl ConnectionPool {
             user_id,
             include_read
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetUnreadNotifications)?;
 
@@ -117,7 +116,7 @@ impl ConnectionPool {
             user_id,
             include_read
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetUnreadNotifications)?;
 
@@ -142,7 +141,7 @@ impl ConnectionPool {
             user_id,
             include_read
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetUnreadNotifications)?;
 
@@ -167,7 +166,7 @@ impl ConnectionPool {
             user_id,
             include_read
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetUnreadNotifications)?;
         let torrent_request_comments = sqlx::query_as!(
@@ -190,7 +189,7 @@ impl ConnectionPool {
             user_id,
             include_read
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetUnreadNotifications)?;
 
@@ -213,7 +212,7 @@ impl ConnectionPool {
             user_id,
             include_read
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetUnreadNotifications)?;
 
@@ -237,7 +236,7 @@ impl ConnectionPool {
             user_id,
             include_read
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetUnreadNotifications)?;
 
@@ -263,7 +262,7 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetUnreadNotifications)?;
 
@@ -292,7 +291,7 @@ impl ConnectionPool {
             user_id,
             include_read
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetUnreadNotifications)?
         .into_iter()
@@ -335,7 +334,7 @@ impl ConnectionPool {
             )
             "#,
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(result.rows_affected())
@@ -361,7 +360,7 @@ impl ConnectionPool {
             "#,
             retention_seconds
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(result.rows_affected())
@@ -433,7 +432,7 @@ impl ConnectionPool {
             user_id,
             torrent_ids
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotMarkNotificationAsRead)?;
 
@@ -457,7 +456,7 @@ impl ConnectionPool {
             user_id,
             torrent_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotMarkNotificationAsRead)?;
 
@@ -505,9 +504,7 @@ impl ConnectionPool {
         requested_by_id: i32,
         threshold_hours: i32,
     ) -> Result<Vec<i32>> {
-        let mut tx: Transaction<'_, Postgres> = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx: Transaction<'_, Postgres> = self.pool.begin().await?;
 
         let row = sqlx::query!(
             r#"
@@ -756,7 +753,7 @@ impl ConnectionPool {
             forum_thread_id,
             user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotMarkNotificationAsRead)?;
 
@@ -822,7 +819,7 @@ impl ConnectionPool {
             title_group_id,
             user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotMarkNotificationAsRead)?;
 
@@ -843,7 +840,7 @@ impl ConnectionPool {
             title_group_id,
             user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotMarkNotificationAsRead)?;
 
@@ -864,7 +861,7 @@ impl ConnectionPool {
             collage_id,
             user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotMarkNotificationAsRead)?;
         Ok(())
@@ -883,7 +880,7 @@ impl ConnectionPool {
             forum_thread_id,
             user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumThread)?;
 
@@ -944,7 +941,7 @@ impl ConnectionPool {
             title_group_id,
             user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotMarkNotificationAsRead)?;
 
@@ -1005,7 +1002,7 @@ impl ConnectionPool {
             torrent_request_id,
             user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotMarkNotificationAsRead)?;
 
@@ -1070,7 +1067,7 @@ impl ConnectionPool {
             "#,
             staff_pm_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotMarkNotificationAsRead)?;
 
@@ -1091,7 +1088,7 @@ impl ConnectionPool {
             staff_pm_id,
             user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotMarkNotificationAsRead)?;
 
@@ -1178,7 +1175,7 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotGetUnreadNotifications)?;
 

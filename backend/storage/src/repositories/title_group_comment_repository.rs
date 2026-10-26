@@ -14,8 +14,7 @@ use crate::{
 };
 use arcadia_common::error::{Error, Result};
 use chrono::{DateTime, Local, Utc};
-use sqlx::{FromRow, PgPool, Postgres, Transaction};
-use std::borrow::Borrow;
+use sqlx::{FromRow, Postgres, Transaction};
 use tokio::sync::broadcast;
 
 #[derive(FromRow)]
@@ -58,9 +57,7 @@ impl ConnectionPool {
         user_id: i32,
         notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<TitleGroupComment> {
-        let mut tx: Transaction<'_, Postgres> = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx: Transaction<'_, Postgres> = self.pool.begin().await?;
 
         let created_title_group_comment = sqlx::query_as!(
             TitleGroupComment,
@@ -114,7 +111,7 @@ impl ConnectionPool {
             "#,
             comment_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindTitleGroupComment)?;
 
@@ -138,7 +135,7 @@ impl ConnectionPool {
             edited_comment.content,
             edited_comment.locked
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|e| Error::ErrorWhileUpdatingTitleGroupComment(e.to_string()))?;
 
@@ -146,9 +143,7 @@ impl ConnectionPool {
     }
 
     pub async fn delete_title_group_comment(&self, comment_id: i64) -> Result<()> {
-        let mut tx: Transaction<'_, Postgres> = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx: Transaction<'_, Postgres> = self.pool.begin().await?;
 
         let deleted_comment = sqlx::query!(
             r#"
@@ -209,7 +204,7 @@ impl ConnectionPool {
             limit,
             offset
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindTitleGroupComment)?;
 
@@ -237,7 +232,7 @@ impl ConnectionPool {
             "#,
             form.content
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindTitleGroupComment)?
         .unwrap_or(0);
@@ -289,7 +284,7 @@ impl ConnectionPool {
             limit,
             offset
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotSearchTitleGroupComments)?;
 
@@ -324,7 +319,7 @@ impl ConnectionPool {
             "SELECT COUNT(*) FROM title_group_comments WHERE created_by_id = $1",
             form.created_by_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotSearchTitleGroupComments)?
         .unwrap_or(0);
@@ -362,7 +357,7 @@ impl ConnectionPool {
             "#,
             limit as i64
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindTitleGroupComment)?;
 

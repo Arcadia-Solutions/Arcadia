@@ -1,7 +1,6 @@
 use crate::{connection_pool::ConnectionPool, models::bonus_points_log::BonusPointsLogAction};
 use arcadia_common::error::Result;
-use sqlx::{PgPool, Postgres, Transaction};
-use std::borrow::Borrow;
+use sqlx::{Postgres, Transaction};
 
 impl ConnectionPool {
     pub async fn purchase_upload(
@@ -10,9 +9,7 @@ impl ConnectionPool {
         bytes: i64,
         bonus_points_cost: i64,
     ) -> Result<()> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         Self::decrement_bonus_points_and_freeleech_tokens(&mut tx, user_id, bonus_points_cost, 0)
             .await?;
@@ -39,9 +36,7 @@ impl ConnectionPool {
         quantity: i32,
         bonus_points_cost: i64,
     ) -> Result<()> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         Self::decrement_bonus_points_and_freeleech_tokens(&mut tx, user_id, bonus_points_cost, 0)
             .await?;
@@ -72,7 +67,7 @@ impl ConnectionPool {
             required,
             user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         Ok(result)

@@ -12,8 +12,7 @@ use crate::{
 };
 use arcadia_common::error::{Error, Result};
 use chrono::{DateTime, Utc};
-use sqlx::{FromRow, PgPool, Postgres, Transaction};
-use std::borrow::Borrow;
+use sqlx::{FromRow, Postgres, Transaction};
 use tokio::sync::broadcast;
 
 #[derive(FromRow)]
@@ -42,9 +41,7 @@ impl ConnectionPool {
         content: &str,
         notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<TorrentRequestComment> {
-        let mut tx: Transaction<'_, Postgres> = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx: Transaction<'_, Postgres> = self.pool.begin().await?;
 
         let created_torrent_request_comment = sqlx::query_as!(
             TorrentRequestComment,
@@ -94,9 +91,7 @@ impl ConnectionPool {
     }
 
     pub async fn delete_torrent_request_comment(&self, comment_id: i64) -> Result<()> {
-        let mut tx: Transaction<'_, Postgres> = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx: Transaction<'_, Postgres> = self.pool.begin().await?;
 
         let deleted_comment = sqlx::query!(
             r#"
@@ -164,7 +159,7 @@ impl ConnectionPool {
             limit,
             offset
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotSearchTorrentRequestComments)?;
 
@@ -197,7 +192,7 @@ impl ConnectionPool {
             "SELECT COUNT(*) FROM torrent_request_comments WHERE created_by_id = $1",
             form.created_by_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotSearchTorrentRequestComments)?
         .unwrap_or(0);

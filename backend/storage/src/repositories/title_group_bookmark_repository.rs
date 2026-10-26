@@ -5,7 +5,6 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     pub async fn create_title_group_bookmark(
@@ -24,7 +23,7 @@ impl ConnectionPool {
             bookmark.title_group_id,
             bookmark.description,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateTitleGroupBookmark)?;
 
@@ -47,7 +46,7 @@ impl ConnectionPool {
             bookmark_id,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindTitleGroupBookmark)?;
 
@@ -74,7 +73,7 @@ impl ConnectionPool {
             current_user_id,
             edited_bookmark.description
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|e| Error::ErrorWhileUpdatingTitleGroupBookmark(e.to_string()))?;
 
@@ -94,7 +93,7 @@ impl ConnectionPool {
         )
         .bind(bookmark_id)
         .bind(current_user_id)
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         if result.rows_affected() == 0 {

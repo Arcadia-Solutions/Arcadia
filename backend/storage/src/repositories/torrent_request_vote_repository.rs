@@ -7,8 +7,6 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use sqlx::PgPool;
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     pub async fn create_torrent_request_vote(
@@ -36,9 +34,7 @@ impl ConnectionPool {
         // TODO config: check if the bounty is above the minimum set in the config
         // TODO config: check if the user's ratio stays above the minimum ratio set in the config (after the uploaded amount changes)
 
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let created_torrent_request_vote = sqlx::query_as!(
             TorrentRequestVote,

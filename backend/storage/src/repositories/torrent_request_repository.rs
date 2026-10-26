@@ -15,8 +15,8 @@ use arcadia_common::error::{Error, Result};
 use arcadia_shared::utils::format_title_group_name;
 use chrono::{Duration, Utc};
 use serde_json::Value;
-use sqlx::{query_as, PgPool, Postgres, Transaction};
-use std::{borrow::Borrow, collections::HashMap};
+use sqlx::{query_as, Postgres, Transaction};
+use std::collections::HashMap;
 
 impl ConnectionPool {
     pub async fn fetch_title_group_name_for_torrent_request(
@@ -80,7 +80,7 @@ impl ConnectionPool {
                 .bind(&torrent_request.video_resolution)
                 .bind(&torrent_request.audio_bitrate_sampling)
                 .bind(&torrent_request.source)
-                .fetch_one(self.borrow())
+                .fetch_one(&self.pool)
                 .await
                 .map_err(Error::CouldNotCreateTorrentRequest)?;
 
@@ -116,7 +116,7 @@ impl ConnectionPool {
             "#,
             torrent_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::TorrentNotFound)?;
 
@@ -134,7 +134,7 @@ impl ConnectionPool {
             torrent_id,
             torrent_request_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         if !is_torrent_in_requested_title_group.unwrap() {
@@ -151,7 +151,7 @@ impl ConnectionPool {
             "#,
             torrent_request_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         if is_torrent_request_filled.unwrap() {
@@ -183,7 +183,7 @@ impl ConnectionPool {
             "#,
             torrent_request_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         // Calculate the share for each user (50% each).
@@ -198,9 +198,7 @@ impl ConnectionPool {
 
         let torrent_uploader_id = torrent_upload_info.created_by_id;
 
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         sqlx::query!(
             r#"
@@ -342,9 +340,7 @@ impl ConnectionPool {
             } => (refund_bounty, message),
         };
 
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         // Locking the request makes the checks below reliable: a concurrent vote creation has to
         // lock the same row (foreign key), and so does a concurrent fill or deletion
@@ -541,7 +537,7 @@ impl ConnectionPool {
             "#,
             torrent_request_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::TorrentRequestNotFound)?;
 
@@ -576,7 +572,7 @@ impl ConnectionPool {
             include_filled,
             subscribed_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotSearchForTorrentRequests)?
         .unwrap_or(0);
@@ -728,7 +724,7 @@ impl ConnectionPool {
             order_by_direction,
             subscribed_user_id
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotSearchForTorrentRequests)?;
 
@@ -751,7 +747,7 @@ impl ConnectionPool {
                 "#,
                 &title_group_ids
             )
-            .fetch_all(self.borrow())
+            .fetch_all(&self.pool)
             .await?
         };
 
@@ -967,7 +963,7 @@ impl ConnectionPool {
             torrent_request_id,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindTheTorrentRequest)?;
 
@@ -1025,7 +1021,7 @@ impl ConnectionPool {
             edited_torrent_request.audio_bitrate_sampling as _,
             edited_torrent_request.source as _,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|e| Error::ErrorWhileUpdatingTorrentRequest(e.to_string()))?;
 

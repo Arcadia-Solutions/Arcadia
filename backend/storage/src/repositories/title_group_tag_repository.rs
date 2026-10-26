@@ -14,8 +14,8 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use sqlx::{types::Json, PgPool};
-use std::{borrow::Borrow, collections::HashMap};
+use sqlx::types::Json;
+use std::collections::HashMap;
 
 impl ConnectionPool {
     /// Tags are stored lowercase, with their words separated by dots. Dashes
@@ -46,7 +46,7 @@ impl ConnectionPool {
             "#,
             sanitized_name
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await
         .map_err(Error::CouldNotCreateTitleGroupTag)?;
 
@@ -71,7 +71,7 @@ impl ConnectionPool {
             sanitized_name,
             user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await;
 
         // the tag already exists
@@ -90,7 +90,7 @@ impl ConnectionPool {
                 "#,
                 sanitized_name
             )
-            .fetch_one(self.borrow())
+            .fetch_one(&self.pool)
             .await;
         }
 
@@ -122,7 +122,7 @@ impl ConnectionPool {
             "#,
             &sanitized_names
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         // the name of the tag each name belongs to, `None` when that tag is deleted. A name can be
@@ -165,7 +165,7 @@ impl ConnectionPool {
             "#,
             sanitized_name
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await?;
 
         Ok(tag_id)
@@ -186,7 +186,7 @@ impl ConnectionPool {
             "#,
             tag_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::TitleGroupTagNotFound)
     }
@@ -214,7 +214,7 @@ impl ConnectionPool {
             &edited_tag.synonyms as _,
             edited_tag.id
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await
         .map_err(Error::CouldNotUpdateTitleGroupTag)?
         .ok_or(Error::TitleGroupTagNotFound)?;
@@ -237,7 +237,7 @@ impl ConnectionPool {
             user_id,
             request.deletion_reason
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteTitleGroupTag)?;
 
@@ -252,7 +252,7 @@ impl ConnectionPool {
             "#,
             request.id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteTitleGroupTag)?;
 
@@ -275,7 +275,7 @@ impl ConnectionPool {
             "#,
             tag_id
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await?;
 
         if let Some(conflicting_tag_name) = conflicting_tag_name {
@@ -297,7 +297,7 @@ impl ConnectionPool {
             "#,
             tag_id
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await
         .map_err(Error::CouldNotUpdateTitleGroupTag)?
         .ok_or(Error::TitleGroupTagNotFound)
@@ -315,9 +315,7 @@ impl ConnectionPool {
             return Err(Error::TitleGroupTagCannotBeMergedIntoItself);
         }
 
-        let mut transaction = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut transaction = self.pool.begin().await?;
 
         let source_tag = sqlx::query!(
             r#"
@@ -421,7 +419,7 @@ impl ConnectionPool {
             "#,
             tag_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         if !tag_is_applicable {
@@ -438,7 +436,7 @@ impl ConnectionPool {
             tag_id,
             user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -461,7 +459,7 @@ impl ConnectionPool {
             title_group_id,
             tag_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -493,7 +491,7 @@ impl ConnectionPool {
             "#,
             query
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
 
@@ -522,7 +520,7 @@ impl ConnectionPool {
             limit,
             offset
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(PaginatedResults {
@@ -558,7 +556,7 @@ impl ConnectionPool {
             query.name,
             query.show_deleted
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
 
@@ -625,7 +623,7 @@ impl ConnectionPool {
             offset,
             query.show_deleted
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(PaginatedResults {
@@ -660,7 +658,7 @@ impl ConnectionPool {
             query.title_group_name,
             &query.content_type as &Option<ContentType>
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
 
@@ -741,7 +739,7 @@ impl ConnectionPool {
             query.user_applied_tags_after,
             query.user_applied_tags_before
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         let results = rows

@@ -6,7 +6,6 @@ use crate::{
     },
 };
 use arcadia_common::error::Result;
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     /// Returns the amount of registrations per period, alongside the total for that period.
@@ -47,7 +46,7 @@ impl ConnectionPool {
             query.to,
             &query.interval.to_string(),
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         let new_users = data.iter().map(|data_point| data_point.count).sum();
@@ -68,7 +67,7 @@ impl ConnectionPool {
             query.from,
             query.to,
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?
         .into_iter()
         .map(|row| TorrentClientStatsDataPoint {
@@ -95,7 +94,7 @@ impl ConnectionPool {
             query.from,
             query.to,
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(UserStatsResponse {

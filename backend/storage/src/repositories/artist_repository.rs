@@ -13,8 +13,7 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use sqlx::{PgPool, Postgres, Transaction};
-use std::borrow::Borrow;
+use sqlx::{Postgres, Transaction};
 use std::collections::HashMap;
 use tokio::sync::broadcast;
 
@@ -24,9 +23,7 @@ impl ConnectionPool {
         artists: &Vec<UserCreatedArtist>,
         current_user_id: i32,
     ) -> Result<Vec<Artist>> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let mut created_artists = Vec::new();
 
@@ -66,9 +63,7 @@ impl ConnectionPool {
         current_user_id: i32,
         notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<Vec<AffiliatedArtistHierarchy>> {
-        let mut tx: Transaction<'_, Postgres> = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx: Transaction<'_, Postgres> = self.pool.begin().await?;
 
         let values: Vec<String> = (0..artists.len())
             .map(|i| {
@@ -210,7 +205,7 @@ impl ConnectionPool {
             name,
             limit
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotSearchForArtists)?;
 
@@ -235,7 +230,7 @@ impl ConnectionPool {
             "#,
             form.name,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .unwrap()
         .unwrap();
@@ -266,7 +261,7 @@ impl ConnectionPool {
             form.order_by_column.to_string(),
             form.order_by_direction.to_string()
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(PaginatedResults {
@@ -287,7 +282,7 @@ impl ConnectionPool {
             "#,
             artist_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindArtist)
     }
@@ -336,7 +331,7 @@ impl ConnectionPool {
             artist_id,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindArtist)?;
 
@@ -369,7 +364,7 @@ impl ConnectionPool {
             &updated_artist.external_links,
             updated_artist.id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotUpdateArtist)
     }
@@ -380,7 +375,7 @@ impl ConnectionPool {
             pictures,
             artist_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotUpdateArtist)?;
         Ok(())
@@ -396,7 +391,7 @@ impl ConnectionPool {
             "#,
         )
         .bind(affiliation_ids)
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         sqlx::query!(
@@ -406,7 +401,7 @@ impl ConnectionPool {
             "#,
             &affiliation_ids
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Update title_groups_amount for each affected artist
@@ -419,7 +414,7 @@ impl ConnectionPool {
                 "#,
                 artist_id
             )
-            .execute(self.borrow())
+            .execute(&self.pool)
             .await?;
         }
 
@@ -457,7 +452,7 @@ impl ConnectionPool {
                 OR a.total_size != COALESCE(s.total_size, 0))
             "#
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(result.rows_affected())
@@ -471,7 +466,7 @@ impl ConnectionPool {
             "#,
             artist_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteArtist)?;
 

@@ -18,36 +18,21 @@ use crate::models::{
 use crate::utils::compute_diff;
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type, ToSchema, Clone, PartialEq, Eq)]
-#[sqlx(type_name = "content_type_enum")]
+#[sqlx(type_name = "content_type_enum", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum ContentType {
-    #[sqlx(rename = "movie")]
-    #[serde(rename = "movie")]
     Movie,
-    #[sqlx(rename = "video")]
-    #[serde(rename = "video")]
     Video,
     #[sqlx(rename = "tv_show")]
     #[serde(rename = "tv_show")]
     TVShow,
-    #[sqlx(rename = "music")]
-    #[serde(rename = "music")]
     Music,
-    #[sqlx(rename = "podcast")]
-    #[serde(rename = "podcast")]
     Podcast,
-    #[sqlx(rename = "software")]
-    #[serde(rename = "software")]
     Software,
-    #[sqlx(rename = "book")]
-    #[serde(rename = "book")]
     Book,
-    #[sqlx(rename = "live_performance")]
-    #[serde(rename = "live_performance")]
     LivePerformance,
     // aka SiteRip, but also includes packs of other content than website dumps (books, etc.)
     // this allows users to group content (when possible), which lowers the load on the tracker and makes the upload process faster (1 announce instead of multiple)
-    #[sqlx(rename = "collection")]
-    #[serde(rename = "collection")]
     Collection,
 }
 

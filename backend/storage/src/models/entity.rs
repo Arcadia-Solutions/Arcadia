@@ -4,22 +4,13 @@ use sqlx::prelude::FromRow;
 use utoipa::ToSchema;
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type, ToSchema)]
-#[sqlx(type_name = "entity_role_enum")]
+#[sqlx(type_name = "entity_role_enum", rename_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum EntityRole {
-    #[serde(rename = "producer")]
-    #[sqlx(rename = "producer")]
     Producer,
-    #[serde(rename = "developer")]
-    #[sqlx(rename = "developer")]
     Developer,
-    #[serde(rename = "designer")]
-    #[sqlx(rename = "designer")]
     Designer,
-    #[serde(rename = "label")]
-    #[sqlx(rename = "label")]
     Label,
-    #[serde(rename = "network")]
-    #[sqlx(rename = "network")]
     Network,
 }
 #[derive(Debug, Deserialize, Serialize, FromRow, ToSchema)]

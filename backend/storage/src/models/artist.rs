@@ -97,73 +97,30 @@ pub struct ArtistSearchResult {
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type, ToSchema, PartialEq)]
-#[sqlx(type_name = "artist_role_enum")]
+#[sqlx(type_name = "artist_role_enum", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum ArtistRole {
-    #[serde(rename = "main")]
-    #[sqlx(rename = "main")]
     Main,
-    #[serde(rename = "guest")]
-    #[sqlx(rename = "guest")]
     Guest,
-    #[serde(rename = "producer")]
-    #[sqlx(rename = "producer")]
     Producer,
-    #[serde(rename = "director")]
-    #[sqlx(rename = "director")]
     Director,
-    #[serde(rename = "cinematographer")]
-    #[sqlx(rename = "cinematographer")]
     Cinematographer,
-    #[serde(rename = "actor")]
-    #[sqlx(rename = "actor")]
     Actor,
-    #[serde(rename = "writer")]
-    #[sqlx(rename = "writer")]
     Writer,
-    #[serde(rename = "composer")]
-    #[sqlx(rename = "composer")]
     Composer,
-    #[serde(rename = "remixer")]
-    #[sqlx(rename = "remixer")]
     Remixer,
-    #[serde(rename = "conductor")]
-    #[sqlx(rename = "conductor")]
     Conductor,
-    #[serde(rename = "dj_compiler")]
-    #[sqlx(rename = "dj_compiler")]
     DjCompiler,
-    #[serde(rename = "arranger")]
-    #[sqlx(rename = "arranger")]
     Arranger,
-    #[serde(rename = "host")]
-    #[sqlx(rename = "host")]
     Host,
-    #[serde(rename = "author")]
-    #[sqlx(rename = "author")]
     Author,
-    #[serde(rename = "illustrator")]
-    #[sqlx(rename = "illustrator")]
     Illustrator,
-    #[serde(rename = "editor")]
-    #[sqlx(rename = "editor")]
     Editor,
-    #[serde(rename = "developer")]
-    #[sqlx(rename = "developer")]
     Developer,
-    #[serde(rename = "designer")]
-    #[sqlx(rename = "designer")]
     Designer,
-    #[serde(rename = "creator")]
-    #[sqlx(rename = "creator")]
     Creator,
-    #[serde(rename = "performer")]
-    #[sqlx(rename = "performer")]
     Performer,
-    #[serde(rename = "presenter")]
-    #[sqlx(rename = "presenter")]
     Presenter,
-    #[serde(rename = "contributor")]
-    #[sqlx(rename = "contributor")]
     Contributor,
 }
 

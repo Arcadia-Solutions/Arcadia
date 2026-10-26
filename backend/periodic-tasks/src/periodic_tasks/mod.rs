@@ -1,12 +1,7 @@
-pub mod announce_errors;
 pub mod bonus_points;
-pub mod expired_warnings;
 pub mod inactive_users;
 pub mod materialized_views;
-pub mod peers;
-pub mod reseed_requests;
 pub mod scheduler;
 pub mod seeding_size;
-pub mod torrents;
 pub mod user_badges;
 pub mod user_classes;

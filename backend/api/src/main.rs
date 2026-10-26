@@ -75,11 +75,7 @@ async fn main() -> std::io::Result<()> {
     // Initialize and start periodic tasks before starting the web server
     // This ensures that if periodic tasks fail to initialize (e.g., an invalid bonus formula),
     // the entire application fails to start
-    let store = Arc::new(arcadia_periodic_tasks::store::Store::new(
-        Arc::clone(&pool),
-        config.periodic_tasks.clone(),
-    ));
-    let _scheduler = run_periodic_tasks(store)
+    let _scheduler = run_periodic_tasks(Arc::clone(&pool), config.periodic_tasks.clone())
         .await
         .expect("Failed to initialize periodic tasks");
 

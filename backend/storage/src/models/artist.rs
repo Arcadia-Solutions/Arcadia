@@ -29,12 +29,6 @@ pub struct Artist {
     pub total_size: i64,
 }
 
-#[derive(Debug, Deserialize, Serialize, FromRow)]
-pub struct SimilarArtists {
-    pub artist_1_id: i64,
-    pub artist_2_id: i64,
-}
-
 #[derive(Debug, Deserialize, Serialize, FromRow, ToSchema)]
 pub struct UserCreatedArtist {
     pub name: String,

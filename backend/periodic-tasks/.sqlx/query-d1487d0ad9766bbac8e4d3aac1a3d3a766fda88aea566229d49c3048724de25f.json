@@ -1,0 +1,109 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                fp.id,\n                fp.content,\n                fp.created_at,\n                fp.updated_at,\n                fp.sticky,\n                fp.locked,\n                fp.forum_thread_id,\n                ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS \"created_by!: UserLiteAvatar\"\n            FROM forum_posts fp\n            JOIN users u ON fp.created_by_id = u.id\n            WHERE fp.forum_thread_id = $1\n            ORDER BY fp.created_at ASC\n            OFFSET $2\n            LIMIT $3\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "forum_posts",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "content",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "forum_posts",
+            "name": "content"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "forum_posts",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "forum_posts",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "sticky",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "forum_posts",
+            "name": "sticky"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "locked",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "forum_posts",
+            "name": "locked"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "forum_thread_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "forum_posts",
+            "name": "forum_thread_id"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "created_by!: UserLiteAvatar",
+        "type_info": "Record",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "d1487d0ad9766bbac8e4d3aac1a3d3a766fda88aea566229d49c3048724de25f"
+}

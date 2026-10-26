@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE title_group_bookmarks source\n            SET title_group_id = $2\n            WHERE source.title_group_id = $1\n              AND NOT EXISTS (\n                  SELECT 1 FROM title_group_bookmarks target\n                  WHERE target.title_group_id = $2 AND target.user_id = source.user_id\n              )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9f5d381194586fc6f7cc10b2216dec44499da9153975a68a05d8b46f139aa430"
+}

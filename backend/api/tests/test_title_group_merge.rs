@@ -5,6 +5,7 @@ use crate::common::TestUser;
 use actix_web::http::StatusCode;
 use actix_web::test;
 use arcadia_storage::connection_pool::ConnectionPool;
+use arcadia_storage::models::{artist::ArtistRole, entity::EntityRole};
 use common::{auth_header, create_test_app_and_login};
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
@@ -146,6 +147,32 @@ async fn test_merge_title_groups_moves_all_related_data(pool: PgPool) {
     assert!(target_title_group
         .external_links
         .contains(&"https://shared.example.com".to_string()));
+
+    // Conflicts keep the target's row
+    let target_hierarchy = pool.find_title_group_hierarchy(11, 146).await.unwrap();
+    let shared_artist = target_hierarchy
+        .affiliated_artists
+        .iter()
+        .find(|affiliated_artist| affiliated_artist.artist_id == 12)
+        .unwrap();
+    assert_eq!(shared_artist.roles, vec![ArtistRole::Guest]);
+    assert_eq!(target_hierarchy.affiliated_entities.len(), 2);
+    let shared_entity = target_hierarchy
+        .affiliated_entities
+        .iter()
+        .find(|affiliated_entity| affiliated_entity.entity_id == 11)
+        .unwrap();
+    assert!(matches!(shared_entity.roles[..], [EntityRole::Label]));
+    assert_eq!(target_hierarchy.bookmark_id, Some(12));
+    assert!(target_hierarchy.is_subscribed_to_torrents);
+    assert!(target_hierarchy.is_subscribed_to_comments);
+
+    // Notifications follow the merged title group
+    let notifications = pool.find_all_notifications(100, true).await.unwrap();
+    assert_eq!(notifications.title_group_comments.len(), 1);
+    assert_eq!(notifications.title_group_comments[0].title_group_id, 11);
+    assert_eq!(notifications.artist_title_groups.len(), 1);
+    assert_eq!(notifications.artist_title_groups[0].title_group_id, 11);
 
     // No data should remain referencing source title group
     let source_anything: (i64,) =

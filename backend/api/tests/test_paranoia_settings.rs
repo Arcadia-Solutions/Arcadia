@@ -509,7 +509,15 @@ async fn test_paranoia_settings_hide_the_forum_posts_list(pool: PgPool) {
         search_forum_posts_request(&basic_user.token),
     )
     .await;
-    assert!(!own_posts.results.is_empty());
+    let created_by = &own_posts.results[0].post.created_by;
+    assert_eq!(
+        (created_by.id, created_by.username.as_str()),
+        (BASIC_USER_ID, "user_basic")
+    );
+    assert_eq!(
+        own_posts.results[0].thread_name,
+        "Thread in Different Sub Category"
+    );
 
     // another user cannot list them
     let other_user = login_as(&service, TestUser::EditArtist).await;
@@ -562,14 +570,22 @@ async fn test_paranoia_settings_hide_the_comment_lists(pool: PgPool) {
             search_title_group_comments_request(&basic_user.token),
         )
         .await;
-    assert!(!own_title_group_comments.results.is_empty());
+    let created_by = &own_title_group_comments.results[0].comment.created_by;
+    assert_eq!(
+        (created_by.id, created_by.username.as_str()),
+        (BASIC_USER_ID, "user_basic")
+    );
     let own_request_comments =
         call_and_read_body_json::<PaginatedResults<TorrentRequestCommentWithLocation>, _>(
             &service,
             search_torrent_request_comments_request(&basic_user.token),
         )
         .await;
-    assert!(!own_request_comments.results.is_empty());
+    let created_by = &own_request_comments.results[0].comment.created_by;
+    assert_eq!(
+        (created_by.id, created_by.username.as_str()),
+        (BASIC_USER_ID, "user_basic")
+    );
 
     // another user cannot list them
     let other_user = login_as(&service, TestUser::EditArtist).await;

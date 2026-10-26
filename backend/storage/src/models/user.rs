@@ -409,7 +409,7 @@ pub struct UserLite {
     pub banned: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema, Decode)]
 pub struct UserLiteAvatar {
     pub id: i32,
     pub username: String,

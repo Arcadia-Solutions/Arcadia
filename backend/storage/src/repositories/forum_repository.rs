@@ -21,75 +21,10 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use chrono::{DateTime, Local, Utc};
+use chrono::Local;
 use serde_json::Value;
-use sqlx::{prelude::FromRow, Postgres, Transaction};
+use sqlx::{Postgres, Transaction};
 use tokio::sync::broadcast;
-
-#[derive(FromRow)]
-#[allow(dead_code)]
-struct DBImportSubCategoryWithLatestPost {
-    id: i32,
-    name: String,
-    sort_order: i32,
-    threads_amount: i64,
-    posts_amount: i64,
-    forbidden_classes: Vec<String>,
-    new_threads_restricted: bool,
-    thread_sort_by: ForumThreadSortBy,
-    thread_sort_direction: ForumThreadSortDirection,
-    forum_category_id: i32,
-    category_name: String,
-    latest_post_id: Option<i64>,
-    thread_id: Option<i64>,
-    thread_name: Option<String>,
-    latest_post_created_at: Option<DateTime<Utc>>,
-    user_id: Option<i32>,
-    username: Option<String>,
-    warned: Option<bool>,
-    banned: Option<bool>,
-}
-
-#[derive(Debug, FromRow)]
-struct DBImportForumPost {
-    id: i64,
-    content: String,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
-    sticky: bool,
-    locked: bool,
-    forum_thread_id: i64,
-    created_by_user_id: i32,
-    created_by_user_username: String,
-    created_by_user_class_name: String,
-    created_by_user_avatar: Option<String>,
-    created_by_user_banned: bool,
-    created_by_user_warned: bool,
-    created_by_user_custom_title: Option<String>,
-}
-
-#[derive(Debug, FromRow)]
-struct DBImportForumPostWithLocation {
-    id: i64,
-    content: String,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
-    sticky: bool,
-    locked: bool,
-    forum_thread_id: i64,
-    created_by_user_id: i32,
-    created_by_user_username: String,
-    created_by_user_class_name: String,
-    created_by_user_avatar: Option<String>,
-    created_by_user_banned: bool,
-    created_by_user_warned: bool,
-    created_by_user_custom_title: Option<String>,
-    thread_name: String,
-    sub_category_id: i32,
-    sub_category_name: String,
-    category_id: i32,
-    category_name: String,
-}
 
 impl ConnectionPool {
     pub async fn create_forum_post(
@@ -515,15 +450,14 @@ impl ConnectionPool {
         .map_err(Error::CouldNotFindForumSubCategory)?;
 
         // Query all subcategories with their latest posts in one query
-        let sub_categories_data = sqlx::query_as!(
-            DBImportSubCategoryWithLatestPost,
+        let sub_categories_data = sqlx::query!(
             r#"
-            SELECT fsc.id, fsc.name, fsc.sort_order, fsc.threads_amount, fsc.posts_amount, fsc.forbidden_classes,
+            SELECT fsc.id, fsc.name, fsc.threads_amount, fsc.posts_amount, fsc.forbidden_classes,
                    fsc.new_threads_restricted, fsc.thread_sort_by AS "thread_sort_by: ForumThreadSortBy",
                    fsc.thread_sort_direction AS "thread_sort_direction: ForumThreadSortDirection",
                    fsc.forum_category_id, fc.name AS category_name,
                    fp.id AS "latest_post_id?", ft.id AS "thread_id?", ft.name AS "thread_name?", fp.created_at AS "latest_post_created_at?",
-                   u.id AS "user_id?", u.username AS "username?", u.warned AS "warned?", u.banned AS "banned?"
+                   CASE WHEN u.id IS NOT NULL THEN ROW(u.id, u.username, u.warned, u.banned) END AS "latest_post_created_by?: UserLite"
             FROM forum_sub_categories fsc
             INNER JOIN forum_categories fc ON fsc.forum_category_id = fc.id
             LEFT JOIN LATERAL (
@@ -564,32 +498,17 @@ impl ConnectionPool {
                     sc.thread_id,
                     sc.thread_name,
                     sc.latest_post_created_at,
-                    sc.user_id,
-                    sc.username,
-                    sc.warned,
-                    sc.banned,
+                    sc.latest_post_created_by,
                 ) {
-                    (
-                        Some(id),
-                        Some(thread_id),
-                        Some(name),
-                        Some(created_at),
-                        Some(user_id),
-                        Some(username),
-                        Some(warned),
-                        Some(banned),
-                    ) => Some(ForumThreadPostLite {
-                        id,
-                        thread_id,
-                        name,
-                        created_at: created_at.with_timezone(&Local),
-                        created_by: UserLite {
-                            id: user_id,
-                            username,
-                            warned,
-                            banned,
-                        },
-                    }),
+                    (Some(id), Some(thread_id), Some(name), Some(created_at), Some(created_by)) => {
+                        Some(ForumThreadPostLite {
+                            id,
+                            thread_id,
+                            name,
+                            created_at: created_at.with_timezone(&Local),
+                            created_by,
+                        })
+                    }
                     _ => None,
                 },
                 threads: None,
@@ -1046,8 +965,7 @@ impl ConnectionPool {
             ((form.page.unwrap_or(1) - 1) as i64) * page_size
         };
 
-        let posts = sqlx::query_as!(
-            DBImportForumPost,
+        let posts = sqlx::query!(
             r#"
             SELECT
                 fp.id,
@@ -1057,13 +975,7 @@ impl ConnectionPool {
                 fp.sticky,
                 fp.locked,
                 fp.forum_thread_id,
-                u.id AS created_by_user_id,
-                u.username AS created_by_user_username,
-                u.class_name AS created_by_user_class_name,
-                u.avatar AS created_by_user_avatar,
-                u.banned AS created_by_user_banned,
-                u.warned AS created_by_user_warned,
-                u.custom_title AS created_by_user_custom_title
+                ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS "created_by!: UserLiteAvatar"
             FROM forum_posts fp
             JOIN users u ON fp.created_by_id = u.id
             WHERE fp.forum_thread_id = $1
@@ -1110,15 +1022,7 @@ impl ConnectionPool {
                 sticky: r.sticky,
                 locked: r.locked,
                 forum_thread_id: r.forum_thread_id,
-                created_by: UserLiteAvatar {
-                    id: r.created_by_user_id,
-                    username: r.created_by_user_username,
-                    class_name: r.created_by_user_class_name,
-                    avatar: r.created_by_user_avatar,
-                    banned: r.created_by_user_banned,
-                    warned: r.created_by_user_warned,
-                    custom_title: r.created_by_user_custom_title,
-                },
+                created_by: r.created_by,
                 reactions: reactions_per_post.remove(&r.id).unwrap_or_default(),
             })
             .collect();
@@ -1242,8 +1146,7 @@ impl ConnectionPool {
         let limit = form.page_size as i64;
         let offset = (form.page - 1) as i64 * form.page_size as i64;
 
-        let posts = sqlx::query_as!(
-            DBImportForumPostWithLocation,
+        let posts = sqlx::query!(
             r#"
             SELECT
                 p.id,
@@ -1253,13 +1156,7 @@ impl ConnectionPool {
                 p.sticky,
                 p.locked,
                 p.forum_thread_id,
-                u.id AS created_by_user_id,
-                u.username AS created_by_user_username,
-                u.class_name AS created_by_user_class_name,
-                u.avatar AS created_by_user_avatar,
-                u.banned AS created_by_user_banned,
-                u.warned AS created_by_user_warned,
-                u.custom_title AS created_by_user_custom_title,
+                ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS "created_by!: UserLiteAvatar",
                 t.name AS thread_name,
                 s.id AS sub_category_id,
                 s.name AS sub_category_name,
@@ -1296,15 +1193,7 @@ impl ConnectionPool {
                     content: post.content,
                     sticky: post.sticky,
                     locked: post.locked,
-                    created_by: UserLiteAvatar {
-                        id: post.created_by_user_id,
-                        username: post.created_by_user_username,
-                        class_name: post.created_by_user_class_name,
-                        avatar: post.created_by_user_avatar,
-                        banned: post.created_by_user_banned,
-                        warned: post.created_by_user_warned,
-                        custom_title: post.created_by_user_custom_title,
-                    },
+                    created_by: post.created_by,
                     reactions: Vec::new(),
                 },
                 thread_name: post.thread_name,

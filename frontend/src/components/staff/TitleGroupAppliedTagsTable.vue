@@ -56,6 +56,10 @@
           size="small"
           @update:modelValue="customRange?.[1] && search()"
         />
+        <div class="checkbox">
+          <Checkbox v-model="excludeTitleGroupCreator" binary size="small" inputId="exclude-title-group-creator" @change="search" />
+          <label for="exclude-title-group-creator">{{ t('applied_tag.exclude_title_group_creator') }}</label>
+        </div>
         <Button :label="t('general.search')" size="small" :loading @click="search" />
       </div>
     </ContentContainer>
@@ -112,7 +116,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { AutoComplete, Button, Column, DataTable, DatePicker, InputText, Message, Select, type DataTableSortEvent } from 'primevue'
+import { AutoComplete, Button, Checkbox, Column, DataTable, DatePicker, InputText, Message, Select, type DataTableSortEvent } from 'primevue'
 import ContentContainer from '@/components/ContentContainer.vue'
 import PaginatedResults from '@/components/PaginatedResults.vue'
 import TimeAgo from '@/components/TimeAgo.vue'
@@ -138,6 +142,7 @@ const username = ref('')
 const titleGroupName = ref('')
 const foundTagNames = ref<string[]>([])
 const contentType = ref<ContentType | null>(null)
+const excludeTitleGroupCreator = ref(false)
 const period = ref('all_time')
 const customRange = ref<(Date | null)[] | null>(null)
 const periodDays: Record<string, number> = { last_day: 1, last_week: 7, last_month: 30, last_year: 365 }
@@ -178,6 +183,7 @@ const fetchAppliedTags = () => {
     tag_name: tagName.value || undefined,
     username: username.value || undefined,
     title_group_name: titleGroupName.value || undefined,
+    exclude_title_group_creator: excludeTitleGroupCreator.value,
     page: page.value,
     page_size: pageSize,
     order_by_column: sortField.value,
@@ -227,6 +233,11 @@ onMounted(fetchAppliedTags)
   flex-wrap: wrap;
   align-items: center;
   gap: 15px;
+}
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 .applied-tags :deep(.p-datatable-column-header-content) {
   margin-right: 0.8rem;

@@ -3197,6 +3197,10 @@ export interface SearchTitleGroupAppliedTagsQuery {
      */
     'user_applied_tags_before'?: string | null;
     /**
+     * when true, only the tags applied by a user who did not create the title group are returned
+     */
+    'exclude_title_group_creator': boolean;
+    /**
      * partial username of the user who applied the tag
      */
     'username'?: string | null;
@@ -7786,6 +7790,7 @@ export interface SearchTitleGroupAppliedTagsRequest {
     'content_type'?: ContentType | null;
     'user_applied_tags_after'?: string | null;
     'user_applied_tags_before'?: string | null;
+    'exclude_title_group_creator': boolean;
 }
 
 
@@ -7794,7 +7799,7 @@ export const searchTitleGroupAppliedTags = async (request: SearchTitleGroupAppli
     const response = await globalAxios.request<SearchTitleGroupAppliedTags200Response>({
         url: `/api/title-group-tags/applied`,
         method: 'GET',
-        params: { 'tag_name': request['tag_name'], 'username': request['username'], 'title_group_name': request['title_group_name'], 'content_type': request['content_type'], 'user_applied_tags_after': request['user_applied_tags_after'], 'user_applied_tags_before': request['user_applied_tags_before'], 'page': request['page'], 'page_size': request['page_size'], 'order_by_column': request['order_by_column'], 'order_by_direction': request['order_by_direction'] },
+        params: { 'tag_name': request['tag_name'], 'username': request['username'], 'title_group_name': request['title_group_name'], 'content_type': request['content_type'], 'user_applied_tags_after': request['user_applied_tags_after'], 'user_applied_tags_before': request['user_applied_tags_before'], 'exclude_title_group_creator': request['exclude_title_group_creator'], 'page': request['page'], 'page_size': request['page_size'], 'order_by_column': request['order_by_column'], 'order_by_direction': request['order_by_direction'] },
         ...options
     });
     return response.data.data;

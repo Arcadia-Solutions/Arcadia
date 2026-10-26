@@ -652,11 +652,13 @@ impl ConnectionPool {
               AND ($2::TEXT IS NULL OR u.username ILIKE '%' || $2 || '%')
               AND ($3::TEXT IS NULL OR tg.name ILIKE '%' || $3 || '%')
               AND ($4::content_type_enum IS NULL OR tg.content_type = $4)
+              AND (NOT $5 OR applied_tag.created_by_id <> tg.created_by_id)
             "#,
             query.tag_name,
             query.username,
             query.title_group_name,
-            &query.content_type as &Option<ContentType>
+            &query.content_type as &Option<ContentType>,
+            query.exclude_title_group_creator
         )
         .fetch_one(&self.pool)
         .await?
@@ -702,14 +704,17 @@ impl ConnectionPool {
             CROSS JOIN LATERAL (
                 SELECT COUNT(*) AS amount
                 FROM title_group_applied_tags user_applied_tag
+                JOIN title_groups user_applied_tag_title_group ON user_applied_tag_title_group.id = user_applied_tag.title_group_id
                 WHERE user_applied_tag.created_by_id = applied_tag.created_by_id
                   AND ($9::TIMESTAMPTZ IS NULL OR user_applied_tag.created_at >= $9)
                   AND ($10::TIMESTAMPTZ IS NULL OR user_applied_tag.created_at <= $10)
+                  AND (NOT $11 OR user_applied_tag.created_by_id <> user_applied_tag_title_group.created_by_id)
             ) user_applied_tags
             WHERE ($1::TEXT IS NULL OR tag.name = $1)
               AND ($2::TEXT IS NULL OR u.username ILIKE '%' || $2 || '%')
               AND ($3::TEXT IS NULL OR tg.name ILIKE '%' || $3 || '%')
               AND ($8::content_type_enum IS NULL OR tg.content_type = $8)
+              AND (NOT $11 OR applied_tag.created_by_id <> tg.created_by_id)
             ORDER BY
                 CASE WHEN $4 = 'tag_name' AND $5 = 'asc' THEN tag.name END ASC,
                 CASE WHEN $4 = 'tag_name' AND $5 = 'desc' THEN tag.name END DESC,
@@ -737,7 +742,8 @@ impl ConnectionPool {
             offset,
             &query.content_type as &Option<ContentType>,
             query.user_applied_tags_after,
-            query.user_applied_tags_before
+            query.user_applied_tags_before,
+            query.exclude_title_group_creator
         )
         .fetch_all(&self.pool)
         .await?;

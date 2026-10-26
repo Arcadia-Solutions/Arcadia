@@ -1,0 +1,44 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT COUNT(*)::BIGINT\n            FROM title_group_applied_tags applied_tag\n            JOIN title_group_tags tag ON tag.id = applied_tag.tag_id\n            JOIN users u ON u.id = applied_tag.created_by_id\n            JOIN title_groups tg ON tg.id = applied_tag.title_group_id\n            WHERE ($1::TEXT IS NULL OR tag.name = $1)\n              AND ($2::TEXT IS NULL OR u.username ILIKE '%' || $2 || '%')\n              AND ($3::TEXT IS NULL OR tg.name ILIKE '%' || $3 || '%')\n              AND ($4::content_type_enum IS NULL OR tg.content_type = $4)\n              AND (NOT $5 OR applied_tag.created_by_id <> tg.created_by_id)\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "content_type_enum",
+            "kind": {
+              "Enum": [
+                "movie",
+                "video",
+                "tv_show",
+                "music",
+                "podcast",
+                "software",
+                "book",
+                "live_performance",
+                "collection"
+              ]
+            }
+          }
+        },
+        "Bool"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "c167f43e06b5c2f98b89f0f91912accf955031de9b5e1c0a72c88e37284cb87a"
+}

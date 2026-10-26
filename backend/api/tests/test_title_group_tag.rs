@@ -362,7 +362,7 @@ async fn test_search_title_group_applied_tags(pool: PgPool) {
     let search = |filters: &str| {
         test::TestRequest::get()
             .uri(&format!(
-                "/api/title-group-tags/applied?page=1&page_size=10&order_by_column=title_group_tags_amount&order_by_direction=desc{filters}"
+                "/api/title-group-tags/applied?page=1&page_size=10&order_by_column=title_group_tags_amount&order_by_direction=desc&exclude_title_group_creator=false{filters}"
             ))
             .insert_header(auth_header(&manage_user.token))
             .to_request()
@@ -403,4 +403,49 @@ async fn test_search_title_group_applied_tags(pool: PgPool) {
         .await;
     assert_eq!(results.total_items, 1);
     assert_eq!(results.results[0].user_applied_tags_amount, 0);
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_title_group",
+        "with_test_title_group_tag",
+        "with_test_title_group_tag_applied",
+        "with_test_title_group_tag_applied_by_title_group_creator"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_search_title_group_applied_tags_excluding_title_group_creator(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, manage_user) = create_test_app_and_login(
+        pool.clone(),
+        MockRedisPool::default(),
+        TestUser::ManageTitleGroupTags,
+    )
+    .await;
+
+    // user 100 applied "action" on title group 1 and "drama" on their own title group 3
+    for (exclude_title_group_creator, expected_tag_names, expected_user_applied_tags_amount) in [
+        (false, vec!["action", "drama", "drama"], 2),
+        (true, vec!["action"], 1),
+    ] {
+        let request = test::TestRequest::get()
+            .uri(&format!(
+                "/api/title-group-tags/applied?page=1&page_size=10&order_by_column=tag_name&order_by_direction=asc&exclude_title_group_creator={exclude_title_group_creator}"
+            ))
+            .insert_header(auth_header(&manage_user.token))
+            .to_request();
+        let results: PaginatedResults<TitleGroupAppliedTag> =
+            common::call_and_read_body_json_with_status(&service, request, StatusCode::OK).await;
+        let tag_names: Vec<&str> = results
+            .results
+            .iter()
+            .map(|tag| tag.tag_name.as_str())
+            .collect();
+        assert_eq!(tag_names, expected_tag_names);
+        assert_eq!(
+            results.results[0].user_applied_tags_amount,
+            expected_user_applied_tags_amount
+        );
+    }
 }

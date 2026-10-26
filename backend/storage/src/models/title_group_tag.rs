@@ -144,6 +144,8 @@ pub struct SearchTitleGroupAppliedTagsQuery {
     #[schema(value_type = Option<String>, format = DateTime)]
     #[param(value_type = Option<String>, format = DateTime)]
     pub user_applied_tags_before: Option<DateTime<Utc>>,
+    /// when true, only the tags applied by a user who did not create the title group are returned
+    pub exclude_title_group_creator: bool,
     // pagination and ordering
     pub page: u32,
     pub page_size: u32,

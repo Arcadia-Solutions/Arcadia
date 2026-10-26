@@ -11,7 +11,6 @@ use crate::{
 use arcadia_common::error::{Error, Result};
 use chrono::{DateTime, Utc};
 use sqlx::FromRow;
-use std::borrow::Borrow;
 
 #[derive(Debug, FromRow)]
 struct DBImportDonationSearchResult {
@@ -64,7 +63,7 @@ impl ConnectionPool {
             query.donated_at_start,
             query.donated_at_end
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         let aggregates = sqlx::query!(
@@ -87,7 +86,7 @@ impl ConnectionPool {
             query.donated_at_start,
             query.donated_at_end
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         let db_results = sqlx::query_as!(
@@ -145,7 +144,7 @@ impl ConnectionPool {
             query.order_by_column.to_string(),
             query.order_by_direction.to_string()
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFetchDonations)?;
 
@@ -209,7 +208,7 @@ impl ConnectionPool {
                 request.amount,
                 request.note
             )
-            .fetch_one(self.borrow())
+            .fetch_one(&self.pool)
             .await
             .map_err(Error::CouldNotCreateDonation)?
         } else {
@@ -225,7 +224,7 @@ impl ConnectionPool {
                 request.amount,
                 request.note
             )
-            .fetch_one(self.borrow())
+            .fetch_one(&self.pool)
             .await
             .map_err(Error::CouldNotCreateDonation)?
         };
@@ -242,7 +241,7 @@ impl ConnectionPool {
             "#,
             id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFetchDonation)?;
 
@@ -267,7 +266,7 @@ impl ConnectionPool {
             request.note,
             request.id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotUpdateDonation)?;
 
@@ -282,7 +281,7 @@ impl ConnectionPool {
             "#,
             id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteDonation)?;
 

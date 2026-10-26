@@ -21,76 +21,10 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use chrono::{DateTime, Local, Utc};
+use chrono::Local;
 use serde_json::Value;
-use sqlx::{prelude::FromRow, PgPool, Postgres, Transaction};
-use std::borrow::Borrow;
+use sqlx::{Postgres, Transaction};
 use tokio::sync::broadcast;
-
-#[derive(FromRow)]
-#[allow(dead_code)]
-struct DBImportSubCategoryWithLatestPost {
-    id: i32,
-    name: String,
-    sort_order: i32,
-    threads_amount: i64,
-    posts_amount: i64,
-    forbidden_classes: Vec<String>,
-    new_threads_restricted: bool,
-    thread_sort_by: ForumThreadSortBy,
-    thread_sort_direction: ForumThreadSortDirection,
-    forum_category_id: i32,
-    category_name: String,
-    latest_post_id: Option<i64>,
-    thread_id: Option<i64>,
-    thread_name: Option<String>,
-    latest_post_created_at: Option<DateTime<Utc>>,
-    user_id: Option<i32>,
-    username: Option<String>,
-    warned: Option<bool>,
-    banned: Option<bool>,
-}
-
-#[derive(Debug, FromRow)]
-struct DBImportForumPost {
-    id: i64,
-    content: String,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
-    sticky: bool,
-    locked: bool,
-    forum_thread_id: i64,
-    created_by_user_id: i32,
-    created_by_user_username: String,
-    created_by_user_class_name: String,
-    created_by_user_avatar: Option<String>,
-    created_by_user_banned: bool,
-    created_by_user_warned: bool,
-    created_by_user_custom_title: Option<String>,
-}
-
-#[derive(Debug, FromRow)]
-struct DBImportForumPostWithLocation {
-    id: i64,
-    content: String,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
-    sticky: bool,
-    locked: bool,
-    forum_thread_id: i64,
-    created_by_user_id: i32,
-    created_by_user_username: String,
-    created_by_user_class_name: String,
-    created_by_user_avatar: Option<String>,
-    created_by_user_banned: bool,
-    created_by_user_warned: bool,
-    created_by_user_custom_title: Option<String>,
-    thread_name: String,
-    sub_category_id: i32,
-    sub_category_name: String,
-    category_id: i32,
-    category_name: String,
-}
 
 impl ConnectionPool {
     pub async fn create_forum_post(
@@ -103,9 +37,7 @@ impl ConnectionPool {
             return Err(Error::ForumPostEmpty);
         }
 
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let thread = sqlx::query!(
             r#"SELECT locked FROM forum_threads WHERE id = $1"#,
@@ -204,7 +136,7 @@ impl ConnectionPool {
             "#,
             forum_post_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumPost)?;
 
@@ -225,7 +157,7 @@ impl ConnectionPool {
             edited_post.locked,
             edited_post.id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotUpdateForumPost)?;
 
@@ -246,9 +178,7 @@ impl ConnectionPool {
             return Err(Error::ForumPostEmpty);
         }
 
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         // Check if the subcategory restricts thread creation
         let is_restricted = sqlx::query_scalar!(
@@ -349,7 +279,7 @@ impl ConnectionPool {
             r#"SELECT id, forum_sub_category_id, name, created_at, created_by_id, posts_amount, pinned, locked, views_count FROM forum_threads WHERE id = $1"#,
             created_forum_thread.id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumThread)?;
 
@@ -365,9 +295,7 @@ impl ConnectionPool {
             return Err(Error::ForumThreadNameEmpty);
         }
 
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         // Get current sub-category id
         let old_sub_category_id = sqlx::query_scalar!(
@@ -504,7 +432,7 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotUpsertForumThreadRead)?;
 
@@ -517,20 +445,19 @@ impl ConnectionPool {
             ForumCategoryLite,
             "SELECT id, name FROM forum_categories ORDER BY sort_order, id"
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumSubCategory)?;
 
         // Query all subcategories with their latest posts in one query
-        let sub_categories_data = sqlx::query_as!(
-            DBImportSubCategoryWithLatestPost,
+        let sub_categories_data = sqlx::query!(
             r#"
-            SELECT fsc.id, fsc.name, fsc.sort_order, fsc.threads_amount, fsc.posts_amount, fsc.forbidden_classes,
+            SELECT fsc.id, fsc.name, fsc.threads_amount, fsc.posts_amount, fsc.forbidden_classes,
                    fsc.new_threads_restricted, fsc.thread_sort_by AS "thread_sort_by: ForumThreadSortBy",
                    fsc.thread_sort_direction AS "thread_sort_direction: ForumThreadSortDirection",
                    fsc.forum_category_id, fc.name AS category_name,
                    fp.id AS "latest_post_id?", ft.id AS "thread_id?", ft.name AS "thread_name?", fp.created_at AS "latest_post_created_at?",
-                   u.id AS "user_id?", u.username AS "username?", u.warned AS "warned?", u.banned AS "banned?"
+                   CASE WHEN u.id IS NOT NULL THEN ROW(u.id, u.username, u.warned, u.banned) END AS "latest_post_created_by?: UserLite"
             FROM forum_sub_categories fsc
             INNER JOIN forum_categories fc ON fsc.forum_category_id = fc.id
             LEFT JOIN LATERAL (
@@ -545,7 +472,7 @@ impl ConnectionPool {
             ORDER BY fsc.forum_category_id, fsc.sort_order, fsc.id
             "#
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumSubCategory)?;
 
@@ -571,32 +498,17 @@ impl ConnectionPool {
                     sc.thread_id,
                     sc.thread_name,
                     sc.latest_post_created_at,
-                    sc.user_id,
-                    sc.username,
-                    sc.warned,
-                    sc.banned,
+                    sc.latest_post_created_by,
                 ) {
-                    (
-                        Some(id),
-                        Some(thread_id),
-                        Some(name),
-                        Some(created_at),
-                        Some(user_id),
-                        Some(username),
-                        Some(warned),
-                        Some(banned),
-                    ) => Some(ForumThreadPostLite {
-                        id,
-                        thread_id,
-                        name,
-                        created_at: created_at.with_timezone(&Local),
-                        created_by: UserLite {
-                            id: user_id,
-                            username,
-                            warned,
-                            banned,
-                        },
-                    }),
+                    (Some(id), Some(thread_id), Some(name), Some(created_at), Some(created_by)) => {
+                        Some(ForumThreadPostLite {
+                            id,
+                            thread_id,
+                            name,
+                            created_at: created_at.with_timezone(&Local),
+                            created_by,
+                        })
+                    }
                     _ => None,
                 },
                 threads: None,
@@ -743,7 +655,7 @@ impl ConnectionPool {
             forum_sub_category_id,
             user_id
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumSubCategory)?;
 
@@ -792,7 +704,7 @@ impl ConnectionPool {
             forum_thread_id,
             user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumThread)?;
 
@@ -820,7 +732,7 @@ impl ConnectionPool {
             r#"SELECT id, forum_thread_id, question, created_at, created_by_id FROM forum_polls WHERE forum_thread_id = $1"#,
             forum_thread_id
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumPoll)?;
 
@@ -833,7 +745,7 @@ impl ConnectionPool {
             poll.id,
             user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumPoll)?;
 
@@ -853,7 +765,7 @@ impl ConnectionPool {
             poll.id,
             has_voted
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumPoll)?;
 
@@ -866,7 +778,7 @@ impl ConnectionPool {
             poll.id,
             has_voted
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumPoll)?;
 
@@ -912,9 +824,7 @@ impl ConnectionPool {
             return Err(Error::ForumPollOptionsInsufficient);
         }
 
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let thread_creator_id = sqlx::query_scalar!(
             r#"SELECT created_by_id FROM forum_threads WHERE id = $1"#,
@@ -975,9 +885,7 @@ impl ConnectionPool {
         vote: &UserCreatedForumPollVote,
         user_id: i32,
     ) -> Result<ForumPollHierarchy> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let forum_thread_id = sqlx::query_scalar!(
             r#"SELECT forum_thread_id FROM forum_polls WHERE id = $1"#,
@@ -1046,7 +954,7 @@ impl ConnectionPool {
                 form.thread_id,
                 post_id
             )
-            .fetch_one(self.borrow())
+            .fetch_one(&self.pool)
             .await?
             .unwrap_or(0);
 
@@ -1057,8 +965,7 @@ impl ConnectionPool {
             ((form.page.unwrap_or(1) - 1) as i64) * page_size
         };
 
-        let posts = sqlx::query_as!(
-            DBImportForumPost,
+        let posts = sqlx::query!(
             r#"
             SELECT
                 fp.id,
@@ -1068,13 +975,7 @@ impl ConnectionPool {
                 fp.sticky,
                 fp.locked,
                 fp.forum_thread_id,
-                u.id AS created_by_user_id,
-                u.username AS created_by_user_username,
-                u.class_name AS created_by_user_class_name,
-                u.avatar AS created_by_user_avatar,
-                u.banned AS created_by_user_banned,
-                u.warned AS created_by_user_warned,
-                u.custom_title AS created_by_user_custom_title
+                ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS "created_by!: UserLiteAvatar"
             FROM forum_posts fp
             JOIN users u ON fp.created_by_id = u.id
             WHERE fp.forum_thread_id = $1
@@ -1086,7 +987,7 @@ impl ConnectionPool {
             offset,
             page_size
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumThread)?;
 
@@ -1094,16 +995,14 @@ impl ConnectionPool {
             r#"SELECT COUNT(id) FROM forum_posts WHERE forum_thread_id = $1"#,
             form.thread_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumThread)?
         .unwrap_or(0);
 
         // Track the last post ID on this page for read markers
         if let Some(last_post) = posts.last() {
-            let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-                .begin()
-                .await?;
+            let mut tx = self.pool.begin().await?;
             Self::upsert_forum_thread_read(&mut tx, form.thread_id, last_post.id, user_id).await?;
             tx.commit().await?;
         }
@@ -1123,15 +1022,7 @@ impl ConnectionPool {
                 sticky: r.sticky,
                 locked: r.locked,
                 forum_thread_id: r.forum_thread_id,
-                created_by: UserLiteAvatar {
-                    id: r.created_by_user_id,
-                    username: r.created_by_user_username,
-                    class_name: r.created_by_user_class_name,
-                    avatar: r.created_by_user_avatar,
-                    banned: r.created_by_user_banned,
-                    warned: r.created_by_user_warned,
-                    custom_title: r.created_by_user_custom_title,
-                },
+                created_by: r.created_by,
                 reactions: reactions_per_post.remove(&r.id).unwrap_or_default(),
             })
             .collect();
@@ -1176,7 +1067,7 @@ impl ConnectionPool {
             forum_sub_category_id,
             limit as i32
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumThreadsFirstPost)
     }
@@ -1225,7 +1116,7 @@ impl ConnectionPool {
             limit,
             offset
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumThreadsFirstPost)?;
 
@@ -1233,7 +1124,7 @@ impl ConnectionPool {
             "SELECT COUNT(*) AS total FROM forum_threads WHERE name ILIKE '%' || $1 || '%'",
             form.thread_name
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotSearchForumThreads)?
         .total
@@ -1255,8 +1146,7 @@ impl ConnectionPool {
         let limit = form.page_size as i64;
         let offset = (form.page - 1) as i64 * form.page_size as i64;
 
-        let posts = sqlx::query_as!(
-            DBImportForumPostWithLocation,
+        let posts = sqlx::query!(
             r#"
             SELECT
                 p.id,
@@ -1266,13 +1156,7 @@ impl ConnectionPool {
                 p.sticky,
                 p.locked,
                 p.forum_thread_id,
-                u.id AS created_by_user_id,
-                u.username AS created_by_user_username,
-                u.class_name AS created_by_user_class_name,
-                u.avatar AS created_by_user_avatar,
-                u.banned AS created_by_user_banned,
-                u.warned AS created_by_user_warned,
-                u.custom_title AS created_by_user_custom_title,
+                ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS "created_by!: UserLiteAvatar",
                 t.name AS thread_name,
                 s.id AS sub_category_id,
                 s.name AS sub_category_name,
@@ -1294,7 +1178,7 @@ impl ConnectionPool {
             limit,
             offset
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotSearchForumPosts)?;
 
@@ -1309,15 +1193,7 @@ impl ConnectionPool {
                     content: post.content,
                     sticky: post.sticky,
                     locked: post.locked,
-                    created_by: UserLiteAvatar {
-                        id: post.created_by_user_id,
-                        username: post.created_by_user_username,
-                        class_name: post.created_by_user_class_name,
-                        avatar: post.created_by_user_avatar,
-                        banned: post.created_by_user_banned,
-                        warned: post.created_by_user_warned,
-                        custom_title: post.created_by_user_custom_title,
-                    },
+                    created_by: post.created_by,
                     reactions: Vec::new(),
                 },
                 thread_name: post.thread_name,
@@ -1332,7 +1208,7 @@ impl ConnectionPool {
             "SELECT COUNT(*) AS total FROM forum_posts WHERE created_by_id = $1",
             form.created_by_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotSearchForumPosts)?
         .total
@@ -1352,7 +1228,7 @@ impl ConnectionPool {
             r#"SELECT id, name, sort_order, created_at, created_by_id FROM forum_categories WHERE id = $1"#,
             category_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::ForumCategoryNotFound)
     }
@@ -1382,7 +1258,7 @@ impl ConnectionPool {
             "#,
             sub_category_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumSubCategory)
     }
@@ -1406,7 +1282,7 @@ impl ConnectionPool {
             forum_category.name,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateForumCategory)?;
 
@@ -1432,7 +1308,7 @@ impl ConnectionPool {
             edited_category.name,
             edited_category.id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|e| match e {
             sqlx::Error::RowNotFound => Error::ForumCategoryNotFound,
@@ -1463,7 +1339,7 @@ impl ConnectionPool {
             current_user_id,
             forum_sub_category.new_threads_restricted
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateForumSubCategory)?;
 
@@ -1492,7 +1368,7 @@ impl ConnectionPool {
             edited_sub_category.thread_sort_direction as ForumThreadSortDirection,
             edited_sub_category.id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|e| match e {
             sqlx::Error::RowNotFound => Error::ForumSubCategoryNotFound,
@@ -1508,7 +1384,7 @@ impl ConnectionPool {
             r#"SELECT COUNT(*) FROM forum_sub_categories WHERE forum_category_id = $1"#,
             category_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteForumCategory)?
         .unwrap_or(0);
@@ -1519,7 +1395,7 @@ impl ConnectionPool {
 
         // Delete the category
         let result = sqlx::query!(r#"DELETE FROM forum_categories WHERE id = $1"#, category_id)
-            .execute(self.borrow())
+            .execute(&self.pool)
             .await
             .map_err(Error::CouldNotDeleteForumCategory)?;
 
@@ -1536,7 +1412,7 @@ impl ConnectionPool {
             r#"SELECT COUNT(*) FROM forum_threads WHERE forum_sub_category_id = $1"#,
             sub_category_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteForumSubCategory)?
         .unwrap_or(0);
@@ -1550,7 +1426,7 @@ impl ConnectionPool {
             r#"DELETE FROM forum_sub_categories WHERE id = $1"#,
             sub_category_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteForumSubCategory)?;
 
@@ -1562,9 +1438,7 @@ impl ConnectionPool {
     }
 
     pub async fn delete_forum_thread(&self, thread_id: i64) -> Result<()> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         // Get thread info (sub_category_id, posts_amount, created_by_id) before deletion
         let thread_info = sqlx::query!(
@@ -1643,9 +1517,7 @@ impl ConnectionPool {
     }
 
     pub async fn delete_forum_post(&self, post_id: i64) -> Result<()> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         // Get post info (thread_id and created_by_id) before deletion
         let post_info = sqlx::query!(
@@ -1713,28 +1585,6 @@ impl ConnectionPool {
         Ok(())
     }
 
-    pub async fn find_unread_announcements_amount(&self, user_id: i32) -> Result<i64> {
-        let amount = sqlx::query_scalar!(
-            r#"
-            SELECT COUNT(ft.id)
-            FROM forum_threads ft
-            WHERE ft.forum_sub_category_id = 1
-              AND NOT EXISTS (
-                  SELECT 1
-                  FROM forum_thread_reads ftr
-                  WHERE ftr.forum_thread_id = ft.id
-                    AND ftr.user_id = $1
-              )
-            "#,
-            user_id
-        )
-        .fetch_one(self.borrow())
-        .await
-        .map_err(Error::CouldNotFindForumThread)?;
-
-        Ok(amount.unwrap_or(0))
-    }
-
     pub async fn pin_forum_thread(&self, form: &PinForumThread) -> Result<()> {
         sqlx::query!(
             r#"
@@ -1743,7 +1593,7 @@ impl ConnectionPool {
             form.pin,
             form.thread_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotPinForumThread)?;
 
@@ -1764,7 +1614,7 @@ impl ConnectionPool {
             forum_sub_category_id,
             user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotUpdateForumSubCategory)?;
 
@@ -1784,7 +1634,7 @@ impl ConnectionPool {
             forum_sub_category_id,
             user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotUpdateForumSubCategory)?;
 
@@ -1806,7 +1656,7 @@ impl ConnectionPool {
             "#,
             forum_sub_category_id
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumSubCategory)?;
 
@@ -1824,9 +1674,7 @@ impl ConnectionPool {
             .map(|entry| entry.sort_order)
             .collect();
 
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let result = sqlx::query!(
             r#"
@@ -1870,9 +1718,7 @@ impl ConnectionPool {
             .map(|entry| entry.sort_order)
             .collect();
 
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let result = sqlx::query!(
             r#"
@@ -2009,9 +1855,7 @@ impl ConnectionPool {
         payload: &CreateRelatedForumThread,
         user_id: i32,
     ) -> Result<()> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
         Self::insert_related_forum_thread_tx(
             &mut tx,
             payload.item_type,
@@ -2028,9 +1872,7 @@ impl ConnectionPool {
         &self,
         query: &DeleteRelatedForumThreadQuery,
     ) -> Result<()> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
         let rows_affected = Self::delete_related_forum_thread_tx(
             &mut tx,
             query.item_type,
@@ -2063,7 +1905,7 @@ impl ConnectionPool {
             "#,
             title_group_id
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetRelatedThreads)
     }
@@ -2086,30 +1928,7 @@ impl ConnectionPool {
             "#,
             series_id
         )
-        .fetch_all(self.borrow())
-        .await
-        .map_err(Error::CouldNotGetRelatedThreads)
-    }
-
-    pub async fn find_related_forum_threads_for_artist(
-        &self,
-        artist_id: i64,
-    ) -> Result<Vec<RelatedForumThread>> {
-        sqlx::query_as!(
-            RelatedForumThread,
-            r#"
-                SELECT
-                    rt.forum_thread_id,
-                    ft.name AS thread_name,
-                    rt.created_at
-                FROM artist_related_threads rt
-                JOIN forum_threads ft ON ft.id = rt.forum_thread_id
-                WHERE rt.artist_id = $1
-                ORDER BY rt.created_at DESC
-            "#,
-            artist_id
-        )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetRelatedThreads)
     }

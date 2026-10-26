@@ -3,19 +3,18 @@ name = "arcadia-common"
 version = "0.1.0"
 edition = "2024"
 
+[lints]
+workspace = true
+
 [dependencies]
 actix-web.workspace = true
-actix-web-lab = "0.26.0"
-chrono = { version = "0.4", features = ["serde"] }
 jsonwebtoken = { version = "10.4.0", features = ["rust_crypto"] }
 log = "0.4"
 reqwest = "0.12"
 musicbrainz_rs = "0.13.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = {version = "1.0", features = ["preserve_order"]}
-serde_bencode = "0.2.4"
 sqlx = "0.9"
 thiserror = "2.0.18"
-percent-encoding = "2.3.2"
 opentelemetry = "0.32"
 strum = { version = "0.28", features = ["derive"] }

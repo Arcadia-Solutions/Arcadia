@@ -3,9 +3,11 @@ name = "arcadia-periodic-tasks"
 version = "0.1.0"
 edition = "2024"
 
+[lints]
+workspace = true
+
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread", "fs"] }
 tokio-cron-scheduler = "0.15"
 arcadia-storage = { path = "../storage"}
 arcadia-common = { path = "../common"}

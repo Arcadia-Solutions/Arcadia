@@ -26,7 +26,7 @@ use arcadia_common::error::{Error, Result};
 use chrono::Local;
 use serde_json::{json, Value};
 use sqlx::types::Json;
-use std::{borrow::Borrow, collections::HashMap};
+use std::collections::HashMap;
 
 impl ConnectionPool {
     pub async fn create_title_group(
@@ -83,7 +83,7 @@ impl ConnectionPool {
             &title_group_form.screenshots,
             json!(public_ratings)
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateTitleGroup)?;
 
@@ -96,7 +96,7 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // ensure tags exist
@@ -160,7 +160,7 @@ impl ConnectionPool {
                 "#,
                 title_group_id
             )
-            .fetch_all(self.borrow()),
+            .fetch_all(&self.pool),
             // Torrents with user info
             sqlx::query!(
                 r#"
@@ -204,7 +204,7 @@ impl ConnectionPool {
                 title_group_id,
                 user_id
             )
-            .fetch_all(self.borrow()),
+            .fetch_all(&self.pool),
             // Torrent reports
             sqlx::query_as!(
                 TorrentReport,
@@ -221,7 +221,7 @@ impl ConnectionPool {
                 "#,
                 title_group_id
             )
-            .fetch_all(self.borrow()),
+            .fetch_all(&self.pool),
             // Affiliated artists with artist data
             sqlx::query!(
                 r#"
@@ -246,7 +246,7 @@ impl ConnectionPool {
                 "#,
                 title_group_id
             )
-            .fetch_all(self.borrow()),
+            .fetch_all(&self.pool),
             // Affiliated entities with entity data
             sqlx::query!(
                 r#"
@@ -262,7 +262,7 @@ impl ConnectionPool {
                 "#,
                 title_group_id
             )
-            .fetch_all(self.borrow()),
+            .fetch_all(&self.pool),
             // Comments with user data
             sqlx::query!(
                 r#"
@@ -279,7 +279,7 @@ impl ConnectionPool {
                 "#,
                 title_group_id
             )
-            .fetch_all(self.borrow()),
+            .fetch_all(&self.pool),
             // Torrent requests with bounty and user data
             sqlx::query!(
                 r#"
@@ -317,7 +317,7 @@ impl ConnectionPool {
                 "#,
                 title_group_id
             )
-            .fetch_all(self.borrow()),
+            .fetch_all(&self.pool),
             // Series
             async {
                 match title_group.series_id {
@@ -326,7 +326,7 @@ impl ConnectionPool {
                         r#"SELECT id, name FROM series WHERE id = $1"#,
                         series_id
                     )
-                    .fetch_optional(self.borrow())
+                    .fetch_optional(&self.pool)
                     .await,
                     None => Ok(None),
                 }
@@ -352,7 +352,7 @@ impl ConnectionPool {
                 title_group_id,
                 user_id
             )
-            .fetch_one(self.borrow()),
+            .fetch_one(&self.pool),
             // Same master group entries
             async {
                 match title_group.master_group_id {
@@ -369,7 +369,7 @@ impl ConnectionPool {
                         master_group_id,
                         title_group_id
                     )
-                    .fetch_all(self.borrow())
+                    .fetch_all(&self.pool)
                     .await,
                     None => Ok(vec![]),
                 }
@@ -396,7 +396,7 @@ impl ConnectionPool {
                 "#,
                 title_group_id
             )
-            .fetch_all(self.borrow()),
+            .fetch_all(&self.pool),
             // Active peers for the current user on this title group's torrents
             sqlx::query!(
                 r#"
@@ -412,7 +412,7 @@ impl ConnectionPool {
                 title_group_id,
                 user_id
             )
-            .fetch_all(self.borrow()),
+            .fetch_all(&self.pool),
             // Torrent activities for the current user on this title group's torrents
             sqlx::query!(
                 r#"
@@ -431,7 +431,7 @@ impl ConnectionPool {
                 title_group_id,
                 user_id
             )
-            .fetch_all(self.borrow()),
+            .fetch_all(&self.pool),
         )?;
 
         // Group reports by torrent_id
@@ -772,7 +772,7 @@ impl ConnectionPool {
             "#,
             title_group_id
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(similar_title_groups)
@@ -804,7 +804,7 @@ impl ConnectionPool {
             link.note,
             current_user_id,
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotLinkSimilarTitleGroups)?;
 
@@ -826,7 +826,7 @@ impl ConnectionPool {
             group_1_id,
             group_2_id,
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotUnlinkSimilarTitleGroups)?;
 
@@ -932,7 +932,7 @@ impl ConnectionPool {
             title_group_content_type as &Option<ContentType>,
             limit as i32
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         Ok(title_groups
@@ -966,7 +966,7 @@ impl ConnectionPool {
             "#,
             title_group_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::TitleGroupNotFound)?;
 
@@ -1037,7 +1037,7 @@ impl ConnectionPool {
             edited_title_group.content_type as _,
             edited_title_group.screenshots as _
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|e| Error::ErrorWhileUpdatingTitleGroup(e.to_string()))?;
 
@@ -1058,7 +1058,7 @@ impl ConnectionPool {
             title_group_id,
             series_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(|e| Error::ErrorWhileUpdatingTitleGroup(e.to_string()))?;
 
@@ -1079,7 +1079,7 @@ impl ConnectionPool {
             title_group_id,
             series_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(|e| Error::ErrorWhileUpdatingTitleGroup(e.to_string()))?;
 
@@ -1098,7 +1098,7 @@ impl ConnectionPool {
             "#,
             external_link
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await
         .map_err(|e| Error::ErrorSearchingForTitleGroup(e.to_string()))?;
 
@@ -1110,6 +1110,8 @@ impl ConnectionPool {
         source_title_group_id: i32,
         target_title_group_id: i32,
     ) -> Result<()> {
+        // Rows that conflict with the target stay on the source and are removed by
+        // ON DELETE CASCADE when the source title group is deleted at the end.
         // Move edition_groups (no unique constraint on title_group_id)
         sqlx::query!(
             r#"
@@ -1120,88 +1122,58 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Move title_group_applied_tags (PK on title_group_id, tag_id)
         sqlx::query!(
             r#"
-            DELETE FROM title_group_applied_tags
-            WHERE title_group_id = $1
-              AND tag_id IN (
-                  SELECT tag_id FROM title_group_applied_tags WHERE title_group_id = $2
+            UPDATE title_group_applied_tags source
+            SET title_group_id = $2
+            WHERE source.title_group_id = $1
+              AND NOT EXISTS (
+                  SELECT 1 FROM title_group_applied_tags target
+                  WHERE target.title_group_id = $2 AND target.tag_id = source.tag_id
               )
             "#,
             source_title_group_id,
             target_title_group_id
         )
-        .execute(self.borrow())
-        .await?;
-
-        sqlx::query!(
-            r#"
-            UPDATE title_group_applied_tags
-            SET title_group_id = $2
-            WHERE title_group_id = $1
-            "#,
-            source_title_group_id,
-            target_title_group_id
-        )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Move affiliated_artists (UNIQUE on title_group_id, artist_id)
         sqlx::query!(
             r#"
-            DELETE FROM affiliated_artists
-            WHERE title_group_id = $1
-              AND artist_id IN (
-                  SELECT artist_id FROM affiliated_artists WHERE title_group_id = $2
+            UPDATE affiliated_artists source
+            SET title_group_id = $2
+            WHERE source.title_group_id = $1
+              AND NOT EXISTS (
+                  SELECT 1 FROM affiliated_artists target
+                  WHERE target.title_group_id = $2 AND target.artist_id = source.artist_id
               )
             "#,
             source_title_group_id,
             target_title_group_id
         )
-        .execute(self.borrow())
-        .await?;
-
-        sqlx::query!(
-            r#"
-            UPDATE affiliated_artists
-            SET title_group_id = $2
-            WHERE title_group_id = $1
-            "#,
-            source_title_group_id,
-            target_title_group_id
-        )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Move affiliated_entities (UNIQUE on title_group_id, entity_id)
         sqlx::query!(
             r#"
-            DELETE FROM affiliated_entities
-            WHERE title_group_id = $1
-              AND entity_id IN (
-                  SELECT entity_id FROM affiliated_entities WHERE title_group_id = $2
+            UPDATE affiliated_entities source
+            SET title_group_id = $2
+            WHERE source.title_group_id = $1
+              AND NOT EXISTS (
+                  SELECT 1 FROM affiliated_entities target
+                  WHERE target.title_group_id = $2 AND target.entity_id = source.entity_id
               )
             "#,
             source_title_group_id,
             target_title_group_id
         )
-        .execute(self.borrow())
-        .await?;
-
-        sqlx::query!(
-            r#"
-            UPDATE affiliated_entities
-            SET title_group_id = $2
-            WHERE title_group_id = $1
-            "#,
-            source_title_group_id,
-            target_title_group_id
-        )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Move title_group_comments
@@ -1214,7 +1186,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Move torrent_requests
@@ -1227,91 +1199,61 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Move title_group_bookmarks
         sqlx::query!(
             r#"
-            DELETE FROM title_group_bookmarks
-            WHERE title_group_id = $1
-              AND user_id IN (
-                  SELECT user_id FROM title_group_bookmarks WHERE title_group_id = $2
+            UPDATE title_group_bookmarks source
+            SET title_group_id = $2
+            WHERE source.title_group_id = $1
+              AND NOT EXISTS (
+                  SELECT 1 FROM title_group_bookmarks target
+                  WHERE target.title_group_id = $2 AND target.user_id = source.user_id
               )
             "#,
             source_title_group_id,
             target_title_group_id
         )
-        .execute(self.borrow())
-        .await?;
-
-        sqlx::query!(
-            r#"
-            UPDATE title_group_bookmarks
-            SET title_group_id = $2
-            WHERE title_group_id = $1
-            "#,
-            source_title_group_id,
-            target_title_group_id
-        )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Move subscriptions_title_group_torrents (UNIQUE on title_group_id, user_id)
         sqlx::query!(
             r#"
-            DELETE FROM subscriptions_title_group_torrents
-            WHERE title_group_id = $1
-              AND user_id IN (
-                  SELECT user_id FROM subscriptions_title_group_torrents WHERE title_group_id = $2
+            UPDATE subscriptions_title_group_torrents source
+            SET title_group_id = $2
+            WHERE source.title_group_id = $1
+              AND NOT EXISTS (
+                  SELECT 1 FROM subscriptions_title_group_torrents target
+                  WHERE target.title_group_id = $2 AND target.user_id = source.user_id
               )
             "#,
             source_title_group_id,
             target_title_group_id
         )
-        .execute(self.borrow())
-        .await?;
-
-        sqlx::query!(
-            r#"
-            UPDATE subscriptions_title_group_torrents
-            SET title_group_id = $2
-            WHERE title_group_id = $1
-            "#,
-            source_title_group_id,
-            target_title_group_id
-        )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Move subscriptions_title_group_comments (UNIQUE on title_group_id, user_id)
         sqlx::query!(
             r#"
-            DELETE FROM subscriptions_title_group_comments
-            WHERE title_group_id = $1
-              AND user_id IN (
-                  SELECT user_id FROM subscriptions_title_group_comments WHERE title_group_id = $2
+            UPDATE subscriptions_title_group_comments source
+            SET title_group_id = $2
+            WHERE source.title_group_id = $1
+              AND NOT EXISTS (
+                  SELECT 1 FROM subscriptions_title_group_comments target
+                  WHERE target.title_group_id = $2 AND target.user_id = source.user_id
               )
             "#,
             source_title_group_id,
             target_title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
-        sqlx::query!(
-            r#"
-            UPDATE subscriptions_title_group_comments
-            SET title_group_id = $2
-            WHERE title_group_id = $1
-            "#,
-            source_title_group_id,
-            target_title_group_id
-        )
-        .execute(self.borrow())
-        .await?;
-
-        // Move collage_entry (UNIQUE on collage_id, title_group_id)
+        // Move collage_entry (UNIQUE on collage_id, title_group_id, no ON DELETE CASCADE)
         sqlx::query!(
             r#"
             DELETE FROM collage_entry
@@ -1323,7 +1265,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         sqlx::query!(
@@ -1335,7 +1277,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Move notifications_title_group_comments
@@ -1348,7 +1290,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Move notifications_artist_title_groups
@@ -1361,7 +1303,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Merge external_links from source into target (deduplicated)
@@ -1380,7 +1322,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Delete the now-empty source title group
@@ -1390,7 +1332,7 @@ impl ConnectionPool {
             "#,
             source_title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -1410,7 +1352,7 @@ impl ConnectionPool {
             "#,
             title_group_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         if has_undeleted_torrents {
@@ -1437,7 +1379,7 @@ impl ConnectionPool {
             "#,
             title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Delete the title group (cascades to edition_groups, affiliated_artists, etc.)
@@ -1447,7 +1389,7 @@ impl ConnectionPool {
             "#,
             title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())

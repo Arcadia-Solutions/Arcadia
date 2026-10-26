@@ -13,43 +13,9 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use chrono::{DateTime, Local, Utc};
-use sqlx::{FromRow, PgPool, Postgres, Transaction};
-use std::borrow::Borrow;
+use chrono::Local;
+use sqlx::{Postgres, Transaction};
 use tokio::sync::broadcast;
-
-#[derive(FromRow)]
-struct DBTitleGroupCommentSearchResult {
-    id: i64,
-    content: String,
-    created_at: DateTime<Utc>,
-    title_group_id: i32,
-    title_group_name: String,
-    created_by_id: i32,
-    created_by_username: String,
-    created_by_warned: bool,
-    created_by_banned: bool,
-}
-
-#[derive(FromRow)]
-struct DBTitleGroupCommentWithLocation {
-    id: i64,
-    content: String,
-    created_at: DateTime<Local>,
-    updated_at: DateTime<Local>,
-    created_by_id: i32,
-    title_group_id: i32,
-    title_group_name: String,
-    locked: bool,
-    refers_to_torrent_id: Option<i32>,
-    answers_to_comment_id: Option<i64>,
-    created_by_username: String,
-    created_by_class_name: String,
-    created_by_avatar: Option<String>,
-    created_by_banned: bool,
-    created_by_warned: bool,
-    created_by_custom_title: Option<String>,
-}
 
 impl ConnectionPool {
     pub async fn create_title_group_comment(
@@ -58,9 +24,7 @@ impl ConnectionPool {
         user_id: i32,
         notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<TitleGroupComment> {
-        let mut tx: Transaction<'_, Postgres> = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx: Transaction<'_, Postgres> = self.pool.begin().await?;
 
         let created_title_group_comment = sqlx::query_as!(
             TitleGroupComment,
@@ -114,7 +78,7 @@ impl ConnectionPool {
             "#,
             comment_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindTitleGroupComment)?;
 
@@ -138,7 +102,7 @@ impl ConnectionPool {
             edited_comment.content,
             edited_comment.locked
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|e| Error::ErrorWhileUpdatingTitleGroupComment(e.to_string()))?;
 
@@ -146,9 +110,7 @@ impl ConnectionPool {
     }
 
     pub async fn delete_title_group_comment(&self, comment_id: i64) -> Result<()> {
-        let mut tx: Transaction<'_, Postgres> = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx: Transaction<'_, Postgres> = self.pool.begin().await?;
 
         let deleted_comment = sqlx::query!(
             r#"
@@ -185,8 +147,8 @@ impl ConnectionPool {
         let limit = form.page_size as i64;
         let offset = (form.page - 1) as i64 * form.page_size as i64;
 
-        let db_results = sqlx::query_as!(
-            DBTitleGroupCommentSearchResult,
+        let results = sqlx::query_as!(
+            TitleGroupCommentSearchResult,
             r#"
             SELECT
                 c.id,
@@ -194,10 +156,7 @@ impl ConnectionPool {
                 c.created_at,
                 c.title_group_id,
                 tg.name AS title_group_name,
-                u.id AS created_by_id,
-                u.username AS created_by_username,
-                u.warned AS created_by_warned,
-                u.banned AS created_by_banned
+                ROW(u.id, u.username, u.warned, u.banned) AS "created_by!: UserLite"
             FROM title_group_comments c
             JOIN users u ON u.id = c.created_by_id
             JOIN title_groups tg ON tg.id = c.title_group_id
@@ -209,26 +168,9 @@ impl ConnectionPool {
             limit,
             offset
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindTitleGroupComment)?;
-
-        let results: Vec<TitleGroupCommentSearchResult> = db_results
-            .into_iter()
-            .map(|r| TitleGroupCommentSearchResult {
-                id: r.id,
-                content: r.content,
-                created_at: r.created_at,
-                title_group_id: r.title_group_id,
-                title_group_name: r.title_group_name,
-                created_by: UserLite {
-                    id: r.created_by_id,
-                    username: r.created_by_username,
-                    warned: r.created_by_warned,
-                    banned: r.created_by_banned,
-                },
-            })
-            .collect();
 
         let total_results = sqlx::query_scalar!(
             r#"
@@ -237,7 +179,7 @@ impl ConnectionPool {
             "#,
             form.content
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindTitleGroupComment)?
         .unwrap_or(0);
@@ -258,8 +200,7 @@ impl ConnectionPool {
         let limit = form.page_size as i64;
         let offset = (form.page - 1) as i64 * form.page_size as i64;
 
-        let comments = sqlx::query_as!(
-            DBTitleGroupCommentWithLocation,
+        let comments = sqlx::query!(
             r#"
             SELECT
                 c.id,
@@ -272,12 +213,7 @@ impl ConnectionPool {
                 c.refers_to_torrent_id,
                 c.answers_to_comment_id,
                 tg.name AS title_group_name,
-                u.username AS created_by_username,
-                u.class_name AS created_by_class_name,
-                u.avatar AS created_by_avatar,
-                u.banned AS created_by_banned,
-                u.warned AS created_by_warned,
-                u.custom_title AS created_by_custom_title
+                ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS "created_by!: UserLiteAvatar"
             FROM title_group_comments c
             JOIN users u ON u.id = c.created_by_id
             JOIN title_groups tg ON tg.id = c.title_group_id
@@ -289,7 +225,7 @@ impl ConnectionPool {
             limit,
             offset
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotSearchTitleGroupComments)?;
 
@@ -299,22 +235,14 @@ impl ConnectionPool {
                 comment: TitleGroupCommentHierarchy {
                     id: comment.id,
                     content: comment.content,
-                    created_at: comment.created_at,
-                    updated_at: comment.updated_at,
+                    created_at: comment.created_at.with_timezone(&Local),
+                    updated_at: comment.updated_at.with_timezone(&Local),
                     created_by_id: comment.created_by_id,
                     title_group_id: comment.title_group_id,
                     locked: comment.locked,
                     refers_to_torrent_id: comment.refers_to_torrent_id,
                     answers_to_comment_id: comment.answers_to_comment_id,
-                    created_by: UserLiteAvatar {
-                        id: comment.created_by_id,
-                        username: comment.created_by_username,
-                        class_name: comment.created_by_class_name,
-                        avatar: comment.created_by_avatar,
-                        banned: comment.created_by_banned,
-                        warned: comment.created_by_warned,
-                        custom_title: comment.created_by_custom_title,
-                    },
+                    created_by: comment.created_by,
                 },
                 title_group_name: comment.title_group_name,
             })
@@ -324,7 +252,7 @@ impl ConnectionPool {
             "SELECT COUNT(*) FROM title_group_comments WHERE created_by_id = $1",
             form.created_by_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotSearchTitleGroupComments)?
         .unwrap_or(0);
@@ -341,8 +269,8 @@ impl ConnectionPool {
         &self,
         limit: u32,
     ) -> Result<Vec<TitleGroupCommentSearchResult>> {
-        let db_results = sqlx::query_as!(
-            DBTitleGroupCommentSearchResult,
+        let results = sqlx::query_as!(
+            TitleGroupCommentSearchResult,
             r#"
             SELECT
                 c.id,
@@ -350,10 +278,7 @@ impl ConnectionPool {
                 c.created_at,
                 c.title_group_id,
                 tg.name AS title_group_name,
-                u.id AS created_by_id,
-                u.username AS created_by_username,
-                u.warned AS created_by_warned,
-                u.banned AS created_by_banned
+                ROW(u.id, u.username, u.warned, u.banned) AS "created_by!: UserLite"
             FROM title_group_comments c
             JOIN users u ON u.id = c.created_by_id
             JOIN title_groups tg ON tg.id = c.title_group_id
@@ -362,26 +287,9 @@ impl ConnectionPool {
             "#,
             limit as i64
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindTitleGroupComment)?;
-
-        let results: Vec<TitleGroupCommentSearchResult> = db_results
-            .into_iter()
-            .map(|r| TitleGroupCommentSearchResult {
-                id: r.id,
-                content: r.content,
-                created_at: r.created_at,
-                title_group_id: r.title_group_id,
-                title_group_name: r.title_group_name,
-                created_by: UserLite {
-                    id: r.created_by_id,
-                    username: r.created_by_username,
-                    warned: r.created_by_warned,
-                    banned: r.created_by_banned,
-                },
-            })
-            .collect();
 
         Ok(results)
     }

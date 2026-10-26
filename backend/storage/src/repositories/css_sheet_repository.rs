@@ -3,7 +3,6 @@ use crate::{
     models::css_sheet::{CssSheet, EditedCssSheet, UserCreatedCssSheet},
 };
 use arcadia_common::error::{Error, Result};
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     pub async fn create_css_sheet(
@@ -23,7 +22,7 @@ impl ConnectionPool {
             current_user_id,
             css_sheet.preview_image_url.trim()
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateCssSheet)?;
 
@@ -37,7 +36,7 @@ impl ConnectionPool {
                 SELECT created_at, created_by_id, name, css, preview_image_url FROM css_sheets
             "#,
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindCssSheets)?;
 
@@ -52,7 +51,7 @@ impl ConnectionPool {
             "#,
             name
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CssSheetNotFound)?;
 
@@ -73,31 +72,11 @@ impl ConnectionPool {
             form.css,
             form.preview_image_url
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CssSheetNotFound)?;
 
         Ok(css_sheet)
-    }
-
-    pub async fn set_css_sheet_for_user(
-        &self,
-        user_id: i32,
-        css_sheet_name: Option<String>,
-    ) -> Result<()> {
-        let _ = sqlx::query!(
-            r#"
-                UPDATE users
-                SET css_sheet_name = $2
-                WHERE id = $1
-            "#,
-            user_id,
-            css_sheet_name
-        )
-        .execute(self.borrow())
-        .await?;
-
-        Ok(())
     }
 
     pub async fn get_css_sheet_content(&self, name: &str) -> Result<String> {
@@ -108,7 +87,7 @@ impl ConnectionPool {
             "#,
             name
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CssSheetNotFound)?;
 

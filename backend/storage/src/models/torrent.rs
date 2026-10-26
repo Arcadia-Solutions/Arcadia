@@ -4,12 +4,9 @@ use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{
-    models::{
-        edition_group::Source,
-        title_group::{ContentType, TitleGroupCategory},
-    },
-    utils::compute_diff,
+use crate::models::{
+    edition_group::Source,
+    title_group::{ContentType, TitleGroupCategory},
 };
 use sqlx::{prelude::FromRow, types::Json};
 use strum::{Display, EnumString};
@@ -20,43 +17,22 @@ use crate::models::common::OrderByDirection;
 use super::{torrent_report::TorrentReport, user::UserLite};
 
 #[derive(Debug, Clone, Deserialize, Serialize, sqlx::Type, ToSchema)]
-#[sqlx(type_name = "audio_codec_enum")]
+#[sqlx(type_name = "audio_codec_enum", rename_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum AudioCodec {
-    #[sqlx(rename = "mp2")]
-    #[serde(rename = "mp2")]
     Mp2,
-    #[sqlx(rename = "mp3")]
-    #[serde(rename = "mp3")]
     Mp3,
-    #[sqlx(rename = "aac")]
-    #[serde(rename = "aac")]
     Aac,
-    #[sqlx(rename = "ac3")]
-    #[serde(rename = "ac3")]
     Ac3,
-    #[sqlx(rename = "dts")]
-    #[serde(rename = "dts")]
     Dts,
-    #[sqlx(rename = "flac")]
-    #[serde(rename = "flac")]
     Flac,
-    #[sqlx(rename = "pcm")]
-    #[serde(rename = "pcm")]
     Pcm,
     #[sqlx(rename = "true-hd")]
     #[serde(rename = "true-hd")]
     TrueHd,
-    #[sqlx(rename = "opus")]
-    #[serde(rename = "opus")]
     Opus,
-    #[sqlx(rename = "dsd")]
-    #[serde(rename = "dsd")]
     Dsd,
-    #[sqlx(rename = "cook")]
-    #[serde(rename = "cook")]
     Cook,
-    #[sqlx(rename = "wma")]
-    #[serde(rename = "wma")]
     Wma,
 }
 
@@ -327,16 +303,12 @@ pub enum Features {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, sqlx::Type, ToSchema)]
-#[sqlx(type_name = "extras_enum", rename_all = "lowercase")]
-#[serde(rename_all = "lowercase")]
+#[sqlx(type_name = "extras_enum", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum Extras {
     Booklet,
     Manual,
-    #[sqlx(rename = "behind_the_scenes")]
-    #[serde(rename = "behind_the_scenes")]
     BehindTheScenes,
-    #[sqlx(rename = "deleted_scenes")]
-    #[serde(rename = "deleted_scenes")]
     DeletedScenes,
     Featurette,
     Trailer,
@@ -683,10 +655,4 @@ pub struct TorrentToDelete {
     pub deletion_reason: TorrentDeletionReason,
     pub extra_information: Option<String>,
     pub replacement_torrent_id: Option<i32>,
-}
-
-impl Torrent {
-    pub fn diff(&self, edited: &EditedTorrent) -> Option<Value> {
-        compute_diff(self, edited, &["id"])
-    }
 }

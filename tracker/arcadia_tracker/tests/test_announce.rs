@@ -2,13 +2,33 @@ mod common;
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
-use actix_web::test;
-use common::{create_test_app, read_body_bencode};
-use serde::Deserialize;
+use actix_http::Request;
+use actix_web::{
+    body::MessageBody,
+    dev::{Service, ServiceResponse},
+    test, App, Error,
+};
+use arcadia_tracker::routes::init;
+use serde::{de::DeserializeOwned, Deserialize};
 use sqlx::PgPool;
 
+async fn create_test_app(
+    pool: PgPool,
+) -> impl Service<Request, Response = ServiceResponse, Error = Error> {
+    let tracker = common::create_test_tracker(pool, common::test_config()).await;
+
+    test::init_service(App::new().app_data(tracker).configure(init)).await
+}
+
+async fn read_body_bencode<T: DeserializeOwned, B: MessageBody>(
+    resp: ServiceResponse<B>,
+) -> Result<T, serde_bencode::Error> {
+    let body = test::read_body(resp).await;
+    serde_bencode::from_bytes(&body)
+}
+
 #[derive(Debug, Deserialize)]
-#[allow(dead_code)]
+#[expect(dead_code)]
 struct AnnounceResponse {
     #[serde(rename = "complete")]
     seeders: u32,
@@ -92,7 +112,7 @@ fn test_peer_id() -> [u8; 20] {
     migrations = "../../backend/storage/migrations"
 )]
 async fn test_announce_invalid_passkey(pool: PgPool) {
-    let service = common::create_test_app(pool).await;
+    let service = create_test_app(pool).await;
 
     let invalid_passkey = "invalid_passkey_too_short";
     let info_hash_bytes = [
@@ -130,7 +150,7 @@ async fn test_announce_invalid_passkey(pool: PgPool) {
     migrations = "../../backend/storage/migrations"
 )]
 async fn test_announce_passkey_not_found(pool: PgPool) {
-    let service = common::create_test_app(pool).await;
+    let service = create_test_app(pool).await;
 
     // Use a valid format passkey but one that doesn't exist
     let non_existent_passkey = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab";
@@ -174,7 +194,7 @@ async fn test_announce_passkey_not_found(pool: PgPool) {
     migrations = "../../backend/storage/migrations"
 )]
 async fn test_announce_info_hash_not_found(pool: PgPool) {
-    let service = common::create_test_app(pool).await;
+    let service = create_test_app(pool).await;
 
     let valid_passkey = "d2037c66dd3e13044e0d2f9b891c3837";
     // Use an info_hash that doesn't exist in the database
@@ -212,7 +232,7 @@ async fn test_announce_info_hash_not_found(pool: PgPool) {
     migrations = "../../backend/storage/migrations"
 )]
 async fn test_announce_successful_started(pool: PgPool) {
-    let service = common::create_test_app(pool).await;
+    let service = create_test_app(pool).await;
 
     let valid_passkey = "d2037c66dd3e13044e0d2f9b891c3837";
     // Info hash from with_test_torrent.sql: \x112233445566778899aabbccddeeff0011223344
@@ -276,7 +296,7 @@ async fn test_announce_successful_started(pool: PgPool) {
     migrations = "../../backend/storage/migrations"
 )]
 async fn test_announce_with_existing_peers(pool: PgPool) {
-    let service = common::create_test_app(pool).await;
+    let service = create_test_app(pool).await;
 
     let valid_passkey = "d2037c66dd3e13044e0d2f9b891c3837";
     let info_hash_bytes = [
@@ -339,7 +359,7 @@ async fn test_announce_with_existing_peers(pool: PgPool) {
     migrations = "../../backend/storage/migrations"
 )]
 async fn test_announce_completed_event(pool: PgPool) {
-    let service = common::create_test_app(pool).await;
+    let service = create_test_app(pool).await;
 
     let valid_passkey = "d2037c66dd3e13044e0d2f9b891c3837";
     let info_hash_bytes = [
@@ -406,7 +426,7 @@ async fn test_announce_completed_event(pool: PgPool) {
     migrations = "../../backend/storage/migrations"
 )]
 async fn test_announce_stopped_event(pool: PgPool) {
-    let service = common::create_test_app(pool).await;
+    let service = create_test_app(pool).await;
 
     let valid_passkey = "d2037c66dd3e13044e0d2f9b891c3837";
     let info_hash_bytes = [
@@ -473,7 +493,7 @@ async fn test_announce_stopped_event(pool: PgPool) {
     migrations = "../../backend/storage/migrations"
 )]
 async fn test_announce_missing_user_agent(pool: PgPool) {
-    let service = common::create_test_app(pool).await;
+    let service = create_test_app(pool).await;
 
     let valid_passkey = "d2037c66dd3e13044e0d2f9b891c3837";
     let info_hash_bytes = [
@@ -512,7 +532,7 @@ async fn test_announce_missing_user_agent(pool: PgPool) {
     migrations = "../../backend/storage/migrations"
 )]
 async fn test_announce_snatch_limit_under(pool: PgPool) {
-    let service = common::create_test_app(pool).await;
+    let service = create_test_app(pool).await;
 
     // User with max_snatches_per_day = 2
     let valid_passkey = "e3037c66dd3e13044e0d2f9b891c3838";
@@ -569,7 +589,7 @@ async fn test_announce_snatch_limit_under(pool: PgPool) {
     migrations = "../../backend/storage/migrations"
 )]
 async fn test_announce_snatch_limit_exceeded(pool: PgPool) {
-    let service = common::create_test_app(pool).await;
+    let service = create_test_app(pool).await;
 
     // User with max_snatches_per_day = 2
     let valid_passkey = "e3037c66dd3e13044e0d2f9b891c3838";
@@ -644,7 +664,7 @@ async fn test_announce_snatch_limit_exceeded(pool: PgPool) {
     migrations = "../../backend/storage/migrations"
 )]
 async fn test_announce_bonus_points_deducted(pool: PgPool) {
-    let service = common::create_test_app(pool.clone()).await;
+    let service = create_test_app(pool.clone()).await;
 
     // User with 100 BP downloading torrent with 50 BP cost
     let valid_passkey = "f4037c66dd3e13044e0d2f9b891c3839";
@@ -701,7 +721,7 @@ async fn test_announce_bonus_points_deducted(pool: PgPool) {
     migrations = "../../backend/storage/migrations"
 )]
 async fn test_announce_insufficient_bonus_points(pool: PgPool) {
-    let service = common::create_test_app(pool.clone()).await;
+    let service = create_test_app(pool.clone()).await;
 
     // User with 30 BP trying to download torrent with 50 BP cost
     let valid_passkey = "g5037c66dd3e13044e0d2f9b891c3840";
@@ -772,7 +792,7 @@ async fn test_announce_uploader_free_snatch(pool: PgPool) {
         .await
         .expect("Failed to update torrent creator");
 
-    let service = common::create_test_app(pool.clone()).await;
+    let service = create_test_app(pool.clone()).await;
 
     // Uploader downloading their own torrent
     let valid_passkey = "d2037c66dd3e13044e0d2f9b891c3837";
@@ -830,7 +850,7 @@ async fn test_announce_uploader_free_snatch(pool: PgPool) {
     migrations = "../../backend/storage/migrations"
 )]
 async fn test_announce_no_double_bonus_points_deduction(pool: PgPool) {
-    let service = common::create_test_app(pool.clone()).await;
+    let service = create_test_app(pool.clone()).await;
 
     let valid_passkey = "f4037c66dd3e13044e0d2f9b891c3839";
     let info_hash_bytes = [
@@ -907,7 +927,7 @@ async fn test_announce_no_double_bonus_points_deduction(pool: PgPool) {
     migrations = "../../backend/storage/migrations"
 )]
 async fn test_announce_no_deduction_when_no_download_between_announces(pool: PgPool) {
-    let service = common::create_test_app(pool.clone()).await;
+    let service = create_test_app(pool.clone()).await;
 
     let valid_passkey = "f4037c66dd3e13044e0d2f9b891c3839";
     let info_hash_bytes = [
@@ -986,7 +1006,7 @@ async fn test_announce_no_deduction_when_peer_already_flushed_as_leecher(pool: P
         .await
         .expect("Failed to simulate prior deduction");
 
-    let service = common::create_test_app(pool.clone()).await;
+    let service = create_test_app(pool.clone()).await;
 
     let valid_passkey = "f4037c66dd3e13044e0d2f9b891c3839";
     let info_hash_bytes = [
@@ -1044,7 +1064,7 @@ async fn test_bonus_points_transfer_to_uploader(pool: PgPool) {
         .unwrap();
     let uploader_initial_bp = uploader_row.0;
 
-    let service = common::create_test_app(pool.clone()).await;
+    let service = create_test_app(pool.clone()).await;
 
     let valid_passkey = "f4037c66dd3e13044e0d2f9b891c3839"; // user 10
     let info_hash_bytes = [
@@ -1100,7 +1120,7 @@ async fn test_bonus_points_transfer_to_seeders(pool: PgPool) {
         .unwrap();
     let seeder2_initial_bp = seeder2_row.0;
 
-    let service = common::create_test_app(pool.clone()).await;
+    let service = create_test_app(pool.clone()).await;
 
     let valid_passkey = "f4037c66dd3e13044e0d2f9b891c3839"; // user 10
     let info_hash_bytes = [
@@ -1157,7 +1177,7 @@ async fn test_bonus_points_transfer_to_none(pool: PgPool) {
         .unwrap();
     let uploader_initial_bp = uploader_row.0;
 
-    let service = common::create_test_app(pool.clone()).await;
+    let service = create_test_app(pool.clone()).await;
 
     let valid_passkey = "f4037c66dd3e13044e0d2f9b891c3839"; // user 10
     let info_hash_bytes = [
@@ -1281,7 +1301,7 @@ async fn test_announce_bonus_points_deducted_after_grab_only_activity(pool: PgPo
     // charge_bonus_points_on_resnatch is disabled, since nothing was paid yet.
     insert_grabbed_only_activity(&pool, 100, 10).await;
 
-    let service = common::create_test_app(pool.clone()).await;
+    let service = create_test_app(pool.clone()).await;
 
     let valid_passkey = "f4037c66dd3e13044e0d2f9b891c3839";
     let info_hash_bytes = [
@@ -1327,7 +1347,7 @@ async fn test_announce_bonus_points_deducted_after_grab_only_activity(pool: PgPo
 async fn test_announce_bonus_points_deducted_on_resnatch_when_enabled(pool: PgPool) {
     insert_completed_activity(&pool, 100, 10).await;
 
-    let service = common::create_test_app(pool.clone()).await;
+    let service = create_test_app(pool.clone()).await;
 
     let valid_passkey = "f4037c66dd3e13044e0d2f9b891c3839";
     let info_hash_bytes = [
@@ -1372,7 +1392,7 @@ async fn test_announce_bonus_points_deducted_on_resnatch_when_enabled(pool: PgPo
 async fn test_announce_no_bonus_points_deducted_on_resnatch_when_disabled(pool: PgPool) {
     insert_completed_activity(&pool, 100, 10).await;
 
-    let service = common::create_test_app(pool.clone()).await;
+    let service = create_test_app(pool.clone()).await;
 
     let valid_passkey = "f4037c66dd3e13044e0d2f9b891c3839";
     let info_hash_bytes = [
@@ -1421,7 +1441,7 @@ async fn test_announce_no_deduction_when_seeding_resumes(pool: PgPool) {
     // charge_bonus_points_on_resnatch enabled.
     insert_completed_activity(&pool, 100, 10).await;
 
-    let service = common::create_test_app(pool.clone()).await;
+    let service = create_test_app(pool.clone()).await;
 
     let valid_passkey = "f4037c66dd3e13044e0d2f9b891c3839";
     let info_hash_bytes = [
@@ -1523,7 +1543,7 @@ async fn test_snatch_bonus_points_factors_applied(pool: PgPool) {
         .unwrap();
     let uploader_initial_bp = uploader_row.0;
 
-    let service = common::create_test_app(pool.clone()).await;
+    let service = create_test_app(pool.clone()).await;
 
     let valid_passkey = "f4037c66dd3e13044e0d2f9b891c3839"; // user 10, starts with 100 BP
     let info_hash_bytes = [
@@ -1579,7 +1599,7 @@ async fn test_snatch_bonus_points_factors_applied(pool: PgPool) {
     migrations = "../../backend/storage/migrations"
 )]
 async fn test_announce_legacy_fallback_route(pool: PgPool) {
-    let service = common::create_test_app(pool).await;
+    let service = create_test_app(pool).await;
 
     let valid_passkey = "d2037c66dd3e13044e0d2f9b891c3837";
     let info_hash_bytes = [

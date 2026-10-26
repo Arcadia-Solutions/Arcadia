@@ -5,7 +5,6 @@ use sqlx::{prelude::FromRow, types::Json};
 use utoipa::ToSchema;
 
 use super::torrent::{TorrentHierarchy, TorrentHierarchyLite};
-use crate::utils::compute_diff;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, sqlx::Type)]
 #[sqlx(type_name = "source_enum")]
@@ -180,10 +179,4 @@ pub struct EditedEditionGroup {
     pub source: Option<Source>,
     #[schema(value_type = HashMap<String, String>)]
     pub additional_information: Option<Value>,
-}
-
-impl EditionGroup {
-    pub fn diff(&self, edited: &EditedEditionGroup) -> Option<Value> {
-        compute_diff(self, edited, &["id"])
-    }
 }

@@ -7,7 +7,6 @@ use crate::{
 };
 use arcadia_common::error::{Error, Result};
 use sqlx::types::Json;
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     pub async fn report_torrent(
@@ -32,7 +31,7 @@ impl ConnectionPool {
             form.reported_torrent_id,
             form.description,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateTorrentReport)?;
 
@@ -47,7 +46,7 @@ impl ConnectionPool {
             "#,
             torrent_report_id,
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteTorrentReport)?;
 
@@ -59,7 +58,7 @@ impl ConnectionPool {
             r#"SELECT EXISTS(SELECT 1 FROM torrent_reports WHERE id = $1) AS "exists!""#,
             torrent_report_id,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotGetTorrentReport)
     }

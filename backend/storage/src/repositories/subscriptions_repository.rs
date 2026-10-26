@@ -1,5 +1,5 @@
 use crate::connection_pool::ConnectionPool;
-use crate::models::artist::{AffiliatedArtistLite, ArtistLite};
+use crate::models::artist::ArtistLite;
 use crate::models::collage::CollageLite;
 use crate::models::common::PaginatedResults;
 use crate::models::forum::{ForumSubCategoryLite, ForumThreadLite};
@@ -7,8 +7,6 @@ use crate::models::subscription::SearchSubscriptionsQuery;
 use crate::models::title_group::TitleGroupHierarchyLite;
 use arcadia_common::error::{Error, Result};
 use sqlx::types::Json;
-use std::borrow::Borrow;
-use std::collections::HashMap;
 
 impl ConnectionPool {
     pub async fn find_subscription_forum_sub_category_threads(
@@ -27,7 +25,7 @@ impl ConnectionPool {
             "#,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
 
@@ -49,7 +47,7 @@ impl ConnectionPool {
             offset,
             order_direction
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(PaginatedResults {
@@ -73,7 +71,7 @@ impl ConnectionPool {
             current_user_id,
             forum_sub_category_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotCreateSubscription)?;
 
@@ -93,7 +91,7 @@ impl ConnectionPool {
             forum_sub_category_id,
             current_user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -115,7 +113,7 @@ impl ConnectionPool {
             "#,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
 
@@ -137,7 +135,7 @@ impl ConnectionPool {
             offset,
             order_direction
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(PaginatedResults {
@@ -164,7 +162,7 @@ impl ConnectionPool {
             "#,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
 
@@ -197,7 +195,7 @@ impl ConnectionPool {
             page_size,
             offset,
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         self.enrich_title_groups_with_affiliated_artists(&mut results)
@@ -227,7 +225,7 @@ impl ConnectionPool {
             "#,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
 
@@ -260,7 +258,7 @@ impl ConnectionPool {
             page_size,
             offset,
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         self.enrich_title_groups_with_affiliated_artists(&mut results)
@@ -279,59 +277,9 @@ impl ConnectionPool {
         title_groups: &mut [TitleGroupHierarchyLite],
     ) -> Result<()> {
         let title_group_ids: Vec<i32> = title_groups.iter().map(|tg| tg.id).collect();
-
-        if title_group_ids.is_empty() {
-            return Ok(());
-        }
-
-        let affiliated_artists = sqlx::query!(
-            r#"
-            WITH artist_counts AS (
-                SELECT
-                    title_group_id,
-                    COUNT(*) as count
-                FROM affiliated_artists
-                WHERE title_group_id = ANY($1)
-                GROUP BY title_group_id
-            )
-            SELECT
-                aa.title_group_id,
-                a.id as artist_id,
-                a.name as artist_name
-            FROM affiliated_artists aa
-            JOIN artists a ON a.id = aa.artist_id
-            JOIN artist_counts ac ON ac.title_group_id = aa.title_group_id
-            WHERE ac.count <= 2
-
-            UNION ALL
-
-            SELECT DISTINCT ON (ac.title_group_id)
-                ac.title_group_id,
-                0::bigint as artist_id,
-                ''::text as artist_name
-            FROM artist_counts ac
-            WHERE ac.count > 2
-            ORDER BY title_group_id, artist_id
-            "#,
-            &title_group_ids
-        )
-        .fetch_all(self.borrow())
-        .await?;
-
-        let mut grouped_artists: HashMap<i32, Vec<AffiliatedArtistLite>> = HashMap::new();
-        for row in affiliated_artists {
-            if let (Some(title_group_id), Some(artist_id), Some(artist_name)) =
-                (row.title_group_id, row.artist_id, row.artist_name)
-            {
-                grouped_artists
-                    .entry(title_group_id)
-                    .or_default()
-                    .push(AffiliatedArtistLite {
-                        artist_id,
-                        name: artist_name,
-                    });
-            }
-        }
+        let grouped_artists = self
+            .find_affiliated_artists_lite_by_title_group_ids(&title_group_ids)
+            .await?;
 
         for title_group in title_groups.iter_mut() {
             title_group.affiliated_artists = Json(
@@ -358,7 +306,7 @@ impl ConnectionPool {
             current_user_id,
             thread_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotCreateSubscription)?;
 
@@ -378,7 +326,7 @@ impl ConnectionPool {
             thread_id,
             current_user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // TODO: check result.rows_affected()
@@ -398,7 +346,7 @@ impl ConnectionPool {
             current_user_id,
             title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotCreateSubscription)?;
 
@@ -418,7 +366,7 @@ impl ConnectionPool {
             title_group_id,
             current_user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // TODO: check result.rows_affected()
@@ -438,7 +386,7 @@ impl ConnectionPool {
             current_user_id,
             title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotCreateSubscription)?;
 
@@ -458,7 +406,7 @@ impl ConnectionPool {
             title_group_id,
             current_user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // TODO: check result.rows_affected()
@@ -481,7 +429,7 @@ impl ConnectionPool {
             "#,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
 
@@ -503,7 +451,7 @@ impl ConnectionPool {
             offset,
             order_direction
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(PaginatedResults {
@@ -527,7 +475,7 @@ impl ConnectionPool {
             current_user_id,
             artist_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotCreateSubscription)?;
 
@@ -547,7 +495,7 @@ impl ConnectionPool {
             artist_id,
             current_user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -568,7 +516,7 @@ impl ConnectionPool {
             "#,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
         let order_direction = query.order_by_direction.to_string();
@@ -589,7 +537,7 @@ impl ConnectionPool {
             offset,
             order_direction
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
         Ok(PaginatedResults {
             results,
@@ -611,7 +559,7 @@ impl ConnectionPool {
             current_user_id,
             collage_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotCreateSubscription)?;
         Ok(())
@@ -629,7 +577,7 @@ impl ConnectionPool {
             collage_id,
             current_user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
         Ok(())
     }
@@ -646,7 +594,7 @@ impl ConnectionPool {
             current_user_id,
             torrent_request_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotCreateSubscription)?;
 
@@ -666,7 +614,7 @@ impl ConnectionPool {
             torrent_request_id,
             current_user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // TODO: check result.rows_affected()

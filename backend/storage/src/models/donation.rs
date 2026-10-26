@@ -1,12 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use sqlx::prelude::FromRow;
 use strum::Display;
 use utoipa::{IntoParams, ToSchema};
 
 use super::{common::OrderByDirection, user::UserLiteAvatar};
-use crate::utils::compute_diff;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Donation {
@@ -107,10 +105,4 @@ pub struct EditedDonation {
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct DeletedDonation {
     pub id: i64,
-}
-
-impl Donation {
-    pub fn diff(&self, edited: &EditedDonation) -> Option<Value> {
-        compute_diff(self, edited, &["id"])
-    }
 }

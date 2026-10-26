@@ -9,8 +9,7 @@ use crate::{
     },
 };
 use arcadia_common::error::Result;
-use sqlx::{PgPool, Postgres, Transaction};
-use std::borrow::Borrow;
+use sqlx::{Postgres, Transaction};
 
 impl ConnectionPool {
     pub async fn log_bonus_points_change_tx(
@@ -45,9 +44,7 @@ impl ConnectionPool {
         details: Option<&str>,
         item_id: Option<i64>,
     ) -> Result<()> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         sqlx::query!(
             r#"
@@ -114,7 +111,7 @@ impl ConnectionPool {
             .bind(&actions)
             .bind(limit)
             .bind(offset)
-            .fetch_all(<ConnectionPool as Borrow<PgPool>>::borrow(self))
+            .fetch_all(&self.pool)
             .await?;
 
         let total_items = sqlx::query_scalar!(
@@ -131,7 +128,7 @@ impl ConnectionPool {
             query.to_date,
             actions.as_slice() as &[BonusPointsLogAction]
         )
-        .fetch_one(<ConnectionPool as Borrow<PgPool>>::borrow(self))
+        .fetch_one(&self.pool)
         .await?;
 
         Ok(PaginatedResults {

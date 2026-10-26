@@ -80,8 +80,8 @@ impl<R: RedisPoolInterface> Arcadia<R> {
 
         Self {
             pool,
-            redis_pool: Arc::clone(&redis_pool),
             auth: Auth::new(Arc::clone(&redis_pool)),
+            redis_pool,
             settings: Arc::new(Mutex::new(settings)),
             notification_sender,
             http_client,

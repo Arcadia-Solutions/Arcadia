@@ -3,7 +3,6 @@ use crate::{
     models::master_group::{MasterGroup, UserCreatedMasterGroup},
 };
 use arcadia_common::error::{Error, Result};
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     pub async fn create_master_group(
@@ -21,7 +20,7 @@ impl ConnectionPool {
             master_group_form.name,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateMasterGroup)?;
 

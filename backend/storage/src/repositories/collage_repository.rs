@@ -12,8 +12,7 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use sqlx::{query_as_unchecked, query_scalar, PgPool, Postgres, Transaction};
-use std::borrow::Borrow;
+use sqlx::{query_as_unchecked, query_scalar, Postgres, Transaction};
 use tokio::sync::broadcast;
 
 impl ConnectionPool {
@@ -47,7 +46,7 @@ impl ConnectionPool {
             &collage.tags,
             collage.category as _,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateCollage)?;
 
@@ -60,9 +59,7 @@ impl ConnectionPool {
         user_id: i32,
         notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<Vec<CollageEntry>> {
-        let mut tx: Transaction<'_, Postgres> = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx: Transaction<'_, Postgres> = self.pool.begin().await?;
         let mut created_entries = Vec::with_capacity(collage_entries.len());
         let mut notified_user_ids: Vec<i32> = Vec::new();
 
@@ -126,7 +123,7 @@ impl ConnectionPool {
             "#,
             collage_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFetchCollage)?;
 
@@ -154,7 +151,7 @@ impl ConnectionPool {
             collage_id,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFetchCollage)?;
         let title_group_stats = self
@@ -180,7 +177,7 @@ impl ConnectionPool {
             ",
             form.name,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .unwrap()
         .unwrap();
@@ -219,7 +216,7 @@ impl ConnectionPool {
             offset as i64,
             form.page_size as i64
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(PaginatedResults {
@@ -259,7 +256,7 @@ impl ConnectionPool {
             form.name,
             form.results_amount as i16
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(results)
@@ -282,7 +279,7 @@ impl ConnectionPool {
             form.category as _,
             form.id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotUpdateCollage)?;
 
@@ -296,7 +293,7 @@ impl ConnectionPool {
             "#,
             collage_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteCollage)?
         .unwrap_or(0);
@@ -312,7 +309,7 @@ impl ConnectionPool {
             "#,
             collage_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteCollage)?;
 
@@ -328,7 +325,7 @@ impl ConnectionPool {
             collage_id,
             title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteCollageEntry)?;
 
@@ -350,7 +347,7 @@ impl ConnectionPool {
             collage_id,
             title_group_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFetchCollage)?;
 

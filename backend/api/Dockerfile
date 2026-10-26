@@ -34,6 +34,7 @@ FROM base AS builder
 WORKDIR /app
 
 COPY --from=planner /app/recipe.json recipe.json
+COPY .cargo .cargo
 COPY --from=planner /app/backend/api/vendored /app/backend/api/vendored/
 
 # Set to "false" to build without optimizations (faster build though).

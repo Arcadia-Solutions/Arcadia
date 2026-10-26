@@ -263,11 +263,11 @@ api:
 
         // Missing file
         unsafe { std::env::set_var(CONFIGURATION_PATH_VARIABLE, &missing) };
-        assert!(std::panic::catch_unwind(|| load::<TestConfig>()).is_err());
+        assert!(std::panic::catch_unwind(load::<TestConfig>).is_err());
 
         // Directory
         unsafe { std::env::set_var(CONFIGURATION_PATH_VARIABLE, &dir) };
-        assert!(std::panic::catch_unwind(|| load::<TestConfig>()).is_err());
+        assert!(std::panic::catch_unwind(load::<TestConfig>).is_err());
 
         // Cleanup
         unsafe { std::env::remove_var(CONFIGURATION_PATH_VARIABLE) };

@@ -5,7 +5,7 @@ use strum::Display;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::models::common::OrderByDirection;
-use crate::models::user::{UserLite, UserPermission, UserPermissionMatchMode};
+use crate::models::user::{UserPermission, UserPermissionMatchMode};
 
 use super::user::UserLiteAvatar;
 
@@ -96,35 +96,6 @@ pub struct ConversationHierarchy {
     pub receiver_last_seen_at: Option<DateTime<Utc>>,
     pub locked: bool,
     pub messages: Vec<ConversationMessageHierarchy>,
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct ConversationMessageHierarchyLite {
-    #[schema(value_type = String, format = DateTime)]
-    pub created_at: DateTime<Utc>,
-    pub created_by: UserLite,
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct ConversationOverview {
-    pub id: i64,
-    #[schema(value_type = String, format = DateTime)]
-    pub created_at: DateTime<Utc>,
-    pub subject: String,
-    pub sender_id: i32,
-    pub receiver_id: i32,
-    pub correspondant: UserLite,
-    #[schema(value_type = String, format = DateTime)]
-    pub sender_last_seen_at: DateTime<Utc>,
-    #[schema(value_type = String, format = DateTime)]
-    pub receiver_last_seen_at: Option<DateTime<Utc>>,
-    pub locked: bool,
-    pub last_message: ConversationMessageHierarchyLite,
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct ConversationsOverview {
-    conversations: Vec<ConversationOverview>,
 }
 
 #[derive(Debug, Deserialize, IntoParams, ToSchema)]

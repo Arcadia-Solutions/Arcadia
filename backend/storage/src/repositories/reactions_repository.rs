@@ -6,7 +6,6 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use std::borrow::Borrow;
 use std::collections::HashMap;
 
 fn map_reaction_write_error(error: sqlx::Error) -> Error {
@@ -49,7 +48,7 @@ impl ConnectionPool {
             user_id,
             emoji_id
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await
         .map_err(map_reaction_write_error)?;
 
@@ -77,7 +76,7 @@ impl ConnectionPool {
             user_id,
             emoji_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?
         .rows_affected();
 
@@ -119,7 +118,7 @@ impl ConnectionPool {
             forum_post_ids,
             user_id
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         let mut reactions_per_post: HashMap<i64, Vec<ContentReaction>> = HashMap::new();
@@ -171,7 +170,7 @@ impl ConnectionPool {
             "#,
             forum_post_id
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         let mut grouped: Vec<ForumPostReactionUsers> = Vec::new();

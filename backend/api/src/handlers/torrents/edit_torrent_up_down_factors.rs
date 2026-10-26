@@ -3,6 +3,7 @@ use actix_web::{
     HttpRequest, HttpResponse,
 };
 use arcadia_shared::tracker::models::torrent::APIUpdateTorrentFactors;
+use reqwest::Method;
 
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -50,33 +51,19 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .await?;
 
     // Notify tracker to update its in-memory state
-    let mut url = arc.tracker.url_internal.clone();
-    url.path_segments_mut()
-        .unwrap()
-        .push("api")
-        .push("torrents")
-        .push(&form.torrent_id.to_string())
-        .push("up-down-factors");
-
     let payload = APIUpdateTorrentFactors {
         upload_factor: form.upload_factor,
         download_factor: form.download_factor,
     };
 
-    let res = arc
-        .internal_http_client
-        .put(url)
-        .header("x-api-key", arc.tracker.api_key.clone())
-        .json(&payload)
-        .send()
+    arc.pool
+        .notify_tracker(
+            Method::PUT,
+            &["torrents", &form.torrent_id.to_string(), "up-down-factors"],
+            Some(&payload),
+            "update torrent factors",
+        )
         .await;
-
-    if res.is_err() {
-        log::warn!(
-            "Tried to update torrent factors in tracker and got: {:?}",
-            res
-        );
-    }
 
     Ok(HttpResponse::Ok().json(json!({"result": "success"})))
 }

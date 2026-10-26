@@ -5,7 +5,6 @@ use crate::{
     },
 };
 use arcadia_common::error::Result;
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     /// Returns forum activity statistics (threads or posts) over the requested period,
@@ -72,7 +71,7 @@ impl ConnectionPool {
                     &query.interval.to_string(),
                     &query.group_by.to_string(),
                 )
-                .fetch_all(self.borrow())
+                .fetch_all(&self.pool)
                 .await?
             }
             ForumStatsMetric::Threads => {
@@ -133,7 +132,7 @@ impl ConnectionPool {
                     &query.interval.to_string(),
                     &query.group_by.to_string(),
                 )
-                .fetch_all(self.borrow())
+                .fetch_all(&self.pool)
                 .await?
             }
         };
@@ -166,7 +165,7 @@ impl ConnectionPool {
             query.from,
             query.to,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         let average_posts_per_thread = if summary.total_threads_created > 0 {

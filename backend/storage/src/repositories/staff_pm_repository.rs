@@ -7,8 +7,6 @@ use crate::{
 };
 use arcadia_common::error::{Error, Result};
 use serde_json::Value;
-use sqlx::PgPool;
-use std::borrow::Borrow;
 use tokio::sync::broadcast;
 
 impl ConnectionPool {
@@ -28,7 +26,7 @@ impl ConnectionPool {
             conversation.subject,
             current_user_id,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateConversation)?;
 
@@ -51,9 +49,7 @@ impl ConnectionPool {
         can_reply_staff_pm: bool,
         notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<StaffPmMessage> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         // Check if the user created the staff PM and if it's resolved
         let staff_pm = sqlx::query!(
@@ -127,7 +123,7 @@ impl ConnectionPool {
             "#,
             staff_pm_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindConversation)?;
 
@@ -148,7 +144,7 @@ impl ConnectionPool {
 			"#,
             staff_pm_id,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateConversation)?;
 
@@ -169,7 +165,7 @@ impl ConnectionPool {
             "#,
             staff_pm_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindConversation)?;
 
@@ -190,7 +186,7 @@ impl ConnectionPool {
 			"#,
             staff_pm_id,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateConversation)?;
 
@@ -253,7 +249,7 @@ impl ConnectionPool {
             current_user_id,
             can_read_staff_pm,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindConversations)?;
 
@@ -311,7 +307,7 @@ impl ConnectionPool {
             current_user_id,
             can_read_staff_pm,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindConversation)?;
 

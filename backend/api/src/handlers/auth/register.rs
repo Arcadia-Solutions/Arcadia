@@ -23,6 +23,7 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
+use reqwest::Method;
 use serde::Deserialize;
 use utoipa::ToSchema;
 
@@ -132,9 +133,6 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 
     // Inform tracker about the new user so it can accept announces immediately
     {
-        let mut url = arc.tracker.url_internal.clone();
-        url.path_segments_mut().unwrap().push("api").push("users");
-
         let payload = APIInsertUser {
             id: user.id as u32,
             passkey: user.passkey.parse().expect("invalid passkey format"),
@@ -142,17 +140,9 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         };
 
         // Fire and log; don't fail registration if tracker call fails
-        let res = arc
-            .internal_http_client
-            .put(url)
-            .header("x-api-key", arc.tracker.api_key.clone())
-            .json(&payload)
-            .send()
+        arc.pool
+            .notify_tracker(Method::PUT, &["users"], Some(&payload), "upsert user")
             .await;
-
-        if res.is_err() {
-            log::warn!("Tried to upsert user in tracker and got: {:?}", res);
-        }
     }
 
     // Send welcome email

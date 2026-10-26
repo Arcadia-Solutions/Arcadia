@@ -11,8 +11,7 @@ use rand::{
     distr::{Alphanumeric, SampleString},
     rng,
 };
-use sqlx::{PgPool, Postgres, Transaction};
-use std::borrow::Borrow;
+use sqlx::{Postgres, Transaction};
 
 impl ConnectionPool {
     pub async fn create_invitation(
@@ -24,9 +23,7 @@ impl ConnectionPool {
         // TODO: retry if invitation_key already exists
         let invitation_key: String = Alphanumeric.sample_string(&mut rng(), 50);
 
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let _ = Self::decrement_invitations_available(&mut tx, current_user_id).await;
 
@@ -82,7 +79,7 @@ impl ConnectionPool {
             "#,
             invitation_key
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::InvitationKeyInvalid)?;
 
@@ -127,7 +124,7 @@ impl ConnectionPool {
             query.receiver_username,
             show_foreign_invitations,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
 
@@ -177,7 +174,7 @@ impl ConnectionPool {
             query.order_by_direction.to_string(),
             show_foreign_invitations,
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         let results = rows

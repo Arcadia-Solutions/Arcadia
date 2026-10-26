@@ -1,6 +1,5 @@
 use chrono::{DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use sqlx::prelude::FromRow;
 use strum::Display;
 use utoipa::{IntoParams, ToSchema};
@@ -8,7 +7,6 @@ use utoipa::{IntoParams, ToSchema};
 use super::site_highlight::SiteHighlightItemType;
 use super::user::{UserLite, UserLiteAvatar};
 use crate::models::reaction::ContentReaction;
-use crate::utils::compute_diff;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct RelatedForumThread {
@@ -459,34 +457,4 @@ pub struct ReorderForumSubCategoryEntry {
 pub struct ReorderForumSubCategories {
     pub forum_category_id: i32,
     pub sub_categories: Vec<ReorderForumSubCategoryEntry>,
-}
-
-impl ForumCategory {
-    pub fn diff(&self, edited: &EditedForumCategory) -> Option<Value> {
-        compute_diff(self, edited, &["id"])
-    }
-}
-
-impl ForumSubCategory {
-    pub fn diff(&self, edited: &EditedForumSubCategory) -> Option<Value> {
-        compute_diff(self, edited, &["id"])
-    }
-}
-
-impl ForumThread {
-    pub fn diff(&self, edited: &EditedForumThread) -> Option<Value> {
-        compute_diff(self, edited, &["id"])
-    }
-}
-
-impl ForumPost {
-    pub fn diff(&self, edited: &EditedForumPost) -> Option<Value> {
-        compute_diff(self, edited, &["id"])
-    }
-}
-
-impl ForumThreadEnriched {
-    pub fn diff(&self, edited: &EditedForumThread) -> Option<Value> {
-        compute_diff(self, edited, &["id"])
-    }
 }

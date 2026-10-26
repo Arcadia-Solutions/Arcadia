@@ -8,17 +8,17 @@ use crate::{
         ip_check::{IpCheck, IpCheckProvider, UserRegistrationIp},
         user::{
             EditedUser, EditedUserClass, HideableUserList, PublicUser, SearchUsersQuery, UserClass,
-            UserCreatedUserClass, UserCreatedUserWarning, UserLite, UserMinimal,
-            UserParanoiaSettings, UserPermission, UserPermissionMatchMode, UserSearchResult,
-            UserSettings, UserSettingsResponse, UserWarning, UserWithStats,
+            UserCreatedUserClass, UserCreatedUserWarning, UserLite, UserParanoiaSettings,
+            UserPermission, UserPermissionMatchMode, UserSearchResult, UserSettings,
+            UserSettingsResponse, UserWarning, UserWithStats,
         },
     },
 };
 use arcadia_common::error::{Error, Result};
 use arcadia_shared::tracker::models::user::{APIInsertUser, APIUpdateUserMaxSnatchesPerDay};
 use chrono::{DateTime, Utc};
-use sqlx::{types::ipnetwork::IpNetwork, PgPool};
-use std::borrow::Borrow;
+use reqwest::Method;
+use sqlx::types::ipnetwork::IpNetwork;
 
 struct UnbannedUser {
     id: i32,
@@ -73,7 +73,7 @@ impl ConnectionPool {
             "#,
             *id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|error| match error {
             sqlx::Error::RowNotFound => Error::UserWithIdNotFound(*id),
@@ -106,7 +106,7 @@ impl ConnectionPool {
             "#,
             id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -124,7 +124,7 @@ impl ConnectionPool {
             edited_user.description,
             edited_user.email
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -153,7 +153,7 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::UserWithIdNotFound(user_id))?;
 
@@ -189,7 +189,7 @@ impl ConnectionPool {
             &settings.paranoia_hidden_stats as &[DisplayableUserStats],
             &settings.paranoia_hidden_lists as &[HideableUserList]
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -210,7 +210,7 @@ impl ConnectionPool {
             user_id,
             uploaded_as_anonymous
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -229,7 +229,7 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::UserWithIdNotFound(user_id))
     }
@@ -248,7 +248,7 @@ impl ConnectionPool {
             user_id,
             custom_title
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -293,7 +293,7 @@ impl ConnectionPool {
             result.is_tor,
             result.is_hosting
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -322,7 +322,7 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::UserWithIdNotFound(user_id))
     }
@@ -336,7 +336,7 @@ impl ConnectionPool {
                 ORDER BY id
             "#
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(users
@@ -350,9 +350,7 @@ impl ConnectionPool {
         current_user_id: i32,
         user_warning: &UserCreatedUserWarning,
     ) -> Result<UserWarning> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let _ = sqlx::query!(
             r#"
@@ -401,7 +399,7 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .expect("failed to get user warnings")
     }
@@ -410,9 +408,7 @@ impl ConnectionPool {
     /// for users whose all active (non-expired) warnings have expired.
     /// Keeps the warning rows in the database for history.
     pub async fn clear_expired_warnings(&self) -> Result<u64> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         // Unban users whose ban-warnings have all expired
         let unbanned_users = sqlx::query_as!(
@@ -462,9 +458,7 @@ impl ConnectionPool {
     /// and `removed_by_id`, and clears the `warned` and `banned` flags on the
     /// user. Warning rows are kept.
     pub async fn remove_user_warnings(&self, user_id: i32, current_user_id: i32) -> Result<()> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         sqlx::query!(
             r#"
@@ -504,35 +498,25 @@ impl ConnectionPool {
     /// so unbanned users must be (re)inserted for their announces to be accepted.
     async fn notify_tracker_users_unbanned(&self, users: &[UnbannedUser]) {
         for user in users {
-            let mut url = self.tracker_config.url_internal.clone();
-            url.path_segments_mut().unwrap().push("api").push("users");
-
             let payload = APIInsertUser {
                 id: user.id as u32,
                 passkey: user.passkey.parse().expect("invalid passkey format"),
                 max_snatches_per_day: user.max_snatches_per_day.map(|x| x as u32),
             };
 
-            if let Err(e) = self
-                .internal_http_client
-                .put(url)
-                .header("x-api-key", self.tracker_config.api_key.clone())
-                .json(&payload)
-                .send()
-                .await
-            {
-                log::warn!(
-                    "Failed to insert unbanned user {} in tracker: {}",
-                    user.id,
-                    e
-                );
-            }
+            self.notify_tracker(
+                Method::PUT,
+                &["users"],
+                Some(&payload),
+                &format!("insert unbanned user {}", user.id),
+            )
+            .await;
         }
     }
 
     pub async fn is_user_banned(&self, user_id: i32) -> Result<bool> {
         let result = sqlx::query_scalar!("SELECT banned FROM users WHERE id = $1", user_id)
-            .fetch_optional(self.borrow())
+            .fetch_optional(&self.pool)
             .await?;
 
         let Some(banned) = result else {
@@ -544,7 +528,7 @@ impl ConnectionPool {
 
     pub async fn is_user_warned(&self, user_id: i32) -> Result<bool> {
         let result = sqlx::query_scalar!("SELECT warned FROM users WHERE id = $1", user_id)
-            .fetch_optional(self.borrow())
+            .fetch_optional(&self.pool)
             .await?;
 
         let Some(warned) = result else {
@@ -552,19 +536,6 @@ impl ConnectionPool {
         };
 
         Ok(warned)
-    }
-
-    pub async fn find_registered_users(&self) -> Result<Vec<UserMinimal>> {
-        let users = sqlx::query_as!(
-            UserMinimal,
-            r#"
-            SELECT id, passkey FROM users
-            "#
-        )
-        .fetch_all(self.borrow())
-        .await?;
-
-        Ok(users)
     }
 
     pub async fn create_user_class(&self, user_class: &UserCreatedUserClass) -> Result<UserClass> {
@@ -634,7 +605,7 @@ impl ConnectionPool {
             user_class.max_snatches_per_day,
             user_class.promotion_cost_bonus_points
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|e| {
             if let sqlx::Error::Database(ref db_err) = e
@@ -675,7 +646,7 @@ impl ConnectionPool {
             "#,
             name
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::UserClassNotFound(name.to_string()))
     }
@@ -722,7 +693,7 @@ impl ConnectionPool {
                 ORDER BY cc.position IS NULL, cc.position, uc.name
             "#
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::from)
     }
@@ -803,7 +774,7 @@ impl ConnectionPool {
             edited_class.max_snatches_per_day,
             edited_class.promotion_cost_bonus_points
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|e| {
             if let sqlx::Error::RowNotFound = e {
@@ -884,7 +855,7 @@ impl ConnectionPool {
                 old_permissions as &[UserPermission],
                 new_permissions as &[UserPermission],
             )
-            .execute(self.borrow())
+            .execute(&self.pool)
             .await?;
         }
 
@@ -903,39 +874,22 @@ impl ConnectionPool {
             class_name,
             new_max_snatches_per_day,
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
-        let tracker_config = &self.tracker_config;
-
         for user_id in affected_user_ids {
-            let mut url = tracker_config.url_internal.clone();
-            url.path_segments_mut()
-                .unwrap()
-                .push("api")
-                .push("users")
-                .push(&user_id.to_string())
-                .push("max-snatches-per-day");
-
             let payload = APIUpdateUserMaxSnatchesPerDay {
                 id: user_id as u32,
                 max_snatches_per_day: new_max_snatches_per_day.map(|x| x as u32),
             };
 
-            if let Err(e) = self
-                .internal_http_client
-                .put(url)
-                .header("x-api-key", tracker_config.api_key.clone())
-                .json(&payload)
-                .send()
-                .await
-            {
-                log::warn!(
-                    "Failed to update user {} snatch limit in tracker: {}",
-                    user_id,
-                    e
-                );
-            }
+            self.notify_tracker(
+                Method::PUT,
+                &["users", &user_id.to_string(), "max-snatches-per-day"],
+                Some(&payload),
+                &format!("update user {user_id} snatch limit"),
+            )
+            .await;
         }
 
         Ok(())
@@ -955,12 +909,12 @@ impl ConnectionPool {
             name,
             target_class_name
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Delete the user class
         let result = sqlx::query!(r#"DELETE FROM user_classes WHERE name = $1"#, name)
-            .execute(self.borrow())
+            .execute(&self.pool)
             .await
             .map_err(Error::CouldNotDeleteUserClass)?;
 
@@ -969,17 +923,6 @@ impl ConnectionPool {
         }
 
         Ok(())
-    }
-
-    pub async fn count_users_in_class(&self, class_name: &str) -> Result<i64> {
-        let result = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM users WHERE class_name = $1"#,
-            class_name
-        )
-        .fetch_one(self.borrow())
-        .await?;
-
-        Ok(result.unwrap_or(0))
     }
 
     pub async fn update_user_permissions(
@@ -996,7 +939,7 @@ impl ConnectionPool {
             user_id,
             permissions as &[UserPermission]
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -1012,7 +955,7 @@ impl ConnectionPool {
             user_id,
             locked
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -1026,9 +969,7 @@ impl ConnectionPool {
         new_class_name: &str,
         notify_tracker: bool,
     ) -> Result<()> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         // Get current user with their class and permissions
         let user = sqlx::query_as!(
@@ -1172,30 +1113,18 @@ impl ConnectionPool {
 
         // Notify tracker about the new max_snatches_per_day
         if notify_tracker {
-            let tracker_config = &self.tracker_config;
-            let mut url = tracker_config.url_internal.clone();
-            url.path_segments_mut()
-                .unwrap()
-                .push("api")
-                .push("users")
-                .push(&user_id.to_string())
-                .push("max-snatches-per-day");
-
             let payload = APIUpdateUserMaxSnatchesPerDay {
                 id: user_id as u32,
                 max_snatches_per_day: new_class.max_snatches_per_day.map(|x| x as u32),
             };
 
-            if let Err(e) = self
-                .internal_http_client
-                .put(url)
-                .header("x-api-key", tracker_config.api_key.clone())
-                .json(&payload)
-                .send()
-                .await
-            {
-                log::warn!("Failed to update user snatch limit in tracker: {}", e);
-            }
+            self.notify_tracker(
+                Method::PUT,
+                &["users", &user_id.to_string(), "max-snatches-per-day"],
+                Some(&payload),
+                &format!("update user {user_id} snatch limit"),
+            )
+            .await;
         }
 
         Ok(())
@@ -1212,7 +1141,7 @@ impl ConnectionPool {
             "#,
             username
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotSearchForUsers)?;
 
@@ -1241,7 +1170,7 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(clients)
@@ -1317,7 +1246,7 @@ impl ConnectionPool {
             searched_permissions as &[UserPermission],
             match_all_permissions
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotSearchForUsers)?;
 
@@ -1338,7 +1267,7 @@ impl ConnectionPool {
             searched_permissions as &[UserPermission],
             match_all_permissions
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotSearchForUsers)?;
 
@@ -1378,7 +1307,7 @@ impl ConnectionPool {
             searched_permissions as &[UserPermission],
             match_all_permissions
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotSearchForUsers)?;
 
@@ -1431,7 +1360,7 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::UserWithIdNotFound(user_id))
     }
@@ -1489,7 +1418,7 @@ impl ConnectionPool {
             last_user_id,
             class_names
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::from)
     }
@@ -1524,7 +1453,7 @@ impl ConnectionPool {
             "#,
             current_class_name
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await
         .map_err(Error::from)
     }
@@ -1534,9 +1463,7 @@ impl ConnectionPool {
     /// Creates a warning entry for each banned user.
     /// Returns the number of users banned.
     pub async fn ban_inactive_users(&self, inactive_days: i32) -> Result<u64> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let banned_user_ids = sqlx::query_scalar!(
             r#"
@@ -1579,9 +1506,7 @@ impl ConnectionPool {
         new_class_name: &str,
         bonus_points_cost: i64,
     ) -> Result<()> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         // Deduct bonus points
         sqlx::query!(

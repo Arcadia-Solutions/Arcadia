@@ -1,8 +1,6 @@
 use crate::models::user::UserLite;
-use crate::utils::compute_diff;
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use sqlx::prelude::FromRow;
 use utoipa::{IntoParams, ToSchema};
 
@@ -28,12 +26,6 @@ pub struct Collage {
     pub description: String,
     pub tags: Vec<String>,
     pub category: CollageCategory,
-}
-
-impl Collage {
-    pub fn diff(&self, edited: &EditedCollage) -> Option<Value> {
-        compute_diff(self, edited, &["id", "created_at", "created_by_id"])
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]

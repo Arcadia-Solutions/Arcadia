@@ -22,8 +22,8 @@ use rand::{
     rng, RngExt,
 };
 use sha2::{Digest, Sha256};
-use sqlx::{types::ipnetwork::IpNetwork, PgPool};
-use std::{borrow::Borrow, sync::LazyLock};
+use sqlx::types::ipnetwork::IpNetwork;
+use std::sync::LazyLock;
 
 pub const MAXIMUM_API_KEYS_PER_USER: i64 = 15;
 
@@ -44,7 +44,7 @@ impl ConnectionPool {
             "SELECT EXISTS(SELECT 1 FROM users WHERE username = $1)",
             username
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         Ok(result.exists.unwrap_or(false))
@@ -72,9 +72,7 @@ impl ConnectionPool {
             return Err(Error::UsernameAlreadyExists);
         }
 
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let registered_user = sqlx::query_as!(
             User,
@@ -154,7 +152,7 @@ impl ConnectionPool {
             "#,
             login.username
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|e| {
             log::debug!("Error fetching user: {:?}", e);
@@ -201,7 +199,7 @@ impl ConnectionPool {
             "#,
             &value_hash[..]
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::InvalidAPIKeyOrBanned)?;
 
@@ -220,7 +218,7 @@ impl ConnectionPool {
             "#,
             current_user_id
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(api_keys)
@@ -232,7 +230,7 @@ impl ConnectionPool {
             api_key_id,
             current_user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?
         .rows_affected();
 
@@ -261,7 +259,7 @@ impl ConnectionPool {
             "#,
             id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::WrongUsernameOrPassword)
     }
@@ -292,7 +290,7 @@ impl ConnectionPool {
             current_user_id,
             MAXIMUM_API_KEYS_PER_USER
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await
         .map_err(Error::CouldNotCreateAPIKey)?
         .ok_or(Error::TooManyAPIKeys(MAXIMUM_API_KEYS_PER_USER))?;
@@ -314,7 +312,7 @@ impl ConnectionPool {
             user_id,
             permission as &UserPermission
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         Ok(result)
@@ -339,7 +337,7 @@ impl ConnectionPool {
                 permission as &UserPermission,
                 path
             )
-            .execute(self.borrow())
+            .execute(&self.pool)
             .await;
 
             return Err(Error::InsufficientPermissions(format!("{:?}", permission)));
@@ -366,7 +364,7 @@ impl ConnectionPool {
             query.to_date,
             query.permission.clone() as Option<UserPermission>
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
 
@@ -407,7 +405,7 @@ impl ConnectionPool {
             query.page as i32,
             query.page_size as i32
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         let results = rows
@@ -445,7 +443,7 @@ impl ConnectionPool {
             user_id,
             password_hash
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -472,7 +470,7 @@ impl ConnectionPool {
             user_id,
             expires_at
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok((token, expires_at))
@@ -488,7 +486,7 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -502,7 +500,7 @@ impl ConnectionPool {
             "#,
             token
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await?
         .ok_or(Error::InvalidOrExpiredPasswordResetToken)
     }
@@ -515,7 +513,7 @@ impl ConnectionPool {
             user_id,
             password
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -539,7 +537,7 @@ impl ConnectionPool {
             "#,
             username
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::UserNotFound(username.to_string()))
     }

@@ -56,11 +56,11 @@ VALUES
   (12, 'Target comment', NOW(), NOW(), 1, 11, false);
 
 -- Bookmarks: user 100 bookmarks source, user 146 bookmarks both (conflict)
-INSERT INTO title_group_bookmarks (user_id, title_group_id, description)
+INSERT INTO title_group_bookmarks (id, user_id, title_group_id, description)
 VALUES
-  (100, 10, 'Source bookmark'),
-  (146, 10, 'Source bookmark by merge user'),
-  (146, 11, 'Target bookmark by merge user');
+  (10, 100, 10, 'Source bookmark'),
+  (11, 146, 10, 'Source bookmark by merge user'),
+  (12, 146, 11, 'Target bookmark by merge user');
 
 -- Subscriptions (title_group_torrents): user 100 on source, user 146 on both (conflict)
 INSERT INTO subscriptions_title_group_torrents (user_id, title_group_id)
@@ -91,3 +91,22 @@ VALUES
 -- Torrent request on source
 INSERT INTO torrent_requests (id, title_group_id, created_at, updated_at, created_by_id, description, languages, container, audio_codec, audio_channels, audio_bitrate_sampling, video_codec, features, subtitle_languages, video_resolution, source)
 VALUES (10, 10, NOW(), NOW(), 1, 'Request on source', ARRAY['English']::language_enum[], ARRAY['FLAC'], ARRAY['flac']::audio_codec_enum[], ARRAY['2.0']::audio_channels_enum[], ARRAY['Lossless']::audio_bitrate_sampling_enum[], ARRAY[]::video_codec_enum[], ARRAY[]::features_enum[], ARRAY[]::language_enum[], ARRAY[]::video_resolution_enum[], ARRAY['CD']::source_enum[]);
+
+-- Entities: entity 10 only on source, entity 11 on both (conflict, target is label)
+INSERT INTO entities (id, name, description, pictures, created_by_id)
+VALUES
+  (10, 'Entity A', '', '{}', 1),
+  (11, 'Entity Shared', '', '{}', 1);
+
+INSERT INTO affiliated_entities (title_group_id, entity_id, roles, created_by_id)
+VALUES
+  (10, 10, '{producer}', 1),
+  (10, 11, '{producer}', 1),
+  (11, 11, '{label}', 1);
+
+-- Notifications on source for user 100
+INSERT INTO notifications_title_group_comments (title_group_id, title_group_comment_id, user_id)
+VALUES (10, 10, 100);
+
+INSERT INTO notifications_artist_title_groups (artist_id, title_group_id, user_id)
+VALUES (10, 10, 100);

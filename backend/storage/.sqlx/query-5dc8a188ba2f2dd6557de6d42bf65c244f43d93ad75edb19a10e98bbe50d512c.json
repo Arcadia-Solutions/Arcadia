@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE affiliated_artists source\n            SET title_group_id = $2\n            WHERE source.title_group_id = $1\n              AND NOT EXISTS (\n                  SELECT 1 FROM affiliated_artists target\n                  WHERE target.title_group_id = $2 AND target.artist_id = source.artist_id\n              )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5dc8a188ba2f2dd6557de6d42bf65c244f43d93ad75edb19a10e98bbe50d512c"
+}

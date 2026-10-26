@@ -137,6 +137,10 @@ tracker:
     - BI3500
     - BI3600
     - BI3700
+    - BI3800
+    - BI3900
+    - BI4000
+    - BI4100
     # Deluge
     - DE12
     - DE13
@@ -151,6 +155,8 @@ tracker:
     - KT23
     - KT24
     - KT5
+    - KT25
+    - KT26
     # LibTorrent (rTorrent)
     - LT
     - lt0D
@@ -179,6 +185,10 @@ tracker:
     - TR4040
     - TR4050
     - TR4060
+    - TR4100
+    - TR4110
+    - TR4120
+    - TR4130
   # Amount of peers sent back when the peer does not include a numwant.
   numwant_default: 15
   # Max amount of peers sent back when the peer's numwant is too high.

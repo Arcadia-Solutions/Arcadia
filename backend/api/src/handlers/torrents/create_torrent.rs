@@ -1,6 +1,7 @@
 use actix_multipart::form::MultipartForm;
 use actix_web::{web::Data, HttpRequest, HttpResponse};
 use arcadia_shared::tracker::models::torrent::APIInsertTorrent;
+use reqwest::Method;
 
 use crate::{middlewares::auth_middleware::Authdata, Arcadia};
 use arcadia_common::error::Result;
@@ -91,12 +92,6 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         )
         .await?;
 
-    let mut url = arc.tracker.url_internal.clone();
-    url.path_segments_mut()
-        .unwrap()
-        .push("api")
-        .push("torrents");
-
     let payload = APIInsertTorrent {
         id: torrent.id as u32,
         info_hash: torrent.info_hash,
@@ -108,20 +103,14 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         upload_factor: torrent.download_factor as u8,
     };
 
-    let res = arc
-        .internal_http_client
-        .put(url)
-        .header("x-api-key", arc.tracker.api_key.clone())
-        .json(&payload)
-        .send()
+    arc.pool
+        .notify_tracker(
+            Method::PUT,
+            &["torrents"],
+            Some(&payload),
+            "insert new torrent",
+        )
         .await;
-
-    if res.is_err() {
-        log::warn!(
-            "Tried to insert new torrent into tracker's db and got: {:?}",
-            res
-        );
-    }
 
     Ok(HttpResponse::Created().json(torrent))
 }

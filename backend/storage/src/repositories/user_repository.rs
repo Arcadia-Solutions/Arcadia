@@ -17,6 +17,7 @@ use crate::{
 use arcadia_common::error::{Error, Result};
 use arcadia_shared::tracker::models::user::{APIInsertUser, APIUpdateUserMaxSnatchesPerDay};
 use chrono::{DateTime, Utc};
+use reqwest::Method;
 use sqlx::types::ipnetwork::IpNetwork;
 
 struct UnbannedUser {
@@ -497,29 +498,19 @@ impl ConnectionPool {
     /// so unbanned users must be (re)inserted for their announces to be accepted.
     async fn notify_tracker_users_unbanned(&self, users: &[UnbannedUser]) {
         for user in users {
-            let mut url = self.tracker_config.url_internal.clone();
-            url.path_segments_mut().unwrap().push("api").push("users");
-
             let payload = APIInsertUser {
                 id: user.id as u32,
                 passkey: user.passkey.parse().expect("invalid passkey format"),
                 max_snatches_per_day: user.max_snatches_per_day.map(|x| x as u32),
             };
 
-            if let Err(e) = self
-                .internal_http_client
-                .put(url)
-                .header("x-api-key", self.tracker_config.api_key.clone())
-                .json(&payload)
-                .send()
-                .await
-            {
-                log::warn!(
-                    "Failed to insert unbanned user {} in tracker: {}",
-                    user.id,
-                    e
-                );
-            }
+            self.notify_tracker(
+                Method::PUT,
+                &["users"],
+                Some(&payload),
+                &format!("insert unbanned user {}", user.id),
+            )
+            .await;
         }
     }
 
@@ -886,36 +877,19 @@ impl ConnectionPool {
         .fetch_all(&self.pool)
         .await?;
 
-        let tracker_config = &self.tracker_config;
-
         for user_id in affected_user_ids {
-            let mut url = tracker_config.url_internal.clone();
-            url.path_segments_mut()
-                .unwrap()
-                .push("api")
-                .push("users")
-                .push(&user_id.to_string())
-                .push("max-snatches-per-day");
-
             let payload = APIUpdateUserMaxSnatchesPerDay {
                 id: user_id as u32,
                 max_snatches_per_day: new_max_snatches_per_day.map(|x| x as u32),
             };
 
-            if let Err(e) = self
-                .internal_http_client
-                .put(url)
-                .header("x-api-key", tracker_config.api_key.clone())
-                .json(&payload)
-                .send()
-                .await
-            {
-                log::warn!(
-                    "Failed to update user {} snatch limit in tracker: {}",
-                    user_id,
-                    e
-                );
-            }
+            self.notify_tracker(
+                Method::PUT,
+                &["users", &user_id.to_string(), "max-snatches-per-day"],
+                Some(&payload),
+                &format!("update user {user_id} snatch limit"),
+            )
+            .await;
         }
 
         Ok(())
@@ -1139,30 +1113,18 @@ impl ConnectionPool {
 
         // Notify tracker about the new max_snatches_per_day
         if notify_tracker {
-            let tracker_config = &self.tracker_config;
-            let mut url = tracker_config.url_internal.clone();
-            url.path_segments_mut()
-                .unwrap()
-                .push("api")
-                .push("users")
-                .push(&user_id.to_string())
-                .push("max-snatches-per-day");
-
             let payload = APIUpdateUserMaxSnatchesPerDay {
                 id: user_id as u32,
                 max_snatches_per_day: new_class.max_snatches_per_day.map(|x| x as u32),
             };
 
-            if let Err(e) = self
-                .internal_http_client
-                .put(url)
-                .header("x-api-key", tracker_config.api_key.clone())
-                .json(&payload)
-                .send()
-                .await
-            {
-                log::warn!("Failed to update user snatch limit in tracker: {}", e);
-            }
+            self.notify_tracker(
+                Method::PUT,
+                &["users", &user_id.to_string(), "max-snatches-per-day"],
+                Some(&payload),
+                &format!("update user {user_id} snatch limit"),
+            )
+            .await;
         }
 
         Ok(())

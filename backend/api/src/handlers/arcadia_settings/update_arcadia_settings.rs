@@ -9,6 +9,7 @@ use arcadia_storage::{
     models::{arcadia_settings::ArcadiaSettings, user::UserPermission},
     redis::RedisPoolInterface,
 };
+use reqwest::Method;
 
 #[utoipa::path(
     put,
@@ -105,12 +106,6 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     *arc.settings.lock().unwrap() = updated_settings.clone();
 
     // Notify tracker of settings change
-    let mut url = arc.tracker.url_internal.clone();
-    url.path_segments_mut()
-        .unwrap()
-        .push("api")
-        .push("settings");
-
     let payload = ArcadiaSettingsForTracker {
         global_upload_factor: updated_settings.global_upload_factor,
         global_download_factor: updated_settings.global_download_factor,
@@ -124,17 +119,14 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         charge_bonus_points_on_resnatch: updated_settings.charge_bonus_points_on_resnatch,
     };
 
-    let res = arc
-        .internal_http_client
-        .put(url)
-        .header("x-api-key", arc.tracker.api_key.clone())
-        .json(&payload)
-        .send()
+    arc.pool
+        .notify_tracker(
+            Method::PUT,
+            &["settings"],
+            Some(&payload),
+            "update settings",
+        )
         .await;
-
-    if res.is_err() {
-        log::warn!("Tried to update settings in tracker and got: {:?}", res);
-    }
 
     Ok(HttpResponse::Ok().json(updated_settings))
 }

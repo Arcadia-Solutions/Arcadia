@@ -2,6 +2,7 @@ use actix_web::{
     web::{Data, Json},
     HttpRequest, HttpResponse,
 };
+use reqwest::Method;
 
 use chrono::Local;
 
@@ -54,27 +55,14 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .remove_torrent(&form, user.sub, &arc.notification_sender)
         .await?;
 
-    let torrent_id = form.id;
-    let mut url = arc.tracker.url_internal.clone();
-    url.path_segments_mut()
-        .unwrap()
-        .push("api")
-        .push("torrents")
-        .push(&torrent_id.to_string());
-
-    let res = arc
-        .internal_http_client
-        .delete(url)
-        .header("x-api-key", arc.tracker.api_key.clone())
-        .send()
+    arc.pool
+        .notify_tracker(
+            Method::DELETE,
+            &["torrents", &form.id.to_string()],
+            None::<&()>,
+            "mark torrent as deleted",
+        )
         .await;
-
-    if res.is_err() {
-        log::warn!(
-            "Tried to mark torrent as deleted in tracker and got: {:?}",
-            res
-        );
-    }
 
     Ok(HttpResponse::Ok().finish())
 }

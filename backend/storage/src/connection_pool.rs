@@ -1,3 +1,4 @@
+use serde::Serialize;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::borrow::Borrow;
 use url::Url;
@@ -47,6 +48,34 @@ impl ConnectionPool {
                 .no_proxy()
                 .build()
                 .expect("Failed to build no-proxy HTTP client"),
+        }
+    }
+
+    /// Sends a request to the tracker's internal api (`/api/<path_segments>`),
+    /// only logging a warning on failure so the caller's operation still succeeds.
+    pub async fn notify_tracker(
+        &self,
+        method: reqwest::Method,
+        path_segments: &[&str],
+        body: Option<&impl Serialize>,
+        action_description: &str,
+    ) {
+        let mut url = self.tracker_config.url_internal.clone();
+        url.path_segments_mut()
+            .unwrap()
+            .push("api")
+            .extend(path_segments);
+
+        let mut request = self
+            .internal_http_client
+            .request(method, url)
+            .header("x-api-key", self.tracker_config.api_key.clone());
+        if let Some(body) = body {
+            request = request.json(body);
+        }
+
+        if let Err(error) = request.send().await {
+            log::warn!("Failed to {action_description} in tracker: {error}");
         }
     }
 }

@@ -736,26 +736,6 @@ impl ConnectionPool {
         Ok(user_ids)
     }
 
-    pub async fn find_unread_notifications_amount_forum_sub_category_threads(
-        &self,
-        user_id: i32,
-    ) -> Result<i64> {
-        let count = sqlx::query_scalar!(
-            r#"
-            SELECT COUNT(*)
-            FROM notifications_forum_sub_category_threads
-            WHERE user_id = $1 AND read_status = FALSE
-            "#,
-            user_id
-        )
-        .fetch_one(self.borrow())
-        .await
-        .map_err(Error::CouldNotGetUnreadNotifications)?
-        .unwrap_or(0);
-
-        Ok(count)
-    }
-
     pub async fn mark_notification_forum_sub_category_thread_as_read_by_thread_id(
         &self,
         forum_thread_id: i64,
@@ -822,48 +802,6 @@ impl ConnectionPool {
         .map_err(Error::CouldNotCreateNotification)?;
 
         Ok(user_ids)
-    }
-
-    pub async fn find_unread_notifications_amount_forum_thread_posts(
-        &self,
-        user_id: i32,
-    ) -> Result<i64> {
-        let count = sqlx::query_scalar!(
-            r#"
-            SELECT COUNT(*)
-            FROM notifications_forum_thread_posts
-            WHERE user_id = $1 AND read_status = FALSE
-            "#,
-            user_id
-        )
-        .fetch_one(self.borrow())
-        .await
-        .map_err(Error::CouldNotGetUnreadNotifications)?
-        .unwrap_or(0);
-
-        Ok(count)
-    }
-
-    pub async fn find_unread_notifications_amount_title_group_torrents(
-        &self,
-        user_id: i32,
-    ) -> Result<i64> {
-        let count = sqlx::query_scalar!(
-            r#"
-            SELECT COUNT(*)
-            FROM notifications_title_group_torrents n
-            JOIN torrents t ON t.id = n.torrent_id
-            WHERE n.user_id = $1 AND n.read_status = FALSE
-            AND t.deleted_at IS NULL
-            "#,
-            user_id
-        )
-        .fetch_one(self.borrow())
-        .await
-        .map_err(Error::CouldNotGetUnreadNotifications)?
-        .unwrap_or(0);
-
-        Ok(count)
     }
 
     pub async fn mark_notification_title_group_torrent_as_read(
@@ -992,26 +930,6 @@ impl ConnectionPool {
         Ok(user_ids)
     }
 
-    pub async fn find_unread_notifications_amount_title_group_comments(
-        &self,
-        user_id: i32,
-    ) -> Result<i64> {
-        let count = sqlx::query_scalar!(
-            r#"
-            SELECT COUNT(*)
-            FROM notifications_title_group_comments
-            WHERE user_id = $1 AND read_status = FALSE
-            "#,
-            user_id
-        )
-        .fetch_one(self.borrow())
-        .await
-        .map_err(Error::CouldNotGetUnreadNotifications)?
-        .unwrap_or(0);
-
-        Ok(count)
-    }
-
     pub async fn mark_notification_title_group_comment_as_read(
         &self,
         title_group_id: i32,
@@ -1071,26 +989,6 @@ impl ConnectionPool {
         .map_err(Error::CouldNotCreateNotification)?;
 
         Ok(user_ids)
-    }
-
-    pub async fn find_unread_notifications_amount_torrent_request_comments(
-        &self,
-        user_id: i32,
-    ) -> Result<i64> {
-        let count = sqlx::query_scalar!(
-            r#"
-            SELECT COUNT(*)
-            FROM notifications_torrent_request_comments
-            WHERE user_id = $1 AND read_status = FALSE
-            "#,
-            user_id
-        )
-        .fetch_one(self.borrow())
-        .await
-        .map_err(Error::CouldNotGetUnreadNotifications)?
-        .unwrap_or(0);
-
-        Ok(count)
     }
 
     pub async fn mark_notification_torrent_request_comment_as_read(
@@ -1158,26 +1056,6 @@ impl ConnectionPool {
         .map_err(Error::CouldNotCreateNotification)?;
 
         Ok(user_ids)
-    }
-
-    pub async fn find_unread_notifications_amount_staff_pm_messages(
-        &self,
-        user_id: i32,
-    ) -> Result<i64> {
-        let count = sqlx::query_scalar!(
-            r#"
-            SELECT COUNT(*)
-            FROM notifications_staff_pm_messages
-            WHERE user_id = $1 AND read_status = FALSE
-            "#,
-            user_id
-        )
-        .fetch_one(self.borrow())
-        .await
-        .map_err(Error::CouldNotGetUnreadNotifications)?
-        .unwrap_or(0);
-
-        Ok(count)
     }
 
     pub async fn mark_notifications_staff_pm_messages_as_read(

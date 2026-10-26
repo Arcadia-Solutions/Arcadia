@@ -1361,23 +1361,6 @@ impl ConnectionPool {
         Ok(())
     }
 
-    pub async fn increment_torrent_times_completed(&self, torrent_id: i32) -> Result<()> {
-        let _ = sqlx::query!(
-            r#"
-            UPDATE torrents
-            SET
-                times_completed = times_completed + 1
-            WHERE
-                id = $1
-            "#,
-            torrent_id
-        )
-        .execute(self.borrow())
-        .await?;
-
-        Ok(())
-    }
-
     pub async fn set_torrent_staff_checked(
         &self,
         torrent_id: i32,

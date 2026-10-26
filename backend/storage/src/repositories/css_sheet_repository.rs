@@ -80,26 +80,6 @@ impl ConnectionPool {
         Ok(css_sheet)
     }
 
-    pub async fn set_css_sheet_for_user(
-        &self,
-        user_id: i32,
-        css_sheet_name: Option<String>,
-    ) -> Result<()> {
-        let _ = sqlx::query!(
-            r#"
-                UPDATE users
-                SET css_sheet_name = $2
-                WHERE id = $1
-            "#,
-            user_id,
-            css_sheet_name
-        )
-        .execute(self.borrow())
-        .await?;
-
-        Ok(())
-    }
-
     pub async fn get_css_sheet_content(&self, name: &str) -> Result<String> {
         let css = sqlx::query!(
             r#"

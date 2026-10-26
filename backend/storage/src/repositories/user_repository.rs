@@ -8,9 +8,9 @@ use crate::{
         ip_check::{IpCheck, IpCheckProvider, UserRegistrationIp},
         user::{
             EditedUser, EditedUserClass, HideableUserList, PublicUser, SearchUsersQuery, UserClass,
-            UserCreatedUserClass, UserCreatedUserWarning, UserLite, UserMinimal,
-            UserParanoiaSettings, UserPermission, UserPermissionMatchMode, UserSearchResult,
-            UserSettings, UserSettingsResponse, UserWarning, UserWithStats,
+            UserCreatedUserClass, UserCreatedUserWarning, UserLite, UserParanoiaSettings,
+            UserPermission, UserPermissionMatchMode, UserSearchResult, UserSettings,
+            UserSettingsResponse, UserWarning, UserWithStats,
         },
     },
 };
@@ -554,19 +554,6 @@ impl ConnectionPool {
         Ok(warned)
     }
 
-    pub async fn find_registered_users(&self) -> Result<Vec<UserMinimal>> {
-        let users = sqlx::query_as!(
-            UserMinimal,
-            r#"
-            SELECT id, passkey FROM users
-            "#
-        )
-        .fetch_all(self.borrow())
-        .await?;
-
-        Ok(users)
-    }
-
     pub async fn create_user_class(&self, user_class: &UserCreatedUserClass) -> Result<UserClass> {
         sqlx::query_as!(
             UserClass,
@@ -969,17 +956,6 @@ impl ConnectionPool {
         }
 
         Ok(())
-    }
-
-    pub async fn count_users_in_class(&self, class_name: &str) -> Result<i64> {
-        let result = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM users WHERE class_name = $1"#,
-            class_name
-        )
-        .fetch_one(self.borrow())
-        .await?;
-
-        Ok(result.unwrap_or(0))
     }
 
     pub async fn update_user_permissions(

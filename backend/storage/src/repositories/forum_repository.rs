@@ -1713,28 +1713,6 @@ impl ConnectionPool {
         Ok(())
     }
 
-    pub async fn find_unread_announcements_amount(&self, user_id: i32) -> Result<i64> {
-        let amount = sqlx::query_scalar!(
-            r#"
-            SELECT COUNT(ft.id)
-            FROM forum_threads ft
-            WHERE ft.forum_sub_category_id = 1
-              AND NOT EXISTS (
-                  SELECT 1
-                  FROM forum_thread_reads ftr
-                  WHERE ftr.forum_thread_id = ft.id
-                    AND ftr.user_id = $1
-              )
-            "#,
-            user_id
-        )
-        .fetch_one(self.borrow())
-        .await
-        .map_err(Error::CouldNotFindForumThread)?;
-
-        Ok(amount.unwrap_or(0))
-    }
-
     pub async fn pin_forum_thread(&self, form: &PinForumThread) -> Result<()> {
         sqlx::query!(
             r#"
@@ -2085,29 +2063,6 @@ impl ConnectionPool {
                 ORDER BY rt.created_at DESC
             "#,
             series_id
-        )
-        .fetch_all(self.borrow())
-        .await
-        .map_err(Error::CouldNotGetRelatedThreads)
-    }
-
-    pub async fn find_related_forum_threads_for_artist(
-        &self,
-        artist_id: i64,
-    ) -> Result<Vec<RelatedForumThread>> {
-        sqlx::query_as!(
-            RelatedForumThread,
-            r#"
-                SELECT
-                    rt.forum_thread_id,
-                    ft.name AS thread_name,
-                    rt.created_at
-                FROM artist_related_threads rt
-                JOIN forum_threads ft ON ft.id = rt.forum_thread_id
-                WHERE rt.artist_id = $1
-                ORDER BY rt.created_at DESC
-            "#,
-            artist_id
         )
         .fetch_all(self.borrow())
         .await

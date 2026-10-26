@@ -409,43 +409,6 @@ impl ConnectionPool {
         Ok(conversation_with_messages.conversation_details.unwrap())
     }
 
-    pub async fn find_unread_conversations_amount(&self, user_id: i32) -> Result<u32> {
-        let amount = sqlx::query_scalar!(
-            r#"
-            SELECT
-                COUNT(c.id)
-            FROM
-                conversations c
-            JOIN LATERAL (
-                SELECT
-                    cm.created_at,
-                    cm.created_by_id
-                FROM
-                    conversation_messages cm
-                WHERE
-                    cm.conversation_id = c.id
-                ORDER BY
-                    cm.created_at DESC
-                LIMIT 1
-            ) AS lm ON TRUE
-            WHERE
-                lm.created_by_id != $1
-                AND
-                (
-                    (c.sender_id = $1 AND (c.sender_last_seen_at < lm.created_at))
-                    OR
-                    (c.receiver_id = $1 AND (c.receiver_last_seen_at IS NULL OR c.receiver_last_seen_at < lm.created_at))
-                );
-            "#,
-            user_id,
-        )
-        .fetch_one(self.borrow())
-        .await
-        .expect("error looking for unread conversations");
-
-        Ok(amount.unwrap() as u32)
-    }
-
     /// Sends a message from a sender to multiple recipients, creating a new conversation for each.
     pub async fn send_batch_messages_tx(
         tx: &mut Transaction<'_, Postgres>,

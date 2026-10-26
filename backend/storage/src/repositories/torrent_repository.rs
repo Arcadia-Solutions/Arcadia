@@ -54,7 +54,7 @@ pub struct GetTorrentResult {
     pub file_contents: Vec<u8>,
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 impl ConnectionPool {
     pub async fn create_torrent(
         &self,
@@ -542,7 +542,7 @@ impl ConnectionPool {
 
         let info = Info::from_bytes(torrent.info_dict).map_err(|_| Error::TorrentFileInvalid)?;
 
-        let announce_url = get_announce_url(passkey.to_owned(), tracker_url);
+        let announce_url = get_announce_url(passkey, tracker_url);
 
         let frontend_url = format!("{frontend_url}torrent/{torrent_id}");
 
@@ -1189,6 +1189,10 @@ impl ConnectionPool {
         })
     }
 
+    #[expect(
+        clippy::unused_async,
+        reason = "stub until the top torrents query is restored"
+    )]
     pub async fn find_top_torrents(&self, _period: &str, _amount: i64) -> Result<Value> {
         Ok(Value::Array(vec![]))
         // let search_results = sqlx::query!(

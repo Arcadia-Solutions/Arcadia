@@ -8,6 +8,15 @@ members = [
 
 resolver = "2"
 
+[workspace.lints.rust]
+unreachable_pub = "warn"
+
+[workspace.lints.clippy]
+allow_attributes = "warn"
+unused_async = "warn"
+unused_self = "warn"
+needless_pass_by_value = "warn"
+
 # http2 is left out: it pulls the vulnerable h2 0.3 and the backends sit behind a reverse proxy.
 [workspace.dependencies]
 actix-web = { version = "4", default-features = false, features = ["macros", "compress-brotli", "compress-gzip", "compress-zstd", "cookies", "unicode", "compat"] }

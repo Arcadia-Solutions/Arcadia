@@ -117,5 +117,8 @@ async fn main() -> std::io::Result<()> {
     .bind(server_url)?
     .run();
 
-    server.await
+    let result = server.await;
+    // Blocking flush, kept off the runtime workers that drive the gRPC exporters
+    let _ = tokio::task::spawn_blocking(arcadia_shared::telemetry::shutdown_telemetry).await;
+    result
 }

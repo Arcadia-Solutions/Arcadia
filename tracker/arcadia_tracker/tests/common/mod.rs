@@ -1,24 +1,15 @@
-// Each integration test binary compiles this module and only uses part of it
-#![allow(dead_code)]
-
-use actix_http::Request;
-use actix_web::{
-    body::MessageBody,
-    dev::{Service, ServiceResponse},
-    test, web, App, Error,
-};
+use actix_web::web;
 use arcadia_shared::tracker::models::{
     env::ArcadiaSettingsForTracker, infohash_2_id, passkey_2_id, torrent, user,
 };
-use arcadia_tracker::{config::Config, routes::init, Tracker};
+use arcadia_tracker::{config::Config, Tracker};
 use parking_lot::{Mutex, RwLock};
-use serde::de::DeserializeOwned;
 use sqlx::PgPool;
 use std::sync::OnceLock;
 
 /// Only the keys that differ from their default are given. The database section is required
 /// but unused: the tracker is given the test pool directly.
-pub fn test_config() -> Config {
+pub(crate) fn test_config() -> Config {
     yaml_serde::from_str(
         r#"
         database: { host: localhost, port: 5432, user: arcadia, password: password, name: arcadia }
@@ -40,7 +31,7 @@ pub fn test_config() -> Config {
 }
 
 /// Tracker with its stores loaded from the test database
-pub async fn create_test_tracker(pool: PgPool, config: Config) -> web::Data<Tracker> {
+pub(crate) async fn create_test_tracker(pool: PgPool, config: Config) -> web::Data<Tracker> {
     let settings = ArcadiaSettingsForTracker::from_database(&pool).await;
     let users = user::Map::from_database(&pool).await;
     let passkey2id = passkey_2_id::Map::from_database(&pool).await;
@@ -61,19 +52,4 @@ pub async fn create_test_tracker(pool: PgPool, config: Config) -> web::Data<Trac
         peer_updates: Mutex::new(Default::default()),
         announce_error_updates: Mutex::new(Default::default()),
     })
-}
-
-pub async fn create_test_app(
-    pool: PgPool,
-) -> impl Service<Request, Response = ServiceResponse, Error = Error> {
-    let tracker = create_test_tracker(pool, test_config()).await;
-
-    test::init_service(App::new().app_data(tracker).configure(init)).await
-}
-
-pub async fn read_body_bencode<T: DeserializeOwned, B: MessageBody>(
-    resp: ServiceResponse<B>,
-) -> Result<T, serde_bencode::Error> {
-    let body = test::read_body(resp).await;
-    serde_bencode::from_bytes(&body)
 }

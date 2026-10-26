@@ -78,5 +78,8 @@ async fn main() -> std::io::Result<()> {
         log::info!("Graceful shutdown succeeded");
     }
 
+    // Blocking flush, kept off the runtime workers that drive the gRPC exporters
+    let _ = tokio::task::spawn_blocking(arcadia_shared::telemetry::shutdown_telemetry).await;
+
     Ok(())
 }

@@ -121,7 +121,7 @@ impl Map {
             let torrent_id =
                 u32::try_from(peer.torrent_id).expect("torrent_id out of range for u32");
             let user_id = u32::try_from(peer.user_id).expect("user_id out of range for u32");
-            #[allow(clippy::expect_fun_call)]
+            #[expect(clippy::expect_fun_call)]
             let port = u16::try_from(peer.port).expect(&format!(
                 "Invalid port number in database. Peer: {:?}",
                 peer

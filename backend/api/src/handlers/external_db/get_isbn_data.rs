@@ -24,7 +24,7 @@ use serde_json::json;
 #[serde(untagged)]
 enum Description {
     Typed {
-        #[allow(unused)]
+        #[expect(unused)]
         #[serde(rename = "type")]
         type_: String,
         value: String,

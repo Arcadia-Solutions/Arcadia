@@ -30,7 +30,7 @@ pub trait Mergeable {
     fn merge(&mut self, new: &Self);
 }
 
-#[allow(async_fn_in_trait)]
+#[expect(async_fn_in_trait)]
 pub trait Flushable<T> {
     /// Flushes updates to postgresql database, returning the number of rows
     /// affected (0 on failure).

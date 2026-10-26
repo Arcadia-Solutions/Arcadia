@@ -22,6 +22,7 @@ WORKDIR /app
 # Only needed to satisfy the `[patch.crates-io]` entry in the workspace manifest.
 COPY --from=planner /app/backend/api/vendored /app/backend/api/vendored/
 COPY --from=planner /app/recipe.json recipe.json
+COPY .cargo .cargo
 
 # Set to "false" to build without optimizations, for faster builds.
 ARG PRODUCTION_BUILD=true

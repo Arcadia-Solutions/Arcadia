@@ -189,6 +189,7 @@ tracker:
     - TR4110
     - TR4120
     - TR4130
+    - TR4140
   # Amount of peers sent back when the peer does not include a numwant.
   numwant_default: 15
   # Max amount of peers sent back when the peer's numwant is too high.

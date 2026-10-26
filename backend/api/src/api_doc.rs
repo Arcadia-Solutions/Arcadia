@@ -32,7 +32,9 @@ use arcadia_storage::models::series::{SearchSeriesQuery, SeriesSearchOrderByColu
 use arcadia_storage::models::title_group_comment::{
     TitleGroupCommentSearchQuery, UserTitleGroupCommentSearchQuery,
 };
-use arcadia_storage::models::title_group_tag::SearchTitleGroupTagsQuery;
+use arcadia_storage::models::title_group_tag::{
+    SearchTitleGroupAppliedTagsQuery, SearchTitleGroupTagsQuery,
+};
 use arcadia_storage::models::torrent::{TorrentDeletionReason, TorrentSearch};
 use arcadia_storage::models::torrent_activity::{
     TorrentActivitiesOverview, TorrentActivity, TorrentActivityAndTitleGroup,
@@ -229,6 +231,7 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         crate::handlers::title_group_tags::restore_tag::exec,
         crate::handlers::title_group_tags::merge_tags::exec,
         crate::handlers::title_group_tags::edit_tag::exec,
+        crate::handlers::title_group_tags::search_applied_tags::exec,
         crate::handlers::search::search_title_group_tags::exec,
         crate::handlers::search::search_title_group_tags_lite::exec,
         crate::handlers::search::search_torrents::exec,
@@ -398,6 +401,7 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         ReorderForumSubCategoryEntry,
         SearchTitleGroupTagsLiteQuery,
         SearchTitleGroupTagsQuery,
+        SearchTitleGroupAppliedTagsQuery,
         SearchDonationsQuery,
         UserCreatedDonation,
         EditedDonation,

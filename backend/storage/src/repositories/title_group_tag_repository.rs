@@ -1,17 +1,20 @@
 use crate::{
     connection_pool::ConnectionPool,
     models::{
+        artist::AffiliatedArtistLite,
         common::PaginatedResults,
+        series::SeriesLite,
+        title_group::{ContentType, Platform, TitleGroupCategory, TitleGroupHierarchyLite},
         title_group_tag::{
             DeleteTitleGroupTagRequest, EditedTitleGroupTag, MergeTitleGroupTagsRequest,
-            SearchTitleGroupTagsQuery, TitleGroupTag, TitleGroupTagEnriched, TitleGroupTagLite,
-            UserCreatedTitleGroupTag,
+            SearchTitleGroupAppliedTagsQuery, SearchTitleGroupTagsQuery, TitleGroupAppliedTag,
+            TitleGroupTag, TitleGroupTagEnriched, TitleGroupTagLite, UserCreatedTitleGroupTag,
         },
         user::UserLite,
     },
 };
 use arcadia_common::error::{Error, Result};
-use sqlx::PgPool;
+use sqlx::{types::Json, PgPool};
 use std::{borrow::Borrow, collections::HashMap};
 
 impl ConnectionPool {
@@ -624,6 +627,148 @@ impl ConnectionPool {
         )
         .fetch_all(self.borrow())
         .await?;
+
+        Ok(PaginatedResults {
+            results,
+            page: query.page,
+            page_size: query.page_size,
+            total_items,
+        })
+    }
+
+    pub async fn search_title_group_applied_tags(
+        &self,
+        query: &SearchTitleGroupAppliedTagsQuery,
+    ) -> Result<PaginatedResults<TitleGroupAppliedTag>> {
+        let offset = ((query.page - 1) * query.page_size) as i64;
+        let limit = query.page_size as i64;
+
+        let total_items = sqlx::query_scalar!(
+            r#"
+            SELECT COUNT(*)::BIGINT
+            FROM title_group_applied_tags applied_tag
+            JOIN title_group_tags tag ON tag.id = applied_tag.tag_id
+            JOIN users u ON u.id = applied_tag.created_by_id
+            JOIN title_groups tg ON tg.id = applied_tag.title_group_id
+            WHERE ($1::TEXT IS NULL OR tag.name = $1)
+              AND ($2::TEXT IS NULL OR u.username ILIKE '%' || $2 || '%')
+              AND ($3::TEXT IS NULL OR tg.name ILIKE '%' || $3 || '%')
+              AND ($4::content_type_enum IS NULL OR tg.content_type = $4)
+            "#,
+            query.tag_name,
+            query.username,
+            query.title_group_name,
+            &query.content_type as &Option<ContentType>
+        )
+        .fetch_one(self.borrow())
+        .await?
+        .unwrap_or(0);
+
+        let rows = sqlx::query!(
+            r#"
+            SELECT
+                applied_tag.tag_id,
+                tag.name AS tag_name,
+                applied_tag.created_at,
+                ROW(u.id, u.username, u.warned, u.banned) AS "created_by!: UserLite",
+                user_applied_tags.amount AS "user_applied_tags_amount!",
+                tg.id AS title_group_id,
+                tg.name AS title_group_name,
+                tg.covers,
+                tg.category AS "category: TitleGroupCategory",
+                tg.content_type AS "content_type: ContentType",
+                tg.original_release_date,
+                tg.original_release_date_only_year_known,
+                tg.platform AS "platform: Platform",
+                title_group_tags.names AS "title_group_tag_names!",
+                COALESCE((
+                    SELECT jsonb_agg(jsonb_build_object('artist_id', a.id, 'name', a.name))
+                    FROM affiliated_artists aa
+                    JOIN artists a ON a.id = aa.artist_id
+                    WHERE aa.title_group_id = tg.id
+                ), '[]'::jsonb) AS "affiliated_artists!: Json<Vec<AffiliatedArtistLite>>",
+                CASE WHEN s.id IS NOT NULL
+                    THEN jsonb_build_object('id', s.id, 'name', s.name)
+                END AS "series: Json<SeriesLite>"
+            FROM title_group_applied_tags applied_tag
+            JOIN title_group_tags tag ON tag.id = applied_tag.tag_id
+            JOIN users u ON u.id = applied_tag.created_by_id
+            JOIN title_groups tg ON tg.id = applied_tag.title_group_id
+            LEFT JOIN series s ON s.id = tg.series_id
+            CROSS JOIN LATERAL (
+                SELECT ARRAY_AGG(other_tag.name ORDER BY other_tag.name) AS names
+                FROM title_group_applied_tags other_applied_tag
+                JOIN title_group_tags other_tag ON other_tag.id = other_applied_tag.tag_id
+                WHERE other_applied_tag.title_group_id = tg.id
+            ) title_group_tags
+            CROSS JOIN LATERAL (
+                SELECT COUNT(*) AS amount
+                FROM title_group_applied_tags user_applied_tag
+                WHERE user_applied_tag.created_by_id = applied_tag.created_by_id
+                  AND ($9::TIMESTAMPTZ IS NULL OR user_applied_tag.created_at >= $9)
+                  AND ($10::TIMESTAMPTZ IS NULL OR user_applied_tag.created_at <= $10)
+            ) user_applied_tags
+            WHERE ($1::TEXT IS NULL OR tag.name = $1)
+              AND ($2::TEXT IS NULL OR u.username ILIKE '%' || $2 || '%')
+              AND ($3::TEXT IS NULL OR tg.name ILIKE '%' || $3 || '%')
+              AND ($8::content_type_enum IS NULL OR tg.content_type = $8)
+            ORDER BY
+                CASE WHEN $4 = 'tag_name' AND $5 = 'asc' THEN tag.name END ASC,
+                CASE WHEN $4 = 'tag_name' AND $5 = 'desc' THEN tag.name END DESC,
+                CASE WHEN $4 = 'username' AND $5 = 'asc' THEN u.username END ASC,
+                CASE WHEN $4 = 'username' AND $5 = 'desc' THEN u.username END DESC,
+                CASE WHEN $4 = 'title_group_name' AND $5 = 'asc' THEN tg.name END ASC,
+                CASE WHEN $4 = 'title_group_name' AND $5 = 'desc' THEN tg.name END DESC,
+                CASE WHEN $4 = 'created_at' AND $5 = 'asc' THEN applied_tag.created_at END ASC,
+                CASE WHEN $4 = 'created_at' AND $5 = 'desc' THEN applied_tag.created_at END DESC,
+                CASE WHEN $4 = 'title_group_tags_amount' AND $5 = 'asc' THEN cardinality(title_group_tags.names) END ASC,
+                CASE WHEN $4 = 'title_group_tags_amount' AND $5 = 'desc' THEN cardinality(title_group_tags.names) END DESC,
+                CASE WHEN $4 = 'content_type' AND $5 = 'asc' THEN tg.content_type END ASC,
+                CASE WHEN $4 = 'content_type' AND $5 = 'desc' THEN tg.content_type END DESC,
+                CASE WHEN $4 = 'user_applied_tags_amount' AND $5 = 'asc' THEN user_applied_tags.amount END ASC,
+                CASE WHEN $4 = 'user_applied_tags_amount' AND $5 = 'desc' THEN user_applied_tags.amount END DESC,
+                applied_tag.created_at DESC
+            LIMIT $6 OFFSET $7
+            "#,
+            query.tag_name,
+            query.username,
+            query.title_group_name,
+            query.order_by_column.to_string(),
+            query.order_by_direction.to_string(),
+            limit,
+            offset,
+            &query.content_type as &Option<ContentType>,
+            query.user_applied_tags_after,
+            query.user_applied_tags_before
+        )
+        .fetch_all(self.borrow())
+        .await?;
+
+        let results = rows
+            .into_iter()
+            .map(|row| TitleGroupAppliedTag {
+                tag_id: row.tag_id,
+                tag_name: row.tag_name,
+                created_at: row.created_at,
+                created_by: row.created_by,
+                user_applied_tags_amount: row.user_applied_tags_amount,
+                title_group: TitleGroupHierarchyLite {
+                    id: row.title_group_id,
+                    name: row.title_group_name,
+                    covers: row.covers,
+                    category: row.category,
+                    content_type: row.content_type,
+                    tags: row.title_group_tag_names,
+                    original_release_date: row.original_release_date,
+                    original_release_date_only_year_known: row
+                        .original_release_date_only_year_known,
+                    platform: row.platform,
+                    edition_groups: Json(vec![]),
+                    affiliated_artists: row.affiliated_artists,
+                    series: row.series,
+                },
+            })
+            .collect();
 
         Ok(PaginatedResults {
             results,

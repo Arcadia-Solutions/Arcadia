@@ -1224,6 +1224,24 @@
     "from_date": "From Date",
     "to_date": "To Date"
   },
+  "applied_tag": {
+    "applied_tag": "Applied tag | Applied tags",
+    "tag": "Tag",
+    "applied_by": "Applied by",
+    "applied_at": "Applied at",
+    "tags_on_title": "Tags on title",
+    "no_applied_tags": "No applied tags found",
+    "explanation": "Every tag applied to a title group, with who applied it and when. Use it to review recent tagging and remove wrong tags. The period selector does not filter the list: it only sets the time range used to count how many tags each user applied, shown in the \"Tags applied by user\" column.",
+    "user_applied_tags": "Tags applied by user ({period})",
+    "user_applied_tags_period": "Count tags applied by each user over:",
+    "last_day": "Last day",
+    "last_week": "Last week",
+    "last_month": "Last month",
+    "last_year": "Last year",
+    "all_time": "All time",
+    "custom_range": "Custom range",
+    "tag_removed": "Tag removed from the title"
+  },
   "user_edit_log": {
     "user_edit_log": "User Edit Log | User Edit Logs",
     "edited_by": "Edited by",

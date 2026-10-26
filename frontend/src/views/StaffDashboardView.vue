@@ -29,6 +29,9 @@
         <Tab value="userEditLogs" v-if="userStore.permissions.includes('search_user_edit_change_logs')">
           {{ t('user_edit_log.user_edit_log', 2) }}
         </Tab>
+        <Tab value="appliedTags" v-if="userStore.permissions.includes('manage_title_group_tags')">
+          {{ t('applied_tag.applied_tag', 2) }}
+        </Tab>
         <Tab value="allConversations" v-if="userStore.permissions.includes('read_all_conversations')">
           {{ t('conversation.all_conversations') }}
         </Tab>
@@ -80,6 +83,9 @@
         <TabPanel value="userEditLogs" v-if="userStore.permissions.includes('search_user_edit_change_logs') && currentTab === 'userEditLogs'">
           <UserEditLogsTable />
         </TabPanel>
+        <TabPanel value="appliedTags" v-if="userStore.permissions.includes('manage_title_group_tags') && currentTab === 'appliedTags'">
+          <TitleGroupAppliedTagsTable />
+        </TabPanel>
         <TabPanel value="allConversations" v-if="userStore.permissions.includes('read_all_conversations') && currentTab === 'allConversations'">
           <AllConversationsTable />
         </TabPanel>
@@ -114,6 +120,7 @@ import DonationsTable from '@/components/staff/DonationsTable.vue'
 import UnauthorizedAccessTable from '@/components/staff/UnauthorizedAccessTable.vue'
 import UserEditLogsTable from '@/components/staff/UserEditLogsTable.vue'
 import AllConversationsTable from '@/components/staff/AllConversationsTable.vue'
+import TitleGroupAppliedTagsTable from '@/components/staff/TitleGroupAppliedTagsTable.vue'
 import UserBadgesTable from '@/components/staff/UserBadgesTable.vue'
 import SiteHighlightsManager from '@/components/staff/SiteHighlightsManager.vue'
 import MaintenanceTools from '@/components/staff/MaintenanceTools.vue'

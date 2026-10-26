@@ -7,7 +7,8 @@ use actix_web::test;
 use arcadia_storage::connection_pool::ConnectionPool;
 use arcadia_storage::models::common::PaginatedResults;
 use arcadia_storage::models::title_group_tag::{
-    DeleteTitleGroupTagRequest, TitleGroupTag, TitleGroupTagEnriched, TitleGroupTagLite,
+    DeleteTitleGroupTagRequest, TitleGroupAppliedTag, TitleGroupTag, TitleGroupTagEnriched,
+    TitleGroupTagLite,
 };
 use common::{auth_header, create_test_app_and_login};
 use mocks::mock_redis::MockRedisPool;
@@ -338,4 +339,68 @@ async fn test_resolving_scraped_tag_names(pool: PgPool) {
         .unwrap();
 
     assert_eq!(resolved_names, vec!["science.fiction", "road.movie"]);
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_title_group",
+        "with_test_title_group_tag",
+        "with_test_title_group_tag_applied"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_search_title_group_applied_tags(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, manage_user) = create_test_app_and_login(
+        pool.clone(),
+        MockRedisPool::default(),
+        TestUser::ManageTitleGroupTags,
+    )
+    .await;
+
+    let search = |filters: &str| {
+        test::TestRequest::get()
+            .uri(&format!(
+                "/api/title-group-tags/applied?page=1&page_size=10&order_by_column=title_group_tags_amount&order_by_direction=desc{filters}"
+            ))
+            .insert_header(auth_header(&manage_user.token))
+            .to_request()
+    };
+
+    let results: PaginatedResults<TitleGroupAppliedTag> =
+        common::call_and_read_body_json_with_status(
+            &service,
+            search("&tag_name=action"),
+            StatusCode::OK,
+        )
+        .await;
+    assert_eq!(results.total_items, 1);
+    assert_eq!(results.results[0].tag_name, "action");
+    assert_eq!(results.results[0].title_group.id, 1);
+    assert_eq!(
+        results.results[0].title_group.tags,
+        vec!["action".to_string()]
+    );
+    assert_eq!(results.results[0].user_applied_tags_amount, 1);
+
+    let results: PaginatedResults<TitleGroupAppliedTag> =
+        common::call_and_read_body_json_with_status(
+            &service,
+            search("&tag_name=act"),
+            StatusCode::OK,
+        )
+        .await;
+    assert_eq!(results.total_items, 0);
+
+    // the time range only scopes the per-user count, it does not filter the results
+    let results: PaginatedResults<TitleGroupAppliedTag> =
+        common::call_and_read_body_json_with_status(
+            &service,
+            search("&user_applied_tags_after=2999-01-01T00:00:00Z"),
+            StatusCode::OK,
+        )
+        .await;
+    assert_eq!(results.total_items, 1);
+    assert_eq!(results.results[0].user_applied_tags_amount, 0);
 }

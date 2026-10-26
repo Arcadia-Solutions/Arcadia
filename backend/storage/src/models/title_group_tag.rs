@@ -5,7 +5,11 @@ use sqlx::prelude::FromRow;
 use strum::Display;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::models::{common::OrderByDirection, user::UserLite};
+use crate::models::{
+    common::OrderByDirection,
+    title_group::{ContentType, TitleGroupHierarchyLite},
+    user::UserLite,
+};
 use crate::utils::compute_diff;
 
 #[derive(Debug, Deserialize, Serialize, FromRow, ToSchema)]
@@ -83,6 +87,69 @@ pub struct SearchTitleGroupTagsQuery {
     pub page: u32,
     pub page_size: u32,
     pub order_by_column: TitleGroupTagSearchOrderByColumn,
+    pub order_by_direction: OrderByDirection,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct TitleGroupAppliedTag {
+    pub tag_id: i32,
+    pub tag_name: String,
+    #[schema(value_type = String, format = DateTime)]
+    pub created_at: DateTime<Utc>,
+    pub created_by: UserLite,
+    /// amount of tags applied by `created_by` on any title group, within the requested time range
+    pub user_applied_tags_amount: i64,
+    /// `tags` holds every tag applied to the title group, `edition_groups` is always empty
+    pub title_group: TitleGroupHierarchyLite,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema, Display)]
+pub enum TitleGroupAppliedTagOrderByColumn {
+    #[serde(rename = "tag_name")]
+    #[strum(serialize = "tag_name")]
+    TagName,
+    #[serde(rename = "username")]
+    #[strum(serialize = "username")]
+    Username,
+    #[serde(rename = "title_group_name")]
+    #[strum(serialize = "title_group_name")]
+    TitleGroupName,
+    #[serde(rename = "created_at")]
+    #[strum(serialize = "created_at")]
+    CreatedAt,
+    #[serde(rename = "title_group_tags_amount")]
+    #[strum(serialize = "title_group_tags_amount")]
+    TitleGroupTagsAmount,
+    #[serde(rename = "content_type")]
+    #[strum(serialize = "content_type")]
+    ContentType,
+    #[serde(rename = "user_applied_tags_amount")]
+    #[strum(serialize = "user_applied_tags_amount")]
+    UserAppliedTagsAmount,
+}
+
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
+#[into_params(parameter_in = Query)]
+pub struct SearchTitleGroupAppliedTagsQuery {
+    /// exact name of the tag
+    pub tag_name: Option<String>,
+    /// partial username of the user who applied the tag
+    pub username: Option<String>,
+    /// partial name of the title group
+    pub title_group_name: Option<String>,
+    pub content_type: Option<ContentType>,
+    /// start of the time range used to compute `user_applied_tags_amount`, does not filter the results
+    #[schema(value_type = Option<String>, format = DateTime)]
+    #[param(value_type = Option<String>, format = DateTime)]
+    pub user_applied_tags_after: Option<DateTime<Utc>>,
+    /// end of the time range used to compute `user_applied_tags_amount`, does not filter the results
+    #[schema(value_type = Option<String>, format = DateTime)]
+    #[param(value_type = Option<String>, format = DateTime)]
+    pub user_applied_tags_before: Option<DateTime<Utc>>,
+    // pagination and ordering
+    pub page: u32,
+    pub page_size: u32,
+    pub order_by_column: TitleGroupAppliedTagOrderByColumn,
     pub order_by_direction: OrderByDirection,
 }
 

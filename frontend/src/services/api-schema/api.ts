@@ -2471,6 +2471,26 @@ export interface PaginatedResultsInvitationHierarchyResultsInner {
     'sender_id': number;
     'user_application_id'?: number | null;
 }
+export interface PaginatedResultsTitleGroupAppliedTag {
+    'page': number;
+    'page_size': number;
+    'results': Array<PaginatedResultsTitleGroupAppliedTagResultsInner>;
+    'total_items': number;
+}
+export interface PaginatedResultsTitleGroupAppliedTagResultsInner {
+    'created_at': string;
+    'created_by': UserLite;
+    'tag_id': number;
+    'tag_name': string;
+    /**
+     * `tags` holds every tag applied to the title group, `edition_groups` is always empty
+     */
+    'title_group': TitleGroupHierarchyLite;
+    /**
+     * amount of tags applied by `created_by` on any title group, within the requested time range
+     */
+    'user_applied_tags_amount': number;
+}
 export interface PaginatedResultsTitleGroupCommentSearchResult {
     'page': number;
     'page_size': number;
@@ -3150,6 +3170,39 @@ export interface SearchSubscriptionsQuery {
 }
 
 
+export interface SearchTitleGroupAppliedTags200Response {
+    'data': PaginatedResultsTitleGroupAppliedTag;
+    'side_effects': Array<SideEffect>;
+}
+export interface SearchTitleGroupAppliedTagsQuery {
+    'content_type'?: ContentType | null;
+    'order_by_column': TitleGroupAppliedTagOrderByColumn;
+    'order_by_direction': OrderByDirection;
+    'page': number;
+    'page_size': number;
+    /**
+     * exact name of the tag
+     */
+    'tag_name'?: string | null;
+    /**
+     * partial name of the title group
+     */
+    'title_group_name'?: string | null;
+    /**
+     * start of the time range used to compute `user_applied_tags_amount`, does not filter the results
+     */
+    'user_applied_tags_after'?: string | null;
+    /**
+     * end of the time range used to compute `user_applied_tags_amount`, does not filter the results
+     */
+    'user_applied_tags_before'?: string | null;
+    /**
+     * partial username of the user who applied the tag
+     */
+    'username'?: string | null;
+}
+
+
 export interface SearchTitleGroupComments200Response {
     'data': PaginatedResultsTitleGroupCommentSearchResult;
     'side_effects': Array<SideEffect>;
@@ -3544,6 +3597,34 @@ export interface TitleGroupAndAssociatedData {
     'title_group_comments': Array<TitleGroupCommentHierarchy>;
     'torrent_requests': Array<TorrentRequestHierarchyLite>;
 }
+export interface TitleGroupAppliedTag {
+    'created_at': string;
+    'created_by': UserLite;
+    'tag_id': number;
+    'tag_name': string;
+    /**
+     * `tags` holds every tag applied to the title group, `edition_groups` is always empty
+     */
+    'title_group': TitleGroupHierarchyLite;
+    /**
+     * amount of tags applied by `created_by` on any title group, within the requested time range
+     */
+    'user_applied_tags_amount': number;
+}
+
+export const TitleGroupAppliedTagOrderByColumn = {
+    TagName: 'tag_name',
+    Username: 'username',
+    TitleGroupName: 'title_group_name',
+    CreatedAt: 'created_at',
+    TitleGroupTagsAmount: 'title_group_tags_amount',
+    ContentType: 'content_type',
+    UserAppliedTagsAmount: 'user_applied_tags_amount'
+} as const;
+
+export type TitleGroupAppliedTagOrderByColumn = typeof TitleGroupAppliedTagOrderByColumn[keyof typeof TitleGroupAppliedTagOrderByColumn];
+
+
 /**
  * How many title groups share an attribute value, such as a content type.
  */
@@ -7692,6 +7773,32 @@ export const restoreTitleGroupTag = async (restoreTitleGroupTagRequest: RestoreT
     return response.data.data;
 };
 
+
+
+export interface SearchTitleGroupAppliedTagsRequest {
+    'page': number;
+    'page_size': number;
+    'order_by_column': TitleGroupAppliedTagOrderByColumn;
+    'order_by_direction': OrderByDirection;
+    'tag_name'?: string | null;
+    'username'?: string | null;
+    'title_group_name'?: string | null;
+    'content_type'?: ContentType | null;
+    'user_applied_tags_after'?: string | null;
+    'user_applied_tags_before'?: string | null;
+}
+
+
+
+export const searchTitleGroupAppliedTags = async (request: SearchTitleGroupAppliedTagsRequest, options?: RawAxiosRequestConfig): Promise<SearchTitleGroupAppliedTags200Response['data']> => {
+    const response = await globalAxios.request<SearchTitleGroupAppliedTags200Response>({
+        url: `/api/title-group-tags/applied`,
+        method: 'GET',
+        params: { 'tag_name': request['tag_name'], 'username': request['username'], 'title_group_name': request['title_group_name'], 'content_type': request['content_type'], 'user_applied_tags_after': request['user_applied_tags_after'], 'user_applied_tags_before': request['user_applied_tags_before'], 'page': request['page'], 'page_size': request['page_size'], 'order_by_column': request['order_by_column'], 'order_by_direction': request['order_by_direction'] },
+        ...options
+    });
+    return response.data.data;
+};
 
 
 

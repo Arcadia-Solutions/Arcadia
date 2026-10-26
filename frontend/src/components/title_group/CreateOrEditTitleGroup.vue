@@ -275,7 +275,7 @@ import type { VNodeRef } from 'vue'
 import EditAffiliatedArtists from '../artist/EditAffiliatedArtists.vue'
 import { onMounted } from 'vue'
 import { nextTick } from 'vue'
-import _ from 'lodash'
+import { pick } from 'lodash-es'
 import { showToast } from '@/main'
 import type { UserCreatedTitleGroupForm } from './CreateOrSelectTitleGroup.vue'
 import TitleGroupTagsInput from '../TitleGroupTagsInput.vue'
@@ -630,7 +630,7 @@ const onImageUploaded = (urls: string[], url: string) => {
 
 onMounted(async () => {
   if (props.initialTitleGroup) {
-    Object.assign(titleGroupForm.value, _.pick(JSON.parse(JSON.stringify(props.initialTitleGroup)), Object.keys(titleGroupForm.value)))
+    Object.assign(titleGroupForm.value, pick(JSON.parse(JSON.stringify(props.initialTitleGroup)), Object.keys(titleGroupForm.value)))
     if (titleGroupForm.value.external_links.length === 0) {
       titleGroupForm.value.external_links.push('')
     }

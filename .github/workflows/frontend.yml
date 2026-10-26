@@ -42,6 +42,8 @@ jobs:
         if: ${{ !cancelled() }}
       - run: npm run check-format
         if: ${{ !cancelled() }}
+      - run: npm run build-only
+        if: ${{ !cancelled() }}
 
   test:
     runs-on: ubuntu-latest

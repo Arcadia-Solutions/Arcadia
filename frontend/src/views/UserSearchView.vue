@@ -88,6 +88,7 @@
       <Column v-if="shouldStatBeDisplayed('torrents')" field="torrents" :header="userStatLabel('torrents')" sortable />
       <Column v-if="shouldStatBeDisplayed('title_groups')" field="title_groups" :header="userStatLabel('title_groups')" sortable />
       <Column v-if="shouldStatBeDisplayed('title_group_comments')" field="title_group_comments" :header="userStatLabel('title_group_comments')" sortable />
+      <Column field="title_group_tags_applied" :header="t('user.title_group_tags_applied')" sortable />
       <Column v-if="shouldStatBeDisplayed('forum_posts')" field="forum_posts" :header="userStatLabel('forum_posts')" sortable />
       <Column v-if="shouldStatBeDisplayed('forum_threads')" field="forum_threads" :header="userStatLabel('forum_threads')" sortable />
       <Column v-if="shouldStatBeDisplayed('seeding')" field="seeding" :header="userStatLabel('seeding')" sortable />

@@ -1201,7 +1201,9 @@ impl ConnectionPool {
                    title_group_comments AS "title_group_comments?",
                    forum_posts AS "forum_posts?", forum_threads AS "forum_threads?",
                    bonus_points AS "bonus_points?", seeding AS "seeding?", warned, banned,
-                   paranoia_hidden_stats AS "paranoia_hidden_stats: Vec<DisplayableUserStats>"
+                   paranoia_hidden_stats AS "paranoia_hidden_stats: Vec<DisplayableUserStats>",
+                   (SELECT COUNT(*) FROM title_group_applied_tags WHERE created_by_id = users.id)
+                       AS "title_group_tags_applied!"
             FROM users
             WHERE ($1::TEXT IS NULL OR LOWER(username) LIKE LOWER('%' || $1 || '%'))
               AND ($6::TIMESTAMPTZ IS NULL OR created_at >= $6)
@@ -1233,7 +1235,9 @@ impl ConnectionPool {
                 CASE WHEN $2 = 'bonus_points' AND $3 THEN bonus_points END ASC,
                 CASE WHEN $2 = 'bonus_points' AND NOT $3 THEN bonus_points END DESC,
                 CASE WHEN $2 = 'seeding' AND $3 THEN seeding END ASC,
-                CASE WHEN $2 = 'seeding' AND NOT $3 THEN seeding END DESC
+                CASE WHEN $2 = 'seeding' AND NOT $3 THEN seeding END DESC,
+                CASE WHEN $2 = 'title_group_tags_applied' AND $3 THEN (SELECT COUNT(*) FROM title_group_applied_tags WHERE created_by_id = users.id) END ASC,
+                CASE WHEN $2 = 'title_group_tags_applied' AND NOT $3 THEN (SELECT COUNT(*) FROM title_group_applied_tags WHERE created_by_id = users.id) END DESC
             LIMIT $4 OFFSET $5
             "#,
             query.username,

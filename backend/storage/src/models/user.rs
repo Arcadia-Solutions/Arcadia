@@ -654,6 +654,7 @@ pub struct UserSearchResult {
     pub forum_threads: Option<i32>,
     pub bonus_points: Option<i64>,
     pub seeding: Option<i32>,
+    pub title_group_tags_applied: i64,
     pub warned: bool,
     pub banned: bool,
     pub paranoia_hidden_stats: Vec<DisplayableUserStats>,
@@ -755,6 +756,9 @@ pub enum UserSearchOrderBy {
     #[serde(rename = "last_seen")]
     #[strum(serialize = "last_seen")]
     LastSeen,
+    #[serde(rename = "title_group_tags_applied")]
+    #[strum(serialize = "title_group_tags_applied")]
+    TitleGroupTagsApplied,
 }
 
 /// User stats used for promotion/demotion checks

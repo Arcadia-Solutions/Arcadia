@@ -2758,6 +2758,7 @@ export interface PaginatedResultsUserSearchResultResultsInner {
     'paranoia_hidden_stats': Array<DisplayableUserStats>;
     'seeding'?: number | null;
     'title_group_comments'?: number | null;
+    'title_group_tags_applied': number;
     'title_groups'?: number | null;
     'torrents'?: number | null;
     'uploaded'?: number | null;
@@ -3176,6 +3177,10 @@ export interface SearchTitleGroupAppliedTags200Response {
 }
 export interface SearchTitleGroupAppliedTagsQuery {
     'content_type'?: ContentType | null;
+    /**
+     * when true, only the tags applied by a user who did not create the title group are returned
+     */
+    'exclude_title_group_creator': boolean;
     'order_by_column': TitleGroupAppliedTagOrderByColumn;
     'order_by_direction': OrderByDirection;
     'page': number;
@@ -3196,10 +3201,6 @@ export interface SearchTitleGroupAppliedTagsQuery {
      * end of the time range used to compute `user_applied_tags_amount`, does not filter the results
      */
     'user_applied_tags_before'?: string | null;
-    /**
-     * when true, only the tags applied by a user who did not create the title group are returned
-     */
-    'exclude_title_group_creator': boolean;
     /**
      * partial username of the user who applied the tag
      */
@@ -5055,7 +5056,8 @@ export const UserSearchOrderBy = {
     ForumThreads: 'forum_threads',
     BonusPoints: 'bonus_points',
     Seeding: 'seeding',
-    LastSeen: 'last_seen'
+    LastSeen: 'last_seen',
+    TitleGroupTagsApplied: 'title_group_tags_applied'
 } as const;
 
 export type UserSearchOrderBy = typeof UserSearchOrderBy[keyof typeof UserSearchOrderBy];
@@ -5078,6 +5080,7 @@ export interface UserSearchResult {
     'paranoia_hidden_stats': Array<DisplayableUserStats>;
     'seeding'?: number | null;
     'title_group_comments'?: number | null;
+    'title_group_tags_applied': number;
     'title_groups'?: number | null;
     'torrents'?: number | null;
     'uploaded'?: number | null;
@@ -7780,6 +7783,7 @@ export const restoreTitleGroupTag = async (restoreTitleGroupTagRequest: RestoreT
 
 
 export interface SearchTitleGroupAppliedTagsRequest {
+    'exclude_title_group_creator': boolean;
     'page': number;
     'page_size': number;
     'order_by_column': TitleGroupAppliedTagOrderByColumn;
@@ -7790,7 +7794,6 @@ export interface SearchTitleGroupAppliedTagsRequest {
     'content_type'?: ContentType | null;
     'user_applied_tags_after'?: string | null;
     'user_applied_tags_before'?: string | null;
-    'exclude_title_group_creator': boolean;
 }
 
 

@@ -259,6 +259,7 @@
     "class": "Class",
     "joined_at": "Joined",
     "registered_after": "Registered after",
+    "title_group_tags_applied": "Tags applied",
     "registered_before": "Registered before",
     "permissions": "Permissions",
     "permissions_match": "Permissions match",

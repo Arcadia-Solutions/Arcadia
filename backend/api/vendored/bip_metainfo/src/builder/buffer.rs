@@ -1,6 +1,6 @@
 use std::io;
 
-use crossbeam::sync::MsQueue;
+use builder::queue::Queue;
 
 // Ensures that we have enough buffers to keep workers busy.
 const TOTAL_BUFFERS_MULTIPLICATIVE: usize = 2;
@@ -8,13 +8,13 @@ const TOTAL_BUFFERS_ADDITIVE: usize = 0;
 
 /// Stores a set number of piece buffers to be used and re-used.
 pub struct PieceBuffers {
-    piece_queue: MsQueue<PieceBuffer>,
+    piece_queue: Queue<PieceBuffer>,
 }
 
 impl PieceBuffers {
     /// Create a new queue filled with a number of piece buffers based on the number of workers.
     pub fn new(piece_length: usize, num_workers: usize) -> PieceBuffers {
-        let piece_queue = MsQueue::new();
+        let piece_queue = Queue::new();
 
         let total_buffers = calculate_total_buffers(num_workers);
         for _ in 0..total_buffers {

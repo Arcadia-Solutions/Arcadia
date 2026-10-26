@@ -8,6 +8,7 @@ use error::ParseResult;
 use parse;
 
 mod buffer;
+mod queue;
 mod worker;
 
 // Piece length is inversly related to the file size.

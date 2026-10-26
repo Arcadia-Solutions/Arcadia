@@ -16,13 +16,12 @@ license          = "MIT/Apache-2.0"
 [dependencies]
 bip_bencode      = { version = "0.4" }
 bip_util         = { version = "0.5" }
-crossbeam        = "0.3"
 walkdir          = "2.0"
 error-chain      = "0.11"
 
 [dev-dependencies]
 chrono           = "0.4"
-rand             = "0.3"
+rand             = "0.9"
 pbr              = "1.0"
 
 [features]

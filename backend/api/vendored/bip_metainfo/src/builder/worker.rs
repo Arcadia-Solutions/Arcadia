@@ -3,7 +3,7 @@ use std::sync::mpsc::{self, Sender, Receiver};
 use std::thread;
 
 use bip_util::sha::ShaHash;
-use crossbeam::sync::MsQueue;
+use builder::queue::Queue;
 
 use accessor::{Accessor, PieceAccess};
 use builder::buffer::{PieceBuffers, PieceBuffer};
@@ -40,7 +40,7 @@ pub fn start_hasher_workers<A, C>(accessor: A,
     let (prog_send, prog_recv) = mpsc::channel();
 
     // Create queue to push work to and pull work from
-    let work_queue = Arc::new(MsQueue::new());
+    let work_queue = Arc::new(Queue::new());
 
     // Create buffer allocator to reuse pre allocated buffers
     let piece_buffers = Arc::new(PieceBuffers::new(piece_length, num_workers));
@@ -77,7 +77,7 @@ pub fn start_hasher_workers<A, C>(accessor: A,
 fn start_hash_master<A>(accessor: A,
                         num_workers: usize,
                         recv: Receiver<MasterMessage>,
-                        work: Arc<MsQueue<WorkerMessage>>,
+                        work: Arc<Queue<WorkerMessage>>,
                         buffers: Arc<PieceBuffers>,
                         progress_sender: Sender<usize>)
                         -> ParseResult<Vec<(usize, ShaHash)>>
@@ -175,7 +175,7 @@ fn start_progress_updater<C>(recv: Receiver<usize>, num_pieces: u64, mut progres
 
 /// Starts a hasher worker which will hash all of the buffers it receives.
 fn start_hash_worker(send: Sender<MasterMessage>,
-                     work: Arc<MsQueue<WorkerMessage>>,
+                     work: Arc<Queue<WorkerMessage>>,
                      buffers: Arc<PieceBuffers>) {
     let mut work_to_do = true;
 
@@ -208,7 +208,7 @@ mod tests {
     use std::sync::mpsc;
 
     use bip_util::sha::ShaHash;
-    use rand::{self, Rng};
+    use rand::{self, RngCore};
 
     use accessor::{Accessor, PieceAccess};
     use builder::worker;
@@ -234,7 +234,7 @@ mod tests {
 
         fn create_region(&mut self, num_bytes: usize) {
             let mut buffer = vec![0u8; num_bytes];
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
 
             rng.fill_bytes(&mut buffer);
 

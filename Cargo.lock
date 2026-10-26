@@ -799,7 +799,6 @@ version = "0.12.0"
 dependencies = [
  "bip_bencode",
  "bip_util",
- "crossbeam",
  "error-chain",
  "walkdir",
 ]
@@ -1201,12 +1200,6 @@ dependencies = [
  "derive_builder",
  "strum 0.27.2",
 ]
-
-[[package]]
-name = "crossbeam"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24ce9782d4d5c53674646a6a4c1863a21a8fc0cb649b3c94dfc16e45071dea19"
 
 [[package]]
 name = "crossbeam-queue"

@@ -1110,6 +1110,8 @@ impl ConnectionPool {
         source_title_group_id: i32,
         target_title_group_id: i32,
     ) -> Result<()> {
+        // Rows that conflict with the target stay on the source and are removed by
+        // ON DELETE CASCADE when the source title group is deleted at the end.
         // Move edition_groups (no unique constraint on title_group_id)
         sqlx::query!(
             r#"
@@ -1126,23 +1128,13 @@ impl ConnectionPool {
         // Move title_group_applied_tags (PK on title_group_id, tag_id)
         sqlx::query!(
             r#"
-            DELETE FROM title_group_applied_tags
-            WHERE title_group_id = $1
-              AND tag_id IN (
-                  SELECT tag_id FROM title_group_applied_tags WHERE title_group_id = $2
-              )
-            "#,
-            source_title_group_id,
-            target_title_group_id
-        )
-        .execute(&self.pool)
-        .await?;
-
-        sqlx::query!(
-            r#"
-            UPDATE title_group_applied_tags
+            UPDATE title_group_applied_tags source
             SET title_group_id = $2
-            WHERE title_group_id = $1
+            WHERE source.title_group_id = $1
+              AND NOT EXISTS (
+                  SELECT 1 FROM title_group_applied_tags target
+                  WHERE target.title_group_id = $2 AND target.tag_id = source.tag_id
+              )
             "#,
             source_title_group_id,
             target_title_group_id
@@ -1153,23 +1145,13 @@ impl ConnectionPool {
         // Move affiliated_artists (UNIQUE on title_group_id, artist_id)
         sqlx::query!(
             r#"
-            DELETE FROM affiliated_artists
-            WHERE title_group_id = $1
-              AND artist_id IN (
-                  SELECT artist_id FROM affiliated_artists WHERE title_group_id = $2
-              )
-            "#,
-            source_title_group_id,
-            target_title_group_id
-        )
-        .execute(&self.pool)
-        .await?;
-
-        sqlx::query!(
-            r#"
-            UPDATE affiliated_artists
+            UPDATE affiliated_artists source
             SET title_group_id = $2
-            WHERE title_group_id = $1
+            WHERE source.title_group_id = $1
+              AND NOT EXISTS (
+                  SELECT 1 FROM affiliated_artists target
+                  WHERE target.title_group_id = $2 AND target.artist_id = source.artist_id
+              )
             "#,
             source_title_group_id,
             target_title_group_id
@@ -1180,23 +1162,13 @@ impl ConnectionPool {
         // Move affiliated_entities (UNIQUE on title_group_id, entity_id)
         sqlx::query!(
             r#"
-            DELETE FROM affiliated_entities
-            WHERE title_group_id = $1
-              AND entity_id IN (
-                  SELECT entity_id FROM affiliated_entities WHERE title_group_id = $2
-              )
-            "#,
-            source_title_group_id,
-            target_title_group_id
-        )
-        .execute(&self.pool)
-        .await?;
-
-        sqlx::query!(
-            r#"
-            UPDATE affiliated_entities
+            UPDATE affiliated_entities source
             SET title_group_id = $2
-            WHERE title_group_id = $1
+            WHERE source.title_group_id = $1
+              AND NOT EXISTS (
+                  SELECT 1 FROM affiliated_entities target
+                  WHERE target.title_group_id = $2 AND target.entity_id = source.entity_id
+              )
             "#,
             source_title_group_id,
             target_title_group_id
@@ -1233,23 +1205,13 @@ impl ConnectionPool {
         // Move title_group_bookmarks
         sqlx::query!(
             r#"
-            DELETE FROM title_group_bookmarks
-            WHERE title_group_id = $1
-              AND user_id IN (
-                  SELECT user_id FROM title_group_bookmarks WHERE title_group_id = $2
-              )
-            "#,
-            source_title_group_id,
-            target_title_group_id
-        )
-        .execute(&self.pool)
-        .await?;
-
-        sqlx::query!(
-            r#"
-            UPDATE title_group_bookmarks
+            UPDATE title_group_bookmarks source
             SET title_group_id = $2
-            WHERE title_group_id = $1
+            WHERE source.title_group_id = $1
+              AND NOT EXISTS (
+                  SELECT 1 FROM title_group_bookmarks target
+                  WHERE target.title_group_id = $2 AND target.user_id = source.user_id
+              )
             "#,
             source_title_group_id,
             target_title_group_id
@@ -1260,23 +1222,13 @@ impl ConnectionPool {
         // Move subscriptions_title_group_torrents (UNIQUE on title_group_id, user_id)
         sqlx::query!(
             r#"
-            DELETE FROM subscriptions_title_group_torrents
-            WHERE title_group_id = $1
-              AND user_id IN (
-                  SELECT user_id FROM subscriptions_title_group_torrents WHERE title_group_id = $2
-              )
-            "#,
-            source_title_group_id,
-            target_title_group_id
-        )
-        .execute(&self.pool)
-        .await?;
-
-        sqlx::query!(
-            r#"
-            UPDATE subscriptions_title_group_torrents
+            UPDATE subscriptions_title_group_torrents source
             SET title_group_id = $2
-            WHERE title_group_id = $1
+            WHERE source.title_group_id = $1
+              AND NOT EXISTS (
+                  SELECT 1 FROM subscriptions_title_group_torrents target
+                  WHERE target.title_group_id = $2 AND target.user_id = source.user_id
+              )
             "#,
             source_title_group_id,
             target_title_group_id
@@ -1287,10 +1239,12 @@ impl ConnectionPool {
         // Move subscriptions_title_group_comments (UNIQUE on title_group_id, user_id)
         sqlx::query!(
             r#"
-            DELETE FROM subscriptions_title_group_comments
-            WHERE title_group_id = $1
-              AND user_id IN (
-                  SELECT user_id FROM subscriptions_title_group_comments WHERE title_group_id = $2
+            UPDATE subscriptions_title_group_comments source
+            SET title_group_id = $2
+            WHERE source.title_group_id = $1
+              AND NOT EXISTS (
+                  SELECT 1 FROM subscriptions_title_group_comments target
+                  WHERE target.title_group_id = $2 AND target.user_id = source.user_id
               )
             "#,
             source_title_group_id,
@@ -1299,19 +1253,7 @@ impl ConnectionPool {
         .execute(&self.pool)
         .await?;
 
-        sqlx::query!(
-            r#"
-            UPDATE subscriptions_title_group_comments
-            SET title_group_id = $2
-            WHERE title_group_id = $1
-            "#,
-            source_title_group_id,
-            target_title_group_id
-        )
-        .execute(&self.pool)
-        .await?;
-
-        // Move collage_entry (UNIQUE on collage_id, title_group_id)
+        // Move collage_entry (UNIQUE on collage_id, title_group_id, no ON DELETE CASCADE)
         sqlx::query!(
             r#"
             DELETE FROM collage_entry

@@ -288,7 +288,7 @@ import { useTitleGroupStore } from '@/stores/titleGroup'
 import { useI18n } from 'vue-i18n'
 import { nextTick } from 'vue'
 import type { VNodeRef } from 'vue'
-import _ from 'lodash'
+import { pick } from 'lodash-es'
 import { showToast } from '@/main'
 import TorrentRequestVoteInputs from './TorrentRequestVoteInputs.vue'
 import { useUserStore } from '@/stores/user'
@@ -396,7 +396,7 @@ const validateButtonDisabled = computed(() => {
 
 onMounted(async () => {
   if (props.initialTorrentRequest) {
-    Object.assign(torrentRequestForm.value, _.pick(props.initialTorrentRequest, Object.keys(torrentRequestForm.value)))
+    Object.assign(torrentRequestForm.value, pick(props.initialTorrentRequest, Object.keys(torrentRequestForm.value)))
     await nextTick()
     Object.keys(torrentRequestForm.value).forEach((key) => {
       try {

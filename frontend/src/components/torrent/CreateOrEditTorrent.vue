@@ -337,7 +337,7 @@ import { useTitleGroupStore } from '@/stores/titleGroup'
 import { useI18n } from 'vue-i18n'
 import { nextTick } from 'vue'
 import type { VNodeRef } from 'vue'
-import _ from 'lodash'
+import { pick } from 'lodash-es'
 import { showToast } from '@/main'
 import { Chip } from 'primevue'
 import {
@@ -585,7 +585,7 @@ const removeExtrasValue = (item: Extras) => {
 }
 onMounted(async () => {
   if (props.initialTorrent) {
-    Object.assign(torrentForm.value, _.pick(props.initialTorrent, Object.keys(torrentForm.value)))
+    Object.assign(torrentForm.value, pick(props.initialTorrent, Object.keys(torrentForm.value)))
     if (props.initialTorrent.extras.length > 0) {
       isExtras.value = true
     }

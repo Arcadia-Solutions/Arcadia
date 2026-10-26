@@ -1,6 +1,9 @@
 reviews:
   path_filters:
     - "!.sqlx"
+  auto_review:
+    ignore_usernames:
+      - "renovate[bot]"
 
 issue_enrichment:
   auto_enrich:

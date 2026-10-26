@@ -4,6 +4,7 @@ use actix_web::{
     HttpRequest, HttpResponse,
 };
 use arcadia_common::error::Result;
+use arcadia_storage::utils::compute_diff;
 use arcadia_storage::{
     models::{
         forum::{EditedForumSubCategory, ForumSubCategory},
@@ -40,7 +41,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .find_forum_sub_category_raw(edited_sub_category.id)
         .await?;
 
-    if let Some(edits) = original_sub_category.diff(&edited_sub_category) {
+    if let Some(edits) = compute_diff(&original_sub_category, &edited_sub_category, &["id"]) {
         arc.pool
             .create_user_edit_change_log(&NewUserEditChangeLog {
                 item_type: "forum_sub_category".to_string(),

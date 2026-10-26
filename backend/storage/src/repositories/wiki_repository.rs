@@ -10,7 +10,6 @@ use crate::{
 };
 use arcadia_common::error::{Error, Result};
 use serde_json::Value;
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     pub async fn create_wiki_article(
@@ -30,7 +29,7 @@ impl ConnectionPool {
             current_user_id,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateWikiArticle)?;
 
@@ -43,7 +42,7 @@ impl ConnectionPool {
             r#"SELECT id, title, created_at, created_by_id, updated_at, updated_by_id, body FROM wiki_articles WHERE id = $1"#,
             article_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindWikiArticle)
     }
@@ -91,7 +90,7 @@ impl ConnectionPool {
             "#,
             article_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindWikiArticle)?;
 
@@ -123,7 +122,7 @@ impl ConnectionPool {
             id_2,
             current_user_id,
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotLinkSimilarWikiArticles)?;
 
@@ -149,7 +148,7 @@ impl ConnectionPool {
             id_1,
             id_2,
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotUnlinkSimilarWikiArticles)?;
 
@@ -174,7 +173,7 @@ impl ConnectionPool {
             current_user_id,
             article.id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotCreateWikiArticle)?;
 
@@ -196,7 +195,7 @@ impl ConnectionPool {
             form.search_string,
             form.title_only,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .unwrap()
         .unwrap();
@@ -216,7 +215,7 @@ impl ConnectionPool {
             offset as i64,
             form.page_size as i64,
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(PaginatedResults {

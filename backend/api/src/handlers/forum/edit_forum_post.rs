@@ -4,6 +4,7 @@ use actix_web::{
     HttpResponse,
 };
 use arcadia_common::error::{Error, Result};
+use arcadia_storage::utils::compute_diff;
 use arcadia_storage::{
     models::{
         forum::{EditedForumPost, ForumPost},
@@ -38,7 +39,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
             .user_has_permission(user.sub, &UserPermission::EditForumPost)
             .await?
     {
-        if let Some(edits) = original_forum_post.diff(&edited_forum_post) {
+        if let Some(edits) = compute_diff(&original_forum_post, &edited_forum_post, &["id"]) {
             arc.pool
                 .create_user_edit_change_log(&NewUserEditChangeLog {
                     item_type: "forum_post".to_string(),

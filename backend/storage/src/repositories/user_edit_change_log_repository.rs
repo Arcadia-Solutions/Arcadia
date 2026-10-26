@@ -9,7 +9,6 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     pub async fn create_user_edit_change_log(&self, log: &NewUserEditChangeLog) -> Result<()> {
@@ -23,7 +22,7 @@ impl ConnectionPool {
             log.edited_by_id,
             log.edits
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotCreateUserEditChangeLog)?;
 
@@ -37,7 +36,7 @@ impl ConnectionPool {
             "#,
             id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteUserEditChangeLog)?;
 
@@ -50,7 +49,7 @@ impl ConnectionPool {
             DELETE FROM user_edit_change_logs
             "#
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteAllUserEditChangeLogs)?;
 
@@ -71,7 +70,7 @@ impl ConnectionPool {
             query.user_id,
             query.item_type
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?
         .unwrap_or(0);
 
@@ -107,7 +106,7 @@ impl ConnectionPool {
             query.page as i32,
             query.page_size as i32
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         let results = rows

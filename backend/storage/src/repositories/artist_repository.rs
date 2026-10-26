@@ -3,8 +3,9 @@ use crate::{
     connection_pool::ConnectionPool,
     models::{
         artist::{
-            AffiliatedArtist, AffiliatedArtistHierarchy, Artist, ArtistEnriched, ArtistLite,
-            ArtistSearchResult, SearchArtistsQuery, UserCreatedAffiliatedArtist, UserCreatedArtist,
+            AffiliatedArtist, AffiliatedArtistHierarchy, AffiliatedArtistLite, Artist,
+            ArtistEnriched, ArtistLite, ArtistSearchResult, SearchArtistsQuery,
+            UserCreatedAffiliatedArtist, UserCreatedArtist,
         },
         common::PaginatedResults,
         forum::RelatedForumThread,
@@ -13,8 +14,7 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use sqlx::{PgPool, Postgres, Transaction};
-use std::borrow::Borrow;
+use sqlx::{Postgres, Transaction};
 use std::collections::HashMap;
 use tokio::sync::broadcast;
 
@@ -24,9 +24,7 @@ impl ConnectionPool {
         artists: &Vec<UserCreatedArtist>,
         current_user_id: i32,
     ) -> Result<Vec<Artist>> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let mut created_artists = Vec::new();
 
@@ -66,9 +64,7 @@ impl ConnectionPool {
         current_user_id: i32,
         notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<Vec<AffiliatedArtistHierarchy>> {
-        let mut tx: Transaction<'_, Postgres> = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx: Transaction<'_, Postgres> = self.pool.begin().await?;
 
         let values: Vec<String> = (0..artists.len())
             .map(|i| {
@@ -210,7 +206,7 @@ impl ConnectionPool {
             name,
             limit
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotSearchForArtists)?;
 
@@ -235,7 +231,7 @@ impl ConnectionPool {
             "#,
             form.name,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .unwrap()
         .unwrap();
@@ -266,7 +262,7 @@ impl ConnectionPool {
             form.order_by_column.to_string(),
             form.order_by_direction.to_string()
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(PaginatedResults {
@@ -287,7 +283,7 @@ impl ConnectionPool {
             "#,
             artist_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindArtist)
     }
@@ -336,7 +332,7 @@ impl ConnectionPool {
             artist_id,
             current_user_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindArtist)?;
 
@@ -369,7 +365,7 @@ impl ConnectionPool {
             &updated_artist.external_links,
             updated_artist.id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotUpdateArtist)
     }
@@ -380,7 +376,7 @@ impl ConnectionPool {
             pictures,
             artist_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotUpdateArtist)?;
         Ok(())
@@ -396,7 +392,7 @@ impl ConnectionPool {
             "#,
         )
         .bind(affiliation_ids)
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         sqlx::query!(
@@ -406,7 +402,7 @@ impl ConnectionPool {
             "#,
             &affiliation_ids
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Update title_groups_amount for each affected artist
@@ -419,7 +415,7 @@ impl ConnectionPool {
                 "#,
                 artist_id
             )
-            .execute(self.borrow())
+            .execute(&self.pool)
             .await?;
         }
 
@@ -457,7 +453,7 @@ impl ConnectionPool {
                 OR a.total_size != COALESCE(s.total_size, 0))
             "#
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(result.rows_affected())
@@ -471,10 +467,72 @@ impl ConnectionPool {
             "#,
             artist_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(Error::CouldNotDeleteArtist)?;
 
         Ok(())
+    }
+
+    /// For title groups with at most 2 affiliated artists, returns them;
+    /// for title groups with more, returns a single dummy artist (id 0, empty name)
+    pub async fn find_affiliated_artists_lite_by_title_group_ids(
+        &self,
+        title_group_ids: &[i32],
+    ) -> Result<HashMap<i32, Vec<AffiliatedArtistLite>>> {
+        if title_group_ids.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let affiliated_artists = sqlx::query!(
+            r#"
+            WITH artist_counts AS (
+                SELECT
+                    title_group_id,
+                    COUNT(*) as count
+                FROM affiliated_artists
+                WHERE title_group_id = ANY($1)
+                GROUP BY title_group_id
+            )
+            SELECT
+                aa.title_group_id,
+                a.id as artist_id,
+                a.name as artist_name
+            FROM affiliated_artists aa
+            JOIN artists a ON a.id = aa.artist_id
+            JOIN artist_counts ac ON ac.title_group_id = aa.title_group_id
+            WHERE ac.count <= 2
+
+            UNION ALL
+
+            SELECT DISTINCT ON (ac.title_group_id)
+                ac.title_group_id,
+                0::bigint as artist_id,
+                ''::text as artist_name
+            FROM artist_counts ac
+            WHERE ac.count > 2
+            ORDER BY title_group_id, artist_id
+            "#,
+            title_group_ids
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut grouped_artists: HashMap<i32, Vec<AffiliatedArtistLite>> = HashMap::new();
+        for row in affiliated_artists {
+            if let (Some(title_group_id), Some(artist_id), Some(artist_name)) =
+                (row.title_group_id, row.artist_id, row.artist_name)
+            {
+                grouped_artists
+                    .entry(title_group_id)
+                    .or_default()
+                    .push(AffiliatedArtistLite {
+                        artist_id,
+                        name: artist_name,
+                    });
+            }
+        }
+
+        Ok(grouped_artists)
     }
 }

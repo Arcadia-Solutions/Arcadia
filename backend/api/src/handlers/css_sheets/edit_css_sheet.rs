@@ -4,6 +4,7 @@ use actix_web::{
     HttpRequest, HttpResponse,
 };
 use arcadia_common::error::Result;
+use arcadia_storage::utils::compute_diff;
 use arcadia_storage::{
     models::{
         css_sheet::{CssSheet, EditedCssSheet},
@@ -48,7 +49,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         *arc.settings.lock().unwrap() = updated_settings;
     }
 
-    if let Some(edits) = original_css_sheet.diff(&css_sheet) {
+    if let Some(edits) = compute_diff(&original_css_sheet, &css_sheet, &["old_name"]) {
         arc.pool
             .create_user_edit_change_log(&NewUserEditChangeLog {
                 item_type: "css_sheet".to_string(),

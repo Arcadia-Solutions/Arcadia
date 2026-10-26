@@ -3,8 +3,6 @@ use crate::{
     models::emoji::{Emoji, EmojiImage, EmojiUsage, ReorderEmojis},
 };
 use arcadia_common::error::{Error, Result};
-use sqlx::PgPool;
-use std::borrow::Borrow;
 
 fn map_emoji_write_error(error: sqlx::Error) -> Error {
     if let sqlx::Error::Database(db_err) = &error
@@ -32,7 +30,7 @@ impl ConnectionPool {
             ORDER BY sort_order, id
             "#
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(emojis)
@@ -48,7 +46,7 @@ impl ConnectionPool {
             GROUP BY e.id
             "#
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(usage)
@@ -67,7 +65,7 @@ impl ConnectionPool {
             "#,
             emoji_id
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await?
         .ok_or(Error::EmojiNotFound)
     }
@@ -103,7 +101,7 @@ impl ConnectionPool {
             image,
             image_mime_type
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(map_emoji_write_error)?;
 
@@ -148,7 +146,7 @@ impl ConnectionPool {
             representation_changed,
             image_mime_type
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await
         .map_err(map_emoji_write_error)?
         .ok_or(Error::EmojiNotFound)
@@ -156,7 +154,7 @@ impl ConnectionPool {
 
     pub async fn delete_emoji(&self, emoji_id: i32) -> Result<()> {
         let deleted = sqlx::query!(r#"DELETE FROM emojis WHERE id = $1"#, emoji_id)
-            .execute(self.borrow())
+            .execute(&self.pool)
             .await?
             .rows_affected();
 
@@ -178,9 +176,7 @@ impl ConnectionPool {
             .map(|entry| entry.sort_order)
             .collect();
 
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let result = sqlx::query!(
             r#"
@@ -214,7 +210,7 @@ impl ConnectionPool {
             emoji_id,
             enabled
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?
         .rows_affected();
 

@@ -1,0 +1,3 @@
+[build]
+# Deployments build on the host that runs them (compose builds locally), so use every CPU feature it has.
+rustflags = ["-C", "target-cpu=native"]

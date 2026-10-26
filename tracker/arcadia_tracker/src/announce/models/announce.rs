@@ -10,25 +10,16 @@ use crate::{announce::error::AnnounceError, Tracker};
 
 #[derive(Debug)]
 pub struct Announce {
-    #[allow(dead_code)]
     pub info_hash: InfoHash,
-    #[allow(dead_code)]
     pub peer_id: PeerId,
-    #[allow(dead_code)]
     pub port: u16,
-    #[allow(dead_code)]
     pub uploaded: u64,
-    #[allow(dead_code)]
     pub downloaded: u64,
-    #[allow(dead_code)]
     pub left: u64,
-    #[allow(dead_code)]
     pub event: AnnounceEvent,
-    #[allow(dead_code)]
     pub numwant: usize,
     // corrupt: Option<u64>,
     // key: Option<String>,
-    #[allow(dead_code)]
     pub compact: Option<bool>,
 }
 

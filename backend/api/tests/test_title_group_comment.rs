@@ -137,6 +137,11 @@ async fn test_search_title_group_comments_returns_results(pool: PgPool) {
     assert_eq!(response.results.len(), 5);
     assert_eq!(response.page, 1);
     assert_eq!(response.page_size, 10);
+    let created_by = &response.results[0].created_by;
+    assert_eq!(
+        (created_by.id, created_by.username.as_str()),
+        (1, "creator")
+    );
 }
 
 #[sqlx::test(

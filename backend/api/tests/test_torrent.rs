@@ -17,7 +17,7 @@ use arcadia_storage::{
         peer::PublicPeer,
         title_group::TitleGroupHierarchyLite,
         torrent::{TorrentSearch, TorrentSearchOrderByColumn},
-        torrent_activity::TorrentActivityAndUser,
+        torrent_activity::{TorrentActivityAndTitleGroup, TorrentActivityAndUser},
         user::PublicProfile,
     },
 };
@@ -2080,4 +2080,45 @@ async fn test_cannot_create_title_group_edition_group_or_torrent_when_uploads_di
         let response = test::call_service(&service, request).await;
         assert_eq!(response.status(), StatusCode::FORBIDDEN, "{path}");
     }
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_title_group",
+        "with_test_edition_group",
+        "with_test_torrents_of_basic_user",
+        "with_test_snatch_of_basic_user",
+        "with_test_artist",
+        "with_test_affiliated_artist",
+        "with_refreshed_title_group_hierarchy_lite"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_torrent_search_and_user_activities_include_affiliated_artists(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        common::create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+
+    let req = test::TestRequest::get()
+        .uri("/api/search/torrents/lite?torrent_snatched_by_id=100&page=1&page_size=5&order_by_column=torrent_snatched_at&order_by_direction=desc&title_group_include_empty_groups=false")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+    let search: PaginatedResults<TitleGroupHierarchyLite> =
+        common::call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
+    assert_eq!(search.results[0].affiliated_artists.0.len(), 1);
+    assert_eq!(
+        search.results[0].affiliated_artists.0[0].name,
+        "The Beatles"
+    );
+
+    let req = test::TestRequest::get()
+        .uri("/api/users/torrent-activities?page=1&page_size=5&include_unseeded_torrents=true&order_by_column=grabbed_at&order_by_direction=desc&hours_seeding_per_day=24&seeders_per_torrent=current")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+    let activities: PaginatedResults<TorrentActivityAndTitleGroup> =
+        common::call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
+    let affiliated_artists = &activities.results[0].title_group.affiliated_artists.0;
+    assert_eq!(affiliated_artists.len(), 1);
+    assert_eq!(affiliated_artists[0].name, "The Beatles");
 }

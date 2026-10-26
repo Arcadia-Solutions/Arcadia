@@ -3,22 +3,21 @@ name = "arcadia_tracker"
 version = "0.1.0"
 edition = "2024"
 
+[lints]
+workspace = true
+
 [dependencies]
 actix-web.workspace = true
 utoipa = { version = "6", features = ["actix_extras"] }
 utoipa-swagger-ui = { version = "10", features = ["actix-web"] }
-utoipa-actix-web = "0.2"
 tokio = { version = "1.52.3", default-features = false, features = ["rt-multi-thread", "macros", "signal", "sync"] }
-tracing = "0.1"
 tracing-actix-web = "0.7"
 thiserror = "2.0.18"
 actix-web-httpauth = "0.8.2"
-futures = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 strum = { version = "0.28", features = ["derive", "std"] }
 log = "0.4"
 serde_bencode = "0.2.4"
-anyhow = { version = "1.0.102", default-features = true, features = ["std"] }
 arcadia-shared = { path = "../../shared" }
 opentelemetry = { version = "0.32", features = ["metrics"] }
 parking_lot = "0.12.5"

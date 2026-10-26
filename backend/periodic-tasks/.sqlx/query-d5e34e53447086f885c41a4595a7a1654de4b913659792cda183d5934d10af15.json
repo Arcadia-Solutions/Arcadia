@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE subscriptions_title_group_comments source\n            SET title_group_id = $2\n            WHERE source.title_group_id = $1\n              AND NOT EXISTS (\n                  SELECT 1 FROM subscriptions_title_group_comments target\n                  WHERE target.title_group_id = $2 AND target.user_id = source.user_id\n              )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d5e34e53447086f885c41a4595a7a1654de4b913659792cda183d5934d10af15"
+}

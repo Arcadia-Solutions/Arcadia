@@ -1,21 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::prelude::FromRow;
 use strum::Display;
 use utoipa::ToSchema;
 
 use super::common::OrderByDirection;
 use super::user::UserLiteAvatar;
-
-#[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct UserEditChangeLog {
-    pub id: i64,
-    pub item_type: String,
-    pub item_id: i64,
-    pub edited_by_id: i32,
-    pub edited_at: DateTime<Utc>,
-    pub edits: serde_json::Value,
-}
 
 pub struct NewUserEditChangeLog {
     pub item_type: String,

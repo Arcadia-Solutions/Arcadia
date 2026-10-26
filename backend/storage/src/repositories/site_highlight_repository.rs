@@ -6,8 +6,6 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use sqlx::PgPool;
-use std::borrow::Borrow;
 
 fn map_site_highlight_write_error(error: sqlx::Error, fallback: fn(sqlx::Error) -> Error) -> Error {
     if let sqlx::Error::Database(db_err) = &error
@@ -49,7 +47,7 @@ impl ConnectionPool {
                 ORDER BY position ASC, id ASC
             "#
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetSiteHighlights)?;
 
@@ -77,7 +75,7 @@ impl ConnectionPool {
                 ORDER BY sh.position ASC, sh.id ASC
             "#
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetSiteHighlights)?;
 
@@ -89,9 +87,7 @@ impl ConnectionPool {
         payload: &CreateSiteHighlight,
         user_id: i32,
     ) -> Result<SiteHighlight> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let (title_group_id, series_id, artist_id) =
             split_item_id(payload.item_type, payload.item_id);
@@ -148,9 +144,7 @@ impl ConnectionPool {
         id: i32,
         payload: &EditSiteHighlight,
     ) -> Result<SiteHighlight> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let existing = sqlx::query_as!(
             SiteHighlight,
@@ -253,7 +247,7 @@ impl ConnectionPool {
 
     pub async fn delete_site_highlight(&self, id: i32) -> Result<()> {
         let result = sqlx::query!("DELETE FROM site_highlights WHERE id = $1", id)
-            .execute(self.borrow())
+            .execute(&self.pool)
             .await
             .map_err(Error::CouldNotDeleteSiteHighlight)?;
 

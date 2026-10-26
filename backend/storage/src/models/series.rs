@@ -1,11 +1,9 @@
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use sqlx::prelude::FromRow;
 use utoipa::{IntoParams, ToSchema};
 
 use super::common::OrderByDirection;
-use crate::utils::compute_diff;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Series {
@@ -92,10 +90,4 @@ pub struct SearchSeriesQuery {
 pub struct SeriesSearchResponse {
     pub results: Vec<SeriesSearchResult>,
     pub total_items: i64,
-}
-
-impl Series {
-    pub fn diff(&self, edited: &EditedSeries) -> Option<Value> {
-        compute_diff(self, edited, &["id"])
-    }
 }

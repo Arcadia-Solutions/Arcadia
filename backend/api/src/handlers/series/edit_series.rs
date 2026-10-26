@@ -4,6 +4,7 @@ use actix_web::{
     HttpResponse,
 };
 use arcadia_common::error::{Error, Result};
+use arcadia_storage::utils::compute_diff;
 use arcadia_storage::{
     models::{
         series::{EditedSeries, Series},
@@ -44,7 +45,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         )));
     }
 
-    if let Some(edits) = series.diff(&form) {
+    if let Some(edits) = compute_diff(&series, &form, &["id"]) {
         arc.pool
             .create_user_edit_change_log(&NewUserEditChangeLog {
                 item_type: "series".to_string(),

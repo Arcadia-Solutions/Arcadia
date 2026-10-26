@@ -1,0 +1,212 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT fsc.id, fsc.name, fsc.threads_amount, fsc.posts_amount, fsc.forbidden_classes,\n                   fsc.new_threads_restricted, fsc.thread_sort_by AS \"thread_sort_by: ForumThreadSortBy\",\n                   fsc.thread_sort_direction AS \"thread_sort_direction: ForumThreadSortDirection\",\n                   fsc.forum_category_id, fc.name AS category_name,\n                   fp.id AS \"latest_post_id?\", ft.id AS \"thread_id?\", ft.name AS \"thread_name?\", fp.created_at AS \"latest_post_created_at?\",\n                   CASE WHEN u.id IS NOT NULL THEN ROW(u.id, u.username, u.warned, u.banned) END AS \"latest_post_created_by?: UserLite\"\n            FROM forum_sub_categories fsc\n            INNER JOIN forum_categories fc ON fsc.forum_category_id = fc.id\n            LEFT JOIN LATERAL (\n                SELECT fp.id, fp.created_at, fp.created_by_id, fp.forum_thread_id\n                FROM forum_posts fp\n                JOIN forum_threads ft_inner ON fp.forum_thread_id = ft_inner.id\n                WHERE ft_inner.forum_sub_category_id = fsc.id\n                ORDER BY fp.created_at DESC LIMIT 1\n            ) AS fp ON TRUE\n            LEFT JOIN forum_threads ft ON fp.forum_thread_id = ft.id\n            LEFT JOIN users u ON fp.created_by_id = u.id\n            ORDER BY fsc.forum_category_id, fsc.sort_order, fsc.id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "forum_sub_categories",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "forum_sub_categories",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "threads_amount",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "forum_sub_categories",
+            "name": "threads_amount"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "posts_amount",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "forum_sub_categories",
+            "name": "posts_amount"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "forbidden_classes",
+        "type_info": "VarcharArray",
+        "origin": {
+          "Table": {
+            "table": "forum_sub_categories",
+            "name": "forbidden_classes"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "new_threads_restricted",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "forum_sub_categories",
+            "name": "new_threads_restricted"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "thread_sort_by: ForumThreadSortBy",
+        "type_info": {
+          "Custom": {
+            "name": "forum_thread_sort_by_enum",
+            "kind": {
+              "Enum": [
+                "latest_post",
+                "created_at",
+                "name",
+                "posts_amount",
+                "views_count"
+              ]
+            }
+          }
+        },
+        "origin": {
+          "Table": {
+            "table": "forum_sub_categories",
+            "name": "thread_sort_by"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "thread_sort_direction: ForumThreadSortDirection",
+        "type_info": {
+          "Custom": {
+            "name": "forum_thread_sort_direction_enum",
+            "kind": {
+              "Enum": [
+                "ascending",
+                "descending"
+              ]
+            }
+          }
+        },
+        "origin": {
+          "Table": {
+            "table": "forum_sub_categories",
+            "name": "thread_sort_direction"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "forum_category_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "forum_sub_categories",
+            "name": "forum_category_id"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "category_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "forum_categories",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "latest_post_id?",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "forum_posts",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "thread_id?",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "forum_threads",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "thread_name?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "forum_threads",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "latest_post_created_at?",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "forum_posts",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "latest_post_created_by?: UserLite",
+        "type_info": "Record",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "b011e4ba912c72dc7b42e8c81ded62d9221e558aa369c58ce43dcfb29f5110e6"
+}

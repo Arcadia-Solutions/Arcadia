@@ -789,7 +789,61 @@ async fn test_get_thread_posts_success(pool: PgPool) {
         common::call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
 
     assert!(posts.total_items > 0);
-    assert!(!posts.results.is_empty());
+    let created_by = &posts.results[0].created_by;
+    assert_eq!(created_by.id, 100);
+    assert_eq!(created_by.username, "user_basic");
+    assert_eq!(created_by.class_name, "newbie");
+    assert_eq!(created_by.avatar, None);
+    assert_eq!(created_by.custom_title, None);
+    assert!(!created_by.banned && !created_by.warned);
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_forum_category",
+        "with_test_forum_sub_category",
+        "with_test_forum_thread",
+        "with_test_forum_post",
+        "with_test_restricted_forum_sub_category"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_get_forum_latest_post_in_sub_category(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+
+    let req = test::TestRequest::get()
+        .uri("/api/forum")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+    let overview: serde_json::Value =
+        common::call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
+
+    let sub_categories = overview["forum_categories"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|category| category["sub_categories"].as_array().unwrap())
+        .collect::<Vec<_>>();
+    let latest_post = &sub_categories
+        .iter()
+        .find(|sub_category| sub_category["id"] == 100)
+        .unwrap()["latest_post_in_thread"];
+    assert_eq!(latest_post["id"], 102);
+    assert_eq!(latest_post["thread_id"], 102);
+    assert_eq!(latest_post["name"], "Pinned Thread");
+    assert_eq!(
+        latest_post["created_by"],
+        serde_json::json!({"id": 100, "username": "user_basic", "warned": false, "banned": false})
+    );
+    // a sub category without any post has no latest post
+    assert!(sub_categories
+        .iter()
+        .find(|sub_category| sub_category["id"] == 102)
+        .unwrap()["latest_post_in_thread"]
+        .is_null());
 }
 
 #[sqlx::test(

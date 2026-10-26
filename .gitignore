@@ -19,3 +19,5 @@ config.yml
 
 compose.override.yml
 Caddyfile
+
+CLAUDE.md

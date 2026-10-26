@@ -1,7 +1,5 @@
 use crate::connection_pool::ConnectionPool;
 use arcadia_common::error::Result;
-use sqlx::PgPool;
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     /// Recomputes every "cached SQL COUNT" attribute from its source tables.
@@ -9,9 +7,7 @@ impl ConnectionPool {
     /// If they drift out of sync (manual database edits for example), this runs
     /// all the recomputation queries in a single transaction.
     pub async fn recompute_cached_amounts(&self) -> Result<()> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         sqlx::query!(
             "UPDATE artists

@@ -35,29 +35,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "actix-files"
-version = "0.6.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df8c4f30e3272d7c345f88ae0aac3848507ef5ba871f9cc2a41c8085a0f0523b"
-dependencies = [
- "actix-http",
- "actix-service",
- "actix-utils",
- "actix-web",
- "bitflags",
- "bytes",
- "derive_more 2.1.1",
- "futures-core",
- "http-range",
- "log",
- "mime",
- "mime_guess",
- "percent-encoding",
- "pin-project-lite",
- "v_htmlescape",
-]
-
-[[package]]
 name = "actix-http"
 version = "3.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -435,7 +412,6 @@ name = "arcadia-api"
 version = "0.1.0"
 dependencies = [
  "actix-cors",
- "actix-files",
  "actix-http",
  "actix-multipart",
  "actix-multipart-rfc7578",
@@ -465,15 +441,12 @@ dependencies = [
  "reqwest 0.12.28",
  "serde",
  "serde_bencode",
- "serde_bytes",
  "serde_json",
  "serde_qs",
  "serde_urlencoded",
  "sha2 0.10.9",
  "sqlx",
- "strum 0.28.0",
  "subtle",
- "thiserror 2.0.21",
  "tmdb-api",
  "tokio",
  "tracing",
@@ -481,9 +454,7 @@ dependencies = [
  "url",
  "urlencoding",
  "utoipa",
- "utoipa-actix-web",
  "utoipa-swagger-ui",
- "uuid",
  "zip",
 ]
 
@@ -492,16 +463,12 @@ name = "arcadia-common"
 version = "0.1.0"
 dependencies = [
  "actix-web",
- "actix-web-lab",
- "chrono 0.4.45",
  "jsonwebtoken",
  "log",
  "musicbrainz_rs",
  "opentelemetry",
- "percent-encoding",
  "reqwest 0.12.28",
  "serde",
- "serde_bencode",
  "serde_json",
  "sqlx",
  "strum 0.28.0",
@@ -520,7 +487,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
- "tokio",
  "tokio-cron-scheduler",
 ]
 
@@ -563,13 +529,11 @@ dependencies = [
  "chrono 0.4.45",
  "deadpool",
  "deadpool-redis",
- "indexmap",
  "ipnetwork",
  "log",
  "musicbrainz_rs",
  "rand 0.10.3",
  "redis",
- "regex",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
@@ -589,10 +553,8 @@ dependencies = [
  "actix-http",
  "actix-web",
  "actix-web-httpauth",
- "anyhow",
  "arcadia-shared",
  "chrono 0.4.45",
- "futures",
  "log",
  "opentelemetry",
  "parking_lot",
@@ -604,10 +566,8 @@ dependencies = [
  "strum 0.28.0",
  "thiserror 2.0.21",
  "tokio",
- "tracing",
  "tracing-actix-web",
  "utoipa",
- "utoipa-actix-web",
  "utoipa-swagger-ui",
  "yaml_serde",
 ]
@@ -2124,12 +2084,6 @@ dependencies = [
  "http-body",
  "pin-project-lite",
 ]
-
-[[package]]
-name = "http-range"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2149c4b4b83390c71fab669730347d578ec6bdf759f2160c581ad8b8819733b4"
 
 [[package]]
 name = "httparse"
@@ -5092,17 +5046,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "utoipa-actix-web"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3af2eb471d6791cfead324a893342eb73530d48bd37c485dd6296bc9fd8101ed"
-dependencies = [
- "actix-service",
- "actix-web",
- "utoipa",
-]
-
-[[package]]
 name = "utoipa-gen"
 version = "6.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5139,15 +5082,8 @@ checksum = "4a0e2d11620c50695fe12bbbfde96b3477fe606e7284c22d505c12ce51214514"
 dependencies = [
  "getrandom 0.4.3",
  "js-sys",
- "serde_core",
  "wasm-bindgen",
 ]
-
-[[package]]
-name = "v_htmlescape"
-version = "0.15.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e8257fbc510f0a46eb602c10215901938b5c2a7d5e70fc11483b1d3c9b5b18c"
 
 [[package]]
 name = "valuable"

@@ -7,7 +7,6 @@ use crate::{
 };
 use arcadia_common::error::{Error, Result};
 use sqlx::types::Json;
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     pub async fn get_arcadia_settings(&self) -> Result<ArcadiaSettings> {
@@ -68,7 +67,7 @@ impl ConnectionPool {
                 LIMIT 1
             "#,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotFindArcadiaSettings)?;
 
@@ -235,7 +234,7 @@ impl ConnectionPool {
             settings.global_snatch_bonus_points_reward_factor,
             settings.uploads_disabled,
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotUpdateArcadiaSettings)?;
 

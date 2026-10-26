@@ -1,6 +1,5 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use sqlx::prelude::FromRow;
 use strum::Display;
 use utoipa::{IntoParams, ToSchema};
@@ -10,7 +9,6 @@ use crate::models::{
     title_group::{ContentType, TitleGroupHierarchyLite},
     user::UserLite,
 };
-use crate::utils::compute_diff;
 
 #[derive(Debug, Deserialize, Serialize, FromRow, ToSchema)]
 pub struct TitleGroupTag {
@@ -170,10 +168,4 @@ pub struct MergeTitleGroupTagsRequest {
     /// target tag, and it ends up soft deleted
     pub source_tag_id: i32,
     pub target_tag_id: i32,
-}
-
-impl TitleGroupTag {
-    pub fn diff(&self, edited: &EditedTitleGroupTag) -> Option<Value> {
-        compute_diff(self, edited, &["id"])
-    }
 }

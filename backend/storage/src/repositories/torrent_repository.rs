@@ -1,7 +1,6 @@
 use crate::{
     connection_pool::ConnectionPool,
     models::{
-        artist::AffiliatedArtistLite,
         bonus_points_log::BonusPointsLogAction,
         common::{OrderByDirection, PaginatedResults},
         edition_group::{EditionGroupHierarchyLite, Source},
@@ -28,8 +27,8 @@ use arcadia_common::{
 use arcadia_shared::{tracker::models::torrent::InfoHash, utils::format_title_group_name};
 use bip_metainfo::{Info, Metainfo, MetainfoBuilder};
 use serde_json::{json, Value};
-use sqlx::{types::Json, PgPool};
-use std::{borrow::Borrow, collections::HashMap, str::FromStr};
+use sqlx::types::Json;
+use std::{collections::HashMap, str::FromStr};
 use tokio::sync::broadcast;
 
 use chrono::NaiveDate;
@@ -55,7 +54,7 @@ pub struct GetTorrentResult {
     pub file_contents: Vec<u8>,
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 impl ConnectionPool {
     pub async fn create_torrent(
         &self,
@@ -68,9 +67,7 @@ impl ConnectionPool {
         torrent_source_tag: Option<&str>,
         notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<Torrent> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         // Check release date cutoff if configured
         if let Some(max_release_date) = torrent_max_release_date_allowed {
@@ -350,7 +347,7 @@ impl ConnectionPool {
             "#,
             torrent_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::TorrentNotFound)?;
 
@@ -365,9 +362,7 @@ impl ConnectionPool {
         torrent_id: i32,
         trumpable_notification: Option<&TrumpableNotification>,
     ) -> Result<Torrent> {
-        let mut transaction = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut transaction = self.pool.begin().await?;
 
         let updated_torrent = sqlx::query_as!(
             Torrent,
@@ -481,7 +476,7 @@ impl ConnectionPool {
             torrent_id,
             target_edition_group_id,
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await
         .map_err(|e| Error::ErrorWhileUpdatingTorrent(e.to_string()))?;
 
@@ -524,9 +519,7 @@ impl ConnectionPool {
         tracker_url: &str,
         torrent_source_tag: Option<&str>,
     ) -> Result<GetTorrentResult> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let torrent = sqlx::query!(
             r#"
@@ -549,7 +542,7 @@ impl ConnectionPool {
 
         let info = Info::from_bytes(torrent.info_dict).map_err(|_| Error::TorrentFileInvalid)?;
 
-        let announce_url = get_announce_url(passkey.to_owned(), tracker_url);
+        let announce_url = get_announce_url(passkey, tracker_url);
 
         let frontend_url = format!("{frontend_url}torrent/{torrent_id}");
 
@@ -595,7 +588,7 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetUploadedTorrents)
     }
@@ -616,7 +609,7 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotGetSnatchedTorrents)
     }
@@ -643,7 +636,8 @@ impl ConnectionPool {
     ) -> Result<u64> {
         const BATCH_SIZE: i64 = 100;
 
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
+        let mut tx = self
+            .pool
             .begin()
             .await
             .map_err(|e| Error::ErrorWhileUpdatingTorrent(e.to_string()))?;
@@ -871,7 +865,7 @@ impl ConnectionPool {
             can_see_anonymous_uploads,
             form.torrent_trumpable
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(|error| Error::ErrorSearchingForTorrents(error.to_string()))?;
 
@@ -969,7 +963,7 @@ impl ConnectionPool {
             can_see_anonymous_uploads,
             form.torrent_trumpable
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await
         .map_err(|error| Error::ErrorSearchingForTorrents(error.to_string()))?
         .unwrap_or(Some(0));
@@ -1000,7 +994,7 @@ impl ConnectionPool {
             &title_group_ids,
             form.edition_group_source.as_slice() as &[Source]
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         let mut grouped_editions: HashMap<i32, Vec<EditionGroupHierarchyLite>> = HashMap::new();
@@ -1152,7 +1146,7 @@ impl ConnectionPool {
             can_see_anonymous_uploads,
             form.torrent_trumpable
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         let mut grouped_torrents: HashMap<i32, Vec<TorrentHierarchyLite>> = HashMap::new();
@@ -1164,60 +1158,9 @@ impl ConnectionPool {
                 .push(t);
         }
 
-        // Fetch affiliated artists with conditional logic in a single query
-        // For title groups with 1-2 artists, fetch actual artist data
-        // For title groups with >2 artists, return a dummy artist (id=0, name='')
-        let affiliated_artists = sqlx::query!(
-            r#"
-            WITH artist_counts AS (
-                SELECT
-                    title_group_id,
-                    COUNT(*) as count
-                FROM affiliated_artists
-                WHERE title_group_id = ANY($1)
-                GROUP BY title_group_id
-            )
-            -- Get title groups with 1-2 artists (fetch actual artist data)
-            SELECT
-                aa.title_group_id,
-                a.id as artist_id,
-                a.name as artist_name
-            FROM affiliated_artists aa
-            JOIN artists a ON a.id = aa.artist_id
-            JOIN artist_counts ac ON ac.title_group_id = aa.title_group_id
-            WHERE ac.count <= 2
-
-            UNION ALL
-
-            -- Get title groups with >2 artists (return dummy artist)
-            SELECT DISTINCT ON (ac.title_group_id)
-                ac.title_group_id,
-                0::bigint as artist_id,
-                ''::text as artist_name
-            FROM artist_counts ac
-            WHERE ac.count > 2
-            ORDER BY title_group_id, artist_id
-            "#,
-            &title_group_ids
-        )
-        .fetch_all(self.borrow())
-        .await?;
-
-        // Group the artists by title_group_id
-        let mut grouped_artists: HashMap<i32, Vec<AffiliatedArtistLite>> = HashMap::new();
-        for row in affiliated_artists {
-            if let (Some(title_group_id), Some(artist_id), Some(artist_name)) =
-                (row.title_group_id, row.artist_id, row.artist_name)
-            {
-                grouped_artists
-                    .entry(title_group_id)
-                    .or_default()
-                    .push(AffiliatedArtistLite {
-                        artist_id,
-                        name: artist_name,
-                    });
-            }
-        }
+        let mut grouped_artists = self
+            .find_affiliated_artists_lite_by_title_group_ids(&title_group_ids)
+            .await?;
 
         let title_groups = title_groups
             .into_iter()
@@ -1246,6 +1189,10 @@ impl ConnectionPool {
         })
     }
 
+    #[expect(
+        clippy::unused_async,
+        reason = "stub until the top torrents query is restored"
+    )]
     pub async fn find_top_torrents(&self, _period: &str, _amount: i64) -> Result<Value> {
         Ok(Value::Array(vec![]))
         // let search_results = sqlx::query!(
@@ -1279,7 +1226,7 @@ impl ConnectionPool {
         //     period,
         //     amount
         // )
-        // .fetch_one(self.borrow())
+        // .fetch_one(&self.pool)
         // .await
         // .map_err(|error| Error::ErrorSearchingForTorrents(error.to_string()))?;
 
@@ -1292,9 +1239,7 @@ impl ConnectionPool {
         current_user_id: i32,
         notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<()> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         let title_group = sqlx::query!(
             r#"
@@ -1361,23 +1306,6 @@ impl ConnectionPool {
         Ok(())
     }
 
-    pub async fn increment_torrent_times_completed(&self, torrent_id: i32) -> Result<()> {
-        let _ = sqlx::query!(
-            r#"
-            UPDATE torrents
-            SET
-                times_completed = times_completed + 1
-            WHERE
-                id = $1
-            "#,
-            torrent_id
-        )
-        .execute(self.borrow())
-        .await?;
-
-        Ok(())
-    }
-
     pub async fn set_torrent_staff_checked(
         &self,
         torrent_id: i32,
@@ -1395,7 +1323,7 @@ impl ConnectionPool {
             torrent_id,
             staff_checked
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -1427,7 +1355,7 @@ impl ConnectionPool {
             "#,
             torrent_id
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         let peers = rows
@@ -1518,14 +1446,14 @@ impl ConnectionPool {
             order_by_column.to_string(),
             order_by_direction.to_string()
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         let total_items = sqlx::query_scalar!(
             r#"SELECT COUNT(*) AS "count!" FROM torrent_activities WHERE torrent_id = $1"#,
             torrent_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         Ok(PaginatedResults {
@@ -1555,7 +1483,7 @@ impl ConnectionPool {
             upload_factor,
             download_factor
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -1634,7 +1562,7 @@ impl ConnectionPool {
                 .bind(limit)
                 .bind(offset)
                 .bind(query.include_unseeded_torrents)
-                .fetch_all(self.borrow())
+                .fetch_all(&self.pool)
                 .await
                 .map_err(|error| Error::ErrorSearchingForTorrents(error.to_string()))?;
 
@@ -1657,7 +1585,7 @@ impl ConnectionPool {
             user_id,
             query.include_unseeded_torrents
         )
-        .fetch_optional(self.borrow())
+        .fetch_optional(&self.pool)
         .await
         .map_err(|error| Error::ErrorSearchingForTorrents(error.to_string()))?
         .unwrap_or(Some(0));
@@ -1710,7 +1638,7 @@ impl ConnectionPool {
             "#,
             &title_group_ids
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(|error| Error::ErrorSearchingForTorrents(error.to_string()))?;
 
@@ -1739,7 +1667,7 @@ impl ConnectionPool {
             "#,
             &edition_group_ids
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         let mut edition_group_map: HashMap<i32, EditionGroupHierarchyLite> = HashMap::new();
@@ -1833,7 +1761,7 @@ impl ConnectionPool {
             &torrent_ids,
             user_id
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await?;
 
         let mut torrent_map: HashMap<i32, TorrentHierarchyLite> = HashMap::new();
@@ -1872,7 +1800,7 @@ impl ConnectionPool {
                 .bind(user_id)
                 .bind(&torrent_ids)
                 .bind(ticks_per_day)
-                .fetch_all(self.borrow())
+                .fetch_all(&self.pool)
                 .await?;
 
         let mut activity_map: HashMap<i32, TorrentActivity> = HashMap::new();
@@ -1881,54 +1809,9 @@ impl ConnectionPool {
         }
 
         // Step 7: Affiliated artists
-        let affiliated_artists = sqlx::query!(
-            r#"
-            WITH artist_counts AS (
-                SELECT
-                    title_group_id,
-                    COUNT(*) as count
-                FROM affiliated_artists
-                WHERE title_group_id = ANY($1)
-                GROUP BY title_group_id
-            )
-            SELECT
-                aa.title_group_id,
-                a.id as artist_id,
-                a.name as artist_name
-            FROM affiliated_artists aa
-            JOIN artists a ON a.id = aa.artist_id
-            JOIN artist_counts ac ON ac.title_group_id = aa.title_group_id
-            WHERE ac.count <= 2
-
-            UNION ALL
-
-            SELECT DISTINCT ON (ac.title_group_id)
-                ac.title_group_id,
-                0::bigint as artist_id,
-                ''::text as artist_name
-            FROM artist_counts ac
-            WHERE ac.count > 2
-            ORDER BY title_group_id, artist_id
-            "#,
-            &title_group_ids
-        )
-        .fetch_all(self.borrow())
-        .await?;
-
-        let mut grouped_artists: HashMap<i32, Vec<AffiliatedArtistLite>> = HashMap::new();
-        for row in affiliated_artists {
-            if let (Some(title_group_id), Some(artist_id), Some(artist_name)) =
-                (row.title_group_id, row.artist_id, row.artist_name)
-            {
-                grouped_artists
-                    .entry(title_group_id)
-                    .or_default()
-                    .push(AffiliatedArtistLite {
-                        artist_id,
-                        name: artist_name,
-                    });
-            }
-        }
+        let grouped_artists = self
+            .find_affiliated_artists_lite_by_title_group_ids(&title_group_ids)
+            .await?;
 
         // Step 8: Assembly
         let mut results = Vec::new();
@@ -1990,7 +1873,7 @@ impl ConnectionPool {
 
         let (bonus_per_tick,): (i64,) = sqlx::query_as(sqlx::AssertSqlSafe(query))
             .bind(user_id)
-            .fetch_one(self.borrow())
+            .fetch_one(&self.pool)
             .await?;
 
         Ok(bonus_per_tick)
@@ -2006,7 +1889,7 @@ impl ConnectionPool {
             "#,
             torrent_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::TorrentNotFound)?;
 
@@ -2026,7 +1909,7 @@ impl ConnectionPool {
             "#,
             torrent_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::TorrentNotFound)?;
 

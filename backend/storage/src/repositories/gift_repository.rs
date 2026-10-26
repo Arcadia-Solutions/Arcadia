@@ -6,14 +6,11 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use sqlx::{PgPool, Postgres, Transaction};
-use std::borrow::Borrow;
+use sqlx::{Postgres, Transaction};
 
 impl ConnectionPool {
     pub async fn create_gift(&self, gift: &UserCreatedGift, current_user_id: i32) -> Result<Gift> {
-        let mut tx = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx = self.pool.begin().await?;
 
         Self::decrement_bonus_points_and_freeleech_tokens(
             &mut tx,

@@ -8,12 +8,10 @@ use crate::models::user::UserLite;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Display, sqlx::Type, ToSchema)]
 #[sqlx(type_name = "user_application_status_enum", rename_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum UserApplicationStatus {
-    #[serde(rename = "pending")]
     Pending,
-    #[serde(rename = "accepted")]
     Accepted,
-    #[serde(rename = "rejected")]
     Rejected,
 }
 

@@ -75,7 +75,7 @@ jobs:
           cache-workspaces: ./
 
       - name: Check clippy for new warnings
-        run: cargo clippy
+        run: cargo clippy --all-targets -- -D warnings
         env:
           SQLX_OFFLINE: "true"
 

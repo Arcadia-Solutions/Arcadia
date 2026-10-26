@@ -62,12 +62,6 @@ impl WarningCollection {
         self.warnings.is_empty()
     }
 
-    /// Returns true if there exists a warning which requires returning early.
-    pub fn should_early_return(&self) -> bool {
-        self.warnings
-            .contains(&AnnounceWarning::StoppedPeerDoesntExist)
-    }
-
     /// Create the warning message to be returned to the user.
     pub fn into_message(self) -> Option<Vec<u8>> {
         if self.warnings.is_empty() {

@@ -1,0 +1,121 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                c.id,\n                c.torrent_request_id,\n                c.content,\n                c.created_at,\n                c.updated_at,\n                c.created_by_id,\n                tr.title_group_id,\n                tg.name AS title_group_name,\n                ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS \"created_by!: UserLiteAvatar\"\n            FROM torrent_request_comments c\n            JOIN users u ON u.id = c.created_by_id\n            JOIN torrent_requests tr ON tr.id = c.torrent_request_id\n            JOIN title_groups tg ON tg.id = tr.title_group_id\n            WHERE c.created_by_id = $1\n            ORDER BY c.created_at DESC\n            LIMIT $2 OFFSET $3\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "torrent_request_comments",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "torrent_request_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "torrent_request_comments",
+            "name": "torrent_request_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "content",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "torrent_request_comments",
+            "name": "content"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "torrent_request_comments",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "torrent_request_comments",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "created_by_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "torrent_request_comments",
+            "name": "created_by_id"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "title_group_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "torrent_requests",
+            "name": "title_group_id"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "title_group_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "created_by!: UserLiteAvatar",
+        "type_info": "Record",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "7c5b0a479964addac3c7223a495de879f7e5cb6d12d4e7f8619bfa8f95ec0561"
+}

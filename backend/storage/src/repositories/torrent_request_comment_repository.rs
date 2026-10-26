@@ -11,28 +11,8 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use chrono::{DateTime, Utc};
-use sqlx::{FromRow, PgPool, Postgres, Transaction};
-use std::borrow::Borrow;
+use sqlx::{Postgres, Transaction};
 use tokio::sync::broadcast;
-
-#[derive(FromRow)]
-struct DBTorrentRequestCommentWithLocation {
-    id: i64,
-    torrent_request_id: i64,
-    content: String,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
-    created_by_id: i32,
-    title_group_id: i32,
-    title_group_name: String,
-    created_by_username: String,
-    created_by_class_name: String,
-    created_by_avatar: Option<String>,
-    created_by_banned: bool,
-    created_by_warned: bool,
-    created_by_custom_title: Option<String>,
-}
 
 impl ConnectionPool {
     pub async fn create_torrent_request_comment(
@@ -42,9 +22,7 @@ impl ConnectionPool {
         content: &str,
         notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<TorrentRequestComment> {
-        let mut tx: Transaction<'_, Postgres> = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx: Transaction<'_, Postgres> = self.pool.begin().await?;
 
         let created_torrent_request_comment = sqlx::query_as!(
             TorrentRequestComment,
@@ -94,9 +72,7 @@ impl ConnectionPool {
     }
 
     pub async fn delete_torrent_request_comment(&self, comment_id: i64) -> Result<()> {
-        let mut tx: Transaction<'_, Postgres> = <ConnectionPool as Borrow<PgPool>>::borrow(self)
-            .begin()
-            .await?;
+        let mut tx: Transaction<'_, Postgres> = self.pool.begin().await?;
 
         let deleted_comment = sqlx::query!(
             r#"
@@ -134,8 +110,7 @@ impl ConnectionPool {
         let limit = form.page_size as i64;
         let offset = (form.page - 1) as i64 * form.page_size as i64;
 
-        let comments = sqlx::query_as!(
-            DBTorrentRequestCommentWithLocation,
+        let comments = sqlx::query!(
             r#"
             SELECT
                 c.id,
@@ -146,12 +121,7 @@ impl ConnectionPool {
                 c.created_by_id,
                 tr.title_group_id,
                 tg.name AS title_group_name,
-                u.username AS created_by_username,
-                u.class_name AS created_by_class_name,
-                u.avatar AS created_by_avatar,
-                u.banned AS created_by_banned,
-                u.warned AS created_by_warned,
-                u.custom_title AS created_by_custom_title
+                ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS "created_by!: UserLiteAvatar"
             FROM torrent_request_comments c
             JOIN users u ON u.id = c.created_by_id
             JOIN torrent_requests tr ON tr.id = c.torrent_request_id
@@ -164,7 +134,7 @@ impl ConnectionPool {
             limit,
             offset
         )
-        .fetch_all(self.borrow())
+        .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotSearchTorrentRequestComments)?;
 
@@ -178,15 +148,7 @@ impl ConnectionPool {
                     content: comment.content,
                     created_at: comment.created_at,
                     updated_at: comment.updated_at,
-                    created_by: UserLiteAvatar {
-                        id: comment.created_by_id,
-                        username: comment.created_by_username,
-                        class_name: comment.created_by_class_name,
-                        avatar: comment.created_by_avatar,
-                        banned: comment.created_by_banned,
-                        warned: comment.created_by_warned,
-                        custom_title: comment.created_by_custom_title,
-                    },
+                    created_by: comment.created_by,
                 },
                 title_group_id: comment.title_group_id,
                 title_group_name: comment.title_group_name,
@@ -197,7 +159,7 @@ impl ConnectionPool {
             "SELECT COUNT(*) FROM torrent_request_comments WHERE created_by_id = $1",
             form.created_by_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(Error::CouldNotSearchTorrentRequestComments)?
         .unwrap_or(0);

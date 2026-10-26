@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2024"
 license = "AGPL-3.0"
 
+[lints]
+workspace = true
+
 [dependencies]
 actix-web.workspace = true
 async-stream = "0.3"
@@ -13,7 +16,6 @@ actix-web-lab = "0.26.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = {version = "1.0", features = ["preserve_order"]}
 chrono = { version = "0.4", features = ["serde"] }
-uuid = { version = "1.23.1", features = ["serde", "v4"] }
 futures-util = "0.3.32"
 jsonwebtoken = { version = "10.4.0", features = ["rust_crypto"] }
 argon2 = "0.5.3"
@@ -21,21 +23,16 @@ subtle = "2"
 futures = "0.3"
 rand = "0.10.1"
 bip_metainfo = "0.12.0"
-serde_bytes = "0.11"
 actix-multipart = "0.7.2"
-actix-files = "0.6.10"
 reqwest = { version = "0.12", features = ["json"] }
 actix-cors = "0.7.1"
 actix-http = "3.12.1"
 tracing = "0.1"
 tracing-actix-web = "0.7"
-thiserror = "2.0.18"
 utoipa = { version = "6", features = ["actix_extras"] }
 utoipa-swagger-ui = { version = "10", features = ["actix-web"] }
-utoipa-actix-web = "0.2"
 serde_bencode = "0.2.4"
 actix-web-httpauth = "0.8.2"
-strum = { version = "0.28", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 lettre = "0.11"
 log = "0.4"

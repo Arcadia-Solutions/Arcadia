@@ -3,7 +3,6 @@ use crate::{
     models::edition_group::{EditedEditionGroup, EditionGroup, UserCreatedEditionGroup},
 };
 use arcadia_common::error::{Error, Result};
-use std::borrow::Borrow;
 
 impl ConnectionPool {
     pub async fn create_edition_group(
@@ -29,7 +28,7 @@ impl ConnectionPool {
             .bind(&edition_group_form.external_links)
             .bind(&edition_group_form.source)
             .bind(&edition_group_form.additional_information)
-            .fetch_one(self.borrow())
+            .fetch_one(&self.pool)
             .await
             .map_err(Error::CouldNotCreateEditionGroup)?;
 
@@ -46,7 +45,7 @@ impl ConnectionPool {
             "#,
             edition_group_form.title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Increment user's edition_groups counter
@@ -58,7 +57,7 @@ impl ConnectionPool {
             "#,
             current_user_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(created_edition_group)
@@ -78,7 +77,7 @@ impl ConnectionPool {
             "#,
             edition_group_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|_| Error::EditionGroupNotFound)?;
 
@@ -97,7 +96,7 @@ impl ConnectionPool {
             "#,
             edition_group_id
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await?;
 
         if has_undeleted_torrents {
@@ -119,7 +118,7 @@ impl ConnectionPool {
             "#,
             edition_group.title_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Decrement user's edition_groups counter
@@ -131,7 +130,7 @@ impl ConnectionPool {
             "#,
             edition_group.created_by_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         // Delete the edition group
@@ -141,7 +140,7 @@ impl ConnectionPool {
             "#,
             edition_group_id
         )
-        .execute(self.borrow())
+        .execute(&self.pool)
         .await?;
 
         Ok(())
@@ -184,7 +183,7 @@ impl ConnectionPool {
             edited_edition_group.source as _,
             edited_edition_group.additional_information
         )
-        .fetch_one(self.borrow())
+        .fetch_one(&self.pool)
         .await
         .map_err(|e| Error::ErrorWhileUpdatingEditionGroup(e.to_string()))?;
 

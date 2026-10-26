@@ -1,0 +1,169 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                p.id,\n                p.content,\n                p.created_at,\n                p.updated_at,\n                p.sticky,\n                p.locked,\n                p.forum_thread_id,\n                ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS \"created_by!: UserLiteAvatar\",\n                t.name AS thread_name,\n                s.id AS sub_category_id,\n                s.name AS sub_category_name,\n                c.id AS category_id,\n                c.name AS category_name\n            FROM forum_posts p\n            JOIN users u ON u.id = p.created_by_id\n            JOIN forum_threads t ON t.id = p.forum_thread_id\n            JOIN forum_sub_categories s ON s.id = t.forum_sub_category_id\n            JOIN forum_categories c ON c.id = s.forum_category_id\n\n            WHERE p.created_by_id = $1\n\n            ORDER BY p.created_at DESC\n\n            LIMIT $2 OFFSET $3;\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "forum_posts",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "content",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "forum_posts",
+            "name": "content"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "forum_posts",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "forum_posts",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "sticky",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "forum_posts",
+            "name": "sticky"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "locked",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "forum_posts",
+            "name": "locked"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "forum_thread_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "forum_posts",
+            "name": "forum_thread_id"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "created_by!: UserLiteAvatar",
+        "type_info": "Record",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 8,
+        "name": "thread_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "forum_threads",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "sub_category_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "forum_sub_categories",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "sub_category_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "forum_sub_categories",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "category_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "forum_categories",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "category_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "forum_categories",
+            "name": "name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "106414ad6f4c0148490f699aa0ff77a465b27caf4287f3184204f51bcbb4486a"
+}

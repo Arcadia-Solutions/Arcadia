@@ -1,7 +1,6 @@
 use crate::{
     connection_pool::ConnectionPool,
     models::{
-        artist::AffiliatedArtistLite,
         bonus_points_log::BonusPointsLogAction,
         common::{OrderByDirection, PaginatedResults},
         edition_group::{EditionGroupHierarchyLite, Source},
@@ -1159,60 +1158,9 @@ impl ConnectionPool {
                 .push(t);
         }
 
-        // Fetch affiliated artists with conditional logic in a single query
-        // For title groups with 1-2 artists, fetch actual artist data
-        // For title groups with >2 artists, return a dummy artist (id=0, name='')
-        let affiliated_artists = sqlx::query!(
-            r#"
-            WITH artist_counts AS (
-                SELECT
-                    title_group_id,
-                    COUNT(*) as count
-                FROM affiliated_artists
-                WHERE title_group_id = ANY($1)
-                GROUP BY title_group_id
-            )
-            -- Get title groups with 1-2 artists (fetch actual artist data)
-            SELECT
-                aa.title_group_id,
-                a.id as artist_id,
-                a.name as artist_name
-            FROM affiliated_artists aa
-            JOIN artists a ON a.id = aa.artist_id
-            JOIN artist_counts ac ON ac.title_group_id = aa.title_group_id
-            WHERE ac.count <= 2
-
-            UNION ALL
-
-            -- Get title groups with >2 artists (return dummy artist)
-            SELECT DISTINCT ON (ac.title_group_id)
-                ac.title_group_id,
-                0::bigint as artist_id,
-                ''::text as artist_name
-            FROM artist_counts ac
-            WHERE ac.count > 2
-            ORDER BY title_group_id, artist_id
-            "#,
-            &title_group_ids
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        // Group the artists by title_group_id
-        let mut grouped_artists: HashMap<i32, Vec<AffiliatedArtistLite>> = HashMap::new();
-        for row in affiliated_artists {
-            if let (Some(title_group_id), Some(artist_id), Some(artist_name)) =
-                (row.title_group_id, row.artist_id, row.artist_name)
-            {
-                grouped_artists
-                    .entry(title_group_id)
-                    .or_default()
-                    .push(AffiliatedArtistLite {
-                        artist_id,
-                        name: artist_name,
-                    });
-            }
-        }
+        let mut grouped_artists = self
+            .find_affiliated_artists_lite_by_title_group_ids(&title_group_ids)
+            .await?;
 
         let title_groups = title_groups
             .into_iter()
@@ -1857,54 +1805,9 @@ impl ConnectionPool {
         }
 
         // Step 7: Affiliated artists
-        let affiliated_artists = sqlx::query!(
-            r#"
-            WITH artist_counts AS (
-                SELECT
-                    title_group_id,
-                    COUNT(*) as count
-                FROM affiliated_artists
-                WHERE title_group_id = ANY($1)
-                GROUP BY title_group_id
-            )
-            SELECT
-                aa.title_group_id,
-                a.id as artist_id,
-                a.name as artist_name
-            FROM affiliated_artists aa
-            JOIN artists a ON a.id = aa.artist_id
-            JOIN artist_counts ac ON ac.title_group_id = aa.title_group_id
-            WHERE ac.count <= 2
-
-            UNION ALL
-
-            SELECT DISTINCT ON (ac.title_group_id)
-                ac.title_group_id,
-                0::bigint as artist_id,
-                ''::text as artist_name
-            FROM artist_counts ac
-            WHERE ac.count > 2
-            ORDER BY title_group_id, artist_id
-            "#,
-            &title_group_ids
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        let mut grouped_artists: HashMap<i32, Vec<AffiliatedArtistLite>> = HashMap::new();
-        for row in affiliated_artists {
-            if let (Some(title_group_id), Some(artist_id), Some(artist_name)) =
-                (row.title_group_id, row.artist_id, row.artist_name)
-            {
-                grouped_artists
-                    .entry(title_group_id)
-                    .or_default()
-                    .push(AffiliatedArtistLite {
-                        artist_id,
-                        name: artist_name,
-                    });
-            }
-        }
+        let grouped_artists = self
+            .find_affiliated_artists_lite_by_title_group_ids(&title_group_ids)
+            .await?;
 
         // Step 8: Assembly
         let mut results = Vec::new();

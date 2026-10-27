@@ -1,7 +1,7 @@
 use actix_web::web::Data;
 use arcadia_shared::telemetry::{instrument_periodic_task, PeriodicTaskInstruments};
 use arcadia_shared::tracker::models::{
-    peer::remove_peers_from_database,
+    peer::{mark_peers_inactive_in_database, remove_peers_from_database},
     peer_update,
     torrent_update::{self, TorrentUpdate},
     Flushable,
@@ -78,6 +78,7 @@ pub async fn reap(arc: &Data<Tracker>) -> u64 {
     let ttl = Duration::seconds(arc.inactive_peer_ttl.try_into().unwrap());
     let inactive_cutoff = Utc::now().checked_sub_signed(ttl).unwrap();
     let mut all_removed_peers: Vec<peer_update::Index> = Vec::new();
+    let mut all_inactivated_peers: Vec<peer_update::Index> = Vec::new();
 
     for (torrent_id, torrent) in arc.torrents.lock().iter_mut() {
         let mut seeder_delta: i32 = 0;
@@ -85,10 +86,12 @@ pub async fn reap(arc: &Data<Tracker>) -> u64 {
 
         // If a peer is marked as inactive and it has not announced for
         // more than inactive_peer_ttl, then it is permanently deleted.
+        // Until then it is kept, so that its next announce is counted from
+        // its previous one.
         let torrent_removed_peers = torrent
             .peers
             .extract_if(.., |_, peer| {
-                inactive_cutoff >= peer.updated_at || !peer.is_active
+                !peer.is_active && peer.updated_at < inactive_cutoff
             })
             .map(|(index, _)| index)
             .collect::<Vec<arcadia_shared::tracker::models::peer::Index>>();
@@ -109,6 +112,11 @@ pub async fn reap(arc: &Data<Tracker>) -> u64 {
             // count are updated to reflect.
             if peer.updated_at < active_cutoff && peer.is_active {
                 peer.is_active = false;
+                all_inactivated_peers.push(peer_update::Index {
+                    torrent_id: *torrent_id,
+                    peer_id: index.peer_id,
+                    user_id: index.user_id,
+                });
 
                 arc.users.write().entry(index.user_id).and_modify(|user| {
                     if peer.is_seeder {
@@ -142,7 +150,32 @@ pub async fn reap(arc: &Data<Tracker>) -> u64 {
         }
     }
 
+    // Retry the previous failures, unless the peer announced again or got removed since
+    let previously_failed = std::mem::take(&mut *arc.unpersisted_inactive_peers.lock());
+    {
+        let torrents = arc.torrents.lock();
+        all_inactivated_peers.extend(previously_failed.into_iter().filter(|index| {
+            torrents
+                .get(&index.torrent_id)
+                .and_then(|torrent| {
+                    torrent
+                        .peers
+                        .get(&arcadia_shared::tracker::models::peer::Index {
+                            user_id: index.user_id,
+                            peer_id: index.peer_id,
+                        })
+                })
+                .is_some_and(|peer| !peer.is_active)
+        }));
+    }
+
     let removed_count = all_removed_peers.len() as u64;
     remove_peers_from_database(&arc.pool, &all_removed_peers).await;
+    if let Err(error) =
+        mark_peers_inactive_in_database(&arc.pool, &all_inactivated_peers, active_cutoff).await
+    {
+        log::error!("Failed marking peers as inactive in db, retrying on next reap: {error}");
+        *arc.unpersisted_inactive_peers.lock() = all_inactivated_peers;
+    }
     removed_count
 }

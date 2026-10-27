@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    UPDATE peers\n                    SET active = FALSE\n                    WHERE (user_id, torrent_id, peer_id) IN (\n                        SELECT t.user_id, t.torrent_id, t.peer_id\n                        FROM (\n                            SELECT * FROM unnest(\n                                $1::int[],\n                                $2::int[],\n                                $3::bytea[]\n                            ) AS t(user_id, torrent_id, peer_id)\n                        ) AS t\n                    )\n                    -- stored as timestamp without time zone in UTC\n                    AND updated_at < ($4::timestamptz AT TIME ZONE 'UTC')\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4Array",
+        "Int4Array",
+        "ByteaArray",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8bfb44ee5f5b055b98c2f85a3212bf32233dbba9c4dc48f9336010e9885fb984"
+}

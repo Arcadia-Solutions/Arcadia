@@ -40,6 +40,8 @@ pub struct Tracker {
     pub torrent_updates: Mutex<Queue<torrent_update::Index, TorrentUpdate>>,
     pub peer_updates: Mutex<Queue<peer_update::Index, PeerUpdate>>,
     pub announce_error_updates: Mutex<Queue<announce_error_update::Index, AnnounceErrorUpdate>>,
+    /// Peers whose inactive state failed to be persisted, retried on the next reap
+    pub unpersisted_inactive_peers: Mutex<Vec<peer_update::Index>>,
 }
 
 impl Deref for Tracker {
@@ -100,6 +102,7 @@ impl Tracker {
                 announce_error_update::Index,
                 AnnounceErrorUpdate,
             >::default()),
+            unpersisted_inactive_peers: Mutex::new(Vec::new()),
         }
     }
 }

@@ -36,6 +36,8 @@ services:
         PRODUCTION_BUILD: "false"
     volumes:
       - ./config.yml:/app/config.yml:ro
+    # configuration overrides of the running scenario
+    env_file: ${WORK_DIR}/tracker.env
     healthcheck:
       # any HTTP answer means the server is up
       test: ["CMD-SHELL", "curl -s -o /dev/null http://localhost:8081/"]
@@ -63,3 +65,12 @@ services:
       - ${WORK_DIR}/leecher/downloads:/downloads
     ports:
       - 127.0.0.1:18081:8080
+
+  leecher2:
+    image: ${CLIENT_IMAGE}
+    environment: *client_env
+    volumes:
+      - ${WORK_DIR}/leecher2/config:/config
+      - ${WORK_DIR}/leecher2/downloads:/downloads
+    ports:
+      - 127.0.0.1:18082:8080

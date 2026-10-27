@@ -22,6 +22,9 @@ const DEAD_LEECHER: PeerId = PeerId([0x22; 20]);
 const FRESH_LEECHER: PeerId = PeerId([0x44; 20]);
 const STALE_LEECHER: PeerId = PeerId([0x55; 20]);
 const DEAD_SEEDER: PeerId = PeerId([0x66; 20]);
+/// Silent for longer than inactive_peer_ttl but never marked as inactive, like a peer loaded from
+/// the database after the tracker was down for that long
+const UNREAPED_DEAD_LEECHER: PeerId = PeerId([0x77; 20]);
 
 fn index(peer_id: PeerId) -> peer::Index {
     peer::Index {
@@ -79,11 +82,19 @@ async fn test_reap_expires_stale_peers(pool: PgPool) {
     config.tracker.active_peer_ttl = ACTIVE_PEER_TTL;
     config.tracker.inactive_peer_ttl = INACTIVE_PEER_TTL;
 
-    let tracker = common::create_test_tracker(pool.clone(), config).await;
-
     let now = Utc::now();
     // Silent for longer than active_peer_ttl, but not yet for inactive_peer_ttl
     let stale = now - Duration::seconds(ACTIVE_PEER_TTL as i64 + 60);
+
+    // The database row of the stale seeder holds its last announce, like the store does
+    sqlx::query("UPDATE peers SET updated_at = $1 WHERE peer_id = $2")
+        .bind(stale)
+        .bind(STALE_SEEDER.to_vec())
+        .execute(&pool)
+        .await
+        .expect("could not age the stale seeder");
+
+    let tracker = common::create_test_tracker(pool.clone(), config).await;
     // Silent for longer than inactive_peer_ttl
     let dead = now - Duration::seconds(INACTIVE_PEER_TTL as i64 + 60);
 
@@ -112,19 +123,22 @@ async fn test_reap_expires_stale_peers(pool: PgPool) {
         torrent_2
             .peers
             .insert(index(STALE_LEECHER), peer(false, true, stale));
+        torrent_2
+            .peers
+            .insert(index(UNREAPED_DEAD_LEECHER), peer(false, true, dead));
         assert!(
             torrent_2.peers.contains_key(&index(DEAD_SEEDER)),
             "the dead peer of torrent 2 is loaded from the database"
         );
         torrent_2.seeders = 0;
-        torrent_2.leechers = 2;
+        torrent_2.leechers = 3;
     }
 
     {
         let mut users = tracker.users.write();
         let user = users.get_mut(&1).expect("user 1 is in the store");
         user.num_seeding = 2;
-        user.num_leeching = 2;
+        user.num_leeching = 3;
     }
 
     let removed = reap(&tracker).await;
@@ -158,7 +172,7 @@ async fn test_reap_expires_stale_peers(pool: PgPool) {
         assert_eq!(torrent_1.leechers, 0);
 
         let torrent_2 = torrents.get(&2).unwrap();
-        assert_eq!(torrent_2.peers.len(), 2, "the dead seeder is erased");
+        assert_eq!(torrent_2.peers.len(), 3, "the dead seeder is erased");
         assert!(
             torrent_2
                 .peers
@@ -172,6 +186,14 @@ async fn test_reap_expires_stale_peers(pool: PgPool) {
                 .get(&index(STALE_LEECHER))
                 .unwrap()
                 .is_active
+        );
+        assert!(
+            !torrent_2
+                .peers
+                .get(&index(UNREAPED_DEAD_LEECHER))
+                .expect("a peer still marked as active is not erased before being counted out")
+                .is_active,
+            "a peer still marked as active is marked as inactive first, whatever its silence"
         );
         assert!(torrent_2.peers.get(&index(DEAD_SEEDER)).is_none());
         assert_eq!(torrent_2.seeders, 0);
@@ -196,17 +218,76 @@ async fn test_reap_expires_stale_peers(pool: PgPool) {
             .get(&torrent_update::Index { torrent_id: 2 })
             .expect("torrent 2 queued an update");
         assert_eq!(update_2.seeder_delta, 0);
-        assert_eq!(update_2.leecher_delta, -1);
+        assert_eq!(update_2.leecher_delta, -2);
     }
 
-    // Only the erased peers are deleted from the database, each from its own torrent
-    let remaining: Vec<(i32, Vec<u8>)> =
-        sqlx::query_as("SELECT torrent_id, peer_id FROM peers ORDER BY torrent_id, peer_id")
-            .fetch_all(&pool)
-            .await
-            .expect("could not read the peers back");
+    // Only the erased peers are deleted from the database, each from its own torrent, and the
+    // ones marked as inactive are marked there too
+    let remaining: Vec<(i32, Vec<u8>, bool)> = sqlx::query_as(
+        "SELECT torrent_id, peer_id, active FROM peers ORDER BY torrent_id, peer_id",
+    )
+    .fetch_all(&pool)
+    .await
+    .expect("could not read the peers back");
     assert_eq!(
         remaining,
-        vec![(1, FRESH_SEEDER.to_vec()), (1, STALE_SEEDER.to_vec())]
+        vec![
+            (1, FRESH_SEEDER.to_vec(), true),
+            (1, STALE_SEEDER.to_vec(), false)
+        ]
     );
+
+    // Peers marked as inactive are kept until inactive_peer_ttl, so that what they report when
+    // they announce again is counted from their previous announce. Only the dead peer that got
+    // marked as inactive by the previous pass is erased now, without being counted out twice.
+    assert_eq!(
+        reap(&tracker).await,
+        1,
+        "inactive peers are not erased before inactive_peer_ttl"
+    );
+    let torrents = tracker.torrents.lock();
+    let torrent_2 = torrents.get(&2).unwrap();
+    assert!(torrent_2.peers.get(&index(UNREAPED_DEAD_LEECHER)).is_none());
+    assert!(torrent_2.peers.get(&index(STALE_LEECHER)).is_some());
+    assert_eq!(torrent_2.leechers, 1);
+}
+
+/// An announce can be flushed to the database between the moment reap marks the peer as inactive
+/// in memory and the moment it persists it, for example by the flush on shutdown. That newer row
+/// must stay active.
+#[sqlx::test(
+    fixtures(
+        "with_test_user",
+        "with_test_title_group",
+        "with_test_edition_group",
+        "with_test_torrent",
+        "with_test_peers"
+    ),
+    migrations = "../../backend/storage/migrations"
+)]
+async fn test_reap_keeps_newer_announce_active_in_database(pool: PgPool) {
+    let mut config = common::test_config();
+    config.tracker.active_peer_ttl = ACTIVE_PEER_TTL;
+    config.tracker.inactive_peer_ttl = INACTIVE_PEER_TTL;
+
+    let tracker = common::create_test_tracker(pool.clone(), config).await;
+
+    // Stale in memory, while the database row (updated_at = NOW()) holds a newer announce
+    let stale = Utc::now() - Duration::seconds(ACTIVE_PEER_TTL as i64 + 60);
+    tracker
+        .torrents
+        .lock()
+        .get_mut(&1)
+        .expect("torrent 1 is in the store")
+        .peers
+        .insert(index(FRESH_SEEDER), peer(true, true, stale));
+
+    reap(&tracker).await;
+
+    let active: bool = sqlx::query_scalar("SELECT active FROM peers WHERE peer_id = $1")
+        .bind(FRESH_SEEDER.to_vec())
+        .fetch_one(&pool)
+        .await
+        .expect("could not read the peer back");
+    assert!(active, "the newer announce is not overwritten as inactive");
 }

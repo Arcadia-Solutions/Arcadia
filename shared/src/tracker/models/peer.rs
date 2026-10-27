@@ -138,3 +138,56 @@ pub async fn remove_peers_from_database(db: &PgPool, peers: &Vec<peer_update::In
         log::info!("Removed {} peers", peers.len());
     }
 }
+
+/// Persists that the peers stopped announcing, the tracker keeps them in memory until they
+/// announce again or get removed.
+/// Rows updated after `active_cutoff` are left untouched, they come from an announce flushed
+/// since the peers were marked as inactive in memory.
+pub async fn mark_peers_inactive_in_database(
+    db: &PgPool,
+    peers: &Vec<peer_update::Index>,
+    active_cutoff: DateTime<Utc>,
+) -> Result<(), Error> {
+    if peers.is_empty() {
+        return Ok(());
+    }
+
+    let mut user_ids: Vec<i32> = Vec::with_capacity(peers.len());
+    let mut torrent_ids: Vec<i32> = Vec::with_capacity(peers.len());
+    let mut peer_ids: Vec<Vec<u8>> = Vec::with_capacity(peers.len());
+
+    for index in peers {
+        user_ids.push(index.user_id as i32);
+        torrent_ids.push(index.torrent_id as i32);
+        peer_ids.push(index.peer_id.to_vec());
+    }
+
+    let result = sqlx::query!(
+        r#"
+                    UPDATE peers
+                    SET active = FALSE
+                    WHERE (user_id, torrent_id, peer_id) IN (
+                        SELECT t.user_id, t.torrent_id, t.peer_id
+                        FROM (
+                            SELECT * FROM unnest(
+                                $1::int[],
+                                $2::int[],
+                                $3::bytea[]
+                            ) AS t(user_id, torrent_id, peer_id)
+                        ) AS t
+                    )
+                    -- stored as timestamp without time zone in UTC
+                    AND updated_at < ($4::timestamptz AT TIME ZONE 'UTC')
+                "#,
+        &user_ids,
+        &torrent_ids,
+        &peer_ids,
+        active_cutoff
+    )
+    .execute(db)
+    .await
+    .map_err(|e| Error::DatabseError(e.to_string()))?;
+
+    log::info!("Marked {} peers as inactive", result.rows_affected());
+    Ok(())
+}

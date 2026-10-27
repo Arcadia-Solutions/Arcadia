@@ -1,3 +1,4 @@
+pub mod advent_calendar;
 pub mod arcadia_settings;
 pub mod artist;
 pub mod bonus_points_log;

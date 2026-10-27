@@ -154,6 +154,7 @@ pub enum TestUser {
     ViewForeignUserStaffNotes,
     RequestReseed,
     ViewRegistrationIps,
+    ManageAdventCalendars,
 }
 
 impl TestUser {
@@ -240,6 +241,7 @@ impl TestUser {
             TestUser::ViewForeignUserStaffNotes => "user_frgn_notes",
             TestUser::RequestReseed => "user_reseed",
             TestUser::ViewRegistrationIps => "user_reg_ips",
+            TestUser::ManageAdventCalendars => "user_advent_cal",
         };
 
         Login {

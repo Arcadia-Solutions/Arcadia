@@ -23,6 +23,7 @@ pub enum BonusPointsLogAction {
     ShopPurchaseUpload,
     ShopPurchaseFreeleechTokens,
     ShopPurchasePromotion,
+    AdventCalendarDoorReward,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]

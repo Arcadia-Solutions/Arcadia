@@ -1,0 +1,47 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE advent_calendars\n                SET\n                    name = $2,\n                    starts_at = $3,\n                    top_message = $4,\n                    button_text = $5,\n                    staff_notes = $6,\n                    late_opening_policy = $7,\n                    late_opening_grace_hours = $8,\n                    published = $9\n                WHERE id = $1\n                RETURNING id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text",
+        "Timestamptz",
+        "Text",
+        "Varchar",
+        "Text",
+        {
+          "Custom": {
+            "name": "advent_calendar_late_opening_policy_enum",
+            "kind": {
+              "Enum": [
+                "during_door_window",
+                "grace_period",
+                "until_event_end"
+              ]
+            }
+          }
+        },
+        "Int4",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "db849eff2f32b774d7bd9d3893a8f8b1ea4ed31f2bc20d41cfbd5daa1a935234"
+}

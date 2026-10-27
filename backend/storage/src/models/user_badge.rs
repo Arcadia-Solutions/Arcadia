@@ -13,6 +13,7 @@ pub enum UserBadgeType {
     TorrentsUploaded,
     ForumPosts,
     ForumThreads,
+    AdventCalendarDoors,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
@@ -134,5 +135,12 @@ pub enum UserBadgeCriteria {
         minimum_thread_name_character_count: i32,
         required_substring: Option<String>,
         minimum_thread_amount: i32,
+    },
+    AdventCalendarDoors {
+        calendar_id: i32,
+        minimum_opened_door_amount: i32,
+        /// only the doors with these names are counted, every door is counted when empty
+        #[serde(default)]
+        door_names: Vec<String>,
     },
 }

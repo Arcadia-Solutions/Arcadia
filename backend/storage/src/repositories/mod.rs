@@ -1,3 +1,4 @@
+pub mod advent_calendar_repository;
 pub mod arcadia_settings_repository;
 pub mod artist_repository;
 pub mod auth_repository;

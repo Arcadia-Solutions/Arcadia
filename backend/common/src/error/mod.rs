@@ -811,6 +811,27 @@ pub enum Error {
     #[error("{0}")]
     InvalidSiteHighlight(String),
 
+    #[error("{0}")]
+    InvalidAdventCalendar(String),
+
+    #[error("advent calendar not found")]
+    AdventCalendarNotFound,
+
+    #[error("advent calendar door not found")]
+    AdventCalendarDoorNotFound,
+
+    #[error("another advent calendar is already published")]
+    AdventCalendarAlreadyPublished,
+
+    #[error("this door cannot be opened right now")]
+    AdventCalendarDoorNotOpenable,
+
+    #[error("wrong passphrase")]
+    WrongAdventCalendarDoorPassphrase,
+
+    #[error("this door was already opened")]
+    AdventCalendarDoorAlreadyOpened,
+
     #[error("the emoji image is larger than 32 KiB")]
     EmojiImageTooLarge,
     #[error("the emoji image must be a png, a webp, a gif or an svg")]
@@ -890,6 +911,7 @@ impl actix_web::ResponseError for Error {
             | Error::WikiArticleCannotBeLinkedToItself
             | Error::TitleGroupCannotBeLinkedToItself
             | Error::InvalidSiteHighlight(_)
+            | Error::InvalidAdventCalendar(_)
             | Error::TooManyAPIKeys(_)
             | Error::EmojiImageTooLarge
             | Error::InvalidEmojiImageMimeType
@@ -918,6 +940,8 @@ impl actix_web::ResponseError for Error {
             | Error::UserClassLocked
             | Error::ShopItemNotAvailable
             | Error::UploadsDisabled
+            | Error::AdventCalendarDoorNotOpenable
+            | Error::WrongAdventCalendarDoorPassphrase
             | Error::APIKeyScopeNotAllowed => StatusCode::FORBIDDEN,
 
             // 404 Not Found
@@ -948,6 +972,8 @@ impl actix_web::ResponseError for Error {
             | Error::UserStaffNoteNotFound
             | Error::EditionGroupNotFound
             | Error::SiteHighlightNotFound
+            | Error::AdventCalendarNotFound
+            | Error::AdventCalendarDoorNotFound
             | Error::RelatedForumThreadNotFound
             | Error::ExternalSourceNotFound(_)
             | Error::EmojiNotFound
@@ -969,6 +995,8 @@ impl actix_web::ResponseError for Error {
             | Error::ForumThreadAlreadyHasPoll
             | Error::ForumPollAlreadyVoted
             | Error::SiteHighlightPositionTaken
+            | Error::AdventCalendarAlreadyPublished
+            | Error::AdventCalendarDoorAlreadyOpened
             | Error::ReseedNotEligible(_)
             | Error::ReseedAlreadyRequested => StatusCode::CONFLICT,
 

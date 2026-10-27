@@ -137,5 +137,17 @@ async fn qualifying_user_ids(
             )
             .await
         }
+        UserBadgeCriteria::AdventCalendarDoors {
+            calendar_id,
+            minimum_opened_door_amount,
+            door_names,
+        } => {
+            pool.find_qualifying_advent_calendar_door_user_ids(
+                *calendar_id,
+                *minimum_opened_door_amount,
+                door_names,
+            )
+            .await
+        }
     }
 }

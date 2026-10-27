@@ -37,7 +37,8 @@
                       "side_effect_reward",
                       "shop_purchase_upload",
                       "shop_purchase_freeleech_tokens",
-                      "shop_purchase_promotion"
+                      "shop_purchase_promotion",
+                      "advent_calendar_door_reward"
                     ]
                   }
                 }

@@ -2,6 +2,7 @@ use actix_web::web::{self, scope};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use arcadia_storage::redis::RedisPoolInterface;
 
+use crate::handlers::advent_calendars::config as AdventCalendarsConfig;
 use crate::handlers::affiliated_artists::config as AffiliatedArtistsConfig;
 use crate::handlers::arcadia_settings::config as ArcadiaSettingsConfig;
 use crate::handlers::artists::config as ArtistsConfig;
@@ -101,6 +102,7 @@ pub fn init<R: RedisPoolInterface + 'static>(cfg: &mut web::ServiceConfig) {
             .service(scope("/donations").configure(DonationsConfig::<R>))
             .service(scope("/arcadia-settings").configure(ArcadiaSettingsConfig::<R>))
             .service(scope("/site-highlights").configure(SiteHighlightsConfig::<R>))
+            .service(scope("/advent-calendars").configure(AdventCalendarsConfig::<R>))
             .service(scope("/related-forum-threads").configure(RelatedForumThreadsConfig::<R>))
             .service(scope("/stats").configure(StatsConfig::<R>))
             .service(scope("/maintenance-tools").configure(MaintenanceToolsConfig::<R>)),

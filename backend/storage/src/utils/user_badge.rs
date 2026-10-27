@@ -1,12 +1,13 @@
 use crate::models::user_badge::{UserBadgeCriteria, UserBadgeType};
 use arcadia_common::error::{Error, Result};
 
+/// Returns the parsed criteria, None for manual badges
 pub fn validate_badge_criteria_shape(
     badge_type: &UserBadgeType,
     criteria: Option<&serde_json::Value>,
-) -> Result<()> {
+) -> Result<Option<UserBadgeCriteria>> {
     match (badge_type, criteria) {
-        (UserBadgeType::Manual, None) => Ok(()),
+        (UserBadgeType::Manual, None) => Ok(None),
         (UserBadgeType::Manual, Some(_)) => Err(Error::UserBadgeCriteriaMismatch),
         (_, None) => Err(Error::UserBadgeCriteriaMismatch),
         (badge_type, Some(value)) => {
@@ -23,10 +24,13 @@ pub fn validate_badge_criteria_shape(
                 ) | (
                     UserBadgeType::ForumThreads,
                     UserBadgeCriteria::ForumThreads { .. }
+                ) | (
+                    UserBadgeType::AdventCalendarDoors,
+                    UserBadgeCriteria::AdventCalendarDoors { .. }
                 )
             );
             if shapes_match {
-                Ok(())
+                Ok(Some(parsed))
             } else {
                 Err(Error::UserBadgeCriteriaMismatch)
             }
@@ -71,6 +75,15 @@ mod tests {
         })
     }
 
+    fn advent_calendar_doors_criteria() -> serde_json::Value {
+        json!({
+            "type": "advent_calendar_doors",
+            "calendar_id": 1,
+            "minimum_opened_door_amount": 24,
+            "door_names": ["Day 24"]
+        })
+    }
+
     #[test]
     fn manual_without_criteria_is_ok() {
         assert!(validate_badge_criteria_shape(&UserBadgeType::Manual, None).is_ok());
@@ -98,6 +111,7 @@ mod tests {
         let torrents = torrents_uploaded_criteria();
         let posts = forum_posts_criteria();
         let threads = forum_threads_criteria();
+        let advent_calendar_doors = advent_calendar_doors_criteria();
         assert!(
             validate_badge_criteria_shape(&UserBadgeType::TorrentsUploaded, Some(&torrents))
                 .is_ok()
@@ -106,6 +120,11 @@ mod tests {
         assert!(
             validate_badge_criteria_shape(&UserBadgeType::ForumThreads, Some(&threads)).is_ok()
         );
+        assert!(validate_badge_criteria_shape(
+            &UserBadgeType::AdventCalendarDoors,
+            Some(&advent_calendar_doors)
+        )
+        .is_ok());
     }
 
     #[test]

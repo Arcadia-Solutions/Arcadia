@@ -54,6 +54,9 @@
       </span>
     </div>
     <div class="right">
+      <RouterLink v-if="publicArcadiaSettings.running_advent_calendar_button_text" id="advent-calendar-button" to="/advent-calendar">
+        <Button :label="publicArcadiaSettings.running_advent_calendar_button_text" icon="pi pi-gift" size="small" />
+      </RouterLink>
       <NavMenu />
     </div>
   </div>
@@ -66,6 +69,7 @@ import NavMenu from './nav_menu/NavMenu.vue'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { Button } from 'primevue'
 
 const { t } = useI18n()
 const user = useUserStore()
@@ -81,6 +85,11 @@ const publicArcadiaSettings = usePublicArcadiaSettingsStore()
   height: 45px;
   padding: 0 7px;
   width: 100%;
+}
+.right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .left .logo {
   height: 40px;

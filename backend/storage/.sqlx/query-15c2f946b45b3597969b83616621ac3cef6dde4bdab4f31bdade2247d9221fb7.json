@@ -124,7 +124,8 @@
                 "manual",
                 "torrents_uploaded",
                 "forum_posts",
-                "forum_threads"
+                "forum_threads",
+                "advent_calendar_doors"
               ]
             }
           }

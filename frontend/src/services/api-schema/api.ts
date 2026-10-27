@@ -46,6 +46,118 @@ export interface AddTitleGroupToSeriesRequest {
     'series_id': number;
     'title_group_id': number;
 }
+export interface AdventCalendar {
+    'button_text': string;
+    'created_at': string;
+    'created_by_id': number;
+    'doors': Array<AdventCalendarDoor>;
+    'id': number;
+    'late_opening_grace_hours': number;
+    'late_opening_policy': AdventCalendarLateOpeningPolicy;
+    'name': string;
+    'published': boolean;
+    'staff_notes': string;
+    'starts_at': string;
+    'top_message': string;
+}
+
+
+export interface AdventCalendarDoor {
+    'bonus_points_distribution': AdventCalendarRewardDistribution;
+    'bonus_points_max': number;
+    'bonus_points_min': number;
+    'download_removed_distribution': AdventCalendarRewardDistribution;
+    'download_removed_max': number;
+    'download_removed_min': number;
+    'duration_minutes': number;
+    'freeleech_tokens_distribution': AdventCalendarRewardDistribution;
+    'freeleech_tokens_max': number;
+    'freeleech_tokens_min': number;
+    'image_url'?: string | null;
+    'invitations_distribution': AdventCalendarRewardDistribution;
+    'invitations_max': number;
+    'invitations_min': number;
+    /**
+     * shown above the passphrase input while the door can be opened
+     */
+    'locked_message'?: string | null;
+    'name': string;
+    'opening_message': string;
+    'passphrase'?: string | null;
+    'staff_notes': string;
+    'upload_distribution': AdventCalendarRewardDistribution;
+    'upload_max': number;
+    'upload_min': number;
+    'id': number;
+    'position': number;
+}
+
+
+export interface AdventCalendarDoorForUser {
+    'ends_at': string;
+    'id': number;
+    'image_url'?: string | null;
+    'locked_message'?: string | null;
+    'name': string;
+    'openable_until': string;
+    'opening'?: AdventCalendarDoorOpeningResult | null;
+    'position': number;
+    'requires_passphrase': boolean;
+    'starts_at': string;
+    'state': AdventCalendarDoorState;
+}
+
+
+export interface AdventCalendarDoorOpeningAttempt {
+    'passphrase'?: string | null;
+}
+export interface AdventCalendarDoorOpeningResult {
+    'bonus_points': number;
+    'download_removed': number;
+    'freeleech_tokens': number;
+    'invitations': number;
+    'opening_message': string;
+    'upload': number;
+}
+
+export const AdventCalendarDoorState = {
+    Locked: 'locked',
+    Openable: 'openable',
+    Opened: 'opened',
+    Missed: 'missed'
+} as const;
+
+export type AdventCalendarDoorState = typeof AdventCalendarDoorState[keyof typeof AdventCalendarDoorState];
+
+
+
+export const AdventCalendarLateOpeningPolicy = {
+    DuringDoorWindow: 'during_door_window',
+    GracePeriod: 'grace_period',
+    UntilEventEnd: 'until_event_end'
+} as const;
+
+export type AdventCalendarLateOpeningPolicy = typeof AdventCalendarLateOpeningPolicy[keyof typeof AdventCalendarLateOpeningPolicy];
+
+
+export interface AdventCalendarLite {
+    'door_count': number;
+    'id': number;
+    'name': string;
+    'published': boolean;
+    'starts_at': string;
+    'total_duration_minutes': number;
+}
+
+export const AdventCalendarRewardDistribution = {
+    Linear: 'linear',
+    Gaussian: 'gaussian',
+    Logarithmic: 'logarithmic'
+} as const;
+
+export type AdventCalendarRewardDistribution = typeof AdventCalendarRewardDistribution[keyof typeof AdventCalendarRewardDistribution];
+
+
 export interface AffiliatedArtistHierarchy {
     'artist': Artist;
     'artist_id': number;
@@ -341,7 +453,8 @@ export const BonusPointsLogAction = {
     SideEffectReward: 'side_effect_reward',
     ShopPurchaseUpload: 'shop_purchase_upload',
     ShopPurchaseFreeleechTokens: 'shop_purchase_freeleech_tokens',
-    ShopPurchasePromotion: 'shop_purchase_promotion'
+    ShopPurchasePromotion: 'shop_purchase_promotion',
+    AdventCalendarDoorReward: 'advent_calendar_door_reward'
 } as const;
 
 export type BonusPointsLogAction = typeof BonusPointsLogAction[keyof typeof BonusPointsLogAction];
@@ -547,6 +660,10 @@ export interface CountryStatsDataPoint {
 }
 export interface CreateAPIKey201Response {
     'data': CreatedAPIKey;
+    'side_effects': Array<SideEffect>;
+}
+export interface CreateAdventCalendar200Response {
+    'data': AdventCalendar;
     'side_effects': Array<SideEffect>;
 }
 export interface CreateArtistAffiliation200Response {
@@ -1687,6 +1804,10 @@ export interface GetPublicArcadiaSettings200Response {
     'data': PublicArcadiaSettings;
     'side_effects': Array<SideEffect>;
 }
+export interface GetPublishedAdventCalendar200Response {
+    'data': PublishedAdventCalendar;
+    'side_effects': Array<SideEffect>;
+}
 export interface GetSeries200Response {
     'data': SeriesEnriched;
     'side_effects': Array<SideEffect>;
@@ -2011,6 +2132,10 @@ export const Language = {
 export type Language = typeof Language[keyof typeof Language];
 
 
+export interface ListAdventCalendars200Response {
+    'data': Array<AdventCalendarLite>;
+    'side_effects': Array<SideEffect>;
+}
 export interface ListSiteHighlights200Response {
     'data': Array<SiteHighlight>;
     'side_effects': Array<SideEffect>;
@@ -2249,6 +2374,10 @@ export interface OAuthAuthorizeResponse {
  */
 export interface OAuthErrorResponse {
     'error': string;
+}
+export interface OpenAdventCalendarDoor200Response {
+    'data': AdventCalendarDoorOpeningResult;
+    'side_effects': Array<SideEffect>;
 }
 
 export const OrderByDirection = {
@@ -2887,6 +3016,10 @@ export interface PublicArcadiaSettings {
     'min_amount_tags_title_group': number;
     'open_signups': boolean;
     'reseed_requestable_after_hours': number;
+    /**
+     * set when an advent calendar is published and currently running
+     */
+    'running_advent_calendar_button_text'?: string | null;
     'torrent_request_vote_currencies': Array<TorrentRequestVoteCurrency>;
     'uploads_disabled': boolean;
 }
@@ -2954,6 +3087,14 @@ export interface PublicUser {
     'uploaded'?: number | null;
     'username': string;
     'warned': boolean;
+}
+export interface PublishedAdventCalendar {
+    'doors': Array<AdventCalendarDoorForUser>;
+    'ends_at': string;
+    'id': number;
+    'name': string;
+    'starts_at': string;
+    'top_message': string;
 }
 export interface RefreshToken {
     'refresh_token': string;
@@ -4493,7 +4634,7 @@ export interface UserBadgeCategory {
 /**
  * @type UserBadgeCriteria
  */
-export type UserBadgeCriteria = UserBadgeCriteriaOneOf | UserBadgeCriteriaOneOf1 | UserBadgeCriteriaOneOf2;
+export type UserBadgeCriteria = UserBadgeCriteriaOneOf | UserBadgeCriteriaOneOf1 | UserBadgeCriteriaOneOf2 | UserBadgeCriteriaOneOf3;
 
 export interface UserBadgeCriteriaOneOf {
     'minimum_title_group_amount': number;
@@ -4533,6 +4674,22 @@ export const UserBadgeCriteriaOneOf2TypeEnum = {
 
 export type UserBadgeCriteriaOneOf2TypeEnum = typeof UserBadgeCriteriaOneOf2TypeEnum[keyof typeof UserBadgeCriteriaOneOf2TypeEnum];
 
+export interface UserBadgeCriteriaOneOf3 {
+    'calendar_id': number;
+    /**
+     * only the doors with these names are counted, every door is counted when empty
+     */
+    'door_names'?: Array<string>;
+    'minimum_opened_door_amount': number;
+    'type': UserBadgeCriteriaOneOf3TypeEnum;
+}
+
+export const UserBadgeCriteriaOneOf3TypeEnum = {
+    AdventCalendarDoors: 'advent_calendar_doors'
+} as const;
+
+export type UserBadgeCriteriaOneOf3TypeEnum = typeof UserBadgeCriteriaOneOf3TypeEnum[keyof typeof UserBadgeCriteriaOneOf3TypeEnum];
+
 /**
  * @type UserBadgeListItem
  */
@@ -4552,7 +4709,8 @@ export const UserBadgeType = {
     Manual: 'manual',
     TorrentsUploaded: 'torrents_uploaded',
     ForumPosts: 'forum_posts',
-    ForumThreads: 'forum_threads'
+    ForumThreads: 'forum_threads',
+    AdventCalendarDoors: 'advent_calendar_doors'
 } as const;
 
 export type UserBadgeType = typeof UserBadgeType[keyof typeof UserBadgeType];
@@ -4594,6 +4752,55 @@ export interface UserCreatedAPIKey {
     'name': string;
     'scopes': Array<APIKeyScope>;
 }
+/**
+ * Used to create and to edit a calendar, the doors\' positions are their index in the list
+ */
+export interface UserCreatedAdventCalendar {
+    'button_text': string;
+    'doors': Array<UserCreatedAdventCalendarDoor>;
+    'late_opening_grace_hours': number;
+    'late_opening_policy': AdventCalendarLateOpeningPolicy;
+    'name': string;
+    'published': boolean;
+    'staff_notes': string;
+    'starts_at': string;
+    'top_message': string;
+}
+
+
+/**
+ * Doors without an id are created, doors with an id are updated
+ */
+export interface UserCreatedAdventCalendarDoor {
+    'bonus_points_distribution': AdventCalendarRewardDistribution;
+    'bonus_points_max': number;
+    'bonus_points_min': number;
+    'download_removed_distribution': AdventCalendarRewardDistribution;
+    'download_removed_max': number;
+    'download_removed_min': number;
+    'duration_minutes': number;
+    'freeleech_tokens_distribution': AdventCalendarRewardDistribution;
+    'freeleech_tokens_max': number;
+    'freeleech_tokens_min': number;
+    'image_url'?: string | null;
+    'invitations_distribution': AdventCalendarRewardDistribution;
+    'invitations_max': number;
+    'invitations_min': number;
+    /**
+     * shown above the passphrase input while the door can be opened
+     */
+    'locked_message'?: string | null;
+    'name': string;
+    'opening_message': string;
+    'passphrase'?: string | null;
+    'staff_notes': string;
+    'upload_distribution': AdventCalendarRewardDistribution;
+    'upload_max': number;
+    'upload_min': number;
+    'id'?: number | null;
+}
+
+
 export interface UserCreatedAffiliatedArtist {
     'artist_id': number;
     'nickname'?: string | null;
@@ -4999,7 +5206,8 @@ export const UserPermission = {
     WriteUserStaffNote: 'write_user_staff_note',
     EditUserStaffNotes: 'edit_user_staff_notes',
     ViewForeignUserStaffNotes: 'view_foreign_user_staff_notes',
-    ViewRegistrationIps: 'view_registration_ips'
+    ViewRegistrationIps: 'view_registration_ips',
+    ManageAdventCalendars: 'manage_advent_calendars'
 } as const;
 
 export type UserPermission = typeof UserPermission[keyof typeof UserPermission];
@@ -5245,6 +5453,114 @@ export interface WikiSearchResult {
     'title': string;
     'updated_at': string;
 }
+
+
+
+export const createAdventCalendar = async (userCreatedAdventCalendar: UserCreatedAdventCalendar, options?: RawAxiosRequestConfig): Promise<CreateAdventCalendar200Response['data']> => {
+    const response = await globalAxios.request<CreateAdventCalendar200Response>({
+        url: '/api/advent-calendars',
+        method: 'POST',
+        data: userCreatedAdventCalendar,
+        ...options
+    });
+    return response.data.data;
+};
+
+
+
+
+export const deleteAdventCalendar = async (id: number, options?: RawAxiosRequestConfig): Promise<void> => {
+    const response = await globalAxios.request<void>({
+        url: `/api/advent-calendars/{id}`.replace('{' + 'id' + '}', String(id)),
+        method: 'DELETE',
+        ...options
+    });
+    return response.data;
+};
+
+
+
+export interface EditAdventCalendarRequest {
+    'id': number;
+    'UserCreatedAdventCalendar': UserCreatedAdventCalendar;
+}
+
+
+
+export const editAdventCalendar = async (request: EditAdventCalendarRequest, options?: RawAxiosRequestConfig): Promise<CreateAdventCalendar200Response['data']> => {
+    const response = await globalAxios.request<CreateAdventCalendar200Response>({
+        url: `/api/advent-calendars/{id}`.replace('{' + 'id' + '}', String(request['id'])),
+        method: 'PUT',
+        data: request['UserCreatedAdventCalendar'],
+        ...options
+    });
+    return response.data.data;
+};
+
+
+
+export const getAdventCalendar = async (id: number, options?: RawAxiosRequestConfig): Promise<CreateAdventCalendar200Response['data']> => {
+    const response = await globalAxios.request<CreateAdventCalendar200Response>({
+        url: `/api/advent-calendars/{id}`.replace('{' + 'id' + '}', String(id)),
+        method: 'GET',
+        ...options
+    });
+    return response.data.data;
+};
+
+
+
+
+
+export const getPublishedAdventCalendar = async (options?: RawAxiosRequestConfig): Promise<GetPublishedAdventCalendar200Response['data']> => {
+    const response = await globalAxios.request<GetPublishedAdventCalendar200Response>({
+        url: '/api/advent-calendars/published',
+        method: 'GET',
+        ...options
+    });
+    return response.data.data;
+};
+
+
+
+export const listAdventCalendars = async (options?: RawAxiosRequestConfig): Promise<ListAdventCalendars200Response['data']> => {
+    const response = await globalAxios.request<ListAdventCalendars200Response>({
+        url: '/api/advent-calendars',
+        method: 'GET',
+        ...options
+    });
+    return response.data.data;
+};
+
+export interface OpenAdventCalendarDoorRequest {
+    'door_id': number;
+    'AdventCalendarDoorOpeningAttempt': AdventCalendarDoorOpeningAttempt;
+}
+
+
+
+export const openAdventCalendarDoor = async (request: OpenAdventCalendarDoorRequest, options?: RawAxiosRequestConfig): Promise<OpenAdventCalendarDoor200Response['data']> => {
+    const response = await globalAxios.request<OpenAdventCalendarDoor200Response>({
+        url: `/api/advent-calendars/doors/{door_id}/open`.replace('{' + 'door_id' + '}', String(request['door_id'])),
+        method: 'POST',
+        data: request['AdventCalendarDoorOpeningAttempt'],
+        ...options
+    });
+    return response.data.data;
+};
+
+
+
+export const resetOwnAdventCalendarProgress = async (id: number, options?: RawAxiosRequestConfig): Promise<void> => {
+    const response = await globalAxios.request<void>({
+        url: `/api/advent-calendars/{id}/progress`.replace('{' + 'id' + '}', String(id)),
+        method: 'DELETE',
+        ...options
+    });
+    return response.data;
+};
+
+
 
 
 

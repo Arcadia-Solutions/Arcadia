@@ -12,6 +12,8 @@ const NO_REVOKE_BADGE_ID: i32 = 702;
 const UPLOADER_TWO_BADGE_ID: i32 = 800;
 const LOVE_SINGLES_TWO_BADGE_ID: i32 = 801;
 const LOVE_SINGLES_ONE_BADGE_ID: i32 = 802;
+const ADVENT_CALENDAR_BADGE_ID: i32 = 900;
+const ADVENT_CALENDAR_DAY_2_BADGE_ID: i32 = 901;
 const QUALIFYING_USER_ID: i32 = 100;
 const SEED_CREATOR_USER_ID: i32 = 1;
 
@@ -218,4 +220,29 @@ async fn test_revokes_torrents_uploaded_auto_award_when_threshold_unmet(pool: Pg
 
     assert!(!user_has_badge(&raw_pool, SEED_CREATOR_USER_ID, LOVE_SINGLES_TWO_BADGE_ID).await);
     assert!(user_has_badge(&raw_pool, SEED_CREATOR_USER_ID, UPLOADER_TWO_BADGE_ID).await);
+}
+
+#[sqlx::test(
+    fixtures("with_test_users", "with_test_advent_calendar_badge"),
+    migrations = "../storage/migrations"
+)]
+async fn test_awards_advent_calendar_doors_badge(pool: PgPool) {
+    let raw_pool = pool.clone();
+    let conn_pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+
+    evaluate_user_badges_inner(conn_pool).await.unwrap();
+
+    // user 100 opened both doors, user 101 only one
+    assert!(user_has_badge(&raw_pool, QUALIFYING_USER_ID, ADVENT_CALENDAR_BADGE_ID).await);
+    assert!(!user_has_badge(&raw_pool, 101, ADVENT_CALENDAR_BADGE_ID).await);
+    // the door names filter only counts Day 2, which user 101 did not open
+    assert!(
+        user_has_badge(
+            &raw_pool,
+            QUALIFYING_USER_ID,
+            ADVENT_CALENDAR_DAY_2_BADGE_ID
+        )
+        .await
+    );
+    assert!(!user_has_badge(&raw_pool, 101, ADVENT_CALENDAR_DAY_2_BADGE_ID).await);
 }

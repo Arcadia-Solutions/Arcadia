@@ -186,4 +186,6 @@ pub struct PublicArcadiaSettings {
     pub custom_js_code: Option<String>,
     pub custom_footer: Option<String>,
     pub uploads_disabled: bool,
+    /// set when an advent calendar is published and currently running
+    pub running_advent_calendar_button_text: Option<String>,
 }

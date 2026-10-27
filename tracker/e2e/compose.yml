@@ -1,0 +1,65 @@
+# Driven by run.sh, which sets WORK_DIR and the client image variables
+name: arcadia-tracker-e2e
+
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: arcadia
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: arcadia
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arcadia -d arcadia"]
+      interval: 1s
+      retries: 30
+
+  init_db:
+    build:
+      context: ../../
+      dockerfile: backend/api/Dockerfile
+      target: initdb
+    command: sh -c "/init_db.sh"
+    working_dir: /app
+    volumes:
+      - ../../backend/storage/scripts/init_db.sh:/init_db.sh
+    environment:
+      DATABASE_URL: postgresql://arcadia:password@db:5432/arcadia
+    depends_on:
+      db:
+        condition: service_healthy
+
+  tracker:
+    build:
+      context: ../../
+      dockerfile: tracker/arcadia_tracker/Dockerfile
+      args:
+        PRODUCTION_BUILD: "false"
+    volumes:
+      - ./config.yml:/app/config.yml:ro
+    healthcheck:
+      # any HTTP answer means the server is up
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://localhost:8081/"]
+      interval: 1s
+      retries: 30
+
+  seeder:
+    image: ${CLIENT_IMAGE}
+    environment: &client_env
+      PUID: ${HOST_UID}
+      PGID: ${HOST_GID}
+      QBT_LEGAL_NOTICE: confirm
+      QBT_WEBUI_PORT: 8080
+    volumes:
+      - ${WORK_DIR}/seeder/config:/config
+      - ${WORK_DIR}/seeder/downloads:/downloads
+    ports:
+      - 127.0.0.1:18080:8080
+
+  leecher:
+    image: ${CLIENT_IMAGE}
+    environment: *client_env
+    volumes:
+      - ${WORK_DIR}/leecher/config:/config
+      - ${WORK_DIR}/leecher/downloads:/downloads
+    ports:
+      - 127.0.0.1:18081:8080

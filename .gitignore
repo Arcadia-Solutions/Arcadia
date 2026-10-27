@@ -16,6 +16,7 @@ kiwiirc/dist/
 
 # configuration
 config.yml
+!tracker/e2e/config.yml
 
 compose.override.yml
 Caddyfile

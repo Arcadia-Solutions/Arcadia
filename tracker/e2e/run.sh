@@ -13,6 +13,8 @@ SIZE=$((16 * 1024 * 1024))
 MAX_TRANSFERRED=$((SIZE + SIZE / 4))
 
 export HOST_UID HOST_GID WORK_DIR CLIENT_IMAGE
+# only ever holds a directory created by this script, which setup and teardown delete
+WORK_DIR=""
 HOST_UID=$(id -u)
 HOST_GID=$(id -g)
 

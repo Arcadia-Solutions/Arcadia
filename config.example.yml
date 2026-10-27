@@ -137,10 +137,6 @@ tracker:
     - BI3500
     - BI3600
     - BI3700
-    - BI3800
-    - BI3900
-    - BI4000
-    - BI4100
     # Deluge
     - DE12
     - DE13

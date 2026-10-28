@@ -109,7 +109,7 @@ impl ConnectionPool {
                 INSERT INTO conversation_messages (conversation_id, created_by_id, content)
                 SELECT $1, $2, $3
                 FROM conversations
-                WHERE id = $1 AND NOT locked
+                WHERE id = $1 AND NOT locked AND $2 IN (sender_id, receiver_id)
                 RETURNING id, conversation_id, created_at, created_by_id, content
             "#,
             message.conversation_id,
@@ -161,10 +161,12 @@ impl ConnectionPool {
                 Ok(msg)
             }
             None => {
-                // Check if conversation exists to differentiate between not found and locked
+                // differentiate between not found and locked, a conversation the user is not
+                // part of is reported as not found
                 let is_locked = sqlx::query_scalar!(
-                    r#"SELECT locked FROM conversations WHERE id = $1"#,
+                    r#"SELECT locked FROM conversations WHERE id = $1 AND $2 IN (sender_id, receiver_id)"#,
                     message.conversation_id,
+                    current_user_id,
                 )
                 .fetch_optional(&self.pool)
                 .await

@@ -40,6 +40,27 @@ async fn test_cannot_send_message_to_locked_conversation(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
+#[sqlx::test(
+    fixtures("with_test_users", "with_test_conversation"),
+    migrations = "../storage/migrations"
+)]
+async fn test_third_party_cannot_send_message_to_conversation(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, third_party) =
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::EditSeries).await;
+
+    let req = test::TestRequest::post()
+        .uri("/api/conversations/messages")
+        .insert_header(auth_header(&third_party.token))
+        .set_json(UserCreatedConversationMessage {
+            conversation_id: 101,
+            content: "injected".into(),
+        })
+        .to_request();
+    let resp = test::call_service(&service, req).await;
+    assert!(!resp.status().is_success());
+}
+
 const FIXTURE_LAST_SEEN_AT: &str = "2020-01-01T00:00:00Z";
 
 async fn read_conversation<S>(

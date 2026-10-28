@@ -54,7 +54,7 @@ services:
   backend:
     environment:
       ARCADIA_API__LOG_LEVEL: "debug,sqlx=debug"
-      ARCADIA_API__JWT_SECRET: "my-secure-production-secret"
+      ARCADIA_API__JWT_SECRET: "output-of-openssl-rand-hex-32"
   tracker:
     environment:
       ARCADIA_TRACKER__NUMWANT: "30"

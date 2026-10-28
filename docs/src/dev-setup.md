@@ -35,7 +35,8 @@ You need these to make meaningful contributions to Arcadia, outside the cases of
 
 Everything is configured by a single `config.yml` at the root of the repository. A quick way to
 get started is `cp config.example.yml config.yml`: that sample documents every key and is the
-reference for what each one does.
+reference for what each one does. Generate the secrets left empty in it (e.g. `api.jwt_secret`) with
+`openssl rand -hex 32`, the services refuse to start without them.
 
 ### Compile-Time Requirement: `DATABASE_URL`
 

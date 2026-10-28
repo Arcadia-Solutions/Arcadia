@@ -48,9 +48,9 @@ api:
   # Address the backend listens on.
   host: 0.0.0.0
   port: 8080
-  # Secret key used for JWT authentication.
-  # Production: must be set to a secure random key (e.g. openssl rand -hex 32).
-  jwt_secret: sensitivejwtsecret
+  # Secret key used for JWT authentication, at least 32 characters long.
+  # Must be set to a secure random key (e.g. openssl rand -hex 32), the backend refuses to start otherwise.
+  jwt_secret: ""
   # Possible values: "error", "warn", "info", "debug", "trace", "off".
   # A level can be set per module, e.g. "debug,sqlx=info".
   # Development: set to "debug,sqlx=debug" for verbose SQL query logging.

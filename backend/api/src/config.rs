@@ -1,5 +1,7 @@
 use arcadia_periodic_tasks::config::PeriodicTasksConfig;
-use arcadia_shared::config::{default_log_level, DatabaseConfig, TelemetryConfig};
+use arcadia_shared::config::{
+    default_log_level, deserialize_secret, DatabaseConfig, TelemetryConfig,
+};
 use reqwest::Url;
 use serde::Deserialize;
 
@@ -73,6 +75,7 @@ pub struct ApiConfig {
     pub host: String,
     #[serde(default = "default_api_port")]
     pub port: u16,
+    #[serde(deserialize_with = "deserialize_secret")]
     pub jwt_secret: String,
     pub frontend_url: Url,
     /// Overridden by the `RUST_LOG` environment variable when it is set.

@@ -158,6 +158,20 @@ impl std::fmt::Debug for DatabaseConfig {
     }
 }
 
+/// Refuses short secrets, which covers the empty placeholders of `config.example.yml`,
+/// so that a deployment can not run with a guessable signing key or shared secret.
+pub fn deserialize_secret<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<String, D::Error> {
+    let secret = String::deserialize(deserializer)?;
+    if secret.len() < 32 {
+        return Err(serde::de::Error::custom(
+            "secrets must be at least 32 characters long, generate one with `openssl rand -hex 32`",
+        ));
+    }
+    Ok(secret)
+}
+
 /// Default of the `log_level` key of every service.
 pub fn default_log_level() -> String {
     "info,sqlx=info".to_string()
@@ -271,5 +285,20 @@ api:
 
         // Cleanup
         unsafe { std::env::remove_var(CONFIGURATION_PATH_VARIABLE) };
+    }
+
+    #[test]
+    fn test_deserialize_secret_rejects_short_secrets() {
+        #[derive(Deserialize)]
+        struct SecretConfig {
+            #[serde(deserialize_with = "deserialize_secret")]
+            secret: String,
+        }
+        assert!(yaml_serde::from_str::<SecretConfig>("secret: sensitivejwtsecret").is_err());
+        assert!(yaml_serde::from_str::<SecretConfig>("secret: \"\"").is_err());
+        let valid_secret = "a".repeat(32);
+        let parsed: SecretConfig =
+            yaml_serde::from_str(&format!("secret: {valid_secret}")).unwrap();
+        assert_eq!(parsed.secret, valid_secret);
     }
 }

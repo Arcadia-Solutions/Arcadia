@@ -15,6 +15,10 @@ impl ConnectionPool {
         user_id: i32,
         vote_currencies: &[TorrentRequestVoteCurrency],
     ) -> Result<TorrentRequestVote> {
+        if torrent_request_vote.bounty_upload < 0 || torrent_request_vote.bounty_bonus_points < 0 {
+            return Err(Error::VoteBountyNegative);
+        }
+
         let has_upload = vote_currencies.contains(&TorrentRequestVoteCurrency::Upload)
             && torrent_request_vote.bounty_upload > 0;
         let has_bonus_points = vote_currencies.contains(&TorrentRequestVoteCurrency::BonusPoints)

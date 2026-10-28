@@ -456,3 +456,29 @@ async fn test_torrent_request_title_group_is_locked_once_voted_on_or_filled(pool
     let resp = test::call_service(&service, edit_request(4)).await;
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_title_group",
+        "with_test_torrent_request"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_torrent_request_vote_with_negative_bounty_is_refused(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        common::create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+
+    let req = test::TestRequest::post()
+        .insert_header(auth_header(&user.token))
+        .uri("/api/torrent-requests/vote")
+        .set_json(serde_json::json!({
+            "torrent_request_id": 1,
+            "bounty_upload": 1,
+            "bounty_bonus_points": -1000000
+        }))
+        .to_request();
+    let resp = test::call_service(&service, req).await;
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+}

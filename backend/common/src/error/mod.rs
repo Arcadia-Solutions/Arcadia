@@ -275,6 +275,9 @@ pub enum Error {
     #[error("vote bounty must be positive in at least one enabled currency")]
     VoteBountyRequired,
 
+    #[error("vote bounty can not be negative")]
+    VoteBountyNegative,
+
     #[error("torrent file invalid")]
     TorrentFileInvalid,
 
@@ -884,6 +887,7 @@ impl actix_web::ResponseError for Error {
             | Error::InvalidTrailerUrl(_)
             | Error::ContentReleasedAfterCutoff(_)
             | Error::VoteBountyRequired
+            | Error::VoteBountyNegative
             | Error::InvalidPassword(_)
             | Error::PasswordsDoNotMatch
             | Error::DonationAmountMustBePositive

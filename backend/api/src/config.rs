@@ -113,6 +113,7 @@ pub struct TrackerConfig {
     pub name: String,
     pub url: Url,
     pub url_internal: Url,
+    #[serde(deserialize_with = "deserialize_secret")]
     pub api_key: String,
     #[serde(default)]
     pub torrent_source_tag: Option<String>,

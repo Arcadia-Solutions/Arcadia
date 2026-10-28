@@ -14,7 +14,7 @@ pub(crate) fn test_config() -> Config {
         r#"
         database: { host: localhost, port: 5432, user: arcadia, password: password, name: arcadia }
         tracker:
-          api_key: amazing_api_key
+          api_key: amazing_api_key_of_32_characters
           allowed_torrent_clients: [lt0F01-, qB, UTorrent]
           numwant_default: 50
           numwant_max: 200

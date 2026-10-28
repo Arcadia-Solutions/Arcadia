@@ -22,6 +22,7 @@ arcadia-shared = { path = "../../shared" }
 opentelemetry = { version = "0.32", features = ["metrics"] }
 parking_lot = "0.12.5"
 percent-encoding = "2.3.2"
+subtle = "2"
 rand = { version = "0.10.1", default-features = false, features = ["alloc", "thread_rng"] }
 chrono = { version = "0.4.44", default-features = false, features = ["serde"] }
 sqlx = { version = "0.9", features = [ "runtime-tokio", "postgres", "chrono", "ipnetwork" ] }

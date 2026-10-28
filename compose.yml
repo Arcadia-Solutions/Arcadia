@@ -84,7 +84,8 @@ services:
       context: ./
       dockerfile: tracker/arcadia_tracker/Dockerfile
     ports:
-      - 8081:8081 # BitTorrent client announce/scrape port
+      # only reachable from the host, the public announce url goes through the reverse proxy
+      - 127.0.0.1:8081:8081 # BitTorrent client announce/scrape port
     volumes:
       - ./config.yml:/app/config.yml:ro
     environment:

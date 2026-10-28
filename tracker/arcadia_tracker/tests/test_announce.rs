@@ -1234,7 +1234,7 @@ async fn test_delete_torrent_rejects_announce(pool: PgPool) {
     // Delete the torrent via the tracker API
     let req = test::TestRequest::delete()
         .uri("/api/torrents/1")
-        .insert_header(("x-api-key", "amazing_api_key"))
+        .insert_header(("x-api-key", "amazing_api_key_of_32_characters"))
         .to_request();
 
     let resp = test::call_service(&service, req).await;

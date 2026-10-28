@@ -16,7 +16,7 @@ cp example.env .env
 
 [`.env`](https://github.com/Arcadia-Solutions/arcadia/blob/main/example.env) is used by Docker Compose to configure passwords and tokens shared across multiple services (such as PostgreSQL, Redis, Chevereto, and Ergo IRC).
 
-For a local test with Docker Compose, the default credentials work out of the box, except `api.jwt_secret` which must be generated (`openssl rand -hex 32`): services refuse to start with a secret shorter than 32 characters. For a [production environment](run-docker.md#production-deployment), change all secrets and URLs.
+For a local test with Docker Compose, the default credentials work out of the box, except `api.jwt_secret` and `tracker.api_key` which must be generated (`openssl rand -hex 32`): services refuse to start with a secret shorter than 32 characters. For a [production environment](run-docker.md#production-deployment), change all secrets and URLs.
 
 ## Environment Variables
 

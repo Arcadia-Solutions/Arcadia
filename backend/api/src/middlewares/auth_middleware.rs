@@ -12,6 +12,7 @@ use actix_web_httpauth::extractors::bearer::BearerAuth;
 use arcadia_storage::{models::user::Claims, redis::RedisPoolInterface};
 use futures_util::future::{err, ok, Ready};
 use jsonwebtoken::{decode, errors::ErrorKind, DecodingKey, Validation};
+use subtle::ConstantTimeEq;
 
 #[derive(Debug, Clone)]
 pub struct Authdata {
@@ -143,7 +144,7 @@ fn validate_tracker_api_key<R: RedisPoolInterface + 'static>(
 ) -> std::result::Result<ServiceRequest, (actix_web::Error, ServiceRequest)> {
     let arc = req.app_data::<Data<Arcadia<R>>>().expect("app data set");
 
-    if arc.tracker.api_key != api_key {
+    if !bool::from(arc.tracker.api_key.as_bytes().ct_eq(api_key.as_bytes())) {
         return Err((actix_web::error::ErrorUnauthorized("invalid api key"), req));
     };
 

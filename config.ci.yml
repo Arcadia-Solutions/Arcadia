@@ -21,7 +21,7 @@ tracker:
   name: Arcadia
   url: https://site.com
   url_internal: http://localhost:8081
-  api_key: change_me
+  api_key: 480826f4a2bf5d4df7615fdecef358910bdade172ae22250031fdb433b586cf3
 
 periodic_tasks:
   bonus_points_formula: "size / (seeders + 1)"

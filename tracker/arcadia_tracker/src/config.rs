@@ -1,4 +1,6 @@
-use arcadia_shared::config::{default_log_level, DatabaseConfig, TelemetryConfig};
+use arcadia_shared::config::{
+    default_log_level, deserialize_secret, DatabaseConfig, TelemetryConfig,
+};
 use serde::{Deserialize, Deserializer};
 use std::collections::HashSet;
 
@@ -63,6 +65,7 @@ pub struct TrackerConfig {
     #[serde(default = "default_port")]
     pub port: u16,
     /// Used for the backend to make requests to the tracker and vice-versa.
+    #[serde(deserialize_with = "deserialize_secret")]
     pub api_key: String,
     /// Overridden by the `RUST_LOG` environment variable when it is set.
     #[serde(default = "default_log_level")]

@@ -118,9 +118,9 @@ tracker:
   # URL used by the backend to reach the tracker.
   # Bare-metal: set to http://localhost:8081 (defaults to Docker container hostname).
   url_internal: http://tracker:8081
-  # Shared secret used for the backend to make requests to the tracker and vice-versa.
-  # Production: must be set to a secure random key.
-  api_key: change_me
+  # Shared secret used for the backend to make requests to the tracker and vice-versa, at least 32 characters long.
+  # Must be set to a secure random key (e.g. openssl rand -hex 32), the backend and tracker refuse to start otherwise.
+  api_key: ""
   # Possible values: "error", "warn", "info", "debug", "trace", "off".
   # A level can be set per module, e.g. "debug,sqlx=info".
   # Overridden by the RUST_LOG environment variable when it is set.

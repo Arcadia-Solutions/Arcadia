@@ -50,6 +50,9 @@ arcadia.example.com {
 tracker.example.com {
     encode zstd gzip
 
+    # the /api routes are only meant for the backend, reaching the tracker through the docker network
+    respond /api* 404
+
     reverse_proxy tracker:8081 {
         header_up X-Forwarded-For {remote_host}
     }

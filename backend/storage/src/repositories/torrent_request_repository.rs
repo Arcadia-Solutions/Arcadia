@@ -120,6 +120,27 @@ impl ConnectionPool {
         .await
         .map_err(|_| Error::TorrentNotFound)?;
 
+        let mut tx = self.pool.begin().await?;
+
+        // Locking the request makes the checks below reliable: a concurrent fill has to wait for
+        // this one to commit and then sees it filled, and new votes can not change the bounty
+        let locked_torrent_request = sqlx::query!(
+            r#"
+            SELECT filled_at
+            FROM torrent_requests
+            WHERE id = $1
+            FOR UPDATE
+            "#,
+            torrent_request_id
+        )
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or(Error::TorrentRequestNotFound)?;
+
+        if locked_torrent_request.filled_at.is_some() {
+            return Err(Error::TorrentRequestAlreadyFilled);
+        }
+
         let is_torrent_in_requested_title_group = sqlx::query_scalar!(
             r#"
             SELECT EXISTS (
@@ -134,28 +155,11 @@ impl ConnectionPool {
             torrent_id,
             torrent_request_id
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await?;
 
         if !is_torrent_in_requested_title_group.unwrap() {
             return Err(Error::TorrentTitleGroupNotMatchingRequestedOne);
-        }
-
-        let is_torrent_request_filled = sqlx::query_scalar!(
-            r#"
-            SELECT EXISTS (
-                SELECT 1
-                FROM torrent_requests tr
-                WHERE tr.id = $1 AND tr.filled_at IS NOT NULL
-            )
-            "#,
-            torrent_request_id
-        )
-        .fetch_one(&self.pool)
-        .await?;
-
-        if is_torrent_request_filled.unwrap() {
-            return Err(Error::TorrentRequestAlreadyFilled);
         }
 
         let grace_period_ends_at = torrent_upload_info.created_at
@@ -183,7 +187,7 @@ impl ConnectionPool {
             "#,
             torrent_request_id
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await?;
 
         // Calculate the share for each user (50% each).
@@ -197,8 +201,6 @@ impl ConnectionPool {
         };
 
         let torrent_uploader_id = torrent_upload_info.created_by_id;
-
-        let mut tx = self.pool.begin().await?;
 
         sqlx::query!(
             r#"

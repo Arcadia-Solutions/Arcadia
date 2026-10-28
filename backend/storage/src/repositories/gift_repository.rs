@@ -10,6 +10,10 @@ use sqlx::{Postgres, Transaction};
 
 impl ConnectionPool {
     pub async fn create_gift(&self, gift: &UserCreatedGift, current_user_id: i32) -> Result<Gift> {
+        if gift.bonus_points < 0 || gift.freeleech_tokens < 0 {
+            return Err(Error::GiftAmountNegative);
+        }
+
         let mut tx = self.pool.begin().await?;
 
         Self::decrement_bonus_points_and_freeleech_tokens(

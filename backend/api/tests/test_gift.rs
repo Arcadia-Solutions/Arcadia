@@ -115,3 +115,33 @@ async fn test_concurrent_gifts_can_not_spend_more_than_the_balance(pool: PgPool)
     let sender_after = pool.find_user_with_id(100).await.unwrap();
     assert_eq!(sender_after.bonus_points, 400);
 }
+
+#[sqlx::test(
+    fixtures("with_test_users", "with_test_gift_balance"),
+    migrations = "../storage/migrations"
+)]
+async fn test_negative_gift_is_refused(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) = create_test_app_and_login(
+        Arc::clone(&pool),
+        MockRedisPool::default(),
+        TestUser::Standard,
+    )
+    .await;
+
+    let req = test::TestRequest::post()
+        .uri("/api/gifts")
+        .insert_header(auth_header(&user.token))
+        .set_json(UserCreatedGift {
+            message: "Test gift".into(),
+            receiver_id: 101,
+            bonus_points: -100,
+            freeleech_tokens: -2,
+        })
+        .to_request();
+    let resp = test::call_service(&service, req).await;
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+
+    let receiver_after = pool.find_user_with_id(101).await.unwrap();
+    assert_eq!(receiver_after.bonus_points, 500);
+}

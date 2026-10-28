@@ -7,7 +7,6 @@ use arcadia_common::error::Result;
 use arcadia_storage::{
     models::user_application::{UserApplication, UserCreatedUserApplication},
     redis::RedisPoolInterface,
-    sqlx::types::ipnetwork::IpNetwork,
 };
 
 #[utoipa::path(
@@ -24,11 +23,13 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     req: HttpRequest,
     application: Json<UserCreatedUserApplication>,
 ) -> Result<HttpResponse> {
-    let client_ip = req
-        .connection_info()
-        .realip_remote_addr()
-        .and_then(|ip| ip.parse::<IpNetwork>().ok())
-        .unwrap();
+    let client_ip = super::client_ip(
+        &req,
+        arc.config
+            .api
+            .reverse_proxy_client_ip_header_name
+            .as_deref(),
+    )?;
 
     let created_application = arc
         .pool

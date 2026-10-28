@@ -793,6 +793,9 @@ pub enum Error {
     #[error("no ip check provider could check the ip address")]
     IpCheckFailed,
 
+    #[error("could not find the ip address of the client")]
+    ClientIpNotFound,
+
     #[error("only public ip addresses can be checked")]
     IpNotPublic,
 

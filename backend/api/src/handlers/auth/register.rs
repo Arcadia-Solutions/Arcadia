@@ -17,7 +17,6 @@ use arcadia_storage::{
         user::{Register, User},
     },
     redis::RedisPoolInterface,
-    sqlx::types::ipnetwork::IpNetwork,
 };
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
@@ -71,11 +70,13 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     validate_password(&new_user.password)?;
     validate_password_verification(&new_user.password, &new_user.password_verify)?;
 
-    let client_ip = req
-        .connection_info()
-        .realip_remote_addr()
-        .and_then(|ip| ip.parse::<IpNetwork>().ok())
-        .unwrap();
+    let client_ip = super::client_ip(
+        &req,
+        arc.config
+            .api
+            .reverse_proxy_client_ip_header_name
+            .as_deref(),
+    )?;
 
     let salt = SaltString::generate(&mut OsRng);
 

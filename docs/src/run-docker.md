@@ -103,7 +103,7 @@ cp compose.override.yml.example compose.override.yml
 cp Caddyfile.example Caddyfile
 ```
 
-Edit `Caddyfile` with your domain names. See the [Compose Override Guide](compose-override.md) for full routing and service details.
+Edit `Caddyfile` with your domain names, and set `api.reverse_proxy_client_ip_header_name` and `tracker.reverse_proxy_client_ip_header_name` to `X-Forwarded-For` in `config.yml`, otherwise the ip address of Caddy is recorded instead of the one of the users. See the [Compose Override Guide](compose-override.md) for full routing and service details.
 
 ## Upgrading
 

@@ -96,6 +96,11 @@ pub struct ApiConfig {
     pub max_torrent_size_bytes: u64,
     #[serde(default)]
     pub ip_check_providers: IpCheckProvidersConfig,
+    /// Header set by the reverse proxy holding the original ip address of the client.
+    /// The last address of the comma separated list is selected. Leave unset to use the connecting
+    /// ip address when there is no reverse proxy.
+    #[serde(default)]
+    pub reverse_proxy_client_ip_header_name: Option<String>,
 }
 
 fn default_redis_port() -> u16 {

@@ -11,12 +11,17 @@
 # ------------------------------------------------------------------------------
 # 1. Main Arcadia Website (Web UI, API, IRC Webchat & WebSocket)
 # ------------------------------------------------------------------------------
+# Ensure api.reverse_proxy_client_ip_header_name: X-Forwarded-For is set in
+# config.yml, so the backend records the ip address of the users.
+# ------------------------------------------------------------------------------
 arcadia.example.com {
     encode zstd gzip
 
     # Backend REST API
     handle /api* {
-        reverse_proxy backend:8080
+        reverse_proxy backend:8080 {
+            header_up X-Forwarded-For {remote_host}
+        }
     }
 
     # KiwiIRC Web Client (static assets)

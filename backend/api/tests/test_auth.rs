@@ -5,6 +5,7 @@ use actix_web::{
     http::{header::HeaderValue, StatusCode},
     test::{call_service, read_body, TestRequest},
 };
+use arcadia_api::config::Config;
 use arcadia_storage::services::token_invalidation_service::InvalidationEntry;
 use arcadia_storage::{
     connection_pool::ConnectionPool, models::user::RefreshToken, redis::RedisInterface,
@@ -19,7 +20,7 @@ use crate::common::TestUser;
 use crate::{
     common::{
         auth_header, call_and_read_body_json, create_test_app, create_test_app_and_login,
-        read_body_json_data, Profile,
+        create_test_app_with_config, read_body_json_data, Profile,
     },
     mocks::mock_redis::MockRedis,
 };
@@ -46,7 +47,7 @@ async fn test_open_registration(pool: PgPool) {
     let service = create_test_app(pool, MockRedisPool::default()).await;
 
     let req = TestRequest::post()
-        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .peer_addr("10.10.4.88:6881".parse().unwrap())
         .uri("/api/auth/register")
         .set_json(RegisterRequest {
             username: "test_user",
@@ -73,13 +74,49 @@ async fn test_open_registration(pool: PgPool) {
 }
 
 #[sqlx::test(migrations = "../storage/migrations")]
+async fn test_registration_ip_only_trusts_the_configured_proxy_header(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+
+    let register = |username: &'static str, email: &'static str| {
+        TestRequest::post()
+            .peer_addr("10.10.4.88:6881".parse().unwrap())
+            .insert_header(("Forwarded", "for=198.51.100.9"))
+            .insert_header(("X-Forwarded-For", "198.51.100.9, 10.10.4.90"))
+            .uri("/api/auth/register")
+            .set_json(RegisterRequest {
+                username,
+                password: "TestPassword123",
+                password_verify: "TestPassword123",
+                email,
+            })
+            .to_request()
+    };
+
+    // no reverse proxy configured, the forwarding headers are ignored
+    let service = create_test_app(pool.clone(), MockRedisPool::default()).await;
+    let resp = call_service(&service, register("direct_user", "direct@testdomain.com")).await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+    let user = read_body_json_data::<RegisterResponse, _>(resp).await;
+    assert_eq!(user.registered_from_ip, "10.10.4.88/32");
+
+    // behind a reverse proxy, the address it appended last is used
+    let mut config = arcadia_shared::config::load::<Config>();
+    config.api.reverse_proxy_client_ip_header_name = Some("X-Forwarded-For".to_string());
+    let (service, _) = create_test_app_with_config(pool, MockRedisPool::default(), config).await;
+    let resp = call_service(&service, register("proxied_user", "proxied@testdomain.com")).await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+    let user = read_body_json_data::<RegisterResponse, _>(resp).await;
+    assert_eq!(user.registered_from_ip, "10.10.4.90/32");
+}
+
+#[sqlx::test(migrations = "../storage/migrations")]
 async fn test_duplicate_username_registration(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(pool, MockRedisPool::default()).await;
 
     // Register first user
     let req = TestRequest::post()
-        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .peer_addr("10.10.4.88:6881".parse().unwrap())
         .uri("/api/auth/register")
         .set_json(RegisterRequest {
             username: "duplicate_user",
@@ -94,7 +131,7 @@ async fn test_duplicate_username_registration(pool: PgPool) {
 
     // Try to register second user with same username
     let req = TestRequest::post()
-        .insert_header(("X-Forwarded-For", "10.10.4.89"))
+        .peer_addr("10.10.4.89:6881".parse().unwrap())
         .uri("/api/auth/register")
         .set_json(RegisterRequest {
             username: "duplicate_user",
@@ -125,7 +162,7 @@ async fn test_closed_registration_failures(pool: PgPool) {
 
     // No key specified.  Should fail.
     let req = TestRequest::post()
-        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .peer_addr("10.10.4.88:6881".parse().unwrap())
         .uri("/api/auth/register")
         .set_json(RegisterRequest {
             username: "test_user",
@@ -146,7 +183,7 @@ async fn test_closed_registration_failures(pool: PgPool) {
 
     // Invalid key specified.  Should fail.
     let req = TestRequest::post()
-        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .peer_addr("10.10.4.88:6881".parse().unwrap())
         .uri("/api/auth/register?invitation_key=invalid")
         .set_json(RegisterRequest {
             username: "test_user",
@@ -175,7 +212,7 @@ async fn test_closed_registration_success(pool: PgPool) {
     let service = create_test_app(pool, MockRedisPool::default()).await;
 
     let req = TestRequest::post()
-        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .peer_addr("10.10.4.88:6881".parse().unwrap())
         .uri("/api/auth/register?invitation_key=valid_key")
         .set_json(RegisterRequest {
             username: "test_user2",
@@ -202,7 +239,7 @@ async fn test_closed_registration_success(pool: PgPool) {
 
     // Try again with same key.  Should fail.
     let req = TestRequest::post()
-        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .peer_addr("10.10.4.88:6881".parse().unwrap())
         .uri("/api/auth/register?invitation_key=valid_key")
         .set_json(RegisterRequest {
             username: "test_user3",
@@ -227,7 +264,7 @@ async fn test_closed_registration_expired_failure(pool: PgPool) {
     let service = create_test_app(pool, MockRedisPool::default()).await;
 
     let req = TestRequest::post()
-        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .peer_addr("10.10.4.88:6881".parse().unwrap())
         .uri("/api/auth/register?invitation_key=valid_key")
         .set_json(RegisterRequest {
             username: "test_user2",
@@ -432,7 +469,7 @@ async fn test_registration_assigns_class_permissions(pool: PgPool) {
     let service = create_test_app(pool.clone(), MockRedisPool::default()).await;
 
     let req = TestRequest::post()
-        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .peer_addr("10.10.4.88:6881".parse().unwrap())
         .uri("/api/auth/register")
         .set_json(RegisterRequest {
             username: "test_user_perms",
@@ -476,7 +513,7 @@ async fn test_registration_sends_automated_message_when_configured(pool: PgPool)
     let service = create_test_app(pool.clone(), MockRedisPool::default()).await;
 
     let req = TestRequest::post()
-        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .peer_addr("10.10.4.88:6881".parse().unwrap())
         .uri("/api/auth/register")
         .set_json(RegisterRequest {
             username: "new_user_msg",
@@ -545,7 +582,7 @@ async fn test_registration_no_automated_message_when_not_configured(pool: PgPool
     let service = create_test_app(pool.clone(), MockRedisPool::default()).await;
 
     let req = TestRequest::post()
-        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .peer_addr("10.10.4.88:6881".parse().unwrap())
         .uri("/api/auth/register")
         .set_json(RegisterRequest {
             username: "new_user_no_msg",
@@ -597,7 +634,7 @@ async fn test_registration_automated_message_replaces_username_placeholder(pool:
     let service = create_test_app(pool.clone(), MockRedisPool::default()).await;
 
     let req = TestRequest::post()
-        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .peer_addr("10.10.4.88:6881".parse().unwrap())
         .uri("/api/auth/register")
         .set_json(RegisterRequest {
             username: "ph_user",
@@ -656,7 +693,7 @@ async fn test_registration_applies_default_values_from_settings(pool: PgPool) {
     let service = create_test_app(pool.clone(), MockRedisPool::default()).await;
 
     let req = TestRequest::post()
-        .insert_header(("X-Forwarded-For", "10.10.4.88"))
+        .peer_addr("10.10.4.88:6881".parse().unwrap())
         .uri("/api/auth/register")
         .set_json(RegisterRequest {
             username: "test_defaults",

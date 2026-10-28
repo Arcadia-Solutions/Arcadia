@@ -108,6 +108,13 @@ api:
   #   ip_api:
   #     priority: 5
 
+  # Optional: header provided by the reverse proxy that contains the original ip address of
+  # the client, stored as the registration/application ip. The last address of the comma
+  # separated list is selected. Leave it unset to select the connecting ip address when there is
+  # no reverse proxy: forwarding headers sent by the clients are then ignored.
+  # Production: set to X-Forwarded-For when using Caddy or a standard reverse proxy.
+  # reverse_proxy_client_ip_header_name: X-Forwarded-For
+
 tracker:
   # Address the tracker listens on.
   host: 0.0.0.0

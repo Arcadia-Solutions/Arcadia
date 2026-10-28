@@ -5,7 +5,10 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use reqwest::Client;
 use serde::Deserialize;
 
-use crate::config::ImageHostConfig;
+use crate::{
+    config::ImageHostConfig,
+    services::{image_service::is_public_url, ip_check::is_public},
+};
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -65,6 +68,25 @@ pub async fn upload_image_to_chevereto(
     parse_chevereto_response(response).await
 }
 
+/// The image host fetches the url itself, from inside the internal network, so it must only be
+/// given urls of public addresses.
+async fn can_be_rehosted(url: &str) -> bool {
+    let Ok(url) = url::Url::parse(url) else {
+        return false;
+    };
+    if !is_public_url(&url) {
+        return false;
+    }
+    let (Some(host), Some(port)) = (url.host_str(), url.port_or_known_default()) else {
+        return false;
+    };
+    // ponytail: the image host resolves the name again, a rebinding dns can still answer differently
+    match tokio::net::lookup_host((host.trim_matches(['[', ']']), port)).await {
+        Ok(mut addresses) => addresses.all(|address| is_public(address.ip())),
+        Err(_) => false,
+    }
+}
+
 /// Rehosts all non-empty URLs in the slice, one by one.
 /// Failures are logged and the original URL is kept.
 pub async fn rehost_image_urls(config: &ImageHostConfig, urls: &mut [String]) {
@@ -83,6 +105,10 @@ pub async fn rehost_image_urls(config: &ImageHostConfig, urls: &mut [String]) {
 
     for url in urls.iter_mut() {
         if url.is_empty() {
+            continue;
+        }
+        if !can_be_rehosted(url).await {
+            log::warn!("Not rehosting image {url}: it does not point to a public address");
             continue;
         }
         let result = client

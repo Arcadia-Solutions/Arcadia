@@ -703,6 +703,9 @@ pub enum Error {
         approved_hosts: Vec<String>,
     },
 
+    #[error("image url not pointing to a public address: {0}")]
+    NonPublicImageUrl(String),
+
     #[error("image host not configured")]
     ImageHostNotConfigured,
 
@@ -891,6 +894,7 @@ impl actix_web::ResponseError for Error {
             | Error::ImageHostNotApproved { .. }
             | Error::ImageHostNotConfigured
             | Error::InvalidTrailerUrl(_)
+            | Error::NonPublicImageUrl(_)
             | Error::ContentReleasedAfterCutoff(_)
             | Error::VoteBountyRequired
             | Error::VoteBountyNegative

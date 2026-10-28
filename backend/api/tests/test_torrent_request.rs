@@ -400,3 +400,59 @@ async fn test_filled_torrent_request_cannot_be_deleted(pool: PgPool) {
     let resp = test::call_service(&service, req).await;
     assert_eq!(resp.status(), StatusCode::CONFLICT);
 }
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_title_group",
+        "with_deletable_title_group",
+        "with_test_torrent_requests_of_standard_user"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_torrent_request_title_group_is_locked_once_voted_on_or_filled(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        common::create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+
+    let edit_request = |torrent_request_id: i64| {
+        test::TestRequest::put()
+            .insert_header(auth_header(&user.token))
+            .uri("/api/torrent-requests")
+            .set_json(serde_json::json!({
+                "id": torrent_request_id,
+                "title_group_id": 3,
+                "edition_name": null,
+                "release_group": null,
+                "description": "moved to another title group",
+                "languages": [],
+                "container": [],
+                "source": [],
+                "initial_vote": {
+                    "torrent_request_id": torrent_request_id,
+                    "bounty_upload": 0,
+                    "bounty_bonus_points": 0
+                },
+                "audio_codec": [],
+                "audio_channels": [],
+                "audio_bitrate_sampling": [],
+                "video_codec": [],
+                "features": [],
+                "subtitle_languages": [],
+                "video_resolution": []
+            }))
+            .to_request()
+    };
+
+    // only voted on by its author
+    let resp = test::call_service(&service, edit_request(2)).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    // voted on by another user
+    let resp = test::call_service(&service, edit_request(3)).await;
+    assert_eq!(resp.status(), StatusCode::FORBIDDEN);
+
+    // already filled
+    let resp = test::call_service(&service, edit_request(4)).await;
+    assert_eq!(resp.status(), StatusCode::FORBIDDEN);
+}

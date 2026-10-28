@@ -299,6 +299,9 @@ pub enum Error {
     #[error("this torrent request has votes from other users and cannot be deleted")]
     TorrentRequestHasVotesFromOtherUsers,
 
+    #[error("the title group of a torrent request cannot change once it is filled or has votes from other users")]
+    TorrentRequestTitleGroupLocked,
+
     #[error("title group not found")]
     TitleGroupNotFound,
 
@@ -920,6 +923,7 @@ impl actix_web::ResponseError for Error {
             | Error::InsufficientPermissions(_)
             | Error::TorrentDeletionWindowExpired
             | Error::TorrentRequestHasVotesFromOtherUsers
+            | Error::TorrentRequestTitleGroupLocked
             | Error::TorrentMoveWindowExpired
             | Error::EditionGroupDeletionWindowExpired
             | Error::ForumThreadLocked

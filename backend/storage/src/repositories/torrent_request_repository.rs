@@ -996,6 +996,17 @@ impl ConnectionPool {
                 source = $15,
                 updated_at = NOW()
             WHERE id = $1
+            -- the bounty was voted for this title group, so it can not be redirected to another one
+            AND (
+                title_group_id = $2
+                OR (
+                    filled_at IS NULL
+                    AND NOT EXISTS (
+                        SELECT 1 FROM torrent_request_votes
+                        WHERE torrent_request_id = $1 AND created_by_id != torrent_requests.created_by_id
+                    )
+                )
+            )
             RETURNING
                 id, title_group_id, edition_name, release_group,
                 created_at, updated_at, created_by_id, description,
@@ -1021,9 +1032,10 @@ impl ConnectionPool {
             edited_torrent_request.audio_bitrate_sampling as _,
             edited_torrent_request.source as _,
         )
-        .fetch_one(&self.pool)
+        .fetch_optional(&self.pool)
         .await
-        .map_err(|e| Error::ErrorWhileUpdatingTorrentRequest(e.to_string()))?;
+        .map_err(|e| Error::ErrorWhileUpdatingTorrentRequest(e.to_string()))?
+        .ok_or(Error::TorrentRequestTitleGroupLocked)?;
 
         Ok(updated_torrent_request)
     }

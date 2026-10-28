@@ -130,9 +130,11 @@ assert_all_reported() {
     assert_eq "no announce errors" "$(sql "SELECT count(*) FROM announce_errors")" 0
 }
 
+# usage: assert_seeder_leecher_bounds [max transferred]
 assert_seeder_leecher_bounds() {
-    assert_between "seeder uploaded" "$(user_value seeder real_uploaded)" "$SIZE" "$MAX_TRANSFERRED"
-    assert_between "leecher downloaded" "$(user_value leecher real_downloaded)" "$SIZE" "$MAX_TRANSFERRED"
+    local max=${1:-$MAX_TRANSFERRED}
+    assert_between "seeder uploaded" "$(user_value seeder real_uploaded)" "$SIZE" "$max"
+    assert_between "leecher downloaded" "$(user_value leecher real_downloaded)" "$SIZE" "$max"
     assert_eq "leecher nothing uploaded" "$(user_value leecher real_uploaded)" 0
     assert_eq "seeder nothing downloaded" "$(user_value seeder real_downloaded)" 0
 }
@@ -142,7 +144,174 @@ assert_payload() {
         fail "payload downloaded by $1 differs"
 }
 
-### qBittorrent (official qbittorrent-nox image)
+### Scenarios, the same for every client
+# They drive the clients through `client <action> <role> [argument...]`, which calls the
+# `<CLIENT>_<action>` function of the client under test:
+#   prepare <role>              writes the configuration of the client, before it starts
+#   wait_ready <role>           waits until the client can be controlled
+#   add <role>                  adds the torrent of the role, saved in /downloads
+#   progress <role>             prints the progress of the torrent, between 0 and 1, -1 if missing
+#   reannounce <role>           forces an announce
+#   download_limit <role> <B/s> limits the download speed, 0 to remove the limit
+#   upload_limit <role> <B/s>   limits the upload speed
+#   stop <role>                 stops the torrent
+#   tracker_message <role>      prints what the client shows about the tracker
+client() { "${CLIENT}_$1" "${@:2}"; }
+
+client_reannounce() {
+    local role
+    for role in "$@"; do
+        client reannounce "$role"
+    done
+}
+
+# Waits until the torrent progress of a client reaches the given fraction
+wait_progress() {
+    local role=$1 min=$2
+    for _ in $(seq 240); do
+        python3 -c "import sys; sys.exit(not $(client progress "$role") >= $min)" && return 0
+        sleep 0.5
+    done
+    fail "$role did not reach progress $min, at $(client progress "$role")"
+}
+
+# Fresh stack with the given clients up and the seeder seeding
+# usage: start <role...> [-- tracker configuration override...]
+start() {
+    local roles=() role
+    while [ $# -gt 0 ] && [ "$1" != -- ]; do
+        roles+=("$1")
+        shift
+    done
+    [ $# -gt 0 ] && shift
+    setup "$@"
+    for role in "${roles[@]}"; do
+        client prepare "$role"
+    done
+    compose up -d "${roles[@]}"
+    for role in "${roles[@]}"; do
+        client wait_ready "$role"
+    done
+    client add seeder
+    wait_progress seeder 1
+    # Otherwise the leecher may announce first, get no peer, and only retry after the interval
+    wait_sql "seeder peer active" \
+        "SELECT p.active FROM peers p JOIN users u ON u.id = p.user_id WHERE u.username = 'e2e_seeder' AND p.seeder" t \
+        client reannounce seeder
+}
+
+# Starts the leecher slowly, and waits until it got part of the payload
+leecher_partially_downloaded() {
+    client download_limit leecher $((2 * 1024 * 1024))
+    client add leecher
+    wait_progress leecher 0.3
+}
+
+leecher_finish() {
+    client download_limit leecher 0
+    wait_progress leecher 1
+    assert_payload leecher
+}
+
+# usage: run_scenarios <name of the client and version> <user agent prefix>
+run_scenarios() {
+    local name=$1 agent_prefix=$2 role
+
+    echo "=== $name: transfer then stop"
+    start seeder leecher
+    client add leecher
+    wait_progress leecher 1
+    assert_payload leecher
+    assert_all_reported "$agent_prefix" 2/0/1 seeder leecher
+    assert_seeder_leecher_bounds
+    client stop leecher
+    wait_sql "leecher peer inactive after stop" \
+        "SELECT p.active FROM peers p JOIN users u ON u.id = p.user_id WHERE u.username = 'e2e_leecher'" "f"
+    wait_sql "seeders after stop" "SELECT seeders || '/' || leechers FROM torrents WHERE id = 1" "1/0"
+
+    echo "=== $name: leecher restarted mid-download"
+    # Some clients (qBittorrent 4.4) send no stopped event when shutting down, their previous
+    # session is only counted out once it gets reaped
+    start seeder leecher -- "${SHORT_ACTIVE_PEER_TTL[@]}"
+    leecher_partially_downloaded
+    compose restart -t 30 leecher
+    client wait_ready leecher
+    leecher_finish
+    assert_all_reported "$agent_prefix" 2/0/1 seeder leecher
+    # some clients (qBittorrent 4.4) also lose what they downloaded, and get it again
+    assert_seeder_leecher_bounds $((SIZE + MAX_TRANSFERRED))
+
+    echo "=== $name: swarm of one seeder and two leechers"
+    start seeder leecher leecher2
+    # slow seeder, so that the leechers get pieces from each other
+    client upload_limit seeder $((1024 * 1024))
+    client add leecher
+    client add leecher2
+    wait_progress leecher 1
+    wait_progress leecher2 1
+    assert_payload leecher
+    assert_payload leecher2
+    assert_all_reported "$agent_prefix" 3/0/2 seeder leecher leecher2
+    for role in leecher leecher2; do
+        assert_between "$role downloaded" "$(user_value $role real_downloaded)" "$SIZE" "$MAX_TRANSFERRED"
+    done
+    [ $(($(user_value leecher real_uploaded) + $(user_value leecher2 real_uploaded))) -gt 0 ] ||
+        fail "the leechers did not upload to each other"
+
+    echo "=== $name: leecher killed mid-download"
+    start seeder leecher -- "${SHORT_ACTIVE_PEER_TTL[@]}"
+    leecher_partially_downloaded
+    compose kill leecher
+    # the seeder keeps announcing, the leecher gets marked as inactive
+    wait_sql "killed leecher reaped" "$torrent_counts_query" 1/0/0 client reannounce seeder
+    # A new container, like a reboot after the crash. Restarting the killed one reuses its pid, so
+    # qBittorrent sees its own stale lock file as another running instance and exits.
+    compose rm -f leecher
+    compose up -d leecher
+    client wait_ready leecher
+    leecher_finish
+    # What the killed session downloaded was never announced, and the client may have lost it
+    # too, without resume data saved before the crash, so the seeder may have sent it twice
+    assert_all_reported "$agent_prefix" 2/0/1 seeder leecher
+    assert_between "seeder uploaded" "$(user_value seeder real_uploaded)" "$SIZE" $((SIZE + MAX_TRANSFERRED))
+
+    echo "=== $name: leecher frozen mid-download, then back"
+    start seeder leecher -- "${SHORT_ACTIVE_PEER_TTL[@]}"
+    leecher_partially_downloaded
+    # like a suspended laptop: no announce and no stopped event, then the same session resumes
+    compose pause leecher
+    wait_sql "frozen leecher marked inactive" "$torrent_counts_query" 1/0/0 client reannounce seeder
+    # a few more expiry passes, still far from inactive_peer_ttl
+    for _ in $(seq 5); do
+        client reannounce seeder
+        sleep 1
+    done
+    compose unpause leecher
+    leecher_finish
+    assert_all_reported "$agent_prefix" 2/0/1 seeder leecher
+    assert_seeder_leecher_bounds
+
+    echo "=== $name: client not in the whitelist"
+    setup 'ARCADIA_TRACKER__ALLOWED_TORRENT_CLIENTS=[XX]'
+    client prepare leecher
+    compose up -d leecher
+    client wait_ready leecher
+    client add leecher
+    wait_sql "whitelist error recorded" \
+        "SELECT error_code FROM announce_errors WHERE user_id = $(user_id leecher)" torrent_client_not_in_whitelist
+    for _ in $(seq 30); do
+        client tracker_message leecher | grep -q "torrent client not in whitelist" && break
+        sleep 1
+    done
+    client tracker_message leecher | grep -q "torrent client not in whitelist" ||
+        fail "client does not show the whitelist error: $(client tracker_message leecher)"
+    assert_eq "no peer for rejected client" "$(sql "SELECT count(*) FROM peers")" 0
+    assert_eq "torrent counts untouched" "$(sql "$torrent_counts_query")" 0/0/0
+
+    echo "=== $name: ok"
+}
+
+### qBittorrent (official qbittorrent-nox image), controlled through its web API
 
 # Host port of the web API of each client, published on a random port and looked up whenever the
 # client (re)starts
@@ -154,6 +323,11 @@ qbt() {
     curl -sf "http://127.0.0.1:${QBT_PORTS[$role]}/api/v2/$endpoint" "$@"
 }
 
+qbt_prepare() {
+    mkdir -p "$WORK_DIR/$1/config/qBittorrent/config"
+    cp qBittorrent.conf "$WORK_DIR/$1/config/qBittorrent/config/"
+}
+
 qbt_wait_ready() {
     for _ in $(seq 60); do
         QBT_PORTS[$1]=$(compose port "$1" 8080 2>/dev/null | cut -d: -f2)
@@ -163,165 +337,60 @@ qbt_wait_ready() {
     fail "$1 web API not reachable"
 }
 
-qbt_progress() { { qbt "$1" "torrents/info?hashes=$INFO_HASH" || echo '[]'; } | python3 -c 'import json,sys; t=json.load(sys.stdin); print(t[0]["progress"] if t else -1)'; }
-
-# Waits until the torrent progress of a client reaches the given fraction
-qbt_wait_progress() {
-    local role=$1 min=$2
-    for _ in $(seq 240); do
-        python3 -c "import sys; sys.exit(not $(qbt_progress "$role") >= $min)" && return 0
-        sleep 0.5
-    done
-    fail "$role did not reach progress $min, at $(qbt_progress "$role")"
-}
-
-qbt_up() {
-    local role
-    for role in "$@"; do
-        mkdir -p "$WORK_DIR/$role/config/qBittorrent/config"
-        cp qBittorrent.conf "$WORK_DIR/$role/config/qBittorrent/config/"
-    done
-    compose up -d "$@"
-    for role in "$@"; do
-        qbt_wait_ready "$role"
-    done
-}
-
 qbt_add() { qbt "$1" torrents/add -F "torrents=@$WORK_DIR/$1.torrent" -F savepath=/downloads >/dev/null; }
-
-qbt_reannounce() {
-    local role
-    for role in "$@"; do
-        qbt "$role" torrents/reannounce -d "hashes=$INFO_HASH"
-    done
-}
-
-# Fresh stack with the given clients up and the seeder seeding
-# usage: qbt_start <role...> [-- tracker configuration override...]
-qbt_start() {
-    local roles=()
-    while [ $# -gt 0 ] && [ "$1" != -- ]; do
-        roles+=("$1")
-        shift
-    done
-    [ $# -gt 0 ] && shift
-    setup "$@"
-    qbt_up "${roles[@]}"
-    qbt_add seeder
-    qbt_wait_progress seeder 1
-    # Otherwise the leecher may announce first, get no peer, and only retry after the interval
-    wait_sql "seeder peer active" \
-        "SELECT p.active FROM peers p JOIN users u ON u.id = p.user_id WHERE u.username = 'e2e_seeder' AND p.seeder" t
-}
-
-# Starts the leecher slowly, and waits until it got part of the payload
-qbt_leecher_partially_downloaded() {
-    qbt leecher transfer/setDownloadLimit -d limit=$((2 * 1024 * 1024))
-    qbt_add leecher
-    qbt_wait_progress leecher 0.3
-}
-
-qbt_leecher_finish() {
-    qbt leecher transfer/setDownloadLimit -d limit=0
-    qbt_wait_progress leecher 1
-    assert_payload leecher
-}
+qbt_progress() { { qbt "$1" "torrents/info?hashes=$INFO_HASH" || echo '[]'; } | python3 -c 'import json,sys; t=json.load(sys.stdin); print(t[0]["progress"] if t else -1)'; }
+qbt_reannounce() { qbt "$1" torrents/reannounce -d "hashes=$INFO_HASH"; }
+qbt_download_limit() { qbt "$1" transfer/setDownloadLimit -d "limit=$2"; }
+qbt_upload_limit() { qbt "$1" transfer/setUploadLimit -d "limit=$2"; }
+qbt_stop() { qbt "$1" "$QBT_STOP_ENDPOINT" -d "hashes=$INFO_HASH"; }
+qbt_tracker_message() { qbt "$1" "torrents/trackers?hash=$INFO_HASH"; }
 
 test_qbittorrent() {
-    local version=$1 stop_endpoint=torrents/stop
-    # qBittorrent 4.x calls stopping a torrent pausing it
-    [[ $version == 4.* ]] && stop_endpoint=torrents/pause
+    local version=$1
+    CLIENT=qbt
     CLIENT_IMAGE=qbittorrentofficial/qbittorrent-nox:$version
-    client_reannounce() { qbt_reannounce "$@"; }
+    # qBittorrent 4.x calls stopping a torrent pausing it
+    QBT_STOP_ENDPOINT=torrents/stop
+    [[ $version == 4.* ]] && QBT_STOP_ENDPOINT=torrents/pause
+    run_scenarios "qBittorrent $version" "qBittorrent/"
+}
 
-    echo "=== qBittorrent $version: transfer then stop"
-    qbt_start seeder leecher
-    qbt_add leecher
-    qbt_wait_progress leecher 1
-    assert_payload leecher
-    assert_all_reported "qBittorrent/" 2/0/1 seeder leecher
-    assert_seeder_leecher_bounds
-    qbt leecher "$stop_endpoint" -d "hashes=$INFO_HASH"
-    wait_sql "leecher peer inactive after stop" \
-        "SELECT p.active FROM peers p JOIN users u ON u.id = p.user_id WHERE u.username = 'e2e_leecher'" "f"
-    wait_sql "seeders after stop" "SELECT seeders || '/' || leechers FROM torrents WHERE id = 1" "1/0"
+### Transmission (linuxserver image), controlled with transmission-remote inside the container
 
-    echo "=== qBittorrent $version: leecher restarted mid-download"
-    qbt_start seeder leecher
-    qbt_leecher_partially_downloaded
-    compose restart -t 30 leecher
-    qbt_wait_ready leecher
-    qbt_leecher_finish
-    assert_all_reported "qBittorrent/" 2/0/1 seeder leecher
-    assert_seeder_leecher_bounds
+trc() { compose exec -T "$1" transmission-remote "${@:2}"; }
 
-    echo "=== qBittorrent $version: swarm of one seeder and two leechers"
-    qbt_start seeder leecher leecher2
-    # slow seeder, so that the leechers get pieces from each other
-    qbt seeder transfer/setUploadLimit -d limit=$((1024 * 1024))
-    qbt_add leecher
-    qbt_add leecher2
-    qbt_wait_progress leecher 1
-    qbt_wait_progress leecher2 1
-    assert_payload leecher
-    assert_payload leecher2
-    assert_all_reported "qBittorrent/" 3/0/2 seeder leecher leecher2
-    local role
-    for role in leecher leecher2; do
-        assert_between "$role downloaded" "$(user_value $role real_downloaded)" "$SIZE" "$MAX_TRANSFERRED"
-    done
-    [ $(($(user_value leecher real_uploaded) + $(user_value leecher2 real_uploaded))) -gt 0 ] ||
-        fail "the leechers did not upload to each other"
+tr_prepare() { cp settings.json "$WORK_DIR/$1/config/"; }
 
-    echo "=== qBittorrent $version: leecher killed mid-download"
-    qbt_start seeder leecher -- "${SHORT_ACTIVE_PEER_TTL[@]}"
-    qbt_leecher_partially_downloaded
-    compose kill leecher
-    # the seeder keeps announcing, the leecher gets marked as inactive
-    wait_sql "killed leecher reaped" "$torrent_counts_query" 1/0/0 qbt_reannounce seeder
-    # a new container, like a reboot after the crash: restarting the killed one reuses its pid,
-    # so qBittorrent sees its own stale lock file as another running instance and exits
-    compose rm -f leecher
-    compose up -d leecher
-    qbt_wait_ready leecher
-    qbt_leecher_finish
-    # What the killed session downloaded was never announced, and the client may have lost it
-    # too, without resume data saved before the crash, so the seeder may have sent it twice
-    assert_all_reported "qBittorrent/" 2/0/1 seeder leecher
-    assert_between "seeder uploaded" "$(user_value seeder real_uploaded)" "$SIZE" $((SIZE + MAX_TRANSFERRED))
-
-    echo "=== qBittorrent $version: leecher frozen mid-download, then back"
-    qbt_start seeder leecher -- "${SHORT_ACTIVE_PEER_TTL[@]}"
-    qbt_leecher_partially_downloaded
-    # like a suspended laptop: no announce and no stopped event, then the same session resumes
-    compose pause leecher
-    wait_sql "frozen leecher marked inactive" "$torrent_counts_query" 1/0/0 qbt_reannounce seeder
-    # a few more expiry passes, still far from inactive_peer_ttl
-    for _ in $(seq 5); do
-        qbt_reannounce seeder
+tr_wait_ready() {
+    for _ in $(seq 60); do
+        trc "$1" -l >/dev/null 2>&1 && return 0
         sleep 1
     done
-    compose unpause leecher
-    qbt_leecher_finish
-    assert_all_reported "qBittorrent/" 2/0/1 seeder leecher
-    assert_seeder_leecher_bounds
+    fail "$1 RPC not reachable"
+}
 
-    echo "=== qBittorrent $version: client not in the whitelist"
-    setup 'ARCADIA_TRACKER__ALLOWED_TORRENT_CLIENTS=[XX]'
-    qbt_up leecher
-    qbt_add leecher
-    wait_sql "whitelist error recorded" \
-        "SELECT error_code FROM announce_errors WHERE user_id = $(user_id leecher)" torrent_client_not_in_whitelist
-    for _ in $(seq 30); do
-        qbt leecher "torrents/trackers?hash=$INFO_HASH" | grep -q '"msg":"torrent client not in whitelist"' && break
-        sleep 1
-    done
-    qbt leecher "torrents/trackers?hash=$INFO_HASH" | grep -q '"msg":"torrent client not in whitelist"' ||
-        fail "client does not show the whitelist error: $(qbt leecher "torrents/trackers?hash=$INFO_HASH")"
-    assert_eq "no peer for rejected client" "$(sql "SELECT count(*) FROM peers")" 0
-    assert_eq "torrent counts untouched" "$(sql "$torrent_counts_query")" 0/0/0
+tr_add() {
+    cp "$WORK_DIR/$1.torrent" "$WORK_DIR/$1/config/"
+    trc "$1" -a "/config/$1.torrent" -w /downloads >/dev/null
+}
 
-    echo "=== qBittorrent $version: ok"
+tr_progress() {
+    { trc "$1" -t "$INFO_HASH" -i 2>/dev/null || true; } |
+        python3 -c 'import re,sys; m=re.search(r"Percent Done: ([0-9.]+)%", sys.stdin.read()); print(float(m.group(1)) / 100 if m else -1)'
+}
+
+tr_reannounce() { trc "$1" -t "$INFO_HASH" --reannounce >/dev/null; }
+# in kB/s, 1 kB being 1000 bytes
+tr_download_limit() { if [ "$2" -eq 0 ]; then trc "$1" -D >/dev/null; else trc "$1" -d $(($2 / 1000)) >/dev/null; fi; }
+tr_upload_limit() { trc "$1" -u $(($2 / 1000)) >/dev/null; }
+tr_stop() { trc "$1" -t "$INFO_HASH" --stop >/dev/null; }
+tr_tracker_message() { trc "$1" -t "$INFO_HASH" -it; }
+
+test_transmission() {
+    local version=$1
+    CLIENT=tr
+    CLIENT_IMAGE=linuxserver/transmission:$version
+    run_scenarios "Transmission $version" "Transmission/"
 }
 
 ### Tests, one per supported client version
@@ -334,11 +403,19 @@ qbittorrent-5.0.5() { test_qbittorrent 5.0.5-1; }
 qbittorrent-5.1.4() { test_qbittorrent 5.1.4-2; }
 qbittorrent-5.2.4() { test_qbittorrent 5.2.4-1; }
 qbittorrent-5.3.0() { test_qbittorrent 5.3.0-2; }
+# Every version with an image
+transmission-4.0.6() { test_transmission 4.0.6; }
+transmission-4.1.0() { test_transmission 4.1.0; }
+transmission-4.1.1() { test_transmission 4.1.1; }
+transmission-4.1.2() { test_transmission 4.1.2; }
+transmission-4.1.3() { test_transmission 4.1.3; }
 
 TESTS=(
     qbittorrent-4.4.5 qbittorrent-4.5.5 qbittorrent-4.6.7
     qbittorrent-5.0.5 qbittorrent-5.1.4 qbittorrent-5.2.4 qbittorrent-5.3.0
+    transmission-4.0.6 transmission-4.1.0 transmission-4.1.1 transmission-4.1.2 transmission-4.1.3
 )
+
 # A single test, started by the loop below
 if [ -n "${E2E_TEST:-}" ]; then
     trap teardown EXIT

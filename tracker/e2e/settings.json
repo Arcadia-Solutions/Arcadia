@@ -1,0 +1,13 @@
+{
+    "dht-enabled": false,
+    "lpd-enabled": false,
+    "pex-enabled": false,
+    "peer-port": 6881,
+    "port-forwarding-enabled": false,
+    "download-dir": "/downloads",
+    "incomplete-dir-enabled": false,
+    "watch-dir-enabled": false,
+    "rpc-authentication-required": false,
+    "rpc-whitelist-enabled": false,
+    "rpc-host-whitelist-enabled": false
+}

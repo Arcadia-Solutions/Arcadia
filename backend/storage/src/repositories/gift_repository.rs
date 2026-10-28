@@ -93,6 +93,25 @@ impl ConnectionPool {
         bonus_points: i64,
         freeleech_tokens: i32,
     ) -> Result<()> {
+        // the balance is locked until the debit commits, so that concurrent
+        // debits can not all be checked against the same balance
+        let balance = sqlx::query!(
+            r#"
+              SELECT bonus_points, freeleech_tokens FROM users
+              WHERE id = $1
+              FOR UPDATE
+            "#,
+            user_id
+        )
+        .fetch_one(&mut **tx)
+        .await?;
+        if balance.bonus_points < bonus_points {
+            return Err(Error::NotEnoughBonusPointsAvailable);
+        }
+        if balance.freeleech_tokens < freeleech_tokens {
+            return Err(Error::NotEnoughFreeleechTokensAvailable);
+        }
+
         sqlx::query!(
             r#"
               UPDATE users SET bonus_points = bonus_points - $1,

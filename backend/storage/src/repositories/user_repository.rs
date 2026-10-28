@@ -1512,19 +1512,8 @@ impl ConnectionPool {
     ) -> Result<()> {
         let mut tx = self.pool.begin().await?;
 
-        // Deduct bonus points
-        sqlx::query!(
-            r#"
-            UPDATE users
-            SET bonus_points = bonus_points - $2
-            WHERE id = $1
-            "#,
-            user_id,
-            bonus_points_cost
-        )
-        .execute(&mut *tx)
-        .await?
-        .rows_affected();
+        Self::decrement_bonus_points_and_freeleech_tokens(&mut tx, user_id, bonus_points_cost, 0)
+            .await?;
 
         Self::log_bonus_points_change_tx(
             &mut tx,

@@ -53,14 +53,6 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         )
     };
 
-    if !arc
-        .pool
-        .user_has_enough_bonus_points(current_user.sub, price_calculation.final_price)
-        .await?
-    {
-        return Err(Error::NotEnoughBonusPointsAvailable);
-    }
-
     arc.pool
         .purchase_upload(
             current_user.sub,

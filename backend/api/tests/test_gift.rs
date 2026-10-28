@@ -94,3 +94,24 @@ async fn test_gift_updates_sender_and_receiver_balances_and_sends_message(pool: 
     assert_eq!(gift_conversation.sender_id, 1);
     assert_eq!(gift_conversation.receiver_id, 101);
 }
+
+#[sqlx::test(
+    fixtures("with_test_users", "with_test_gift_balance"),
+    migrations = "../storage/migrations"
+)]
+async fn test_concurrent_gifts_can_not_spend_more_than_the_balance(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let gift = UserCreatedGift {
+        message: "Test gift".into(),
+        receiver_id: 101,
+        bonus_points: 600,
+        freeleech_tokens: 0,
+    };
+
+    let (first, second) =
+        futures::join!(pool.create_gift(&gift, 100), pool.create_gift(&gift, 100));
+    assert!(first.is_ok() != second.is_ok());
+
+    let sender_after = pool.find_user_with_id(100).await.unwrap();
+    assert_eq!(sender_after.bonus_points, 400);
+}

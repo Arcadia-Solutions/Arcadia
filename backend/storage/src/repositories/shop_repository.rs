@@ -57,22 +57,6 @@ impl ConnectionPool {
         Ok(())
     }
 
-    pub async fn user_has_enough_bonus_points(&self, user_id: i32, required: i64) -> Result<bool> {
-        let result = sqlx::query_scalar!(
-            r#"
-                SELECT bonus_points >= $1 as "has_enough!"
-                FROM users
-                WHERE id = $2
-            "#,
-            required,
-            user_id
-        )
-        .fetch_one(&self.pool)
-        .await?;
-
-        Ok(result)
-    }
-
     async fn add_upload(
         tx: &mut Transaction<'_, Postgres>,
         user_id: i32,

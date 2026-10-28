@@ -1,5 +1,8 @@
 use actix_web::{web::Data, App, HttpServer};
-use arcadia_tracker::{api_doc::ApiDoc, config::Config, routes::init, scheduler, Tracker};
+use arcadia_tracker::{
+    api_doc::ApiDoc, config::Config, middleware::RootSpanBuilderWithoutTarget, routes::init,
+    scheduler, Tracker,
+};
 use tracing_actix_web::TracingLogger;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -42,7 +45,7 @@ async fn main() -> std::io::Result<()> {
     let arc2 = arc.clone();
     let server = HttpServer::new(move || {
         App::new()
-            .wrap(TracingLogger::default())
+            .wrap(TracingLogger::<RootSpanBuilderWithoutTarget>::new())
             .app_data(arc2.clone())
             .configure(init) // Initialize routes
             .service(

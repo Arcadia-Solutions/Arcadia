@@ -568,6 +568,7 @@ dependencies = [
  "subtle",
  "thiserror 2.0.21",
  "tokio",
+ "tracing",
  "tracing-actix-web",
  "utoipa",
  "utoipa-swagger-ui",

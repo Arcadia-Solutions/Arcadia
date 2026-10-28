@@ -36,16 +36,30 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 ) -> Result<HttpResponse> {
     let torrent = arc.pool.find_torrent(form.id).await?;
 
-    if !arc
+    let can_edit_any_torrent = arc
         .pool
         .user_has_permission(user.sub, &UserPermission::EditTorrent)
-        .await?
-        && torrent.created_by_id != user.sub
-    {
+        .await?;
+    if !can_edit_any_torrent && torrent.created_by_id != user.sub {
         return Err(Error::InsufficientPermissions(format!(
             "{:?}",
             UserPermission::EditTorrent
         )));
+    }
+
+    // the uploader is held to the same snatch cost policy as at upload time
+    if !can_edit_any_torrent
+        && form.bonus_points_snatch_cost != torrent.bonus_points_snatch_cost
+        && arc
+            .settings
+            .lock()
+            .unwrap()
+            .uploader_bonus_points_snatch_cost(form.bonus_points_snatch_cost)?
+            != form.bonus_points_snatch_cost
+    {
+        return Err(Error::BonusPointsSnatchCostOutOfRange(
+            "the bonus_points_snatch_cost can not be set by uploaders".to_string(),
+        ));
     }
 
     // the trumpable field can be set by the uploader at creation time,

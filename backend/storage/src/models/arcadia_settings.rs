@@ -1,3 +1,4 @@
+use arcadia_common::error::{Error, Result};
 pub use arcadia_shared::tracker::models::env::SnatchedTorrentBonusPointsTransferredTo;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
@@ -186,4 +187,27 @@ pub struct PublicArcadiaSettings {
     pub custom_js_code: Option<String>,
     pub custom_footer: Option<String>,
     pub uploads_disabled: bool,
+}
+
+impl ArcadiaSettings {
+    /// The snatch cost an uploader is allowed to set on their torrent, the same policy applies
+    /// at upload and at edit time.
+    pub fn uploader_bonus_points_snatch_cost(&self, requested_cost: i64) -> Result<i64> {
+        if !self.allow_uploader_set_torrent_bonus_points_cost {
+            return Ok(self.default_torrent_bonus_points_cost);
+        }
+        if requested_cost < self.torrent_bonus_points_cost_min {
+            return Err(Error::BonusPointsSnatchCostOutOfRange(format!(
+                "bonus_points_snatch_cost must be at least {}",
+                self.torrent_bonus_points_cost_min
+            )));
+        }
+        if requested_cost > self.torrent_bonus_points_cost_max {
+            return Err(Error::BonusPointsSnatchCostOutOfRange(format!(
+                "bonus_points_snatch_cost must be at most {}",
+                self.torrent_bonus_points_cost_max
+            )));
+        }
+        Ok(requested_cost)
+    }
 }

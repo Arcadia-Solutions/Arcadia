@@ -49,28 +49,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 
     let (bonus_points_given_on_upload, bonus_points_snatch_cost, torrent_max_release_date_allowed) = {
         let settings = arc.settings.lock().unwrap();
-        let cost = if settings.allow_uploader_set_torrent_bonus_points_cost {
-            let user_cost = form.bonus_points_snatch_cost.0;
-            if user_cost < settings.torrent_bonus_points_cost_min {
-                return Err(
-                    arcadia_common::error::Error::BonusPointsSnatchCostOutOfRange(format!(
-                        "bonus_points_snatch_cost must be at least {}",
-                        settings.torrent_bonus_points_cost_min
-                    )),
-                );
-            }
-            if user_cost > settings.torrent_bonus_points_cost_max {
-                return Err(
-                    arcadia_common::error::Error::BonusPointsSnatchCostOutOfRange(format!(
-                        "bonus_points_snatch_cost must be at most {}",
-                        settings.torrent_bonus_points_cost_max
-                    )),
-                );
-            }
-            user_cost
-        } else {
-            settings.default_torrent_bonus_points_cost
-        };
+        let cost = settings.uploader_bonus_points_snatch_cost(form.bonus_points_snatch_cost.0)?;
         (
             settings.bonus_points_given_on_upload,
             cost,

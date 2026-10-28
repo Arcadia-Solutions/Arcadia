@@ -2140,3 +2140,39 @@ async fn test_torrent_with_out_of_range_piece_length_is_rejected() {
         );
     }
 }
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_title_group",
+        "with_test_edition_group",
+        "with_test_torrents_of_basic_user"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_uploader_can_not_change_the_snatch_cost_when_the_settings_forbid_it(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) = common::create_test_app_and_login(
+        pool.clone(),
+        MockRedisPool::default(),
+        TestUser::Standard,
+    )
+    .await;
+
+    let mut payload = edit_torrent_payload(
+        TORRENT_OF_BASIC_USER_ID,
+        TORRENT_OF_BASIC_USER_RELEASE_NAME,
+        "false",
+    );
+    payload["bonus_points_snatch_cost"] = 1000000.into();
+    let req = test::TestRequest::put()
+        .uri("/api/torrents")
+        .insert_header(auth_header(&user.token))
+        .set_json(payload)
+        .to_request();
+    let resp = test::call_service(&service, req).await;
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+
+    let torrent = pool.find_torrent(TORRENT_OF_BASIC_USER_ID).await.unwrap();
+    assert_eq!(torrent.bonus_points_snatch_cost, 0);
+}

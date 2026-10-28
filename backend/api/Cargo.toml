@@ -34,6 +34,7 @@ utoipa-swagger-ui = { version = "10", features = ["actix-web"] }
 serde_bencode = "0.2.4"
 actix-web-httpauth = "0.8.2"
 tokio = { version = "1", features = ["full"] }
+libc = "0.2"
 lettre = "0.11"
 log = "0.4"
 regex = "1.12.3"

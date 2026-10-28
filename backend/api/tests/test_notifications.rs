@@ -1618,3 +1618,31 @@ async fn test_visiting_title_group_marks_artist_notifications_as_read(pool: PgPo
     let counts: NotificationCounts = common::call_and_read_body_json(&service_b, counts_req).await;
     assert_eq!(counts.artist_title_groups, 0);
 }
+
+#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+async fn test_notification_streams_are_limited_per_user(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+    let stream_request = || {
+        test::TestRequest::get()
+            .uri(&format!("/api/notifications/stream?token={}", user.token))
+            .to_request()
+    };
+
+    // the responses are kept alive so that their streams stay open
+    let mut open_streams = Vec::new();
+    for _ in 0..5 {
+        let resp = test::call_service(&service, stream_request()).await;
+        assert_eq!(resp.status(), StatusCode::OK);
+        open_streams.push(resp);
+    }
+
+    let resp = test::call_service(&service, stream_request()).await;
+    assert_eq!(resp.status(), StatusCode::TOO_MANY_REQUESTS);
+
+    // closing a stream frees its slot
+    open_streams.pop();
+    let resp = test::call_service(&service, stream_request()).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+}

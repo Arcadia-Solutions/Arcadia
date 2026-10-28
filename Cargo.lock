@@ -433,6 +433,7 @@ dependencies = [
  "futures-util",
  "jsonwebtoken",
  "lettre",
+ "libc",
  "log",
  "musicbrainz_rs",
  "rand 0.10.3",

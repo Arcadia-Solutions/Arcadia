@@ -56,6 +56,11 @@ services:
       ARCADIA_ERGO__API_BEARER_TOKEN: ${ARCADIA_ERGO__API_BEARER_TOKEN:-changeme}
       ARCADIA_ERGO__AUTH_CALLBACK_TOKEN: ${ARCADIA_ERGO__AUTH_CALLBACK_TOKEN:-changeme}
       RUST_BACKTRACE: 1
+    # open files the api may hold, half of them can be used by notification streams
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
       interval: 30s

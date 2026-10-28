@@ -5,7 +5,7 @@ use std::time::Duration;
 use tokio_cron_scheduler::{Job, JobScheduler, JobSchedulerError};
 
 use arcadia_shared::telemetry::{instrument_periodic_task, PeriodicTaskInstruments};
-use arcadia_storage::connection_pool::ConnectionPool;
+use arcadia_storage::{connection_pool::ConnectionPool, redis::RedisPool};
 
 use crate::config::{formula_to_sql, PeriodicTasksConfig};
 
@@ -49,9 +49,10 @@ where
     )
 }
 
-/// The pool and the configuration are the ones of the service running the tasks.
+/// The pools and the configuration are the ones of the service running the tasks.
 pub async fn run_periodic_tasks(
     pool: Arc<ConnectionPool>,
+    redis_pool: Arc<RedisPool>,
     config: PeriodicTasksConfig,
 ) -> Result<JobScheduler, Box<dyn std::error::Error>> {
     let scheduler = JobScheduler::new().await?;
@@ -99,7 +100,7 @@ pub async fn run_periodic_tasks(
             &pool,
             config.inactive_user_ban_seconds,
             "inactive_user_ban",
-            ban_inactive_users,
+            move |pool| ban_inactive_users(pool, Arc::clone(&redis_pool)),
         )?)
         .await?;
 

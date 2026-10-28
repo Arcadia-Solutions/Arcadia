@@ -1465,8 +1465,8 @@ impl ConnectionPool {
     /// Bans users who haven't been active for the given number of days.
     /// Skips users who are already banned or have the ImmuneActivityPruning permission.
     /// Creates a warning entry for each banned user.
-    /// Returns the number of users banned.
-    pub async fn ban_inactive_users(&self, inactive_days: i32) -> Result<u64> {
+    /// Returns the ids of the banned users.
+    pub async fn ban_inactive_users(&self, inactive_days: i32) -> Result<Vec<i32>> {
         let mut tx = self.pool.begin().await?;
 
         let banned_user_ids = sqlx::query_scalar!(
@@ -1483,8 +1483,6 @@ impl ConnectionPool {
         .fetch_all(&mut *tx)
         .await?;
 
-        let banned_count = banned_user_ids.len() as u64;
-
         if !banned_user_ids.is_empty() {
             sqlx::query!(
                 r#"
@@ -1500,7 +1498,7 @@ impl ConnectionPool {
 
         tx.commit().await?;
 
-        Ok(banned_count)
+        Ok(banned_user_ids)
     }
 
     /// Deduct bonus points from a user and promote them to the next class

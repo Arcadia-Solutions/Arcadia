@@ -5,7 +5,7 @@ use actix_web::{
     http::{header::HeaderValue, StatusCode},
     test::{call_service, read_body, TestRequest},
 };
-use arcadia_api::services::auth::InvalidationEntry;
+use arcadia_storage::services::token_invalidation_service::InvalidationEntry;
 use arcadia_storage::{
     connection_pool::ConnectionPool, models::user::RefreshToken, redis::RedisInterface,
 };

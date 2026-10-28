@@ -72,13 +72,6 @@ async fn main() -> std::io::Result<()> {
             .expect("db connection"),
     );
 
-    // Initialize and start periodic tasks before starting the web server
-    // This ensures that if periodic tasks fail to initialize (e.g., an invalid bonus formula),
-    // the entire application fails to start
-    let _scheduler = run_periodic_tasks(Arc::clone(&pool), config.periodic_tasks.clone())
-        .await
-        .expect("Failed to initialize periodic tasks");
-
     let redis_pool = Arc::new(RedisPool::new(
         &config.redis.host,
         &config.redis.password,
@@ -89,6 +82,17 @@ async fn main() -> std::io::Result<()> {
         .connection()
         .await
         .expect("failed to connect to redis, check the redis configuration");
+
+    // Initialize and start periodic tasks before starting the web server
+    // This ensures that if periodic tasks fail to initialize (e.g., an invalid bonus formula),
+    // the entire application fails to start
+    let _scheduler = run_periodic_tasks(
+        Arc::clone(&pool),
+        Arc::clone(&redis_pool),
+        config.periodic_tasks.clone(),
+    )
+    .await
+    .expect("Failed to initialize periodic tasks");
 
     // Load settings from database on startup
     let settings = pool

@@ -1,7 +1,11 @@
 pub mod common;
 pub mod mocks;
 
+use arcadia_api::services::auth::Auth;
+use arcadia_periodic_tasks::periodic_tasks::inactive_users;
 use arcadia_storage::connection_pool::ConnectionPool;
+use chrono::Utc;
+use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
@@ -9,10 +13,10 @@ use std::sync::Arc;
 async fn test_ban_inactive_users_bans_only_eligible(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
-    let banned_count = pool.ban_inactive_users(180).await.unwrap();
+    let banned_user_ids = pool.ban_inactive_users(180).await.unwrap();
 
     // Only user_inactive (id=200) should be banned
-    assert_eq!(banned_count, 1);
+    assert_eq!(banned_user_ids, vec![200]);
 
     // Verify user_inactive is now banned
     assert!(pool.is_user_banned(200).await.unwrap());
@@ -37,8 +41,8 @@ async fn test_ban_inactive_users_returns_zero_when_none_eligible(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
     // With a very high threshold, no users should be banned
-    let banned_count = pool.ban_inactive_users(9999).await.unwrap();
-    assert_eq!(banned_count, 0);
+    let banned_user_ids = pool.ban_inactive_users(9999).await.unwrap();
+    assert!(banned_user_ids.is_empty());
 }
 
 #[sqlx::test(fixtures("with_inactive_users"), migrations = "../storage/migrations")]
@@ -65,9 +69,27 @@ async fn test_ban_inactive_users_is_idempotent(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
     let first_run = pool.ban_inactive_users(180).await.unwrap();
-    assert_eq!(first_run, 1);
+    assert_eq!(first_run, vec![200]);
 
     // Running again should ban nobody since user is already banned
     let second_run = pool.ban_inactive_users(180).await.unwrap();
-    assert_eq!(second_run, 0);
+    assert!(second_run.is_empty());
+}
+
+#[sqlx::test(fixtures("with_inactive_users"), migrations = "../storage/migrations")]
+async fn test_ban_inactive_users_invalidates_their_tokens(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let mut settings = pool.get_arcadia_settings().await.unwrap();
+    settings.inactive_user_ban_after_days = Some(180);
+    pool.update_arcadia_settings(&settings).await.unwrap();
+    let redis_pool = Arc::new(MockRedisPool::default());
+    let token_issued_at = Utc::now().timestamp() - 1;
+
+    inactive_users::ban_inactive_users(Arc::clone(&pool), Arc::clone(&redis_pool))
+        .await
+        .unwrap();
+
+    let auth = Auth::new(redis_pool);
+    assert!(auth.is_invalidated(200, token_issued_at).await.unwrap());
+    assert!(!auth.is_invalidated(201, token_issued_at).await.unwrap());
 }

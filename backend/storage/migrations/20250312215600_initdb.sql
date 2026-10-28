@@ -107,7 +107,8 @@ CREATE TYPE user_permissions_enum AS ENUM (
     'write_user_staff_note',
     'edit_user_staff_notes',
     'view_foreign_user_staff_notes',
-    'view_registration_ips'
+    'view_registration_ips',
+    'manage_advent_calendars'
 );
 CREATE TABLE user_classes (
     name VARCHAR(30) UNIQUE NOT NULL,
@@ -1616,7 +1617,8 @@ CREATE TYPE bonus_points_log_action_enum AS ENUM (
     'side_effect_reward',
     'shop_purchase_upload',
     'shop_purchase_freeleech_tokens',
-    'shop_purchase_promotion'
+    'shop_purchase_promotion',
+    'advent_calendar_door_reward'
 );
 CREATE TABLE bonus_points_logs (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -1639,7 +1641,8 @@ CREATE TYPE user_badge_type_enum AS ENUM (
     'manual',
     'torrents_uploaded',
     'forum_posts',
-    'forum_threads'
+    'forum_threads',
+    'advent_calendar_doors'
 );
 CREATE TABLE user_badge_categories (
     id SERIAL PRIMARY KEY,
@@ -1692,6 +1695,91 @@ CREATE TABLE site_highlights (
      OR (item_type = 'series'      AND series_id      IS NOT NULL AND title_group_id IS NULL AND artist_id IS NULL)
      OR (item_type = 'artist'      AND artist_id      IS NOT NULL AND title_group_id IS NULL AND series_id IS NULL)
     )
+);
+
+CREATE TYPE advent_calendar_late_opening_policy_enum AS ENUM (
+    'during_door_window',
+    'grace_period',
+    'until_event_end'
+);
+CREATE TABLE advent_calendars (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_by_id INT NOT NULL REFERENCES users(id),
+    name TEXT NOT NULL,
+    starts_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    top_message TEXT NOT NULL DEFAULT '',
+    button_text VARCHAR(50) NOT NULL,
+    staff_notes TEXT NOT NULL DEFAULT '',
+    late_opening_policy advent_calendar_late_opening_policy_enum NOT NULL DEFAULT 'during_door_window',
+    late_opening_grace_hours INT NOT NULL DEFAULT 0 CHECK (late_opening_grace_hours >= 0),
+    published BOOLEAN NOT NULL DEFAULT FALSE
+);
+-- only one calendar can be published at a time
+CREATE UNIQUE INDEX advent_calendars_single_published ON advent_calendars (published) WHERE published;
+CREATE TYPE advent_calendar_reward_distribution_enum AS ENUM (
+    'linear',
+    'gaussian',
+    'logarithmic'
+);
+-- rolls an amount between minimum and maximum (inclusive) following the distribution
+CREATE FUNCTION roll_advent_calendar_reward(
+    minimum BIGINT,
+    maximum BIGINT,
+    distribution advent_calendar_reward_distribution_enum
+) RETURNS BIGINT LANGUAGE SQL VOLATILE AS $$
+    SELECT CASE WHEN minimum >= maximum THEN minimum ELSE LEAST(maximum, GREATEST(minimum, CASE distribution
+        WHEN 'linear' THEN floor(minimum + random()::NUMERIC * (maximum::NUMERIC - minimum + 1))
+        -- Box-Muller transform, 1 - random() keeps the logarithm away from 0
+        WHEN 'gaussian' THEN round((
+            (minimum::FLOAT8 + maximum) / 2
+            + sqrt(-2 * ln(1 - random())) * cos(2 * pi() * random()) * (maximum::FLOAT8 - minimum) / 6
+        )::NUMERIC)
+        -- log-uniform: every order of magnitude is equally likely, so small values are more frequent
+        WHEN 'logarithmic' THEN floor(exp(
+            ln(minimum::FLOAT8) + random() * (ln(maximum::FLOAT8 + 1) - ln(minimum::FLOAT8))
+        )::NUMERIC)
+    END))::BIGINT END
+$$;
+CREATE TABLE advent_calendar_doors (
+    id SERIAL PRIMARY KEY,
+    calendar_id INT NOT NULL REFERENCES advent_calendars(id) ON DELETE CASCADE,
+    position INT NOT NULL,
+    name TEXT NOT NULL,
+    image_url TEXT,
+    duration_minutes INT NOT NULL CHECK (duration_minutes > 0),
+    opening_message TEXT NOT NULL DEFAULT '',
+    locked_message TEXT,
+    passphrase TEXT,
+    staff_notes TEXT NOT NULL DEFAULT '',
+    upload_min BIGINT NOT NULL DEFAULT 0,
+    upload_max BIGINT NOT NULL DEFAULT 0,
+    upload_distribution advent_calendar_reward_distribution_enum NOT NULL DEFAULT 'linear',
+    download_removed_min BIGINT NOT NULL DEFAULT 0,
+    download_removed_max BIGINT NOT NULL DEFAULT 0,
+    download_removed_distribution advent_calendar_reward_distribution_enum NOT NULL DEFAULT 'linear',
+    freeleech_tokens_min BIGINT NOT NULL DEFAULT 0,
+    freeleech_tokens_max BIGINT NOT NULL DEFAULT 0,
+    freeleech_tokens_distribution advent_calendar_reward_distribution_enum NOT NULL DEFAULT 'linear',
+    invitations_min BIGINT NOT NULL DEFAULT 0,
+    invitations_max BIGINT NOT NULL DEFAULT 0,
+    invitations_distribution advent_calendar_reward_distribution_enum NOT NULL DEFAULT 'linear',
+    bonus_points_min BIGINT NOT NULL DEFAULT 0,
+    bonus_points_max BIGINT NOT NULL DEFAULT 0,
+    bonus_points_distribution advent_calendar_reward_distribution_enum NOT NULL DEFAULT 'linear',
+    -- deferred so that doors can be reordered in a single transaction
+    UNIQUE (calendar_id, position) DEFERRABLE INITIALLY DEFERRED
+);
+CREATE TABLE advent_calendar_door_openings (
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    door_id INT NOT NULL REFERENCES advent_calendar_doors(id) ON DELETE CASCADE,
+    opened_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    upload BIGINT NOT NULL,
+    download_removed BIGINT NOT NULL,
+    freeleech_tokens INT NOT NULL,
+    invitations INT NOT NULL,
+    bonus_points BIGINT NOT NULL,
+    PRIMARY KEY (user_id, door_id)
 );
 
 CREATE TABLE title_group_related_threads (

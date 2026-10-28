@@ -286,7 +286,8 @@
                       "write_user_staff_note",
                       "edit_user_staff_notes",
                       "view_foreign_user_staff_notes",
-                      "view_registration_ips"
+                      "view_registration_ips",
+                      "manage_advent_calendars"
                     ]
                   }
                 }

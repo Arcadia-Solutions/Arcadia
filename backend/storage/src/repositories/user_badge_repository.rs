@@ -6,8 +6,8 @@ use crate::{
         torrent::{Language, TorrentSearch, VideoResolution},
         user_badge::{
             EditedUserBadge, EditedUserBadgeCategory, UserBadge, UserBadgeCategory,
-            UserBadgeListItem, UserBadgeType, UserCreatedUserBadge, UserCreatedUserBadgeCategory,
-            UserEarnedBadge, UserEarnedBadgeWithDetails,
+            UserBadgeCriteria, UserBadgeListItem, UserBadgeType, UserCreatedUserBadge,
+            UserCreatedUserBadgeCategory, UserEarnedBadge, UserEarnedBadgeWithDetails,
         },
     },
     utils::{tag_expression::parse_tag_expression, validate_badge_criteria_shape},
@@ -126,7 +126,11 @@ impl ConnectionPool {
         if badge.name.trim().is_empty() {
             return Err(Error::UserBadgeNameEmpty);
         }
-        validate_badge_criteria_shape(&badge.badge_type, badge.criteria.as_ref())?;
+        if let Some(UserBadgeCriteria::AdventCalendarDoors { calendar_id, .. }) =
+            validate_badge_criteria_shape(&badge.badge_type, badge.criteria.as_ref())?
+        {
+            self.find_advent_calendar(calendar_id).await?;
+        }
 
         let created = sqlx::query_as!(
             UserBadge,
@@ -163,7 +167,11 @@ impl ConnectionPool {
         if edited.name.trim().is_empty() {
             return Err(Error::UserBadgeNameEmpty);
         }
-        validate_badge_criteria_shape(&edited.badge_type, edited.criteria.as_ref())?;
+        if let Some(UserBadgeCriteria::AdventCalendarDoors { calendar_id, .. }) =
+            validate_badge_criteria_shape(&edited.badge_type, edited.criteria.as_ref())?
+        {
+            self.find_advent_calendar(calendar_id).await?;
+        }
 
         let updated = sqlx::query_as!(
             UserBadge,
@@ -534,6 +542,34 @@ impl ConnectionPool {
             minimum_thread_name_character_count as i64,
             required_substring,
             i64::from(minimum_thread_amount),
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(Error::CouldNotFindUserBadges)?;
+
+        Ok(ids)
+    }
+
+    pub async fn find_qualifying_advent_calendar_door_user_ids(
+        &self,
+        calendar_id: i32,
+        minimum_opened_door_amount: i32,
+        door_names: &[String],
+    ) -> Result<Vec<i32>> {
+        let ids = sqlx::query_scalar!(
+            r#"
+                SELECT openings.user_id AS "user_id!"
+                FROM advent_calendar_door_openings openings
+                JOIN advent_calendar_doors doors ON doors.id = openings.door_id
+                JOIN users u ON u.id = openings.user_id AND u.banned = FALSE
+                WHERE doors.calendar_id = $1
+                  AND (CARDINALITY($3::TEXT[]) = 0 OR doors.name = ANY($3))
+                GROUP BY openings.user_id
+                HAVING COUNT(*) >= $2
+            "#,
+            calendar_id,
+            i64::from(minimum_opened_door_amount),
+            door_names,
         )
         .fetch_all(&self.pool)
         .await

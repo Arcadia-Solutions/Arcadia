@@ -40,6 +40,7 @@ const ENDPOINTS_WITHOUT_AUTHENTICATION: &[(Method, &str)] =
 /// Any new endpoint must be added here, otherwise it becomes unreachable with an API key.
 const SCOPE_OF_PATH_PREFIX: &[(&str, APIKeyScope)] = &[
     // user
+    ("/api/advent-calendars", APIKeyScope::User),
     ("/api/arcadia-settings", APIKeyScope::User),
     ("/api/auth", APIKeyScope::User),
     ("/api/conversations", APIKeyScope::User),

@@ -25041,6 +25041,56 @@ INSERT INTO public.wiki_articles (id, title, created_at, created_by_id, updated_
     (3, 'IRC guide', '2025-05-31 13:27:09.230045+00', 1, '2025-05-31 13:27:09.230045+00', 1, 'replace with irc instructions');
 
 --
+-- Data for Name: advent_calendars; Type: TABLE DATA; Schema: public; Owner: arcadia
+--
+
+-- starts when the fixtures are loaded, so the calendar is always running in dev
+INSERT INTO public.advent_calendars (created_by_id, name, starts_at, top_message, button_text, late_opening_policy, late_opening_grace_hours, published) VALUES
+    (1, 'Fixtures Advent Calendar', NOW(), 'A new door opens every day for 30 days!', 'Open the door', 'grace_period', 12, true);
+
+INSERT INTO public.advent_calendar_doors (calendar_id, position, name, image_url, duration_minutes, opening_message, passphrase, upload_min, upload_max, upload_distribution, freeleech_tokens_min, freeleech_tokens_max, invitations_min, invitations_max, bonus_points_min, bonus_points_max, bonus_points_distribution)
+SELECT currval('advent_calendars_id_seq'), day, 'Day ' || day,
+    (ARRAY[
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2d/Botanical_Garden_Aarhus_snow_and_sunshine_Christmas_Eve_2021_01.jpg/330px-Botanical_Garden_Aarhus_snow_and_sunshine_Christmas_Eve_2021_01.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d2/Bournemouth%2C_Christmas_tree_in_the_snow_-_geograph.org.uk_-_2200060.jpg/330px-Bournemouth%2C_Christmas_tree_in_the_snow_-_geograph.org.uk_-_2200060.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/55/Christmas_Lights_on_a_Snow_Covered_Fence.jpg/330px-Christmas_Lights_on_a_Snow_Covered_Fence.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c6/Christmas_Snow_-_geograph.org.uk_-_3699398.jpg/330px-Christmas_Snow_-_geograph.org.uk_-_3699398.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b8/Christmas_Tree%2C_Snow%2C_Oppenheim.jpg/330px-Christmas_Tree%2C_Snow%2C_Oppenheim.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/Christmas_snow_-_geograph.org.uk_-_2114445.jpg/330px-Christmas_snow_-_geograph.org.uk_-_2114445.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/Footprints_in_the_snow_-_Merry_Christmas%5E_-_geograph.org.uk_-_3788633.jpg/330px-Footprints_in_the_snow_-_Merry_Christmas%5E_-_geograph.org.uk_-_3788633.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/01/Labradoodle_wearing_a_Christmas_vest_in_the_snow_in_Uddevalla.jpg/330px-Labradoodle_wearing_a_Christmas_vest_in_the_snow_in_Uddevalla.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e9/Pre%C5%A1ov_-_Christmas_decorations_in_the_Pre%C5%A1ov_Old_Town_under_snow%2C_winter_%28December_2010%29.jpg/330px-Pre%C5%A1ov_-_Christmas_decorations_in_the_Pre%C5%A1ov_Old_Town_under_snow%2C_winter_%28December_2010%29.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1f/Snow_on_Christmas_Tree_-_geograph.org.uk_-_764713.jpg/330px-Snow_on_Christmas_Tree_-_geograph.org.uk_-_764713.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1d/Ulverston%27s_Christmas_Tree_in_the_snow_-_geograph.org.uk_-_7664535.jpg/330px-Ulverston%27s_Christmas_Tree_in_the_snow_-_geograph.org.uk_-_7664535.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f7/Cardiff_Castle_keep_with_Christmas_trees.jpg/330px-Cardiff_Castle_keep_with_Christmas_trees.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9b/Christmas_-_Currier_Winter_Pastime_13c_1976_issue_U.S._stamp.jpg/330px-Christmas_-_Currier_Winter_Pastime_13c_1976_issue_U.S._stamp.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/be/Christmas_stocking_stall_at_the_Christmas_Winter_Wonderland_in_Nottingham_-_geograph.org.uk_-_7653642.jpg/330px-Christmas_stocking_stall_at_the_Christmas_Winter_Wonderland_in_Nottingham_-_geograph.org.uk_-_7653642.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/23/Edinburgh%27s_Christmas_Winter_Wonderland_-_geograph.org.uk_-_1605790.jpg/330px-Edinburgh%27s_Christmas_Winter_Wonderland_-_geograph.org.uk_-_1605790.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/ba/Gediminas%27_Avenue_in_Vilnius_decorated_for_Christmas_in_winter_in_2022.jpg/330px-Gediminas%27_Avenue_in_Vilnius_decorated_for_Christmas_in_winter_in_2022.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/7/76/Glowing_Christmas_Tree_Lights_in_the_Winter_Night.jpg/330px-Glowing_Christmas_Tree_Lights_in_the_Winter_Night.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d1/Hard-christmas_model_streetlife-winter-01ASD.jpg/330px-Hard-christmas_model_streetlife-winter-01ASD.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b3/Hildesheimer_%26_Faulkner_Christmas_card_with_winter_scene.jpg/330px-Hildesheimer_%26_Faulkner_Christmas_card_with_winter_scene.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ac/Lustenau-naked_Tree_in_winter_with_christmas_bauble-01ESD.jpg/330px-Lustenau-naked_Tree_in_winter_with_christmas_bauble-01ESD.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/db/Schw%C3%A4bisch_Hall_in_winter.jpg/330px-Schw%C3%A4bisch_Hall_in_winter.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/da/Szent_Istv%C3%A1n_square%2C_Budapest_Christmas_Fair_and_Winter_Festival_%2831263619210%29.jpg/330px-Szent_Istv%C3%A1n_square%2C_Budapest_Christmas_Fair_and_Winter_Festival_%2831263619210%29.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e0/Winter_Scene_Christmas_Card.jpg/330px-Winter_Scene_Christmas_Card.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/7/71/Winter_landscape._Christmas_Eve%2C_1890.jpg/330px-Winter_landscape._Christmas_Eve%2C_1890.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e6/Winter_scene_Christmas_postcard.jpg/330px-Winter_scene_Christmas_postcard.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b7/Michalovce_-_N%C3%A1mestie_oslobodite%C4%BEov_-_The_central_square%2C_with_Christmas_market_stalls_and_Christmas_tree%2C_winter_%28December_2012%29_01.jpg/330px-Michalovce_-_N%C3%A1mestie_oslobodite%C4%BEov_-_The_central_square%2C_with_Christmas_market_stalls_and_Christmas_tree%2C_winter_%28December_2012%29_01.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/10/Michalovce_-_N%C3%A1mestie_oslobodite%C4%BEov_-_The_central_square%2C_with_Christmas_tree%2C_Christmas_stalls_and_Christmas_light_decorations%2C_winter_%28December_2016%29_01.jpg/330px-Michalovce_-_N%C3%A1mestie_oslobodite%C4%BEov_-_The_central_square%2C_with_Christmas_tree%2C_Christmas_stalls_and_Christmas_light_decorations%2C_winter_%28December_2016%29_01.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ce/Botanical_Garden_Aarhus_snow_and_sunshine_Christmas_Eve_2021_02.jpg/330px-Botanical_Garden_Aarhus_snow_and_sunshine_Christmas_Eve_2021_02.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Gediminas%27_Avenue_in_Vilnius_decorated_for_Christmas_in_winter_in_2022_%282%29.jpg/330px-Gediminas%27_Avenue_in_Vilnius_decorated_for_Christmas_in_winter_in_2022_%282%29.jpg',
+        'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3c/Hard-christmas_model_streetlife-winter-02ASD.jpg/330px-Hard-christmas_model_streetlife-winter-02ASD.jpg'
+    ])[day],
+    1440, 'Happy day ' || day || '!',
+    CASE WHEN day % 7 = 0 THEN 'arcadia' END,
+    1073741824, 10737418240, 'gaussian',
+    CASE WHEN day % 5 = 0 THEN 1 ELSE 0 END, CASE WHEN day % 5 = 0 THEN 3 ELSE 0 END,
+    CASE WHEN day = 30 THEN 1 ELSE 0 END, CASE WHEN day = 30 THEN 1 ELSE 0 END,
+    100, 10000, 'logarithmic'
+FROM generate_series(1, 30) AS day;
+
+--
 -- Name: affiliated_artists_id_seq; Type: SEQUENCE SET; Schema: public; Owner: arcadia
 --
 

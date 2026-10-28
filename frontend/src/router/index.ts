@@ -408,6 +408,14 @@ const router = createRouter({
       component: () => import('../views/ShopView.vue'),
     },
     {
+      path: '/advent-calendar',
+      name: 'AdventCalendar',
+      meta: {
+        documentTitle: 'Advent Calendar',
+      },
+      component: () => import('../views/AdventCalendarView.vue'),
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'NotFound',
       meta: {

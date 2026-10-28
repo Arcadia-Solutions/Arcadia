@@ -1,0 +1,113 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                WITH opening AS (\n                    INSERT INTO advent_calendar_door_openings (\n                        user_id, door_id, upload, download_removed, freeleech_tokens, invitations, bonus_points\n                    )\n                    SELECT\n                        $1,\n                        id,\n                        roll_advent_calendar_reward(upload_min, upload_max, upload_distribution),\n                        roll_advent_calendar_reward(download_removed_min, download_removed_max, download_removed_distribution),\n                        roll_advent_calendar_reward(freeleech_tokens_min, freeleech_tokens_max, freeleech_tokens_distribution)::INT,\n                        roll_advent_calendar_reward(invitations_min, invitations_max, invitations_distribution)::INT,\n                        roll_advent_calendar_reward(bonus_points_min, bonus_points_max, bonus_points_distribution)\n                    FROM advent_calendar_doors\n                    WHERE id = $2\n                    -- the primary key guarantees that concurrent requests only grant the rewards once\n                    ON CONFLICT DO NOTHING\n                    RETURNING *\n                ),\n                updated_user AS (\n                    UPDATE users\n                    SET\n                        uploaded = uploaded + opening.upload,\n                        downloaded = GREATEST(downloaded - opening.download_removed, 0),\n                        freeleech_tokens = users.freeleech_tokens + opening.freeleech_tokens,\n                        invitations = users.invitations + opening.invitations,\n                        bonus_points = users.bonus_points + opening.bonus_points\n                    FROM opening\n                    WHERE users.id = opening.user_id\n                ),\n                bonus_points_log AS (\n                    INSERT INTO bonus_points_logs (user_id, action, amount, item_id)\n                    SELECT user_id, $3, bonus_points, door_id\n                    FROM opening\n                    WHERE bonus_points > 0\n                )\n                SELECT\n                    doors.opening_message,\n                    opening.upload as \"upload!\",\n                    opening.download_removed as \"download_removed!\",\n                    opening.freeleech_tokens as \"freeleech_tokens!\",\n                    opening.invitations as \"invitations!\",\n                    opening.bonus_points as \"bonus_points!\"\n                FROM opening\n                JOIN advent_calendar_doors doors ON doors.id = opening.door_id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "opening_message",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_doors",
+            "name": "opening_message"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "upload!",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "upload"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "download_removed!",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "download_removed"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "freeleech_tokens!",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "freeleech_tokens"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "invitations!",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "invitations"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "bonus_points!",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "bonus_points"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4",
+        {
+          "Custom": {
+            "name": "bonus_points_log_action_enum",
+            "kind": {
+              "Enum": [
+                "snatch_cost_deduction",
+                "snatch_cost_received_as_uploader",
+                "snatch_cost_received_as_seeder",
+                "torrent_upload_reward",
+                "torrent_request_vote_spent",
+                "torrent_request_fill_reward",
+                "torrent_request_vote_refund",
+                "gift_sent",
+                "gift_received",
+                "seedtime_reward",
+                "side_effect_reward",
+                "shop_purchase_upload",
+                "shop_purchase_freeleech_tokens",
+                "shop_purchase_promotion",
+                "advent_calendar_door_reward"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "64932336e980f48437bb751363a87d4df942921e7f1144e1b8fb5b7b0dc851c5"
+}

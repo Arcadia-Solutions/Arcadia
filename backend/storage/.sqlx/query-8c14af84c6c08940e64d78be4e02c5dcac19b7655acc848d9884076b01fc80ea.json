@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT calendars.button_text\n                FROM advent_calendars calendars\n                WHERE calendars.published = TRUE\n                    AND calendars.starts_at <= $1\n                    AND calendars.starts_at + INTERVAL '1 minute' * (\n                        SELECT COALESCE(SUM(doors.duration_minutes), 0)\n                        FROM advent_calendar_doors doors\n                        WHERE doors.calendar_id = calendars.id\n                    ) > $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "button_text",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "button_text"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "8c14af84c6c08940e64d78be4e02c5dcac19b7655acc848d9884076b01fc80ea"
+}

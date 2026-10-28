@@ -2,6 +2,7 @@ use crate::Arcadia;
 use actix_web::{web::Data, HttpResponse};
 use arcadia_common::error::Result;
 use arcadia_storage::{models::arcadia_settings::PublicArcadiaSettings, redis::RedisPoolInterface};
+use chrono::Utc;
 
 #[utoipa::path(
     get,
@@ -17,6 +18,10 @@ use arcadia_storage::{models::arcadia_settings::PublicArcadiaSettings, redis::Re
 )]
 pub async fn exec<R: RedisPoolInterface + 'static>(arc: Data<Arcadia<R>>) -> Result<HttpResponse> {
     let settings = arc.settings.lock().unwrap().clone();
+    let running_advent_calendar_button_text = arc
+        .pool
+        .find_running_advent_calendar_button_text(Utc::now())
+        .await?;
     Ok(HttpResponse::Ok().json(PublicArcadiaSettings {
         global_download_factor: settings.global_download_factor,
         global_upload_factor: settings.global_upload_factor,
@@ -38,5 +43,6 @@ pub async fn exec<R: RedisPoolInterface + 'static>(arc: Data<Arcadia<R>>) -> Res
         custom_js_code: settings.custom_js_code,
         custom_footer: settings.custom_footer,
         uploads_disabled: settings.uploads_disabled,
+        running_advent_calendar_button_text,
     }))
 }

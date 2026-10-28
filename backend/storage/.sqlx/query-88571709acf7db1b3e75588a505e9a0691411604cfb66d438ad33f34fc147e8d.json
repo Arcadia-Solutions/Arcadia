@@ -1,0 +1,89 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    openings.door_id,\n                    openings.upload,\n                    openings.download_removed,\n                    openings.freeleech_tokens,\n                    openings.invitations,\n                    openings.bonus_points\n                FROM advent_calendar_door_openings openings\n                JOIN advent_calendar_doors doors ON doors.id = openings.door_id\n                WHERE openings.user_id = $1 AND doors.calendar_id = $2\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "door_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "door_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "upload",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "upload"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "download_removed",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "download_removed"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "freeleech_tokens",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "freeleech_tokens"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "invitations",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "invitations"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "bonus_points",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "bonus_points"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "88571709acf7db1b3e75588a505e9a0691411604cfb66d438ad33f34fc147e8d"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                DELETE FROM advent_calendar_door_openings openings\n                USING advent_calendar_doors doors\n                WHERE doors.id = openings.door_id\n                    AND openings.user_id = $1\n                    AND doors.calendar_id = $2\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "64f34ee44706884a31ebd1580b804a2143eb6e56ebce3b8b08bb7264c7b212b4"
+}

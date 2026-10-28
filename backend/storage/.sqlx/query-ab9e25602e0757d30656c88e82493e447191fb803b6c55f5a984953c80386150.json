@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT openings.user_id AS \"user_id!\"\n                FROM advent_calendar_door_openings openings\n                JOIN advent_calendar_doors doors ON doors.id = openings.door_id\n                JOIN users u ON u.id = openings.user_id AND u.banned = FALSE\n                WHERE doors.calendar_id = $1\n                  AND (CARDINALITY($3::TEXT[]) = 0 OR doors.name = ANY($3))\n                GROUP BY openings.user_id\n                HAVING COUNT(*) >= $2\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id!",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "user_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int8",
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "ab9e25602e0757d30656c88e82493e447191fb803b6c55f5a984953c80386150"
+}

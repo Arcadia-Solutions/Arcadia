@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                DELETE FROM advent_calendar_doors\n                WHERE calendar_id = $1 AND id <> ALL($2)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "378846dc9406de31128f2720c41d4b7afda24adfc78ae5f8d3f216864b88e556"
+}

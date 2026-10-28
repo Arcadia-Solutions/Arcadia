@@ -42,6 +42,7 @@ onMounted(() => {
     'create_donation',
     'search_donation',
     'search_unauthorized_access',
+    'manage_advent_calendars',
   ]
   if (permissionsToSeeStaffDashboard.some((x: UserPermission) => userStore.permissions.includes(x))) {
     menuItems.value.push({ label: 'Staff Dashboard', route: '/staff-dashboard' })

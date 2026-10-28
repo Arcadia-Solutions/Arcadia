@@ -29,6 +29,7 @@
           { value: UserBadgeType.TorrentsUploaded, label: t('user_badge.type_torrents_uploaded') },
           { value: UserBadgeType.ForumPosts, label: t('user_badge.type_forum_posts') },
           { value: UserBadgeType.ForumThreads, label: t('user_badge.type_forum_threads') },
+          { value: UserBadgeType.AdventCalendarDoors, label: t('user_badge.type_advent_calendar_doors') },
         ]"
         optionLabel="label"
         optionValue="value"
@@ -98,28 +99,56 @@
       </FloatLabel>
     </template>
 
+    <template v-else-if="badge.badge_type === UserBadgeType.AdventCalendarDoors && adventCalendarDoorsCriteria">
+      <h3>{{ t('user_badge.criteria') }}</h3>
+      <FloatLabel>
+        <Select
+          v-model="adventCalendarDoorsCriteria.calendar_id"
+          :options="adventCalendars"
+          optionLabel="name"
+          optionValue="id"
+          size="small"
+          style="width: 100%"
+        />
+        <label>{{ t('user_badge.advent_calendar') }}</label>
+      </FloatLabel>
+      <FloatLabel>
+        <InputNumber v-model="adventCalendarDoorsCriteria.minimum_opened_door_amount" :min="1" />
+        <label>{{ t('user_badge.minimum_opened_door_amount') }}</label>
+      </FloatLabel>
+      <FloatLabel>
+        <MultiSelect v-model="adventCalendarDoorsCriteria.door_names" :options="adventCalendarDoorNames" filter size="small" style="width: 100%" />
+        <label>{{ t('user_badge.door_names') }}</label>
+      </FloatLabel>
+    </template>
+
     <div class="wrapper-center" style="margin-top: 20px">
-      <Button :label="t('general.confirm')" size="small" :loading="loading" @click="save()" />
+      <Button :label="t('general.confirm')" size="small" :loading="loading" :disabled="adventCalendarDoorsCriteria?.calendar_id === 0" @click="save()" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { FloatLabel, InputText, InputNumber, Textarea, Checkbox, Button, Select } from 'primevue'
-import { ref, computed, onMounted, toRaw } from 'vue'
+import { FloatLabel, InputText, InputNumber, Textarea, Checkbox, Button, Select, MultiSelect } from 'primevue'
+import { ref, computed, onMounted, toRaw, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   createUserBadge,
   editUserBadge,
+  getAdventCalendar,
+  listAdventCalendars,
   UserBadgeType,
   UserBadgeCriteriaOneOfTypeEnum,
   UserBadgeCriteriaOneOf1TypeEnum,
   UserBadgeCriteriaOneOf2TypeEnum,
+  UserBadgeCriteriaOneOf3TypeEnum,
+  type AdventCalendarLite,
   type UserBadge,
   type UserBadgeCategory,
   type UserBadgeCriteriaOneOf,
   type UserBadgeCriteriaOneOf1,
   type UserBadgeCriteriaOneOf2,
+  type UserBadgeCriteriaOneOf3,
   type UserCreatedUserBadge,
   type TorrentSearch,
 } from '@/services/api-schema'
@@ -180,6 +209,32 @@ const forumPostsCriteria = computed<UserBadgeCriteriaOneOf1 | null>(() =>
 const forumThreadsCriteria = computed<UserBadgeCriteriaOneOf2 | null>(() =>
   badge.value.badge_type === UserBadgeType.ForumThreads ? (badge.value.criteria as UserBadgeCriteriaOneOf2) : null,
 )
+const adventCalendarDoorsCriteria = computed<UserBadgeCriteriaOneOf3 | null>(() =>
+  badge.value.badge_type === UserBadgeType.AdventCalendarDoors ? (badge.value.criteria as UserBadgeCriteriaOneOf3) : null,
+)
+
+// only fetched when needed, listing the calendars requires the permission to manage them
+const adventCalendars = ref<AdventCalendarLite[]>([])
+watch(adventCalendarDoorsCriteria, (criteria) => {
+  if (criteria && adventCalendars.value.length === 0) {
+    listAdventCalendars().then((calendars) => (adventCalendars.value = calendars))
+  }
+})
+
+const adventCalendarDoorNames = ref<string[]>([])
+watch(
+  () => adventCalendarDoorsCriteria.value?.calendar_id,
+  (calendarId, previousCalendarId) => {
+    adventCalendarDoorNames.value = []
+    // the names of the previous calendar's doors are invalid, unless the badge is just being loaded for edition
+    if (previousCalendarId !== undefined && adventCalendarDoorsCriteria.value) {
+      adventCalendarDoorsCriteria.value.door_names = []
+    }
+    if (calendarId) {
+      getAdventCalendar(calendarId).then((calendar) => (adventCalendarDoorNames.value = calendar.doors.map((door) => door.name)))
+    }
+  },
+)
 
 const forumPostsSubstringProxy = computed({
   get: () => forumPostsCriteria.value?.required_substring ?? '',
@@ -219,6 +274,14 @@ const onTypeChanged = (newType: typeof badge.value.badge_type) => {
       minimum_thread_amount: 1,
       minimum_thread_name_character_count: 0,
       required_substring: null,
+    }
+    badge.value.criteria = c
+  } else if (newType === UserBadgeType.AdventCalendarDoors) {
+    const c: UserBadgeCriteriaOneOf3 = {
+      type: UserBadgeCriteriaOneOf3TypeEnum.AdventCalendarDoors,
+      calendar_id: adventCalendars.value[0]?.id ?? 0,
+      minimum_opened_door_amount: 1,
+      door_names: [],
     }
     badge.value.criteria = c
   }

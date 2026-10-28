@@ -1,0 +1,166 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    calendars.id,\n                    calendars.created_at,\n                    calendars.created_by_id,\n                    calendars.name,\n                    calendars.starts_at,\n                    calendars.top_message,\n                    calendars.button_text,\n                    calendars.staff_notes,\n                    calendars.late_opening_policy as \"late_opening_policy: AdventCalendarLateOpeningPolicy\",\n                    calendars.late_opening_grace_hours,\n                    calendars.published,\n                    COALESCE(\n                        (\n                            SELECT jsonb_agg(doors ORDER BY doors.position)\n                            FROM advent_calendar_doors doors\n                            WHERE doors.calendar_id = calendars.id\n                        ),\n                        '[]'\n                    ) as \"doors!: Json<Vec<AdventCalendarDoor>>\"\n                FROM advent_calendars calendars\n                WHERE calendars.id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "created_by_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "created_by_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "starts_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "starts_at"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "top_message",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "top_message"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "button_text",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "button_text"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "staff_notes",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "staff_notes"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "late_opening_policy: AdventCalendarLateOpeningPolicy",
+        "type_info": {
+          "Custom": {
+            "name": "advent_calendar_late_opening_policy_enum",
+            "kind": {
+              "Enum": [
+                "during_door_window",
+                "grace_period",
+                "until_event_end"
+              ]
+            }
+          }
+        },
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "late_opening_policy"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "late_opening_grace_hours",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "late_opening_grace_hours"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "published",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "published"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "doors!: Json<Vec<AdventCalendarDoor>>",
+        "type_info": "Jsonb",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "63fd361237ec6616b33c05917ec2cd056e4153b3058c6b0ddcd891fa48ec9a4a"
+}

@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    calendars.id,\n                    calendars.name,\n                    calendars.starts_at,\n                    calendars.published,\n                    COUNT(doors.id) as \"door_count!\",\n                    COALESCE(SUM(doors.duration_minutes), 0)::BIGINT as \"total_duration_minutes!\"\n                FROM advent_calendars calendars\n                LEFT JOIN advent_calendar_doors doors ON doors.calendar_id = calendars.id\n                GROUP BY calendars.id\n                ORDER BY calendars.starts_at DESC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "starts_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "starts_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "published",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "advent_calendars",
+            "name": "published"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "door_count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "total_duration_minutes!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "f7f98c4eeea6d68dceb1d5b3f78f1c4704fa9ac9ea117481411e826388d345ee"
+}

@@ -37,6 +37,7 @@
         </Tab>
         <Tab value="userBadges" v-if="canManageUserBadges">{{ t('user_badge.user_badge', 2) }}</Tab>
         <Tab value="siteHighlights" v-if="userStore.permissions.includes('manage_site_highlights')">{{ t('site_highlights.site_highlights', 2) }}</Tab>
+        <Tab value="adventCalendars" v-if="userStore.permissions.includes('manage_advent_calendars')">{{ t('advent_calendar.advent_calendar', 2) }}</Tab>
         <Tab value="maintenanceTools" v-if="userStore.permissions.includes('use_maintenance_tools')">{{ t('maintenance_tools.maintenance_tools') }}</Tab>
       </TabList>
       <!-- tabs are loaded only if they are focused -->
@@ -95,6 +96,9 @@
         <TabPanel value="siteHighlights" v-if="userStore.permissions.includes('manage_site_highlights') && currentTab === 'siteHighlights'">
           <SiteHighlightsManager />
         </TabPanel>
+        <TabPanel value="adventCalendars" v-if="userStore.permissions.includes('manage_advent_calendars') && currentTab === 'adventCalendars'">
+          <AdventCalendarsManager />
+        </TabPanel>
         <TabPanel value="maintenanceTools" v-if="userStore.permissions.includes('use_maintenance_tools') && currentTab === 'maintenanceTools'">
           <MaintenanceTools />
         </TabPanel>
@@ -124,6 +128,7 @@ import TitleGroupAppliedTagsTable from '@/components/staff/TitleGroupAppliedTags
 import UserBadgesTable from '@/components/staff/UserBadgesTable.vue'
 import SiteHighlightsManager from '@/components/staff/SiteHighlightsManager.vue'
 import MaintenanceTools from '@/components/staff/MaintenanceTools.vue'
+import AdventCalendarsManager from '@/components/staff/AdventCalendarsManager.vue'
 import { type UserPermission } from '@/services/api-schema'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'

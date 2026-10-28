@@ -185,3 +185,33 @@ async fn test_bonus_points_rewarded_per_seeding_client(pool: PgPool) {
 
     assert_eq!(user_100_bonus.0, 7); // 3 + 4 = 7
 }
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_title_group",
+        "with_test_edition_group",
+        "with_test_torrent",
+        "with_test_bonus_points",
+        "with_test_torrent_not_staff_checked"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_bonus_points_only_rewarded_for_staff_checked_torrents(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+
+    // torrent 2 is not checked by staff, only torrent 1 rewards bonus points
+    let formula_sql =
+        formula_to_sql("seedtime / 100 + size / 100000000 - seeders", "t.seeders").unwrap();
+    update_seedtime_and_bonus_points(Arc::clone(&pool), 0, formula_sql)
+        .await
+        .unwrap();
+
+    let pg_pool: &PgPool = (*pool).borrow();
+    let user_100_bonus: (i64,) = sqlx::query_as("SELECT bonus_points FROM users WHERE id = 100")
+        .fetch_one(pg_pool)
+        .await
+        .unwrap();
+
+    assert_eq!(user_100_bonus.0, 1);
+}

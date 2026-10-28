@@ -42,7 +42,8 @@ pub async fn update_seedtime_and_bonus_points(
                     ELSE 1
                 END AS bonus
             FROM torrent_activities ta
-            INNER JOIN torrents t ON ta.torrent_id = t.id
+            -- only torrents checked by staff reward bonus points
+            INNER JOIN torrents t ON ta.torrent_id = t.id AND t.staff_checked
             INNER JOIN LATERAL (
                 SELECT COUNT(*) AS active_seeding_clients
                 FROM peers p

@@ -275,6 +275,9 @@ pub enum Error {
     #[error("torrent file invalid")]
     TorrentFileInvalid,
 
+    #[error("torrent is too large, the maximum size is {0} bytes")]
+    TorrentTooLarge(u64),
+
     #[error("dottorrent file not found")]
     DottorrentFileNotFound,
 
@@ -854,6 +857,7 @@ impl actix_web::ResponseError for Error {
             | Error::WrongUsernameOrPassword
             | Error::InvalidOrExpiredPasswordResetToken
             | Error::TorrentFileInvalid
+            | Error::TorrentTooLarge(_)
             | Error::InvalidUserIdOrTorrentId
             | Error::ForumThreadNameEmpty
             | Error::ForumPollQuestionEmpty

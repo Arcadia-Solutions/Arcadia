@@ -91,6 +91,9 @@ pub struct ApiConfig {
     pub http_proxy: Option<String>,
     /// Biggest `page_size` accepted on the paginated endpoints. Bigger values are capped to it.
     pub max_page_size: u32,
+    /// Biggest torrent accepted on upload, in bytes. The size is declared by the uploader in the
+    /// .torrent file, and is used to compute the bonus points rewarded for seeding.
+    pub max_torrent_size_bytes: u64,
     #[serde(default)]
     pub ip_check_providers: IpCheckProvidersConfig,
 }

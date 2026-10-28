@@ -64,6 +64,7 @@ impl ConnectionPool {
         bonus_points_given_on_upload: i64,
         bonus_points_snatch_cost: i64,
         torrent_max_release_date_allowed: Option<NaiveDate>,
+        max_torrent_size_bytes: u64,
         torrent_source_tag: Option<&str>,
         notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<Torrent> {
@@ -148,11 +149,13 @@ impl ConnectionPool {
                 acc
             }));
 
+        // the size is declared by the uploader and feeds the bonus points rewards, so it is bounded
         let size = metainfo
             .info()
             .files()
-            .map(|file| file.length())
-            .sum::<u64>() as i64;
+            .try_fold(0u64, |total, file| total.checked_add(file.length()))
+            .filter(|size| *size <= max_torrent_size_bytes)
+            .ok_or(Error::TorrentTooLarge(max_torrent_size_bytes))? as i64;
 
         let uploaded_torrent = sqlx::query_as::<_, Torrent>(create_torrent_query)
             .bind(torrent_form.edition_group_id.0)
@@ -1516,7 +1519,7 @@ impl ConnectionPool {
             TorrentActivityOrderByColumn::TorrentSeeders => "tgh.torrent_seeders".to_string(),
             TorrentActivityOrderByColumn::BonusPoints => "ta.bonus_points".to_string(),
             TorrentActivityOrderByColumn::BonusPointsPerDay => format!(
-                "COALESCE((SELECT ROUND({formula})::bigint FROM torrents t INNER JOIN peers p ON p.torrent_id = t.id AND p.user_id = ta.user_id WHERE t.id = ta.torrent_id AND p.seeder = true AND p.active = true LIMIT 1), 0)",
+                "COALESCE((SELECT ROUND({formula})::bigint FROM torrents t INNER JOIN peers p ON p.torrent_id = t.id AND p.user_id = ta.user_id WHERE t.id = ta.torrent_id AND t.staff_checked AND p.seeder = true AND p.active = true LIMIT 1), 0)",
                 formula = formula_sql
             ),
         };
@@ -1786,7 +1789,7 @@ impl ConnectionPool {
                        (SELECT ROUND({formula})::bigint * $3
                         FROM torrents t
                         INNER JOIN peers p ON p.torrent_id = t.id AND p.user_id = ta.user_id
-                        WHERE t.id = ta.torrent_id AND p.seeder = true AND p.active = true
+                        WHERE t.id = ta.torrent_id AND t.staff_checked AND p.seeder = true AND p.active = true
                         LIMIT 1),
                        0
                    ) AS bonus_points_per_day
@@ -1866,7 +1869,7 @@ impl ConnectionPool {
             FROM torrent_activities ta
             INNER JOIN torrents t ON ta.torrent_id = t.id
             INNER JOIN peers p ON p.torrent_id = t.id AND p.user_id = ta.user_id
-            WHERE p.seeder = true AND p.active = true AND ta.user_id = $1
+            WHERE t.staff_checked AND p.seeder = true AND p.active = true AND ta.user_id = $1
             "#,
             formula = formula_sql
         );

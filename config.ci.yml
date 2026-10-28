@@ -16,6 +16,7 @@ api:
   jwt_secret: 84e3c25ceba3d3d70e2417def99776ba017996e8ce54d8b88021c38ea27badee
   frontend_url: https://site.com
   max_page_size: 100
+  max_torrent_size_bytes: 1099511627776
 
 tracker:
   name: Arcadia

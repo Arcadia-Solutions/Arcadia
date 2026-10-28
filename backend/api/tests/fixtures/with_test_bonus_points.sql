@@ -1,8 +1,9 @@
 -- Update torrents with known size and seeders for predictable formula results
 -- Torrent 1: size=100MB, seeders=2
 -- Torrent 2: size=200MB, seeders=1
-UPDATE torrents SET size = 100000000, seeders = 2 WHERE id = 1;
-UPDATE torrents SET size = 200000000, seeders = 1 WHERE id = 2;
+-- only torrents checked by staff reward bonus points
+UPDATE torrents SET size = 100000000, seeders = 2, staff_checked = true WHERE id = 1;
+UPDATE torrents SET size = 200000000, seeders = 1, staff_checked = true WHERE id = 2;
 
 -- Torrent activities for bonus points test
 -- User 100 seeds torrent 1 (200 sec) and torrent 2 (300 sec)

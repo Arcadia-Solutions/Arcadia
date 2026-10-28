@@ -62,6 +62,8 @@ api:
   # Biggest page_size accepted on the paginated endpoints. Requests asking for more get this
   # amount of results instead.
   max_page_size: 100
+  # Biggest torrent accepted on upload, in bytes (1 TiB here).
+  max_torrent_size_bytes: 1099511627776
 
   # Optional: TMDB API, for movie and TV metadata. Signup on themoviedb.org
   # tmdb_api_key: your_tmdb_api_key

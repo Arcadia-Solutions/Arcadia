@@ -24,7 +24,20 @@ impl ConnectionPool {
             return Err(Error::VoteBountyRequired);
         }
 
-        let current_user = self.find_user_with_id(user_id).await?;
+        let mut tx = self.pool.begin().await?;
+
+        // the balance is locked until the debit commits, so that concurrent votes
+        // can not all be checked against the same balance
+        let current_user = sqlx::query!(
+            r#"
+                SELECT id, uploaded, bonus_points FROM users
+                WHERE id = $1
+                FOR UPDATE
+            "#,
+            user_id
+        )
+        .fetch_one(&mut *tx)
+        .await?;
         if current_user.bonus_points - torrent_request_vote.bounty_bonus_points < 0 {
             return Err(Error::InsufficientBonusPointsForBounty);
         }
@@ -33,8 +46,6 @@ impl ConnectionPool {
         }
         // TODO config: check if the bounty is above the minimum set in the config
         // TODO config: check if the user's ratio stays above the minimum ratio set in the config (after the uploaded amount changes)
-
-        let mut tx = self.pool.begin().await?;
 
         let created_torrent_request_vote = sqlx::query_as!(
             TorrentRequestVote,

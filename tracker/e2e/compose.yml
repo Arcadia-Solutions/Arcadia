@@ -1,4 +1,5 @@
-# Driven by run.sh, which sets WORK_DIR and the client image variables
+# Driven by run.sh, which sets WORK_DIR, the client image variables and a project name per test,
+# so that tests can run in parallel
 name: arcadia-tracker-e2e
 
 services:
@@ -14,6 +15,8 @@ services:
       retries: 30
 
   init_db:
+    # named, so that the image built once by run.sh is shared by the projects of every test
+    image: arcadia-tracker-e2e-init-db
     build:
       context: ../../
       dockerfile: backend/api/Dockerfile
@@ -29,6 +32,7 @@ services:
         condition: service_healthy
 
   tracker:
+    image: arcadia-tracker-e2e-tracker
     build:
       context: ../../
       dockerfile: tracker/arcadia_tracker/Dockerfile
@@ -55,7 +59,7 @@ services:
       - ${WORK_DIR}/seeder/config:/config
       - ${WORK_DIR}/seeder/downloads:/downloads
     ports:
-      - 127.0.0.1:18080:8080
+      - 127.0.0.1::8080
 
   leecher:
     image: ${CLIENT_IMAGE}
@@ -64,7 +68,7 @@ services:
       - ${WORK_DIR}/leecher/config:/config
       - ${WORK_DIR}/leecher/downloads:/downloads
     ports:
-      - 127.0.0.1:18081:8080
+      - 127.0.0.1::8080
 
   leecher2:
     image: ${CLIENT_IMAGE}
@@ -73,4 +77,4 @@ services:
       - ${WORK_DIR}/leecher2/config:/config
       - ${WORK_DIR}/leecher2/downloads:/downloads
     ports:
-      - 127.0.0.1:18082:8080
+      - 127.0.0.1::8080

@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # End to end tests of the tracker with real torrent clients, one test per supported client version.
 # usage: ./run.sh [test name...]   (all tests when none is given)
+# Tests run in parallel, JOBS of them at a time (default: the amount of CPUs), each in its own
+# compose project, and their logs are kept in LOG_DIR (default: a new temporary directory).
 set -euo pipefail
+SELF=$(realpath "$0")
 cd "$(dirname "$0")"
 
 FIXTURES=../arcadia_tracker/tests/fixtures
@@ -73,7 +76,7 @@ setup() {
     cat "$FIXTURES/with_test_title_group.sql" "$FIXTURES/with_test_edition_group.sql" \
         "$FIXTURES/with_test_torrent.sql" seed.sql |
         compose exec -T db psql -q -v ON_ERROR_STOP=1 -v info_hash="$INFO_HASH" -v size="$SIZE" -U arcadia -d arcadia
-    compose up -d --wait --build tracker
+    compose up -d --wait tracker
 }
 
 teardown() {
@@ -84,7 +87,6 @@ teardown() {
     compose down -v --remove-orphans >/dev/null 2>&1 || true
     [ -n "${WORK_DIR:-}" ] && rm -rf "$WORK_DIR"
 }
-trap teardown EXIT
 
 # What the tracker recorded for a user has to match what its client announced, whatever the
 # client did: every peer session (a new peer_id per client restart) is counted once, from the last
@@ -142,7 +144,9 @@ assert_payload() {
 
 ### qBittorrent (official qbittorrent-nox image)
 
-declare -A QBT_PORTS=([seeder]=18080 [leecher]=18081 [leecher2]=18082)
+# Host port of the web API of each client, published on a random port and looked up whenever the
+# client (re)starts
+declare -A QBT_PORTS=()
 
 qbt() {
     local role=$1 endpoint=$2
@@ -152,7 +156,8 @@ qbt() {
 
 qbt_wait_ready() {
     for _ in $(seq 60); do
-        qbt "$1" app/version >/dev/null 2>&1 && return 0
+        QBT_PORTS[$1]=$(compose port "$1" 8080 2>/dev/null | cut -d: -f2)
+        [ -n "${QBT_PORTS[$1]}" ] && qbt "$1" app/version >/dev/null 2>&1 && return 0
         sleep 1
     done
     fail "$1 web API not reachable"
@@ -321,10 +326,61 @@ test_qbittorrent() {
 
 ### Tests, one per supported client version
 
+# Latest patch of each minor version with an official image, older ones have none
+qbittorrent-4.4.5() { test_qbittorrent 4.4.5-1; }
+qbittorrent-4.5.5() { test_qbittorrent 4.5.5-1; }
 qbittorrent-4.6.7() { test_qbittorrent 4.6.7-1; }
+qbittorrent-5.0.5() { test_qbittorrent 5.0.5-1; }
+qbittorrent-5.1.4() { test_qbittorrent 5.1.4-2; }
+qbittorrent-5.2.4() { test_qbittorrent 5.2.4-1; }
 qbittorrent-5.3.0() { test_qbittorrent 5.3.0-2; }
 
-TESTS=(qbittorrent-4.6.7 qbittorrent-5.3.0)
-for test in "${@:-${TESTS[@]}}"; do
-    "$test"
+TESTS=(
+    qbittorrent-4.4.5 qbittorrent-4.5.5 qbittorrent-4.6.7
+    qbittorrent-5.0.5 qbittorrent-5.1.4 qbittorrent-5.2.4 qbittorrent-5.3.0
+)
+# A single test, started by the loop below
+if [ -n "${E2E_TEST:-}" ]; then
+    trap teardown EXIT
+    # so that the teardown also runs when the parent gets interrupted
+    trap 'exit 1' INT TERM
+    "$E2E_TEST"
+    exit
+fi
+
+# Built once here, the projects of the tests only use the images
+WORK_DIR=$(mktemp -d)
+touch "$WORK_DIR/tracker.env"
+CLIENT_IMAGE=unused compose build init_db tracker
+rm -rf "$WORK_DIR"
+WORK_DIR=""
+
+LOG_DIR=${LOG_DIR:-$(mktemp -d)}
+mkdir -p "$LOG_DIR"
+echo "logs in $LOG_DIR"
+trap 'kill $(jobs -p) 2>/dev/null; wait' INT TERM
+
+declare -A PIDS=()
+RUN=("${@:-${TESTS[@]}}")
+for test in "${RUN[@]}"; do
+    while [ "$(jobs -rp | wc -l)" -ge "${JOBS:-$(nproc)}" ]; do
+        wait -n || true
+    done
+    E2E_TEST=$test COMPOSE_PROJECT_NAME=arcadia-tracker-e2e-${test//./-} "$SELF" >"$LOG_DIR/$test.log" 2>&1 &
+    PIDS[$test]=$!
 done
+
+failed=()
+for test in "${RUN[@]}"; do
+    if wait "${PIDS[$test]}"; then
+        echo "ok    $test"
+    else
+        echo "FAIL  $test"
+        failed+=("$test")
+    fi
+done
+for test in "${failed[@]}"; do
+    echo "===== $test" >&2
+    cat "$LOG_DIR/$test.log" >&2
+done
+[ ${#failed[@]} -eq 0 ]

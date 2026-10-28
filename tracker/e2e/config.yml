@@ -1,7 +1,7 @@
 database: { host: db, port: 5432, user: arcadia, password: password, name: arcadia }
 tracker:
   api_key: e2e_api_key_at_least_32_characters_long
-  allowed_torrent_clients: [qB46, qB53]
+  allowed_torrent_clients: [qB44, qB45, qB46, qB50, qB51, qB52, qB53]
   # clients get a random interval in announce_min..announce_max and the tests force reannounces,
   # min interval 1 and no enforced minimum so that forced reannounces are accepted right away
   announce_min: 1

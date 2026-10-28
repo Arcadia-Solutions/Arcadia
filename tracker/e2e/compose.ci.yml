@@ -8,5 +8,9 @@ services:
 
   tracker:
     build:
+      # the cached artifacts are reused on runners with other CPUs, target-cpu=native crashes
+      # them with SIGILL
+      args:
+        RUSTFLAGS: "-C target-cpu=x86-64"
       cache_from: ["type=gha,scope=tracker-e2e-tracker"]
       cache_to: ["type=gha,mode=max,scope=tracker-e2e-tracker"]

@@ -6,13 +6,14 @@
     <TabPanels>
       <TabPanel v-for="(link, i) in links" :key="link" :value="i">
         <iframe
-          v-if="isYoutubeLink(link) || unplayableLinks.includes(link)"
+          v-if="isYoutubeLink(link)"
           style="width: 100%; aspect-ratio: 16 / 9; border: 0"
           :src="link"
           allowfullscreen
           referrerpolicy="strict-origin-when-cross-origin"
         />
-        <video v-else style="width: 100%; aspect-ratio: 16 / 9" :src="link" controls preload="metadata" @error="unplayableLinks.push(link)" />
+        <!-- only youtube links are embedded, anything else must be a direct video link -->
+        <video v-else-if="isHttpLink(link)" style="width: 100%; aspect-ratio: 16 / 9" :src="link" controls preload="metadata" />
       </TabPanel>
     </TabPanels>
   </Tabs>
@@ -24,13 +25,9 @@ import TabList from 'primevue/tablist'
 import Tab from 'primevue/tab'
 import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
-import { ref } from 'vue'
-import { isYoutubeLink } from '@/services/helpers'
+import { isHttpLink, isYoutubeLink } from '@/services/helpers'
 
 defineProps<{
   links: string[]
 }>()
-
-// a link that is not a youtube one is played as a video file, and embedded in an iframe when it turns out not to be one
-const unplayableLinks = ref<string[]>([])
 </script>

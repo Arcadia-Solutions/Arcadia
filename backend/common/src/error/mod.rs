@@ -691,6 +691,9 @@ pub enum Error {
     #[error("image host not configured")]
     ImageHostNotConfigured,
 
+    #[error("invalid trailer url: {0}, only http(s) links are allowed")]
+    InvalidTrailerUrl(String),
+
     #[error("image host upload failed: {0}")]
     ImageHostUploadFailed(String),
 
@@ -868,6 +871,7 @@ impl actix_web::ResponseError for Error {
             | Error::InvalidUserClassName
             | Error::ImageHostNotApproved { .. }
             | Error::ImageHostNotConfigured
+            | Error::InvalidTrailerUrl(_)
             | Error::ContentReleasedAfterCutoff(_)
             | Error::VoteBountyRequired
             | Error::InvalidPassword(_)

@@ -38,3 +38,13 @@ pub fn validate_image_url(image_url: &str, approved_image_hosts: &[String]) -> R
         approved_hosts: approved_image_hosts.to_vec(),
     })
 }
+
+// trailers end up in a <video>/<iframe> src, any other scheme (javascript:, data:...) must never be stored
+pub fn validate_trailer_urls(trailer_urls: &[String]) -> Result<()> {
+    for trailer_url in trailer_urls {
+        if !Url::parse(trailer_url).is_ok_and(|url| matches!(url.scheme(), "http" | "https")) {
+            return Err(Error::InvalidTrailerUrl(trailer_url.clone()));
+        }
+    }
+    Ok(())
+}

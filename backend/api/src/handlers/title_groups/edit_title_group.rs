@@ -13,7 +13,9 @@ use arcadia_storage::{
 };
 
 use crate::{
-    middlewares::auth_middleware::Authdata, services::image_service::validate_image_urls, Arcadia,
+    middlewares::auth_middleware::Authdata,
+    services::image_service::{validate_image_urls, validate_trailer_urls},
+    Arcadia,
 };
 use arcadia_common::error::{Error, Result};
 
@@ -37,6 +39,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     let approved_image_hosts = arc.settings.lock().unwrap().approved_image_hosts.clone();
     validate_image_urls(&form.covers, &approved_image_hosts)?;
     validate_image_urls(&form.screenshots, &approved_image_hosts)?;
+    validate_trailer_urls(&form.trailers)?;
 
     let title_group = arc.pool.find_title_group(form.id).await?;
 

@@ -290,11 +290,20 @@ export const isValidUrl = (url: string) => {
 
 const youtubeHostnames = ['youtube.com', 'youtu.be', 'youtube-nocookie.com']
 
+export const isHttpLink = (url: string): boolean => {
+  try {
+    return ['http:', 'https:'].includes(new URL(url).protocol)
+  } catch {
+    return false
+  }
+}
+
 // a youtube link has to be embedded in an iframe, any other link is played as a video file
 export const isYoutubeLink = (url: string): boolean => {
   try {
     const hostname = new URL(url).hostname.toLowerCase().replace(/^(www|m)\./, '')
-    return youtubeHostnames.includes(hostname)
+    // the scheme is checked too, javascript://youtube.com/... would otherwise run in the iframe
+    return isHttpLink(url) && youtubeHostnames.includes(hostname)
   } catch {
     return false
   }

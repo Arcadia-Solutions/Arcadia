@@ -105,7 +105,14 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     let Some(code_challenge) = request
         .code_challenge
         .clone()
-        .filter(|challenge| !challenge.is_empty())
+        // an S256 challenge is always 43 base64url characters, anything else is refused
+        // before it is stored
+        .filter(|challenge| {
+            challenge.len() == 43
+                && challenge
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_')
+        })
         .filter(|_| request.code_challenge_method.as_deref() == Some("S256"))
     else {
         return redirect(&[

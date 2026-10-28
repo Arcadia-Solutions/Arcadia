@@ -1,7 +1,7 @@
 use bip_bencode::BRefAccess;
 use bip_bencode::{BDictAccess, BConvert, BencodeConvertError, BListAccess};
 
-use error::{ParseError, ParseResult};
+use error::{ParseError, ParseErrorKind, ParseResult};
 
 /// Struct implemented the BencodeConvert trait for decoding the metainfo file.
 struct MetainfoConverter;
@@ -106,10 +106,24 @@ pub fn parse_info_bencode<'a, B>(root_dict: &'a BDictAccess<B::BKey, B>) -> Pars
 
 // ----------------------------------------------------------------------------//
 
+/// Largest piece length accepted, torrent clients do not create bigger pieces.
+const MAXIMUM_PIECE_LENGTH: i64 = 256 * 1024 * 1024;
+
 /// Parses the piece length from the info dictionary.
+///
+/// The piece length sizes the buffers allocated when the torrent is rebuilt, so
+/// an unbounded value would abort the process on an impossible allocation.
 pub fn parse_piece_length<B>(info_dict: &BDictAccess<B::BKey, B>) -> ParseResult<u64>
     where B: BRefAccess {
-    CONVERT.lookup_and_convert_int(info_dict, PIECE_LENGTH_KEY).map(|len| len as u64)
+    let piece_length = try!(CONVERT.lookup_and_convert_int(info_dict, PIECE_LENGTH_KEY));
+
+    if piece_length <= 0 || piece_length > MAXIMUM_PIECE_LENGTH {
+        return Err(ParseError::from_kind(ParseErrorKind::InvalidData {
+            details: format!("piece length {} is out of range", piece_length),
+        }));
+    }
+
+    Ok(piece_length as u64)
 }
 
 /// Parses the pieces from the info dictionary.

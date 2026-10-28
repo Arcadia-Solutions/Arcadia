@@ -2122,3 +2122,21 @@ async fn test_torrent_search_and_user_activities_include_affiliated_artists(pool
     assert_eq!(affiliated_artists.len(), 1);
     assert_eq!(affiliated_artists[0].name, "The Beatles");
 }
+
+#[actix_web::test]
+async fn test_torrent_with_out_of_range_piece_length_is_rejected() {
+    // the piece length sizes allocations when the torrent is rebuilt, a huge one used to abort the process
+    let torrent_with_piece_length = |piece_length: &str| {
+        format!(
+            "d4:infod6:lengthi1e4:name4:file12:piece lengthi{piece_length}e6:pieces20:{}ee",
+            "a".repeat(20)
+        )
+    };
+
+    assert!(bip_metainfo::Metainfo::from_bytes(torrent_with_piece_length("16384")).is_ok());
+    for piece_length in ["4611686018427387904", "0", "-1"] {
+        assert!(
+            bip_metainfo::Metainfo::from_bytes(torrent_with_piece_length(piece_length)).is_err()
+        );
+    }
+}

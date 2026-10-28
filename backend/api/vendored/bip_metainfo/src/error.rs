@@ -24,5 +24,11 @@ error_chain! {
             description("Missing Data Detected In File")
             display("Missing Data Detected In File: {}", details)
         }
+        InvalidData {
+            details: String
+        } {
+            description("Invalid Data Detected In File")
+            display("Invalid Data Detected In File: {}", details)
+        }
     }
 }

@@ -35,11 +35,13 @@ fail() {
 }
 
 # Polls a query until it returns the expected value, running an optional command before each try
+# Long enough for Transmission 4.0, which ignores reannounce requests for 2 minutes after the
+# first announce of a torrent
 # usage: wait_sql <description> <query> <expected> [command...]
 wait_sql() {
     local description=$1 query=$2 expected=$3 actual=""
     shift 3
-    for _ in $(seq 60); do
+    for _ in $(seq 150); do
         [ $# -gt 0 ] && "$@"
         actual=$(sql "$query")
         [ "$actual" = "$expected" ] && return 0
@@ -56,11 +58,19 @@ user_value() { sql "SELECT $2 FROM users WHERE username = 'e2e_$1'"; }
 container_ip() { docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$(compose ps -q "$1")"; }
 torrent_counts_query="SELECT seeders || '/' || leechers || '/' || times_completed FROM torrents WHERE id = 1"
 
+# Clients may leave files the host user cannot delete (qBittorrent 4.4 ignores PUID and gives
+# them to its own user), so the content of WORK_DIR is deleted from a container
+remove_work_dir() {
+    [ -n "${WORK_DIR:-}" ] || return 0
+    docker run --rm -v "$WORK_DIR:/work" postgres:18 find /work -mindepth 1 -delete
+    rm -rf "$WORK_DIR"
+}
+
 # Starts the db and the tracker, with a fresh database and payload
 # usage: setup [tracker configuration override...]
 setup() {
     compose down -v --remove-orphans >/dev/null 2>&1 || true
-    [ -n "${WORK_DIR:-}" ] && rm -rf "$WORK_DIR"
+    remove_work_dir
     WORK_DIR=$(mktemp -d)
     mkdir -p "$WORK_DIR"/{seeder,leecher,leecher2}/{config,downloads}
     printf '%s\n' "$@" >"$WORK_DIR/tracker.env"
@@ -85,7 +95,7 @@ teardown() {
         compose logs tracker seeder leecher leecher2 >&2
     fi
     compose down -v --remove-orphans >/dev/null 2>&1 || true
-    [ -n "${WORK_DIR:-}" ] && rm -rf "$WORK_DIR"
+    remove_work_dir || true
 }
 
 # What the tracker recorded for a user has to match what its client announced, whatever the
@@ -119,13 +129,17 @@ assert_all_reported() {
     # that comes too early
     wait_sql "all uploads reported" "SELECT sum(real_uploaded) >= $leechers * $SIZE FROM users" t \
         client_reannounce "$@"
-    wait_sql "torrent seeders/leechers/times_completed" "$torrent_counts_query" "$counts"
+    # With SHORT_ACTIVE_PEER_TTL, peers get reaped 10 seconds after their last announce, so they
+    # all have to keep announcing to be counted at the same time. Transmission 4.0 only accepts
+    # a reannounce 2 minutes after the first announce of a session (a restarted leecher is a new one).
+    wait_sql "torrent seeders/leechers/times_completed" "$torrent_counts_query" "$counts" \
+        client_reannounce "$@"
     for role in "$@"; do
         assert_user_consistent "$role"
-        assert_eq "$role active peer" \
-            "$(sql "SELECT host(p.ip), p.port, p.seeder, p.left, starts_with(p.agent, '$agent_prefix')
-                    FROM peers p JOIN users u ON u.id = p.user_id WHERE u.username = 'e2e_$role' AND p.active")" \
-            "$(container_ip "$role")|6881|t|0|t"
+        wait_sql "$role active peer" \
+            "SELECT host(p.ip), p.port, p.seeder, p.left, starts_with(p.agent, '$agent_prefix')
+             FROM peers p JOIN users u ON u.id = p.user_id WHERE u.username = 'e2e_$role' AND p.active" \
+            "$(container_ip "$role")|6881|t|0|t" client reannounce "$role"
     done
     assert_eq "no announce errors" "$(sql "SELECT count(*) FROM announce_errors")" 0
 }
@@ -289,7 +303,9 @@ run_scenarios() {
     compose unpause leecher
     leecher_finish
     assert_all_reported "$agent_prefix" 2/0/1 seeder leecher
-    assert_seeder_leecher_bounds
+    # the requests of the frozen leecher time out, some clients (Transmission 4.0) request the same
+    # blocks again and get them twice
+    assert_seeder_leecher_bounds $((SIZE + MAX_TRANSFERRED))
 
     echo "=== $name: client not in the whitelist"
     setup 'ARCADIA_TRACKER__ALLOWED_TORRENT_CLIENTS=[XX]'
@@ -359,7 +375,21 @@ test_qbittorrent() {
 
 trc() { compose exec -T "$1" transmission-remote "${@:2}"; }
 
-tr_prepare() { cp settings.json "$WORK_DIR/$1/config/"; }
+# announce-ip, ignored by the tracker, makes Transmission send a single announce. Otherwise 4.0
+# sends one over IPv4 and one over IPv6, and without IPv6 it treats every announce as failed:
+# it retries every 20 seconds, ignores reannounce requests and hangs on shutdown.
+tr_prepare() {
+    cp settings.json "$WORK_DIR/$1/config/"
+    # A leecher reaped, then back on the same address, would be refused by a Transmission 4.0
+    # seeder:
+    # - over µTP, the seeder still holds the previous session, the connection times out and the
+    #   leecher gives up on the seeder
+    # - encrypted, when the tracker reports no leecher, the seeder takes every peer it knows for
+    #   a seed, and refuses the encrypted connections of seeds
+    if [[ $CLIENT_IMAGE == *:4.0.* ]]; then
+        sed -i '1a\    "utp-enabled": false,\n    "encryption": 0,' "$WORK_DIR/$1/config/settings.json"
+    fi
+}
 
 tr_wait_ready() {
     for _ in $(seq 60); do

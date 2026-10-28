@@ -2,6 +2,8 @@
     "dht-enabled": false,
     "lpd-enabled": false,
     "pex-enabled": false,
+    "announce-ip-enabled": true,
+    "announce-ip": "127.0.0.1",
     "peer-port": 6881,
     "port-forwarding-enabled": false,
     "download-dir": "/downloads",

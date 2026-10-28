@@ -1,5 +1,11 @@
 use serde_json::{json, Value};
 
+/// Bounds the parser recursion depth, which grows with the amount of tokens.
+const MAXIMUM_TOKENS: usize = 100;
+/// Bounds the DNF expansion, every AND over ORs multiplies the amount of clauses
+/// and the search query evaluates each clause for every title group.
+const MAXIMUM_CLAUSES: usize = 64;
+
 fn sanitize_tag_name(name: &str) -> String {
     name.trim().to_lowercase()
 }
@@ -223,12 +229,18 @@ fn to_dnf(expression: &Expression) -> Result<Vec<DnfClause>, String> {
         Expression::Or(left, right) => {
             let mut left_clauses = to_dnf(left)?;
             let right_clauses = to_dnf(right)?;
+            if left_clauses.len() + right_clauses.len() > MAXIMUM_CLAUSES {
+                return Err("tag expression is too complex".to_string());
+            }
             left_clauses.extend(right_clauses);
             Ok(left_clauses)
         }
         Expression::And(left, right) => {
             let left_clauses = to_dnf(left)?;
             let right_clauses = to_dnf(right)?;
+            if left_clauses.len() * right_clauses.len() > MAXIMUM_CLAUSES {
+                return Err("tag expression is too complex".to_string());
+            }
             // Cartesian product: distribute AND over OR
             let mut result = Vec::new();
             for left_clause in &left_clauses {
@@ -274,6 +286,9 @@ pub fn parse_tag_expression(input: &str) -> Result<Option<Value>, String> {
     let tokens = tokenize(trimmed)?;
     if tokens.is_empty() {
         return Ok(None);
+    }
+    if tokens.len() > MAXIMUM_TOKENS {
+        return Err("tag expression is too long".to_string());
     }
 
     let mut parser = Parser::new(tokens);
@@ -415,6 +430,24 @@ mod tests {
     fn test_dotted_tag_name() {
         let result = parse_tag_expression("epic.movie").unwrap().unwrap();
         assert_eq!(result, json!([{"include": ["epic.movie"], "exclude": []}]));
+    }
+
+    #[test]
+    fn test_oversized_expressions_are_rejected() {
+        // deep nesting used to overflow the stack
+        let nested = format!("{}action{}", "(".repeat(10_000), ")".repeat(10_000));
+        assert!(parse_tag_expression(&nested).is_err());
+        // every (x|y)& group doubles the amount of clauses
+        let exploding = (0..7)
+            .map(|index| format!("(a{index}|b{index})"))
+            .collect::<Vec<_>>()
+            .join("&");
+        assert!(parse_tag_expression(&exploding).is_err());
+        let accepted = (0..6)
+            .map(|index| format!("(a{index}|b{index})"))
+            .collect::<Vec<_>>()
+            .join("&");
+        assert!(parse_tag_expression(&accepted).is_ok());
     }
 
     #[test]

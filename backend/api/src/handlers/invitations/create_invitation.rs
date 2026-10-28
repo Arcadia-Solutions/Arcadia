@@ -3,11 +3,14 @@ use crate::{
 };
 use actix_web::{
     web::{Data, Json},
-    HttpResponse,
+    HttpRequest, HttpResponse,
 };
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::{
-    models::invitation::{Invitation, SentInvitation},
+    models::{
+        invitation::{Invitation, SentInvitation},
+        user::UserPermission,
+    },
     redis::RedisPoolInterface,
 };
 
@@ -27,9 +30,17 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     invitation: Json<SentInvitation>,
     arc: Data<Arcadia<R>>,
     user: Authdata,
+    req: HttpRequest,
 ) -> Result<HttpResponse> {
+    // inviting an applicant accepts their application, which is a staff decision
+    if invitation.user_application_id.is_some() {
+        arc.pool
+            .require_permission(user.sub, &UserPermission::UpdateUserApplication, req.path())
+            .await?;
+    }
+
     let current_user = arc.pool.find_user_with_id(user.sub).await?;
-    if current_user.invitations == 0 {
+    if current_user.invitations <= 0 {
         return Err(Error::NoInvitationsAvailable);
     }
 

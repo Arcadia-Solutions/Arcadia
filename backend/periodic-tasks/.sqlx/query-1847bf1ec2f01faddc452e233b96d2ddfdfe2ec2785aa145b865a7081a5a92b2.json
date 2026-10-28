@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n              UPDATE users SET invitations = invitations - 1\n              WHERE id = $1 AND invitations > 0\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1847bf1ec2f01faddc452e233b96d2ddfdfe2ec2785aa145b865a7081a5a92b2"
+}

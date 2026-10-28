@@ -109,15 +109,22 @@ impl ConnectionPool {
         .map_err(Error::CouldNotCreateUser)?;
 
         if let Some(inv) = invitation {
-            sqlx::query!(
+            // the invitation is only consumed when it is still unused, so that two
+            // registrations racing on the same key can not both claim it
+            let consumed = sqlx::query!(
                 r#"
-                UPDATE invitations SET receiver_id = $1 WHERE id = $2;
+                UPDATE invitations SET receiver_id = $1 WHERE id = $2 AND receiver_id IS NULL;
                 "#,
                 registered_user.id,
                 inv.id
             )
             .execute(&mut *tx)
             .await?;
+
+            if consumed.rows_affected() != 1 {
+                // dropping the transaction rolls the created user back
+                return Err(Error::InvitationKeyAlreadyUsed);
+            }
 
             sqlx::query!(
                 r#"

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE invitations SET receiver_id = $1 WHERE id = $2 AND receiver_id IS NULL;\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3cd75d3af316a13893930e9439433e55d4db7d618aab555237d6f29fd450693e"
+}

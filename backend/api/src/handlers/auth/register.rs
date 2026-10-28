@@ -60,7 +60,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
                 .await?,
         );
 
-        // TODO: push check to db
+        // early rejection, single use is enforced when the invitation is consumed
         if invitation.as_ref().unwrap().receiver_id.is_some() {
             return Err(Error::InvitationKeyAlreadyUsed);
         }

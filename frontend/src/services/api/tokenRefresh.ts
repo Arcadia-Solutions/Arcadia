@@ -10,14 +10,22 @@ export function isTokenExpired(token: string): boolean {
   }
 }
 
+// a refresh token can only be redeemed once, so concurrent callers share the same refresh
+let pendingRefresh: Promise<string> | null = null
+
 export async function refreshAccessToken(): Promise<string> {
   const refresh = localStorage.getItem('refreshToken')
   if (!refresh) return Promise.reject(new Error('no refresh token'))
-  return callRefreshToken({ refresh_token: refresh }).then((tokens) => {
-    localStorage.setItem('token', tokens.token)
-    localStorage.setItem('refreshToken', tokens.refresh_token)
-    return tokens.token
-  })
+  pendingRefresh ??= callRefreshToken({ refresh_token: refresh })
+    .then((tokens) => {
+      localStorage.setItem('token', tokens.token)
+      localStorage.setItem('refreshToken', tokens.refresh_token)
+      return tokens.token
+    })
+    .finally(() => {
+      pendingRefresh = null
+    })
+  return pendingRefresh
 }
 
 export async function getValidToken(): Promise<string | null> {

@@ -1,9 +1,6 @@
 use crate::{
     middlewares::auth_middleware::Authdata,
-    services::{
-        auth::generate_login_tokens,
-        auth_service::{validate_password, validate_password_verification},
-    },
+    services::auth_service::{validate_password, validate_password_verification},
     Arcadia,
 };
 use actix_web::{
@@ -68,12 +65,15 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 
     // the user keeps browsing with tokens issued after the invalidation instead of having to
     // log in again
-    let tokens = generate_login_tokens(
-        target_user_id,
-        &arc.api.jwt_secret,
-        true,
-        Utc::now() + Duration::seconds(1),
-    )?;
+    let tokens = arc
+        .auth
+        .generate_login_tokens(
+            target_user_id,
+            &arc.api.jwt_secret,
+            true,
+            Utc::now() + Duration::seconds(1),
+        )
+        .await?;
 
     Ok(HttpResponse::Ok().json(tokens))
 }

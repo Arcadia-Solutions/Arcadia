@@ -1,4 +1,4 @@
-use crate::{services::auth::generate_login_tokens, Arcadia};
+use crate::Arcadia;
 use actix_web::{web, HttpResponse};
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::{
@@ -36,6 +36,14 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         return Err(Error::InvalidatedToken);
     }
 
+    // each refresh token is redeemed once, a replayed one is refused
+    let Some(jti) = &old_refresh_token.claims.jti else {
+        return Err(Error::InvalidOrExpiredRefreshToken);
+    };
+    if !arc.auth.redeem_refresh_token(jti).await? {
+        return Err(Error::InvalidOrExpiredRefreshToken);
+    }
+
     let user = arc
         .pool
         .find_user_with_id(old_refresh_token.claims.sub)
@@ -44,12 +52,15 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         return Err(Error::AccountBanned);
     }
 
-    let tokens = generate_login_tokens(
-        old_refresh_token.claims.sub,
-        &arc.api.jwt_secret,
-        true,
-        Utc::now(),
-    )?;
+    let tokens = arc
+        .auth
+        .generate_login_tokens(
+            old_refresh_token.claims.sub,
+            &arc.api.jwt_secret,
+            true,
+            Utc::now(),
+        )
+        .await?;
 
     Ok(HttpResponse::Ok().json(tokens))
 }

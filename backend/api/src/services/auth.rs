@@ -6,57 +6,18 @@ use arcadia_storage::{
         invalidate_user_tokens, InvalidationEntry, REFRESH_TOKEN_DURATION,
     },
 };
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD as BASE64_URL, Engine};
 use chrono::{DateTime, Duration, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
+use rand::RngExt as _;
 use serde_json::from_str;
 use std::sync::{Arc, LazyLock};
 
 pub static AUTH_TOKEN_SHORT_DURATION: LazyLock<Duration> = LazyLock::new(|| Duration::hours(1));
 pub static AUTH_TOKEN_LONG_DURATION: LazyLock<Duration> = LazyLock::new(|| Duration::days(1));
 
-/// Issues an authentication token for the user, along with a refresh token when the session
-/// is meant to outlive the short lived authentication token.
-///
-/// `issued_at` is the moment the tokens are issued at. A token issued after an invalidation
-/// stays valid (see [`Auth::is_invalidated`]), so a caller invalidating the user's sessions and
-/// keeping them logged in must issue the new tokens strictly after the invalidation.
-pub fn generate_login_tokens(
-    user_id: i32,
-    jwt_secret: &str,
-    remember_me: bool,
-    issued_at: DateTime<Utc>,
-) -> Result<LoginResponse> {
-    let encoding_key = EncodingKey::from_secret(jwt_secret.as_bytes());
-    let authentication_token_duration = if remember_me {
-        *AUTH_TOKEN_LONG_DURATION
-    } else {
-        *AUTH_TOKEN_SHORT_DURATION
-    };
-
-    let encode_token = |expiration_date: DateTime<Utc>| {
-        encode(
-            &Header::default(),
-            &Claims {
-                sub: user_id,
-                exp: expiration_date.timestamp(),
-                iat: issued_at.timestamp(),
-            },
-            &encoding_key,
-        )
-        .map_err(Error::JwtError)
-    };
-
-    let token = encode_token(issued_at + authentication_token_duration)?;
-    let refresh_token = if remember_me {
-        encode_token(issued_at + *REFRESH_TOKEN_DURATION)?
-    } else {
-        String::new()
-    };
-
-    Ok(LoginResponse {
-        token,
-        refresh_token,
-    })
+fn refresh_token_key(jti: &str) -> String {
+    format!("refresh_token:{jti}")
 }
 
 pub struct Auth<R: RedisPoolInterface = RedisPool> {
@@ -66,6 +27,70 @@ pub struct Auth<R: RedisPoolInterface = RedisPool> {
 impl<R: RedisPoolInterface> Auth<R> {
     pub fn new(redis_pool: Arc<R>) -> Self {
         Self { redis_pool }
+    }
+
+    /// Issues an authentication token for the user, along with a refresh token when the session
+    /// is meant to outlive the short lived authentication token.
+    ///
+    /// `issued_at` is the moment the tokens are issued at. A token issued after an invalidation
+    /// stays valid (see [`Auth::is_invalidated`]), so a caller invalidating the user's sessions and
+    /// keeping them logged in must issue the new tokens strictly after the invalidation.
+    pub async fn generate_login_tokens(
+        &self,
+        user_id: i32,
+        jwt_secret: &str,
+        remember_me: bool,
+        issued_at: DateTime<Utc>,
+    ) -> Result<LoginResponse> {
+        let encoding_key = EncodingKey::from_secret(jwt_secret.as_bytes());
+        let authentication_token_duration = if remember_me {
+            *AUTH_TOKEN_LONG_DURATION
+        } else {
+            *AUTH_TOKEN_SHORT_DURATION
+        };
+
+        let encode_token = |expiration_date: DateTime<Utc>, jti: Option<String>| {
+            encode(
+                &Header::default(),
+                &Claims {
+                    sub: user_id,
+                    exp: expiration_date.timestamp(),
+                    iat: issued_at.timestamp(),
+                    jti,
+                },
+                &encoding_key,
+            )
+            .map_err(Error::JwtError)
+        };
+
+        let token = encode_token(issued_at + authentication_token_duration, None)?;
+        let refresh_token = if remember_me {
+            let raw_bytes: [u8; 32] = rand::rng().random();
+            let jti = BASE64_URL.encode(raw_bytes);
+            self.redis_pool
+                .connection()
+                .await?
+                .set_ex(
+                    refresh_token_key(&jti),
+                    user_id,
+                    (*REFRESH_TOKEN_DURATION).as_seconds_f64() as usize,
+                )
+                .await?;
+            encode_token(issued_at + *REFRESH_TOKEN_DURATION, Some(jti))?
+        } else {
+            String::new()
+        };
+
+        Ok(LoginResponse {
+            token,
+            refresh_token,
+        })
+    }
+
+    /// Consumes the refresh token, returns false if it was already redeemed or never issued.
+    pub async fn redeem_refresh_token(&self, jti: &str) -> Result<bool> {
+        let mut redis = self.redis_pool.connection().await?;
+        Ok(redis.get_del(refresh_token_key(jti)).await?.is_some())
     }
 
     pub async fn invalidate(&self, user_id: i32) -> Result<()> {

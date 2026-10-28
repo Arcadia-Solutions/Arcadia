@@ -1,4 +1,4 @@
-use crate::{services::auth::generate_login_tokens, Arcadia};
+use crate::Arcadia;
 use actix_web::{web, HttpResponse};
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::{
@@ -27,12 +27,15 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         return Err(Error::AccountBanned);
     }
 
-    let tokens = generate_login_tokens(
-        user.id,
-        &arc.api.jwt_secret,
-        user_login.remember_me,
-        Utc::now(),
-    )?;
+    let tokens = arc
+        .auth
+        .generate_login_tokens(
+            user.id,
+            &arc.api.jwt_secret,
+            user_login.remember_me,
+            Utc::now(),
+        )
+        .await?;
 
     Ok(HttpResponse::Ok().json(tokens))
 }

@@ -244,6 +244,9 @@ pub struct Claims {
     pub sub: i32,
     pub exp: i64,
     pub iat: i64,
+    /// only set on refresh tokens, identifies them so that each one is redeemed once
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub jti: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]

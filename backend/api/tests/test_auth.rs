@@ -677,3 +677,28 @@ async fn test_registration_applies_default_values_from_settings(pool: PgPool) {
     assert_eq!(user.bonus_points, 250);
     assert_eq!(user.freeleech_tokens, 5);
 }
+
+#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+async fn test_refresh_token_can_only_be_redeemed_once(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) = create_test_app_and_login(
+        Arc::clone(&pool),
+        MockRedisPool::default(),
+        TestUser::Standard,
+    )
+    .await;
+
+    let refresh_request = || {
+        TestRequest::post()
+            .uri("/api/auth/refresh-token")
+            .set_json(RefreshToken {
+                refresh_token: user.refresh_token.clone(),
+            })
+            .to_request()
+    };
+    let resp = call_service(&service, refresh_request()).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let resp = call_service(&service, refresh_request()).await;
+    assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+}

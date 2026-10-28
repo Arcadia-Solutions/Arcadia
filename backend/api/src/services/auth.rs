@@ -1,6 +1,6 @@
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::{
-    models::user::{Claims, LoginResponse},
+    models::user::{Claims, LoginResponse, TokenType},
     redis::{RedisInterface, RedisPool, RedisPoolInterface},
     services::token_invalidation_service::{
         invalidate_user_tokens, InvalidationEntry, REFRESH_TOKEN_DURATION,
@@ -49,13 +49,14 @@ impl<R: RedisPoolInterface> Auth<R> {
             *AUTH_TOKEN_SHORT_DURATION
         };
 
-        let encode_token = |expiration_date: DateTime<Utc>, jti: Option<String>| {
+        let encode_token = |expiration_date: DateTime<Utc>, typ: TokenType, jti: Option<String>| {
             encode(
                 &Header::default(),
                 &Claims {
                     sub: user_id,
                     exp: expiration_date.timestamp(),
                     iat: issued_at.timestamp(),
+                    typ,
                     jti,
                 },
                 &encoding_key,
@@ -63,7 +64,11 @@ impl<R: RedisPoolInterface> Auth<R> {
             .map_err(Error::JwtError)
         };
 
-        let token = encode_token(issued_at + authentication_token_duration, None)?;
+        let token = encode_token(
+            issued_at + authentication_token_duration,
+            TokenType::Access,
+            None,
+        )?;
         let refresh_token = if remember_me {
             let raw_bytes: [u8; 32] = rand::rng().random();
             let jti = BASE64_URL.encode(raw_bytes);
@@ -76,7 +81,11 @@ impl<R: RedisPoolInterface> Auth<R> {
                     (*REFRESH_TOKEN_DURATION).as_seconds_f64() as usize,
                 )
                 .await?;
-            encode_token(issued_at + *REFRESH_TOKEN_DURATION, Some(jti))?
+            encode_token(
+                issued_at + *REFRESH_TOKEN_DURATION,
+                TokenType::Refresh,
+                Some(jti),
+            )?
         } else {
             String::new()
         };

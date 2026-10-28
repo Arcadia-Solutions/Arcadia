@@ -239,11 +239,20 @@ pub struct LoginResponse {
     pub refresh_token: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum TokenType {
+    Access,
+    Refresh,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
     pub sub: i32,
     pub exp: i64,
     pub iat: i64,
+    /// an access token only authenticates requests, a refresh token only issues new tokens
+    pub typ: TokenType,
     /// only set on refresh tokens, identifies them so that each one is redeemed once
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub jti: Option<String>,

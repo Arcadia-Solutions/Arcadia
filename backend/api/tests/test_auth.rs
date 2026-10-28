@@ -702,3 +702,30 @@ async fn test_refresh_token_can_only_be_redeemed_once(pool: PgPool) {
     let resp = call_service(&service, refresh_request()).await;
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
 }
+
+#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+async fn test_access_and_refresh_tokens_are_not_interchangeable(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) = create_test_app_and_login(
+        Arc::clone(&pool),
+        MockRedisPool::default(),
+        TestUser::Standard,
+    )
+    .await;
+
+    let req = TestRequest::get()
+        .uri("/api/users/me")
+        .insert_header(auth_header(&user.refresh_token))
+        .to_request();
+    let resp = call_service(&service, req).await;
+    assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+
+    let req = TestRequest::post()
+        .uri("/api/auth/refresh-token")
+        .set_json(RefreshToken {
+            refresh_token: user.token.clone(),
+        })
+        .to_request();
+    let resp = call_service(&service, req).await;
+    assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+}

@@ -1,6 +1,7 @@
 use std::sync::LazyLock;
 
 use arcadia_common::error::{Error, Result};
+use argon2::{password_hash::PasswordHash, Argon2, PasswordVerifier};
 use regex::Regex;
 
 static EMAIL_REGEX: LazyLock<Regex> =
@@ -31,6 +32,14 @@ pub fn validate_username(username: &str) -> Result<()> {
         return Err(Error::InvalidUsername);
     }
     Ok(())
+}
+
+pub fn verify_password(password: &str, password_hash: &str) -> Result<()> {
+    let parsed_hash =
+        PasswordHash::new(password_hash).map_err(|_| Error::WrongUsernameOrPassword)?;
+    Argon2::default()
+        .verify_password(password.as_bytes(), &parsed_hash)
+        .map_err(|_| Error::WrongUsernameOrPassword)
 }
 
 pub fn validate_password(password: &str) -> Result<()> {

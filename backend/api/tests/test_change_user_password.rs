@@ -7,7 +7,7 @@ use actix_web::{
 };
 use arcadia_storage::{
     connection_pool::ConnectionPool,
-    models::user::{GeneratedPasswordResetToken, Login, LoginResponse},
+    models::user::{EditedUser, GeneratedPasswordResetToken, Login, LoginResponse},
 };
 use common::{auth_header, create_test_app_and_login, login_as, read_body_json_data, TestUser};
 use mocks::mock_redis::MockRedisPool;
@@ -290,4 +290,29 @@ async fn test_reset_password_with_weak_password_keeps_the_token_usable(pool: PgP
 
     let resp = call_service(&service, req).await;
     assert_eq!(resp.status(), StatusCode::OK);
+}
+
+#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+async fn test_changing_email_requires_current_password(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+
+    for (current_password, expected_status) in [
+        (None, StatusCode::BAD_REQUEST),
+        (Some("wrong_password"), StatusCode::BAD_REQUEST),
+        (Some("test_password"), StatusCode::OK),
+    ] {
+        let req = TestRequest::put()
+            .uri("/api/users")
+            .insert_header(auth_header(&user.token))
+            .set_json(EditedUser {
+                avatar: None,
+                email: "new_email@testdomain.com".into(),
+                description: String::new(),
+                current_password: current_password.map(Into::into),
+            })
+            .to_request();
+        assert_eq!(call_service(&service, req).await.status(), expected_status);
+    }
 }

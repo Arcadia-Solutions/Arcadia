@@ -83,6 +83,7 @@ async fn test_user_avatar_rejects_unapproved_host(pool: PgPool) {
         avatar: Some("https://evil.example.com/avatar.jpg".into()),
         email: "test_user@testdomain.com".into(),
         description: "Updated description".into(),
+        current_password: None,
     };
 
     let req = test::TestRequest::put()
@@ -108,6 +109,7 @@ async fn test_user_avatar_allows_approved_host(pool: PgPool) {
         avatar: Some("https://i.imgur.com/avatar.jpg".into()),
         email: "test_user@testdomain.com".into(),
         description: "Updated description".into(),
+        current_password: None,
     };
 
     let req = test::TestRequest::put()

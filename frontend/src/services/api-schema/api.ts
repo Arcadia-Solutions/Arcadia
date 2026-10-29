@@ -1152,6 +1152,10 @@ export interface EditedTorrent {
 
 export interface EditedUser {
     'avatar'?: string | null;
+    /**
+     * required to change the email, as it is where account recovery is sent
+     */
+    'current_password'?: string | null;
     'description': string;
     'email': string;
 }

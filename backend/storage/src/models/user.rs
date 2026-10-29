@@ -269,6 +269,8 @@ pub struct EditedUser {
     pub avatar: Option<String>,
     pub email: String,
     pub description: String,
+    /// required to change the email, as it is where account recovery is sent
+    pub current_password: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]

@@ -10,6 +10,10 @@
         <InputText name="email" v-model="editedUser.email" />
         <label for="email">{{ t('user.email') }}</label>
       </FloatLabel>
+      <FloatLabel class="input" v-if="editedUser.email !== props.initialUser.email">
+        <Password name="current_password" v-model="editedUser.current_password" :feedback="false" toggleMask />
+        <label for="current_password">{{ t('user.current_password') }}</label>
+      </FloatLabel>
 
       <div class="wrapper-center">
         <Button :label="t('general.confirm')" size="small" :loading @click="sendEdits()" />
@@ -20,7 +24,7 @@
 
 <script setup lang="ts">
 import { showToast } from '@/main'
-import { FloatLabel, InputText } from 'primevue'
+import { FloatLabel, InputText, Password } from 'primevue'
 import { Form } from '@primevue/forms'
 import BBCodeEditor from '../community/BBCodeEditor.vue'
 import Button from 'primevue/button'
@@ -52,11 +56,12 @@ const emit = defineEmits<{
 
 const sendEdits = () => {
   loading.value = true
-  editUser(editedUser.value).then(() => {
-    loading.value = false
-    showToast('Success', t('user.profile_edited_success'), 'success', 4000)
-    emit('done', editedUser.value)
-  })
+  editUser(editedUser.value)
+    .then(() => {
+      showToast('Success', t('user.profile_edited_success'), 'success', 4000)
+      emit('done', editedUser.value)
+    })
+    .finally(() => (loading.value = false))
 }
 onMounted(async () => {
   Object.assign(editedUser.value, props.initialUser)

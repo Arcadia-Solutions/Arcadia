@@ -1,19 +1,19 @@
 use crate::{
     middlewares::auth_middleware::Authdata,
-    services::auth_service::{validate_password, validate_password_verification},
+    services::auth_service::{validate_password, validate_password_verification, verify_password},
     Arcadia,
 };
 use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
-use arcadia_common::error::{Error, Result};
+use arcadia_common::error::Result;
 use arcadia_storage::{
     models::user::{LoginResponse, UserChangedPassword},
     redis::RedisPoolInterface,
 };
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
 use chrono::{Duration, Utc};
@@ -40,11 +40,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 
     let target_user = arc.pool.find_user_with_id(target_user_id).await?;
 
-    let parsed_hash = PasswordHash::new(&target_user.password_hash)
-        .map_err(|_| Error::WrongUsernameOrPassword)?;
-    Argon2::default()
-        .verify_password(form.current_password.as_bytes(), &parsed_hash)
-        .map_err(|_| Error::WrongUsernameOrPassword)?;
+    verify_password(&form.current_password, &target_user.password_hash)?;
 
     validate_password(&form.new_password)?;
     validate_password_verification(&form.new_password, &form.new_password_verify)?;

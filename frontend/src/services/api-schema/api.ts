@@ -268,6 +268,10 @@ export interface ArcadiaSettings {
      * When enabled, creating new title groups, edition groups and torrents is rejected.
      */
     'uploads_disabled': boolean;
+    /**
+     * Shown on the upload page while uploads are disabled. Leave empty to show a generic notice.
+     */
+    'uploads_disabled_message'?: string | null;
     'user_class_name_on_signup': string;
 }
 
@@ -3029,6 +3033,7 @@ export interface PublicArcadiaSettings {
     'running_advent_calendar_button_text'?: string | null;
     'torrent_request_vote_currencies': Array<TorrentRequestVoteCurrency>;
     'uploads_disabled': boolean;
+    'uploads_disabled_message'?: string | null;
 }
 export interface PublicPeer {
     'agent': string;

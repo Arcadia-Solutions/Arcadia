@@ -1,7 +1,10 @@
 <template>
   <div>
     <div class="title">{{ t('torrent.upload_torrent') }}</div>
-    <Message v-if="publicArcadiaSettings.uploads_disabled" severity="warn">{{ t('torrent.uploads_disabled') }}</Message>
+    <Message v-if="publicArcadiaSettings.uploads_disabled" severity="warn" :pt="{ content: { style: 'justify-content: center; text-align: center' } }">
+      <BBCodeRenderer v-if="publicArcadiaSettings.uploads_disabled_message" :content="publicArcadiaSettings.uploads_disabled_message" />
+      <template v-else>{{ t('torrent.uploads_disabled') }}</template>
+    </Message>
     <template v-else>
       <ContentContainer v-if="uploadInfo?.upload_page_top_text" style="margin-bottom: 20px">
         <BBCodeRenderer :content="uploadInfo.upload_page_top_text" />

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                SELECT\n                    user_class_name_on_signup,\n                    default_css_sheet_name,\n                    open_signups,\n                    global_upload_factor,\n                    global_download_factor,\n                    global_snatch_bonus_points_cost_factor,\n                    global_snatch_bonus_points_reward_factor,\n                    logo_subtitle,\n                    approved_image_hosts,\n                    upload_page_top_text,\n                    automated_message_on_signup,\n                    automated_message_on_signup_sender_id,\n                    automated_message_on_signup_locked,\n                    automated_message_on_signup_conversation_name,\n                    bonus_points_given_on_upload,\n                    allow_uploader_set_torrent_bonus_points_cost,\n                    default_torrent_bonus_points_cost,\n                    torrent_bonus_points_cost_min,\n                    torrent_bonus_points_cost_max,\n                    shop_upload_base_price_per_gb,\n                    shop_upload_discount_tiers,\n                    shop_freeleech_token_base_price,\n                    shop_freeleech_token_discount_tiers,\n                    bonus_points_alias,\n                    bonus_points_decimal_places,\n                    torrent_max_release_date_allowed,\n                    snatched_torrent_bonus_points_transferred_to as \"snatched_torrent_bonus_points_transferred_to: _\",\n                    displayed_top_bar_stats as \"displayed_top_bar_stats: Vec<DisplayedTopBarStats>\",\n                    displayable_user_stats as \"displayable_user_stats: Vec<DisplayableUserStats>\",\n                    torrent_request_vote_currencies as \"torrent_request_vote_currencies: _\",\n                    available_shop_items as \"available_shop_items: Vec<AvailableShopItem>\",\n                    bonus_points_per_endpoint as \"bonus_points_per_endpoint: Json<Vec<BonusPointsEndpoint>>\",\n                    reward_bonus_points_per_seeding_client,\n                    charge_bonus_points_on_resnatch,\n                    default_user_uploaded_on_registration,\n                    default_user_downloaded_on_registration,\n                    default_user_bonus_points_on_registration,\n                    default_user_freeleech_tokens_on_registration,\n                    display_image_host_drag_and_drop,\n                    inactive_user_ban_after_days,\n                    irc_webchat_enabled,\n                    irc_webchat_default_channels,\n                    min_amount_tags_title_group,\n                    custom_js_code,\n                    custom_footer,\n                    invitation_expiration_days,\n                    automated_message_on_torrent_marked_trumpable,\n                    reseed_requestable_after_hours,\n                    uploads_disabled\n                FROM arcadia_settings\n                LIMIT 1\n            ",
+  "query": "\n                SELECT\n                    user_class_name_on_signup,\n                    default_css_sheet_name,\n                    open_signups,\n                    global_upload_factor,\n                    global_download_factor,\n                    global_snatch_bonus_points_cost_factor,\n                    global_snatch_bonus_points_reward_factor,\n                    logo_subtitle,\n                    approved_image_hosts,\n                    upload_page_top_text,\n                    automated_message_on_signup,\n                    automated_message_on_signup_sender_id,\n                    automated_message_on_signup_locked,\n                    automated_message_on_signup_conversation_name,\n                    bonus_points_given_on_upload,\n                    allow_uploader_set_torrent_bonus_points_cost,\n                    default_torrent_bonus_points_cost,\n                    torrent_bonus_points_cost_min,\n                    torrent_bonus_points_cost_max,\n                    shop_upload_base_price_per_gb,\n                    shop_upload_discount_tiers,\n                    shop_freeleech_token_base_price,\n                    shop_freeleech_token_discount_tiers,\n                    bonus_points_alias,\n                    bonus_points_decimal_places,\n                    torrent_max_release_date_allowed,\n                    snatched_torrent_bonus_points_transferred_to as \"snatched_torrent_bonus_points_transferred_to: _\",\n                    displayed_top_bar_stats as \"displayed_top_bar_stats: Vec<DisplayedTopBarStats>\",\n                    displayable_user_stats as \"displayable_user_stats: Vec<DisplayableUserStats>\",\n                    torrent_request_vote_currencies as \"torrent_request_vote_currencies: _\",\n                    available_shop_items as \"available_shop_items: Vec<AvailableShopItem>\",\n                    bonus_points_per_endpoint as \"bonus_points_per_endpoint: Json<Vec<BonusPointsEndpoint>>\",\n                    reward_bonus_points_per_seeding_client,\n                    charge_bonus_points_on_resnatch,\n                    default_user_uploaded_on_registration,\n                    default_user_downloaded_on_registration,\n                    default_user_bonus_points_on_registration,\n                    default_user_freeleech_tokens_on_registration,\n                    display_image_host_drag_and_drop,\n                    inactive_user_ban_after_days,\n                    irc_webchat_enabled,\n                    irc_webchat_default_channels,\n                    min_amount_tags_title_group,\n                    custom_js_code,\n                    custom_footer,\n                    invitation_expiration_days,\n                    automated_message_on_torrent_marked_trumpable,\n                    reseed_requestable_after_hours,\n                    uploads_disabled,\n                    uploads_disabled_message\n                FROM arcadia_settings\n                LIMIT 1\n            ",
   "describe": {
     "columns": [
       {
@@ -657,6 +657,17 @@
             "name": "uploads_disabled"
           }
         }
+      },
+      {
+        "ordinal": 49,
+        "name": "uploads_disabled_message",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "arcadia_settings",
+            "name": "uploads_disabled_message"
+          }
+        }
       }
     ],
     "parameters": {
@@ -711,8 +722,9 @@
       false,
       true,
       false,
-      false
+      false,
+      true
     ]
   },
-  "hash": "1064f4a32445f7f8031857dccc081dc7f439ea8032e55dfd5c9850e995aa1418"
+  "hash": "81d8d1591beec40b1220060efe87ef982b211130421e26fa4114cf9ba5e280b7"
 }

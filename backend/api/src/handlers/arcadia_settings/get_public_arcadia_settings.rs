@@ -43,6 +43,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(arc: Data<Arcadia<R>>) -> Res
         custom_js_code: settings.custom_js_code,
         custom_footer: settings.custom_footer,
         uploads_disabled: settings.uploads_disabled,
+        uploads_disabled_message: settings.uploads_disabled_message,
         running_advent_calendar_button_text,
     }))
 }

@@ -123,6 +123,14 @@
         <Checkbox v-model="settings.uploads_disabled" name="uploads_disabled" :binary="true" inputId="uploads_disabled" style="margin-right: 5px" />
         <label for="uploads_disabled">{{ t('arcadia_settings.uploads_disabled') }}</label>
       </div>
+      <BBCodeEditor
+        v-if="settings.uploads_disabled"
+        :label="t('arcadia_settings.uploads_disabled_message')"
+        :initialValue="settings.uploads_disabled_message ?? ''"
+        :rows="3"
+        @valueChange="(val) => (settings!.uploads_disabled_message = val || null)"
+        style="margin-bottom: 10px"
+      />
 
       <FloatLabel>
         <Chips v-model="settings.approved_image_hosts" name="approved_image_hosts" separator="," size="small" style="width: 40em" />
@@ -574,6 +582,9 @@ const saveSettings = async ({ valid }: FormSubmitEvent) => {
     }
     if (!settings.value.custom_footer?.trim()) {
       settings.value.custom_footer = null
+    }
+    if (!settings.value.uploads_disabled_message?.trim()) {
+      settings.value.uploads_disabled_message = null
     }
     if (!settings.value.automated_message_on_torrent_marked_trumpable?.trim()) {
       settings.value.automated_message_on_torrent_marked_trumpable = null

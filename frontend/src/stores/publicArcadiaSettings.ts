@@ -22,6 +22,7 @@ const initialState: PublicArcadiaSettings = {
   custom_js_code: null,
   custom_footer: null,
   uploads_disabled: false,
+  uploads_disabled_message: null,
   running_advent_calendar_button_text: null,
 }
 

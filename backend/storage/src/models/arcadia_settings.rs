@@ -144,6 +144,8 @@ pub struct ArcadiaSettings {
     pub automated_message_on_torrent_marked_trumpable: Option<String>,
     /// When enabled, creating new title groups, edition groups and torrents is rejected.
     pub uploads_disabled: bool,
+    /// Shown on the upload page while uploads are disabled. Leave empty to show a generic notice.
+    pub uploads_disabled_message: Option<String>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema, PartialEq)]
@@ -187,6 +189,7 @@ pub struct PublicArcadiaSettings {
     pub custom_js_code: Option<String>,
     pub custom_footer: Option<String>,
     pub uploads_disabled: bool,
+    pub uploads_disabled_message: Option<String>,
     /// set when an advent calendar is published and currently running
     pub running_advent_calendar_button_text: Option<String>,
 }

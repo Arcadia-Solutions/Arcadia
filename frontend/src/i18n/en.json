@@ -1171,6 +1171,7 @@
     "reward_bonus_points_per_seeding_client": "Reward bonus points for each seeding client (instead of once per seeded torrent)",
     "charge_bonus_points_on_resnatch": "Charge the bonus points snatch cost again when a torrent is re-snatched",
     "uploads_disabled": "Temporarily disable the creation of new title groups, editions and torrents",
+    "uploads_disabled_message": "Message shown on the upload page while uploads are disabled (leave empty for the generic notice)",
     "bp_endpoint_method": "Method",
     "bp_endpoint_path_prefix": "Path prefix",
     "bp_endpoint_amount": "Amount",

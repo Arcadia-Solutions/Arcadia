@@ -3,11 +3,14 @@ use crate::{
 };
 use actix_web::{
     web::{Data, Json},
-    HttpResponse,
+    HttpRequest, HttpResponse,
 };
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::{
-    models::edition_group::{EditionGroup, UserCreatedEditionGroup},
+    models::{
+        edition_group::{EditionGroup, UserCreatedEditionGroup},
+        user::UserPermission,
+    },
     redis::RedisPoolInterface,
 };
 
@@ -27,7 +30,12 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     form: Json<UserCreatedEditionGroup>,
     arc: Data<Arcadia<R>>,
     user: Authdata,
+    req: HttpRequest,
 ) -> Result<HttpResponse> {
+    arc.pool
+        .require_permission(user.sub, &UserPermission::UploadTorrent, req.path())
+        .await?;
+
     if arc.settings.lock().unwrap().uploads_disabled {
         return Err(Error::UploadsDisabled);
     }

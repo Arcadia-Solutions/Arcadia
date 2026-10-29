@@ -1,9 +1,12 @@
 use actix_web::{
     web::{Data, Json},
-    HttpResponse,
+    HttpRequest, HttpResponse,
 };
 use arcadia_storage::{
-    models::title_group::{PublicRating, TitleGroup, UserCreatedTitleGroup},
+    models::{
+        title_group::{PublicRating, TitleGroup, UserCreatedTitleGroup},
+        user::UserPermission,
+    },
     redis::RedisPoolInterface,
 };
 use futures::future::join_all;
@@ -32,7 +35,12 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     mut form: Json<UserCreatedTitleGroup>,
     arc: Data<Arcadia<R>>,
     user: Authdata,
+    req: HttpRequest,
 ) -> Result<HttpResponse> {
+    arc.pool
+        .require_permission(user.sub, &UserPermission::UploadTorrent, req.path())
+        .await?;
+
     if arc.settings.lock().unwrap().uploads_disabled {
         return Err(Error::UploadsDisabled);
     }

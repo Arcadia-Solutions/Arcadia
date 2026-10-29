@@ -127,6 +127,17 @@ impl ConnectionPool {
 
         let info = metainfo.info();
 
+        // the size is declared by the uploader and feeds the bonus points rewards, so it is bounded.
+        // A negative file length is read as a huge unsigned one, so it is rejected here too, before
+        // the info hash computation sums the lengths without overflow checks
+        let size = metainfo
+            .info()
+            .files()
+            .try_fold(0u64, |total, file| total.checked_add(file.length()))
+            .filter(|size| *size <= max_torrent_size_bytes)
+            .and_then(|size| i64::try_from(size).ok())
+            .ok_or(Error::TorrentTooLarge(max_torrent_size_bytes))?;
+
         // We cannot trust that the uploader has set the private field properly, so
         // the info hash is recomputed with the private flag forced and the source
         // tag applied, matching the .torrent file served on download.
@@ -148,14 +159,6 @@ impl ConnectionPool {
                 *acc.entry(ext.to_string()).or_insert(0) += 1;
                 acc
             }));
-
-        // the size is declared by the uploader and feeds the bonus points rewards, so it is bounded
-        let size = metainfo
-            .info()
-            .files()
-            .try_fold(0u64, |total, file| total.checked_add(file.length()))
-            .filter(|size| *size <= max_torrent_size_bytes)
-            .ok_or(Error::TorrentTooLarge(max_torrent_size_bytes))? as i64;
 
         let features = torrent_form
             .features

@@ -28,6 +28,17 @@ use sqlx::PgPool;
 use crate::common::{auth_header, TestUser};
 
 async fn build_test_torrent_upload_request(token: &str, release_group: &str) -> Request {
+    let torrent_data = bytes::Bytes::from_static(include_bytes!(
+        "data/debian-12.10.0-i386-netinst.iso.torrent"
+    ));
+    build_torrent_upload_request(token, release_group, torrent_data).await
+}
+
+async fn build_torrent_upload_request(
+    token: &str,
+    release_group: &str,
+    torrent_data: bytes::Bytes,
+) -> Request {
     use actix_multipart_rfc7578::client::multipart;
 
     let mut form = multipart::Form::default();
@@ -51,10 +62,6 @@ async fn build_test_torrent_upload_request(token: &str, release_group: &str) -> 
     form.add_text("video_resolution", "1080p");
     form.add_text("extras", "");
     form.add_text("bonus_points_snatch_cost", "0");
-
-    let torrent_data = bytes::Bytes::from_static(include_bytes!(
-        "data/debian-12.10.0-i386-netinst.iso.torrent"
-    ));
 
     form.add_reader_file(
         "torrent_file",
@@ -141,6 +148,23 @@ async fn test_valid_torrent(pool: PgPool) {
         "expected announce url to end with /announce/{test_user_passkey}, got: {}",
         metainfo.announce
     );
+}
+
+#[sqlx::test(
+    fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"),
+    migrations = "../storage/migrations"
+)]
+async fn test_upload_torrent_with_negative_file_length_is_rejected(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        common::create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+
+    let torrent_data = bytes::Bytes::from_static(
+        b"d4:infod5:filesld6:lengthi-1e4:pathl1:aeed6:lengthi-1e4:pathl1:beee4:name1:x12:piece lengthi16384e6:pieces20:aaaaaaaaaaaaaaaaaaaaee",
+    );
+    let req = build_torrent_upload_request(&user.token, "TESTGROUP", torrent_data).await;
+    let resp = test::call_service(&service, req).await;
+    assert!(resp.status().is_client_error());
 }
 
 #[sqlx::test(

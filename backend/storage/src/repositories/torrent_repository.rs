@@ -157,6 +157,14 @@ impl ConnectionPool {
             .filter(|size| *size <= max_torrent_size_bytes)
             .ok_or(Error::TorrentTooLarge(max_torrent_size_bytes))? as i64;
 
+        let features = torrent_form
+            .features
+            .split(',')
+            .filter(|f| !f.is_empty())
+            .map(Features::from_str)
+            .collect::<std::result::Result<Vec<Features>, _>>()
+            .map_err(|_| Error::TorrentFileInvalid)?;
+
         let uploaded_torrent = sqlx::query_as::<_, Torrent>(create_torrent_query)
             .bind(torrent_form.edition_group_id.0)
             .bind(user_id)
@@ -185,14 +193,7 @@ impl ConnectionPool {
             .bind(torrent_form.audio_bitrate_sampling.as_deref())
             .bind(torrent_form.audio_channels.as_deref())
             .bind(torrent_form.video_codec.as_deref())
-            .bind(
-                torrent_form
-                    .features
-                    .split(',')
-                    .filter(|f| !f.is_empty())
-                    .map(|f| Features::from_str(f).ok().unwrap())
-                    .collect::<Vec<Features>>(),
-            )
+            .bind(features)
             .bind(
                 torrent_form
                     .subtitle_languages

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # End to end tests of the tracker with real torrent clients, one test per supported client version.
 # usage: ./run.sh [test name...]   (all tests when none is given)
-# Tests run in parallel, JOBS of them at a time (default: the amount of CPUs), each in its own
-# compose project, and their logs are kept in LOG_DIR (default: a new temporary directory).
+# Tests run in parallel, JOBS of them at a time (default: the amount of CPUs), each in
+# its own compose project, and their logs are kept in LOG_DIR (default: a new temporary directory).
 set -euo pipefail
 SELF=$(realpath "$0")
 cd "$(dirname "$0")"
@@ -70,14 +70,12 @@ remove_work_dir() {
     rm -rf "$WORK_DIR"
 }
 
-# Starts the db and the tracker, with a fresh database and payload
-# usage: setup [tracker configuration override...]
-setup() {
-    compose down -v --remove-orphans >/dev/null 2>&1 || true
-    remove_work_dir
+# Once per test, on its first setup, when the client image is known: the payload, and the db with
+# the fixtures, kept as a template that every scenario starts from
+init() {
     WORK_DIR=$(mktemp -d)
     mkdir -p "$WORK_DIR"/{seeder,leecher,leecher2}/{config,downloads}
-    printf '%s\n' "$@" >"$WORK_DIR/tracker.env"
+    touch "$WORK_DIR/tracker.env"
     head -c "$SIZE" /dev/urandom >"$WORK_DIR/seeder/downloads/payload.bin"
     local role
     for role in "${!PASSKEYS[@]}"; do
@@ -90,6 +88,23 @@ setup() {
     cat "$FIXTURES/with_test_title_group.sql" "$FIXTURES/with_test_edition_group.sql" \
         "$FIXTURES/with_test_torrent.sql" seed.sql |
         compose exec -T db psql -q -v ON_ERROR_STOP=1 -v info_hash="$INFO_HASH" -v size="$SIZE" -U arcadia -d arcadia
+    compose exec -T db psql -q -U arcadia -d postgres -c "CREATE DATABASE arcadia_e2e TEMPLATE arcadia"
+}
+
+# Starts the tracker, with a fresh database and no client or client state left from the previous
+# scenario
+# usage: setup [tracker configuration override...]
+setup() {
+    [ -n "$WORK_DIR" ] || init
+    compose rm -sf tracker seeder leecher leecher2 >/dev/null 2>&1
+    # Keeps the payload of the seeder. See remove_work_dir about the owner of the files,
+    # qBittorrent 4.4 also takes the directories, so they are recreated by the host user.
+    docker run --rm -v "$WORK_DIR:/work" postgres:18 sh -c \
+        'find /work/*/config /work/leecher*/downloads -delete'
+    mkdir -p "$WORK_DIR"/{seeder,leecher,leecher2}/config "$WORK_DIR"/{leecher,leecher2}/downloads
+    printf '%s\n' "$@" >"$WORK_DIR/tracker.env"
+    compose exec -T db psql -q -U arcadia -d postgres \
+        -c "DROP DATABASE arcadia WITH (FORCE)" -c "CREATE DATABASE arcadia TEMPLATE arcadia_e2e"
     compose up -d --wait tracker
 }
 

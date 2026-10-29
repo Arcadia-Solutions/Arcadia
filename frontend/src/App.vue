@@ -1,7 +1,7 @@
 <template>
   <PageProgressBar />
   <div id="app-container" v-if="isAppReady">
-    <Toast position="top-right" group="tr" />
+    <Toast position="top-right" group="tr" :pt="toastPt" @mouse-enter="stopToastTimer" @mouse-leave="startToastTimer" />
     <div class="navbars-container" v-if="isRouteProtected(route.path)">
       <TopBar />
       <MenuBar class="menu-bar" />
@@ -22,7 +22,7 @@ import MenuBar from './components/MenuBar.vue'
 import TopBar from './components/TopBar.vue'
 import SearchBars from './components/SearchBars.vue'
 import NotificationToasts from './components/NotificationToasts.vue'
-import { Toast } from 'primevue'
+import { Toast, type ToastPassThroughOptions } from 'primevue'
 import { useUserStore } from './stores/user'
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -32,11 +32,21 @@ import { hasLoggedInCookie, isRouteProtected, loginLocation, setLoggedInCookie }
 import { getMe, getPublicArcadiaSettings } from './services/api-schema'
 import { usePublicArcadiaSettingsStore } from './stores/publicArcadiaSettings'
 import { connectNotificationStream, disconnectNotificationStream } from './services/notificationStream'
+import { startToastTimer, stopToastTimer } from './main'
 
 // enable dark mode by default
 document.documentElement.classList.add('dark-theme')
 
 const isAppReady = ref(false)
+
+// Feeds each timed toast's duration to its progress bar. `instance` is the
+// ToastMessage.
+const toastPt: ToastPassThroughOptions = {
+  message: ({ instance }) => ({
+    class: { 'toast-timed': instance.message.duration },
+    style: { '--toast-duration': `${instance.message.duration}ms` },
+  }),
+}
 const route = useRoute()
 const router = useRouter()
 const siteName = config.site_name
@@ -157,6 +167,37 @@ router.isReady().then(async () => {
 </script>
 
 <style>
+/* PrimeVue renders the summary even when empty, and the text gap then pushes
+   the detail below the icon. */
+.p-toast-summary:empty {
+  display: none;
+}
+/* Time left before a timed toast closes. Hovering restarts the timer, so the
+   bar resets too. */
+.p-toast-message.toast-timed {
+  position: relative;
+  overflow: hidden;
+}
+.p-toast-message.toast-timed::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background: currentColor;
+  opacity: 0.5;
+  transform-origin: left;
+  animation: toast-duration var(--toast-duration) linear forwards;
+}
+.p-toast-message.toast-timed:hover::after {
+  animation: none;
+}
+@keyframes toast-duration {
+  to {
+    transform: scaleX(0);
+  }
+}
 .navbars-container {
   width: 100%;
 }

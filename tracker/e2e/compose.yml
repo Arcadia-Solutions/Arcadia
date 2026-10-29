@@ -49,32 +49,27 @@ services:
       retries: 30
 
   seeder:
-    image: ${CLIENT_IMAGE}
-    environment: &client_env
-      PUID: ${HOST_UID}
-      PGID: ${HOST_GID}
-      QBT_LEGAL_NOTICE: confirm
-      QBT_WEBUI_PORT: 8080
+    <<: &client
+      image: ${CLIENT_IMAGE}
+      environment:
+        PUID: ${HOST_UID}
+        PGID: ${HOST_GID}
+        QBT_LEGAL_NOTICE: confirm
+        QBT_WEBUI_PORT: 8080
+      ports:
+        - 127.0.0.1::8080
     volumes:
       - ${WORK_DIR}/seeder/config:/config
       - ${WORK_DIR}/seeder/downloads:/downloads
-    ports:
-      - 127.0.0.1::8080
 
   leecher:
-    image: ${CLIENT_IMAGE}
-    environment: *client_env
+    <<: *client
     volumes:
       - ${WORK_DIR}/leecher/config:/config
       - ${WORK_DIR}/leecher/downloads:/downloads
-    ports:
-      - 127.0.0.1::8080
 
   leecher2:
-    image: ${CLIENT_IMAGE}
-    environment: *client_env
+    <<: *client
     volumes:
       - ${WORK_DIR}/leecher2/config:/config
       - ${WORK_DIR}/leecher2/downloads:/downloads
-    ports:
-      - 127.0.0.1::8080

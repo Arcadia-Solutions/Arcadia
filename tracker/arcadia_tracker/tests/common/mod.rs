@@ -51,6 +51,5 @@ pub(crate) async fn create_test_tracker(pool: PgPool, config: Config) -> web::Da
         torrent_updates: Mutex::new(Default::default()),
         peer_updates: Mutex::new(Default::default()),
         announce_error_updates: Mutex::new(Default::default()),
-        unpersisted_inactive_peers: Mutex::new(Vec::new()),
     })
 }

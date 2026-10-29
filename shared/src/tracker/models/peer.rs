@@ -147,9 +147,9 @@ pub async fn mark_peers_inactive_in_database(
     db: &PgPool,
     peers: &Vec<peer_update::Index>,
     active_cutoff: DateTime<Utc>,
-) -> Result<(), Error> {
+) {
     if peers.is_empty() {
-        return Ok(());
+        return;
     }
 
     let mut user_ids: Vec<i32> = Vec::with_capacity(peers.len());
@@ -185,9 +185,11 @@ pub async fn mark_peers_inactive_in_database(
         active_cutoff
     )
     .execute(db)
-    .await
-    .map_err(|e| Error::DatabseError(e.to_string()))?;
+    .await;
 
-    log::info!("Marked {} peers as inactive", result.rows_affected());
-    Ok(())
+    match result {
+        Ok(result) => log::info!("Marked {} peers as inactive", result.rows_affected()),
+        // the rows stay active until the peers announce again or get removed
+        Err(error) => log::error!("Failed marking peers as inactive in db: {error}"),
+    }
 }

@@ -172,7 +172,7 @@ pub fn decode_from_query_str(query: &str, req: &HttpRequest) -> Result<Announce,
             if event.unwrap_or_default() == AnnounceEvent::Stopped {
                 0
             } else {
-                numwant.unwrap_or(arc.numwant_default)
+                numwant.unwrap_or(arc.numwant_default).min(arc.numwant_max)
             }
         },
     })

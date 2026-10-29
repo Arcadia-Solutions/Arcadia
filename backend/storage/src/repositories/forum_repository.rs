@@ -23,7 +23,7 @@ use crate::{
 use arcadia_common::error::{Error, Result};
 use chrono::Local;
 use serde_json::Value;
-use sqlx::{Postgres, Transaction};
+use sqlx::{PgConnection, Postgres, Transaction};
 use tokio::sync::broadcast;
 
 impl ConnectionPool {
@@ -180,29 +180,12 @@ impl ConnectionPool {
 
         let mut tx = self.pool.begin().await?;
 
-        // Check if the subcategory restricts thread creation
-        let is_restricted = sqlx::query_scalar!(
-            r#"SELECT new_threads_restricted FROM forum_sub_categories WHERE id = $1"#,
-            forum_thread.forum_sub_category_id
+        ensure_user_can_create_threads_in_sub_category(
+            &mut tx,
+            forum_thread.forum_sub_category_id,
+            current_user_id,
         )
-        .fetch_one(&mut *tx)
-        .await
-        .map_err(Error::CouldNotCreateForumThread)?;
-
-        if is_restricted {
-            let is_allowed = sqlx::query_scalar!(
-                r#"SELECT EXISTS(SELECT 1 FROM forum_sub_category_allowed_posters WHERE forum_sub_category_id = $1 AND user_id = $2) AS "exists!""#,
-                forum_thread.forum_sub_category_id,
-                current_user_id
-            )
-            .fetch_one(&mut *tx)
-            .await
-            .map_err(Error::CouldNotCreateForumThread)?;
-
-            if !is_allowed {
-                return Err(Error::ForumSubCategoryNewThreadsRestricted);
-            }
-        }
+        .await?;
 
         let created_forum_thread = sqlx::query_as!(
             ForumThread,
@@ -308,6 +291,14 @@ impl ConnectionPool {
 
         // If sub-category is changing, update counters on both sub-categories
         if old_sub_category_id != edited_thread.forum_sub_category_id {
+            // moving a thread places it in the destination like creating it would
+            ensure_user_can_create_threads_in_sub_category(
+                &mut tx,
+                edited_thread.forum_sub_category_id,
+                user_id,
+            )
+            .await?;
+
             // Decrement counters on the old sub-category
             sqlx::query!(
                 r#"
@@ -1932,4 +1923,34 @@ impl ConnectionPool {
         .await
         .map_err(Error::CouldNotGetRelatedThreads)
     }
+}
+
+/// Refuses a user who is not on the allow-list of a sub-category restricting thread creation
+async fn ensure_user_can_create_threads_in_sub_category(
+    connection: &mut PgConnection,
+    forum_sub_category_id: i32,
+    user_id: i32,
+) -> Result<()> {
+    let is_restricted = sqlx::query_scalar!(
+        r#"SELECT new_threads_restricted FROM forum_sub_categories WHERE id = $1"#,
+        forum_sub_category_id
+    )
+    .fetch_one(&mut *connection)
+    .await?;
+
+    if is_restricted {
+        let is_allowed = sqlx::query_scalar!(
+            r#"SELECT EXISTS(SELECT 1 FROM forum_sub_category_allowed_posters WHERE forum_sub_category_id = $1 AND user_id = $2) AS "exists!""#,
+            forum_sub_category_id,
+            user_id
+        )
+        .fetch_one(&mut *connection)
+        .await?;
+
+        if !is_allowed {
+            return Err(Error::ForumSubCategoryNewThreadsRestricted);
+        }
+    }
+
+    Ok(())
 }

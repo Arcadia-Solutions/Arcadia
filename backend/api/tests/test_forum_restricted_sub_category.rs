@@ -5,8 +5,9 @@ use actix_web::http::StatusCode;
 use actix_web::test;
 use arcadia_storage::connection_pool::ConnectionPool;
 use arcadia_storage::models::forum::{
-    EditedForumSubCategory, ForumSubCategory, ForumSubCategoryAllowedPoster, ForumThread,
-    ForumThreadSortBy, ForumThreadSortDirection, UserCreatedForumPost, UserCreatedForumThread,
+    EditedForumSubCategory, EditedForumThread, ForumSubCategory, ForumSubCategoryAllowedPoster,
+    ForumThread, ForumThreadSortBy, ForumThreadSortDirection, UserCreatedForumPost,
+    UserCreatedForumThread,
 };
 use arcadia_storage::models::user::UserLite;
 use common::{auth_header, create_test_app_and_login, TestUser};
@@ -84,6 +85,49 @@ async fn test_non_allowed_user_cannot_create_thread_in_restricted_sub_category(p
         .set_json(&create_body)
         .to_request();
 
+    let resp = test::call_service(&service, req).await;
+    assert_eq!(resp.status(), StatusCode::FORBIDDEN);
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_forum_category",
+        "with_test_forum_sub_category",
+        "with_test_restricted_forum_sub_category"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_non_allowed_user_cannot_move_thread_into_restricted_sub_category(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    // user_edit_art (id=101) is NOT in the allowed posters of sub-category 102
+    let (service, user) =
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::EditArtist).await;
+
+    let req = test::TestRequest::post()
+        .uri("/api/forum/thread")
+        .insert_header(auth_header(&user.token))
+        .set_json(&UserCreatedForumThread {
+            forum_sub_category_id: 100,
+            name: "Thread to move".into(),
+            first_post: UserCreatedForumPost {
+                content: "content".into(),
+                forum_thread_id: 0,
+            },
+        })
+        .to_request();
+    let thread: ForumThread =
+        common::call_and_read_body_json_with_status(&service, req, StatusCode::CREATED).await;
+
+    let req = test::TestRequest::put()
+        .uri("/api/forum/thread")
+        .insert_header(auth_header(&user.token))
+        .set_json(&EditedForumThread {
+            id: thread.id,
+            forum_sub_category_id: 102,
+            name: thread.name,
+        })
+        .to_request();
     let resp = test::call_service(&service, req).await;
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }

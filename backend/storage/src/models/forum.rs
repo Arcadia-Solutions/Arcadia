@@ -126,6 +126,7 @@ pub struct ForumThread {
     pub created_by_id: i32,
     pub posts_amount: i64,
     pub pinned: bool,
+    /// only stops new replies in the thread, its author can still edit it
     pub locked: bool,
     pub views_count: i64,
 }

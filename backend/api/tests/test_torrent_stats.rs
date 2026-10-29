@@ -277,3 +277,42 @@ async fn test_torrent_stats_deletions(pool: PgPool) {
     assert_eq!(feb.duplicate, 0);
     assert_eq!(feb.other, 1);
 }
+
+#[sqlx::test(
+    fixtures("with_test_users", "with_test_torrent_stats"),
+    migrations = "../storage/migrations"
+)]
+async fn test_torrent_stats_snatches(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::ViewStatsDetails).await;
+
+    let req = test::TestRequest::get()
+        .uri("/api/stats/torrents?from=2025-01-01&to=2025-02-28&interval=month&group_by=content_type")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+
+    let response: TorrentStatsResponse =
+        call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
+
+    let point = |month: u32, content_type: &str| {
+        response
+            .data
+            .iter()
+            .find(|d| {
+                d.period.format("%m").to_string() == format!("{month:02}")
+                    && d.attribute_value.as_deref() == Some(content_type)
+            })
+            .unwrap()
+    };
+
+    // January: torrent 10 and the deleted torrent 13 (movies), the uncompleted grab is ignored
+    assert_eq!(point(1, "movie").snatches, 2);
+    assert_eq!(point(1, "movie").snatched_size, 5000000000 + 2000000000);
+    assert_eq!(point(1, "music").snatches, 0);
+
+    // February: torrent 12 (music) snatched twice, uploads are unaffected
+    assert_eq!(point(2, "music").snatches, 2);
+    assert_eq!(point(2, "music").snatched_size, 2 * 800000000);
+    assert_eq!(point(2, "music").count, 1);
+}

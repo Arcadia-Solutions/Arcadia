@@ -104,3 +104,11 @@ INSERT INTO torrent_deletions (
 (13, 'Stats Movie A', 'trumped', NULL, NULL, '2025-01-26 10:00:00+00', 100),
 (14, 'Stats Movie A', 'duplicate', NULL, NULL, '2025-01-27 10:00:00+00', 100),
 (15, 'Stats Album B', 'other', NULL, NULL, '2025-02-15 10:00:00+00', 100);
+
+-- Snatches: 2 in January (torrent 10, deleted torrent 13), 2 in February (torrent 12), 1 grabbed but never completed
+INSERT INTO torrent_activities (torrent_id, user_id, grabbed_at, completed_at) VALUES
+(10, 101, '2025-01-16 10:00:00+00', '2025-01-16 11:00:00+00'),
+(13, 101, '2025-01-25 11:00:00+00', '2025-01-25 12:00:00+00'),
+(12, 100, '2025-02-11 10:00:00+00', '2025-02-11 11:00:00+00'),
+(12, 101, '2025-02-12 10:00:00+00', '2025-02-12 11:00:00+00'),
+(11, 100, '2025-01-21 10:00:00+00', NULL);

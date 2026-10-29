@@ -50,11 +50,17 @@
       <ContentContainer :containerTitle="t('stats.total_torrents')">
         {{ formatNumber(totalCount) }}
       </ContentContainer>
+      <ContentContainer :containerTitle="t('stats.total_snatches')">
+        {{ formatNumber(totalSnatches) }}
+      </ContentContainer>
+      <ContentContainer :containerTitle="t('stats.total_snatched_size')">
+        {{ bytesToReadable(totalSnatchedSize) }}
+      </ContentContainer>
       <ContentContainer :containerTitle="t('stats.total_seeding_size')">
         {{ bytesToReadable(overallTorrentStats.total_seeding_size) }}
       </ContentContainer>
     </div>
-    <h3>{{ t('stats.overall_uploads') }}</h3>
+    <h3>{{ t('stats.torrents_and_snatches_over_time') }}</h3>
     <Chart class="chart" :options="overallChartOptions" />
     <template v-if="releaseYearChartOptions">
       <h3>{{ t('stats.title_groups_per_release_year') }}</h3>
@@ -64,19 +70,21 @@
       <Chart class="chart" :options="releaseYearChartOptions" />
     </template>
     <div v-for="groupBy in selectedGroupBys" :key="groupBy" class="grouped-chart">
-      <h3>{{ groupByLabel(groupBy) }}</h3>
       <ProgressSpinner v-if="!groupedStats[groupBy]" />
       <template v-else>
-        <div class="grouped-legend">
-          <span v-for="(attr, i) in groupedData[groupBy].attributes" :key="attr" class="legend-item">
-            <span class="legend-color" :style="{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }" />
-            {{ attr }}
-          </span>
-        </div>
-        <div class="grouped-charts-row">
-          <Chart class="chart grouped-line-chart" :options="groupedData[groupBy].lineOptions" />
-          <Chart class="chart grouped-pie-chart" :options="groupedData[groupBy].pieOptions" />
-        </div>
+        <template v-for="metric in groupedData[groupBy].metrics" :key="metric.label">
+          <h3>{{ metric.label }}</h3>
+          <div class="grouped-legend">
+            <span v-for="(attr, i) in groupedData[groupBy].attributes" :key="attr" class="legend-item">
+              <span class="legend-color" :style="{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }" />
+              {{ attr }}
+            </span>
+          </div>
+          <div class="grouped-charts-row">
+            <Chart class="chart grouped-line-chart" :options="metric.lineOptions" />
+            <Chart class="chart grouped-pie-chart" :options="metric.pieOptions" />
+          </div>
+        </template>
       </template>
     </div>
   </div>
@@ -92,7 +100,7 @@ import Select from 'primevue/select'
 import FloatLabel from 'primevue/floatlabel'
 import { useI18n } from 'vue-i18n'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { getTorrentStats, StatsInterval, TorrentStatsGroupBy, type TorrentStatsResponse } from '@/services/api-schema'
+import { getTorrentStats, StatsInterval, TorrentStatsGroupBy, type TorrentStatsDataPoint, type TorrentStatsResponse } from '@/services/api-schema'
 import { baseChartOptions, CHART_COLORS, groupedAttributePieChartOptions, textColor, titleGroupsPerReleaseYearChartOptions } from '@/services/charts'
 import { bytesToReadable, formatDateToLocalString, formatDateTimeLabel, formatNumber } from '@/services/helpers'
 
@@ -167,6 +175,8 @@ const groupedStats = reactive<Record<string, TorrentStatsResponse>>({})
 
 const totalSize = computed(() => overallTorrentStats.value?.data.reduce((sum, d) => sum + d.total_size, 0) ?? 0)
 const totalCount = computed(() => overallTorrentStats.value?.data.reduce((sum, d) => sum + d.count, 0) ?? 0)
+const totalSnatches = computed(() => overallTorrentStats.value?.data.reduce((sum, d) => sum + d.snatches, 0) ?? 0)
+const totalSnatchedSize = computed(() => overallTorrentStats.value?.data.reduce((sum, d) => sum + d.snatched_size, 0) ?? 0)
 
 const overallChartOptions = computed<Highcharts.Options>(() => {
   if (!overallTorrentStats.value) return {}
@@ -181,10 +191,17 @@ const overallChartOptions = computed<Highcharts.Options>(() => {
       categories: data.map((d) => formatDateTimeLabel(d.period, interval.value)),
       labels: { style: { color: textColor() } },
     },
-    yAxis: {
-      title: { text: undefined },
-      labels: { style: { color: textColor() } },
-    },
+    yAxis: [
+      {
+        title: { text: undefined },
+        labels: { style: { color: textColor() } },
+      },
+      {
+        title: { text: t('stats.snatches'), style: { color: CHART_COLORS[2] } },
+        labels: { style: { color: CHART_COLORS[2] } },
+        opposite: true,
+      },
+    ],
     series: [
       {
         type: 'line',
@@ -206,6 +223,14 @@ const overallChartOptions = computed<Highcharts.Options>(() => {
           }
         }),
         color: CHART_COLORS[1],
+        marker: { enabled: false, states: { hover: { enabled: true, radius: 5 } } },
+      },
+      {
+        type: 'line',
+        name: t('stats.snatches'),
+        yAxis: 1,
+        data: data.map((d) => ({ y: d.snatches, totalSize: d.snatched_size })),
+        color: CHART_COLORS[2],
         marker: { enabled: false, states: { hover: { enabled: true, radius: 5 } } },
       },
     ],
@@ -253,58 +278,86 @@ const releaseYearChartOptions = computed<Highcharts.Options | null>(() =>
 )
 
 const groupedData = computed(() => {
-  const result: Record<string, { attributes: string[]; lineOptions: Highcharts.Options; pieOptions: Highcharts.Options }> = {}
+  const result: Record<string, { attributes: string[]; metrics: { label: string; lineOptions: Highcharts.Options; pieOptions: Highcharts.Options }[] }> = {}
   for (const groupBy of selectedGroupBys.value) {
     const stats = groupedStats[groupBy]
     if (!stats) continue
 
     const periods = [...new Set(stats.data.map((d) => d.period))].sort()
-    const byAttr = new Map<string, Map<string, { count: number; totalSize: number }>>()
+    const byAttr = new Map<string, Map<string, TorrentStatsDataPoint>>()
     for (const point of stats.data) {
       const attr = point.attribute_value!
       if (!byAttr.has(attr)) byAttr.set(attr, new Map())
-      byAttr.get(attr)!.set(point.period, { count: point.count, totalSize: point.total_size })
+      byAttr.get(attr)!.set(point.period, point)
     }
 
     const attributes = [...byAttr.keys()]
 
-    const lineOptions: Highcharts.Options = {
-      ...baseChartOptions,
-      chart: { ...baseChartOptions.chart, type: 'line' },
-      xAxis: {
-        categories: periods.map((p) => formatDateTimeLabel(p, interval.value)),
-        labels: { style: { color: textColor() } },
-      },
-      yAxis: {
-        title: { text: undefined },
-        labels: { style: { color: textColor() } },
-      },
-      tooltip: {
-        shared: true,
-      },
-      series: attributes.map((attr, i) => ({
-        type: 'line' as const,
-        name: attr,
-        data: periods.map((p) => byAttr.get(attr)?.get(p)?.count ?? 0),
-        color: CHART_COLORS[i % CHART_COLORS.length],
-        marker: { enabled: false, states: { hover: { enabled: true, radius: 5 } } },
-      })),
+    const buildMetricCharts = (
+      label: string,
+      countOf: (point: TorrentStatsDataPoint) => number,
+      sizeOf: (point: TorrentStatsDataPoint) => number,
+      sizeLabel: string,
+    ) => {
+      const lineOptions: Highcharts.Options = {
+        ...baseChartOptions,
+        chart: { ...baseChartOptions.chart, type: 'line' },
+        xAxis: {
+          categories: periods.map((p) => formatDateTimeLabel(p, interval.value)),
+          labels: { style: { color: textColor() } },
+        },
+        yAxis: {
+          title: { text: undefined },
+          labels: { style: { color: textColor() } },
+        },
+        tooltip: {
+          shared: true,
+        },
+        series: attributes.map((attr, i) => ({
+          type: 'line' as const,
+          name: attr,
+          data: periods.map((p) => {
+            const point = byAttr.get(attr)?.get(p)
+            return point ? countOf(point) : 0
+          }),
+          color: CHART_COLORS[i % CHART_COLORS.length],
+          marker: { enabled: false, states: { hover: { enabled: true, radius: 5 } } },
+        })),
+      }
+
+      const pieOptions = groupedAttributePieChartOptions(
+        attributes.map((attr) => {
+          let countSum = 0
+          let sizeSum = 0
+          for (const point of byAttr.get(attr)!.values()) {
+            countSum += countOf(point)
+            sizeSum += sizeOf(point)
+          }
+          return { name: attr, y: countSum, extraValue: sizeSum }
+        }),
+        { count: t('stats.count'), extra: { label: sizeLabel, format: bytesToReadable } },
+      )
+
+      return { label, lineOptions, pieOptions }
     }
 
-    const pieOptions = groupedAttributePieChartOptions(
-      attributes.map((attr) => {
-        let countSum = 0
-        let sizeSum = 0
-        for (const v of byAttr.get(attr)!.values()) {
-          countSum += v.count
-          sizeSum += v.totalSize
-        }
-        return { name: attr, y: countSum, extraValue: sizeSum }
-      }),
-      { count: t('stats.count'), extra: { label: t('stats.total_size'), format: bytesToReadable } },
-    )
-
-    result[groupBy] = { attributes, lineOptions, pieOptions }
+    result[groupBy] = {
+      attributes,
+      metrics: [
+        buildMetricCharts(
+          t('stats.torrents_by', { attribute: groupByLabel(groupBy).toLowerCase() }),
+          (p) => p.count,
+          (p) => p.total_size,
+          t('stats.total_size'),
+        ),
+        buildMetricCharts(
+          t('stats.snatches_by', { attribute: groupByLabel(groupBy).toLowerCase() }),
+          (p) => p.snatches,
+          (p) => p.snatched_size,
+          t('stats.total_snatched_size'),
+        ),
+      ],
+    }
   }
   return result
 })

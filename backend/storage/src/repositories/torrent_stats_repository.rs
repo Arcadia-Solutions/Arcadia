@@ -24,11 +24,26 @@ impl ConnectionPool {
                     ('1 ' || $3)::INTERVAL
                 ) AS period
             ),
+            -- uploads (non deleted torrents) and snatches (completed downloads, deleted torrents included)
+            events AS (
+                SELECT t.id AS torrent_id, t.created_at AS happened_at, FALSE AS is_snatch
+                FROM torrents t
+                WHERE t.deleted_at IS NULL
+                  AND t.created_at >= $1::DATE
+                  AND t.created_at < ($2::DATE + INTERVAL '1 day')
+                UNION ALL
+                SELECT ta.torrent_id, ta.completed_at, TRUE
+                FROM torrent_activities ta
+                WHERE ta.completed_at >= $1::DATE
+                  AND ta.completed_at < ($2::DATE + INTERVAL '1 day')
+            ),
             stats AS (
                 SELECT
-                    date_trunc($3, t.created_at)::TIMESTAMP AS period,
-                    COUNT(*)::BIGINT AS count,
-                    COALESCE(SUM(t.size), 0)::BIGINT AS total_size,
+                    date_trunc($3, e.happened_at)::TIMESTAMP AS period,
+                    COUNT(*) FILTER (WHERE NOT e.is_snatch)::BIGINT AS count,
+                    COALESCE(SUM(t.size) FILTER (WHERE NOT e.is_snatch), 0)::BIGINT AS total_size,
+                    COUNT(*) FILTER (WHERE e.is_snatch)::BIGINT AS snatches,
+                    COALESCE(SUM(t.size) FILTER (WHERE e.is_snatch), 0)::BIGINT AS snatched_size,
                     CASE $4
                         WHEN 'video_resolution' THEN t.video_resolution::TEXT
                         WHEN 'video_codec' THEN t.video_codec::TEXT
@@ -45,13 +60,11 @@ impl ConnectionPool {
                         WHEN 'country_from' THEN tg.country_from
                         ELSE NULL
                     END AS attribute_value
-                FROM torrents t
+                FROM events e
+                JOIN torrents t ON e.torrent_id = t.id
                 JOIN edition_groups eg ON t.edition_group_id = eg.id
                 JOIN title_groups tg ON eg.title_group_id = tg.id
-                WHERE t.deleted_at IS NULL
-                  AND t.created_at >= $1::DATE
-                  AND t.created_at < ($2::DATE + INTERVAL '1 day')
-                  AND CASE $4
+                WHERE CASE $4
                         WHEN 'video_resolution' THEN t.video_resolution IS NOT NULL
                         WHEN 'video_codec' THEN t.video_codec IS NOT NULL
                         WHEN 'audio_codec' THEN t.audio_codec IS NOT NULL
@@ -76,6 +89,8 @@ impl ConnectionPool {
                 p.period::TIMESTAMP AS "period!",
                 COALESCE(s.count, 0)::BIGINT AS "count!",
                 COALESCE(s.total_size, 0)::BIGINT AS "total_size!",
+                COALESCE(s.snatches, 0)::BIGINT AS "snatches!",
+                COALESCE(s.snatched_size, 0)::BIGINT AS "snatched_size!",
                 av.attribute_value
             FROM periods p
             LEFT JOIN attribute_values av ON TRUE

@@ -49,8 +49,12 @@ pub struct TorrentStatsQuery {
 pub struct TorrentStatsDataPoint {
     #[schema(value_type = String, format = DateTime)]
     pub period: NaiveDateTime,
+    /// uploads
     pub count: i64,
     pub total_size: i64,
+    pub snatches: i64,
+    /// sum of the sizes of the snatched torrents
+    pub snatched_size: i64,
     pub attribute_value: Option<String>,
 }
 

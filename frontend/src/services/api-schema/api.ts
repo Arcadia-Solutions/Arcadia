@@ -4392,8 +4392,16 @@ export type TorrentSearchOrderByColumn = typeof TorrentSearchOrderByColumn[keyof
 
 export interface TorrentStatsDataPoint {
     'attribute_value'?: string | null;
+    /**
+     * uploads
+     */
     'count': number;
     'period': string;
+    /**
+     * sum of the sizes of the snatched torrents
+     */
+    'snatched_size': number;
+    'snatches': number;
     'total_size': number;
 }
 

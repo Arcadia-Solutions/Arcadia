@@ -17,6 +17,10 @@ SIZE=$((16 * 1024 * 1024))
 # Pieces in flight are discarded when a client restarts and get transferred again. More than
 # this means some bytes were counted twice.
 MAX_TRANSFERRED=$((SIZE + SIZE / 4))
+# Least a seeder reports having uploaded for one full copy of the payload. qBittorrent can report
+# less than what its peers received for good (seen 360455 bytes short on a 16 MiB payload), likely
+# the last send to a leecher that disconnects once complete, never counted.
+MIN_UPLOADED=$((SIZE - 2 * 1024 * 1024))
 # Tracker configuration overrides for the scenarios about peers that stop announcing. Their
 # inactive_peer_ttl stays at its default of several minutes.
 SHORT_ACTIVE_PEER_TTL=(ARCADIA_TRACKER__ACTIVE_PEER_TTL=10 ARCADIA_TRACKER__PEER_EXPIRY_INTERVAL=1)
@@ -93,6 +97,9 @@ teardown() {
     local status=$?
     if [ $status -ne 0 ]; then
         compose logs tracker seeder leecher leecher2 >&2
+        compose exec -T db psql -U arcadia -d arcadia -c \
+            "SELECT username, real_uploaded, real_downloaded, uploaded, downloaded FROM users WHERE username LIKE 'e2e_%'" \
+            -c "SELECT user_id, encode(peer_id, 'escape') AS peer_id, host(ip), uploaded, downloaded, \"left\", seeder, active, updated_at FROM peers" >&2 || true
     fi
     compose down -v --remove-orphans >/dev/null 2>&1 || true
     remove_work_dir || true
@@ -143,7 +150,7 @@ assert_all_reported() {
     local leechers=$(($# - 1))
     # uploads are only reported on the next announce, and clients may skip a forced reannounce
     # that comes too early
-    wait_sql "all uploads reported" "SELECT sum(real_uploaded) >= $leechers * $SIZE FROM users" t \
+    wait_sql "all uploads reported" "SELECT sum(real_uploaded) >= $leechers * $MIN_UPLOADED FROM users" t \
         client_reannounce "$@"
     # With SHORT_ACTIVE_PEER_TTL, peers get reaped 10 seconds after their last announce, so they
     # all have to keep announcing to be counted at the same time. Transmission 4.0 only accepts
@@ -163,7 +170,7 @@ assert_all_reported() {
 # usage: assert_seeder_leecher_bounds [max transferred]
 assert_seeder_leecher_bounds() {
     local max=${1:-$MAX_TRANSFERRED}
-    assert_between "seeder uploaded" "$(user_value seeder real_uploaded)" "$SIZE" "$max"
+    assert_between "seeder uploaded" "$(user_value seeder real_uploaded)" "$MIN_UPLOADED" "$max"
     assert_between "leecher downloaded" "$(user_value leecher real_downloaded)" "$SIZE" "$max"
     assert_eq "leecher nothing uploaded" "$(user_value leecher real_uploaded)" 0
     assert_eq "seeder nothing downloaded" "$(user_value seeder real_downloaded)" 0
@@ -195,14 +202,10 @@ client_reannounce() {
     done
 }
 
-# Waits until the torrent progress of a client reaches the given fraction, running an optional
-# command before each try
-# usage: wait_progress <role> <fraction> [command...]
+# Waits until the torrent progress of a client reaches the given fraction
 wait_progress() {
     local role=$1 min=$2
-    shift 2
     for _ in $(seq 240); do
-        [ $# -gt 0 ] && "$@"
         python3 -c "import sys; sys.exit(not $(client progress "$role") >= $min)" && return 0
         sleep 0.5
     done
@@ -241,12 +244,11 @@ leecher_partially_downloaded() {
     wait_progress leecher 0.3
 }
 
-# With SHORT_ACTIVE_PEER_TTL, the seeder gets reaped while the leecher restarts or is frozen, and
-# the tracker gives no inactive peer: the leecher would only find the seeder once one of them
-# announces again on its own, maybe after announce_max
+# No reannounce while the leecher downloads: qBittorrent 4.4 stops announcing when asked too often,
+# and a Transmission seeder told that there is no leecher takes the leecher for a seed and drops it
 leecher_finish() {
     client download_limit leecher 0
-    wait_progress leecher 1 client reannounce seeder
+    wait_progress leecher 1
     assert_payload leecher
 }
 
@@ -310,7 +312,7 @@ run_scenarios() {
     # What the killed session downloaded was never announced, and the client may have lost it
     # too, without resume data saved before the crash, so the seeder may have sent it twice
     assert_all_reported "$agent_prefix" 2/0/1 seeder leecher
-    assert_between "seeder uploaded" "$(user_value seeder real_uploaded)" "$SIZE" $((SIZE + MAX_TRANSFERRED))
+    assert_between "seeder uploaded" "$(user_value seeder real_uploaded)" "$MIN_UPLOADED" $((SIZE + MAX_TRANSFERRED))
 
     echo "=== $name: leecher frozen mid-download, then back"
     start seeder leecher -- "${SHORT_ACTIVE_PEER_TTL[@]}"

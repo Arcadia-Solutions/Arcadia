@@ -5,12 +5,22 @@ on:
   push:
     paths:
       - "tracker/arcadia_tracker/**"
+      - "tracker/e2e/**"
+      - "shared/**"
+      - "backend/storage/migrations/**"
+      - "backend/storage/scripts/init_db.sh"
+      - "backend/api/Dockerfile"
       - ".github/workflows/tracker.yml"
   pull_request:
     branches:
       - main
     paths:
       - "tracker/arcadia_tracker/**"
+      - "tracker/e2e/**"
+      - "shared/**"
+      - "backend/storage/migrations/**"
+      - "backend/storage/scripts/init_db.sh"
+      - "backend/api/Dockerfile"
       - ".github/workflows/tracker.yml"
 
 env:
@@ -57,6 +67,39 @@ jobs:
 
       - name: Run tests
         run: cargo test
+
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      # relative to tracker/e2e, where run.sh runs compose
+      COMPOSE_FILE: compose.yml:compose.ci.yml
+    steps:
+      - uses: actions/checkout@v4
+
+      # The type=gha layer caches of compose.ci.yml need a buildx builder and the cache service
+      # credentials
+      - uses: docker/setup-buildx-action@v3
+      - uses: crazy-max/ghaction-github-runtime@v3
+
+      # Layers don't hold the cargo cache mounts of the Dockerfiles, so they are saved and
+      # injected back into the builder, otherwise any source change rebuilds every dependency
+      - name: Cache cargo cache mounts
+        uses: actions/cache@v4
+        with:
+          path: cargo-cache-mounts
+          key: tracker-e2e-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: tracker-e2e-cargo-
+      - uses: reproducible-containers/buildkit-cache-dance@v3
+        with:
+          cache-dir: cargo-cache-mounts
+          cache-map: |
+            {
+              "cargo-cache-mounts/tracker-target": { "id": "arcadia-tracker-target", "target": "/app/target" },
+              "cargo-cache-mounts/cargo-registry": { "id": "arcadia-cargo-registry", "target": "/usr/local/cargo/registry" }
+            }
+
+      - name: Run e2e tests
+        run: ./tracker/e2e/run.sh
 
   lint:
     runs-on: ubuntu-latest

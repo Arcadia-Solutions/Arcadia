@@ -260,6 +260,8 @@ CREATE TABLE users (
 
     UNIQUE(passkey)
 );
+-- usernames differing only by their case would look like the same member
+CREATE UNIQUE INDEX users_username_lower_key ON users (LOWER(username));
 INSERT INTO users (username, email, password_hash, registered_from_ip, passkey, class_name, css_sheet_name)
 VALUES ('creator', 'none@domain.com', 'none', '127.0.0.1', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'newbie', 'arcadia');
 CREATE TABLE css_sheets (

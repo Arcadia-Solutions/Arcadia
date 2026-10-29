@@ -129,12 +129,12 @@ async fn test_duplicate_username_registration(pool: PgPool) {
     let resp = call_service(&service, req).await;
     assert_eq!(resp.status(), StatusCode::CREATED);
 
-    // Try to register second user with same username
+    // Try to register second user with same username, differing only by its case
     let req = TestRequest::post()
         .peer_addr("10.10.4.89:6881".parse().unwrap())
         .uri("/api/auth/register")
         .set_json(RegisterRequest {
-            username: "duplicate_user",
+            username: "Duplicate_User",
             password: "DifferentPassword456",
             password_verify: "DifferentPassword456",
             email: "different_email@testdomain.com",

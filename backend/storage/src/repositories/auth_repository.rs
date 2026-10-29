@@ -41,7 +41,7 @@ const PASSWORD_RESET_TOKEN_LENGTH: usize = 50;
 impl ConnectionPool {
     pub async fn does_username_exist(&self, username: &str) -> Result<bool> {
         let result = sqlx::query!(
-            "SELECT EXISTS(SELECT 1 FROM users WHERE username = $1)",
+            "SELECT EXISTS(SELECT 1 FROM users WHERE LOWER(username) = LOWER($1))",
             username
         )
         .fetch_one(&self.pool)

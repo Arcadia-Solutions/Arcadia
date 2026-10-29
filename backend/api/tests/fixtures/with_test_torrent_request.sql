@@ -23,17 +23,17 @@ INSERT INTO torrent_requests (
     '2025-04-01 10:00:00+00',
     '2025-04-01 10:00:00+00',
     1,
-    'Remastered Edition',
-    'Test Group',
+    'red label Parlophone single',
+    NULL,
     'Looking for a high quality version of this release',
-    ARRAY['English']::language_enum[],
+    ARRAY[]::language_enum[],
     ARRAY['FLAC'],
     ARRAY['flac']::audio_codec_enum[],
-    ARRAY['2.0']::audio_channels_enum[],
-    ARRAY['Lossless']::audio_bitrate_sampling_enum[],
+    ARRAY[]::audio_channels_enum[],
+    ARRAY['24bit Lossless']::audio_bitrate_sampling_enum[],
     ARRAY[]::video_codec_enum[],
     ARRAY[]::features_enum[],
     ARRAY[]::language_enum[],
     ARRAY[]::video_resolution_enum[],
-    ARRAY['CD']::source_enum[]
+    ARRAY['Vinyl']::source_enum[]
 );

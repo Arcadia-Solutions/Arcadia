@@ -143,6 +143,35 @@ async fn test_fill_torrent_request_wrong_title_group(pool: PgPool) {
     fixtures(
         "with_test_users",
         "with_test_title_group",
+        "with_test_edition_group",
+        "with_test_torrent",
+        "with_test_cd_torrent_request"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_fill_torrent_request_not_matching_criteria(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        common::create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+
+    // torrent_id=1 is a Vinyl release, but request 2 asks for a CD
+    let req = test::TestRequest::post()
+        .insert_header(auth_header(&user.token))
+        .uri("/api/torrent-requests/fill")
+        .set_json(serde_json::json!({
+            "torrent_request_id": 2,
+            "torrent_id": 1
+        }))
+        .to_request();
+
+    let resp = test::call_service(&service, req).await;
+    assert_eq!(resp.status(), StatusCode::CONFLICT);
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_title_group",
         "with_test_torrent_request"
     ),
     migrations = "../storage/migrations"

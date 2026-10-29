@@ -150,8 +150,8 @@ pub enum Error {
     #[error("could not find the torrent request")]
     CouldNotFindTheTorrentRequest(#[source] sqlx::Error),
 
-    #[error("this torrent isn't in the title group of the request")]
-    TorrentTitleGroupNotMatchingRequestedOne,
+    #[error("this torrent doesn't match the criteria of the request")]
+    TorrentNotMatchingRequest,
 
     #[error("this torrent request is already filled")]
     TorrentRequestAlreadyFilled,
@@ -1015,7 +1015,7 @@ impl actix_web::ResponseError for Error {
             | Error::NotEnoughBonusPointsAvailable
             | Error::NotEnoughFreeleechTokensAvailable
             | Error::TorrentRequestAlreadyFilled
-            | Error::TorrentTitleGroupNotMatchingRequestedOne
+            | Error::TorrentNotMatchingRequest
             | Error::TorrentRequestFillUploaderOnlyWithinFirstHour
             | Error::InsufficientBonusPointsForBounty
             | Error::InsufficientUploadForBounty

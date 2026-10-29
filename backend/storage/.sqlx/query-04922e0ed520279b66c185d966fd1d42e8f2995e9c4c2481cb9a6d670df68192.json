@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT EXISTS (\n                SELECT 1\n                FROM torrents t\n                JOIN edition_groups eg ON t.edition_group_id = eg.id\n                JOIN torrent_requests r ON eg.title_group_id = r.title_group_id\n                WHERE t.id = $1\n                  AND r.id = $2\n                  AND (COALESCE(r.edition_name, '') = '' OR LOWER(r.edition_name) = LOWER(eg.name))\n                  AND (COALESCE(r.release_group, '') = '' OR LOWER(r.release_group) = LOWER(t.release_group))\n                  AND (CARDINALITY(r.source) = 0 OR eg.source = ANY(r.source))\n                  AND (CARDINALITY(r.container) = 0 OR LOWER(t.container) = ANY(SELECT LOWER(c) FROM UNNEST(r.container) c))\n                  AND (CARDINALITY(r.audio_codec) = 0 OR t.audio_codec = ANY(r.audio_codec))\n                  AND (CARDINALITY(r.audio_channels) = 0 OR t.audio_channels = ANY(r.audio_channels))\n                  AND (CARDINALITY(r.audio_bitrate_sampling) = 0 OR t.audio_bitrate_sampling = ANY(r.audio_bitrate_sampling))\n                  AND (CARDINALITY(r.video_codec) = 0 OR t.video_codec = ANY(r.video_codec))\n                  AND (CARDINALITY(r.video_resolution) = 0 OR t.video_resolution = ANY(r.video_resolution))\n                  AND (r.video_resolution_other_x IS NULL OR r.video_resolution_other_x = t.video_resolution_other_x)\n                  AND (r.video_resolution_other_y IS NULL OR r.video_resolution_other_y = t.video_resolution_other_y)\n                  AND (CARDINALITY(r.languages) = 0 OR r.languages && t.languages)\n                  AND (CARDINALITY(r.subtitle_languages) = 0 OR r.subtitle_languages && t.subtitle_languages)\n                  AND (CARDINALITY(r.features) = 0 OR r.features && t.features)\n            )\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "04922e0ed520279b66c185d966fd1d42e8f2995e9c4c2481cb9a6d670df68192"
+}

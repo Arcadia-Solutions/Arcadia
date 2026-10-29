@@ -111,7 +111,7 @@ async fn test_get_title_group_hierarchy_returns_all_associated_data(pool: PgPool
     assert_eq!(data.torrent_requests.len(), 1);
     assert_eq!(
         data.torrent_requests[0].torrent_request.edition_name,
-        Some("Remastered Edition".to_string())
+        Some("red label Parlophone single".to_string())
     );
     assert!(
         data.torrent_requests[0].bounty.upload > 0,

@@ -141,7 +141,8 @@ impl ConnectionPool {
             return Err(Error::TorrentRequestAlreadyFilled);
         }
 
-        let is_torrent_in_requested_title_group = sqlx::query_scalar!(
+        // an empty criterion on the request accepts any value
+        let does_torrent_match_request = sqlx::query_scalar!(
             r#"
             SELECT EXISTS (
                 SELECT 1
@@ -150,6 +151,20 @@ impl ConnectionPool {
                 JOIN torrent_requests r ON eg.title_group_id = r.title_group_id
                 WHERE t.id = $1
                   AND r.id = $2
+                  AND (COALESCE(r.edition_name, '') = '' OR LOWER(r.edition_name) = LOWER(eg.name))
+                  AND (COALESCE(r.release_group, '') = '' OR LOWER(r.release_group) = LOWER(t.release_group))
+                  AND (CARDINALITY(r.source) = 0 OR eg.source = ANY(r.source))
+                  AND (CARDINALITY(r.container) = 0 OR LOWER(t.container) = ANY(SELECT LOWER(c) FROM UNNEST(r.container) c))
+                  AND (CARDINALITY(r.audio_codec) = 0 OR t.audio_codec = ANY(r.audio_codec))
+                  AND (CARDINALITY(r.audio_channels) = 0 OR t.audio_channels = ANY(r.audio_channels))
+                  AND (CARDINALITY(r.audio_bitrate_sampling) = 0 OR t.audio_bitrate_sampling = ANY(r.audio_bitrate_sampling))
+                  AND (CARDINALITY(r.video_codec) = 0 OR t.video_codec = ANY(r.video_codec))
+                  AND (CARDINALITY(r.video_resolution) = 0 OR t.video_resolution = ANY(r.video_resolution))
+                  AND (r.video_resolution_other_x IS NULL OR r.video_resolution_other_x = t.video_resolution_other_x)
+                  AND (r.video_resolution_other_y IS NULL OR r.video_resolution_other_y = t.video_resolution_other_y)
+                  AND (CARDINALITY(r.languages) = 0 OR r.languages && t.languages)
+                  AND (CARDINALITY(r.subtitle_languages) = 0 OR r.subtitle_languages && t.subtitle_languages)
+                  AND (CARDINALITY(r.features) = 0 OR r.features && t.features)
             )
             "#,
             torrent_id,
@@ -158,8 +173,8 @@ impl ConnectionPool {
         .fetch_one(&mut *tx)
         .await?;
 
-        if !is_torrent_in_requested_title_group.unwrap() {
-            return Err(Error::TorrentTitleGroupNotMatchingRequestedOne);
+        if !does_torrent_match_request.unwrap() {
+            return Err(Error::TorrentNotMatchingRequest);
         }
 
         let grace_period_ends_at = torrent_upload_info.created_at

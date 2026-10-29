@@ -346,3 +346,37 @@ async fn test_collage_entry_creator_does_not_receive_own_notification(pool: PgPo
     let counts: NotificationCounts = common::call_and_read_body_json(&service, counts_req).await;
     assert_eq!(counts.collages, 0);
 }
+#[sqlx::test(
+    fixtures("with_test_users", "with_test_title_group", "with_test_collage"),
+    migrations = "../storage/migrations"
+)]
+async fn test_only_owner_or_collage_editor_can_add_entries_to_personal_and_staff_picks_collages(
+    pool: PgPool,
+) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (standard_service, standard_user) =
+        create_test_app_and_login(pool.clone(), MockRedisPool::default(), TestUser::Standard).await;
+    let (editor_service, editor) =
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::EditCollage).await;
+
+    // collages 2, 4 and 5 belong to another user: a theme, a personal and a staff picks collage
+    for (service, user, collage_id, expected_status) in [
+        (&standard_service, &standard_user, 2, StatusCode::CREATED),
+        (&standard_service, &standard_user, 4, StatusCode::FORBIDDEN),
+        (&standard_service, &standard_user, 5, StatusCode::FORBIDDEN),
+        (&editor_service, &editor, 4, StatusCode::CREATED),
+        (&editor_service, &editor, 5, StatusCode::CREATED),
+    ] {
+        let req = test::TestRequest::post()
+            .uri("/api/collages/entries")
+            .insert_header(auth_header(&user.token))
+            .set_json(vec![UserCreatedCollageEntry {
+                collage_id,
+                title_group_id: 1,
+                note: None,
+            }])
+            .to_request();
+        let resp = test::call_service(service, req).await;
+        assert_eq!(resp.status(), expected_status, "collage {collage_id}");
+    }
+}

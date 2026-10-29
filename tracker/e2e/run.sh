@@ -103,11 +103,26 @@ teardown() {
 # amounts the client announced in it. Clients do not have to agree with each other: data in
 # flight when a leecher stops is counted as uploaded by the seeder only.
 assert_user_consistent() {
-    local role=$1 id up down
+    local role=$1 id up down consistent=f
     id=$(user_id "$role")
+    # Announces forced by the reannounces above may still be getting flushed, and peers, users and
+    # activities are flushed in separate transactions, so this waits for a consistent snapshot.
+    # The assertions after it only explain why there was none.
+    for _ in $(seq 10); do
+        consistent=$(sql "SELECT u.real_uploaded = (SELECT coalesce(sum(uploaded), 0) FROM peers WHERE user_id = u.id)
+            AND u.real_downloaded = (SELECT coalesce(sum(downloaded), 0) FROM peers WHERE user_id = u.id)
+            AND u.uploaded = u.real_uploaded * 2
+            AND u.downloaded BETWEEN u.real_downloaded / 2 - 10 AND u.real_downloaded / 2
+            AND (SELECT real_uploaded || '/' || real_downloaded FROM torrent_activities
+                 WHERE torrent_id = 1 AND user_id = u.id) = u.real_uploaded || '/' || u.real_downloaded
+            FROM users u WHERE u.id = $id")
+        [ "$consistent" = t ] && break
+        sleep 1
+    done
     up=$(user_value "$role" real_uploaded)
     down=$(user_value "$role" real_downloaded)
     echo "    $role: uploaded $up, downloaded $down, size $SIZE"
+    [ "$consistent" = t ] && return 0
     assert_eq "$role uploaded = its sessions" "$(sql "SELECT coalesce(sum(uploaded), 0) FROM peers WHERE user_id = $id")" "$up"
     assert_eq "$role downloaded = its sessions" "$(sql "SELECT coalesce(sum(downloaded), 0) FROM peers WHERE user_id = $id")" "$down"
     # upload_factor 200, download_factor 50, rounded down on every announce
@@ -116,6 +131,7 @@ assert_user_consistent() {
     assert_eq "$role activity" \
         "$(sql "SELECT real_uploaded || '/' || real_downloaded FROM torrent_activities WHERE torrent_id = 1 AND user_id = $id")" \
         "$up/$down"
+    fail "$role was inconsistent for 10 seconds"
 }
 
 # Once all leechers completed: every client reported all its traffic, each has a single active
@@ -179,10 +195,14 @@ client_reannounce() {
     done
 }
 
-# Waits until the torrent progress of a client reaches the given fraction
+# Waits until the torrent progress of a client reaches the given fraction, running an optional
+# command before each try
+# usage: wait_progress <role> <fraction> [command...]
 wait_progress() {
     local role=$1 min=$2
+    shift 2
     for _ in $(seq 240); do
+        [ $# -gt 0 ] && "$@"
         python3 -c "import sys; sys.exit(not $(client progress "$role") >= $min)" && return 0
         sleep 0.5
     done
@@ -221,9 +241,12 @@ leecher_partially_downloaded() {
     wait_progress leecher 0.3
 }
 
+# With SHORT_ACTIVE_PEER_TTL, the seeder gets reaped while the leecher restarts or is frozen, and
+# the tracker gives no inactive peer: the leecher would only find the seeder once one of them
+# announces again on its own, maybe after announce_max
 leecher_finish() {
     client download_limit leecher 0
-    wait_progress leecher 1
+    wait_progress leecher 1 client reannounce seeder
     assert_payload leecher
 }
 

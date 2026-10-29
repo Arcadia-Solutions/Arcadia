@@ -60,19 +60,26 @@ async fn test_edit_series(pool: PgPool) {
 )]
 async fn test_add_title_group_to_series(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (standard_service, standard_user) =
+        create_test_app_and_login(pool.clone(), MockRedisPool::default(), TestUser::Standard).await;
     let (service, user) =
-        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::EditTitleGroup).await;
 
-    let req = test::TestRequest::post()
-        .uri("/api/series/title-group")
-        .insert_header(auth_header(&user.token))
-        .set_json(serde_json::json!({
-            "series_id": 1,
-            "title_group_id": 1
-        }))
-        .to_request();
-
-    let _ = call_service(&service, req).await;
+    // title group 1 was created by another user, so only a title group editor can add it
+    for (service, user, expected_status) in [
+        (&standard_service, &standard_user, StatusCode::FORBIDDEN),
+        (&service, &user, StatusCode::OK),
+    ] {
+        let req = test::TestRequest::post()
+            .uri("/api/series/title-group")
+            .insert_header(auth_header(&user.token))
+            .set_json(serde_json::json!({
+                "series_id": 1,
+                "title_group_id": 1
+            }))
+            .to_request();
+        assert_eq!(call_service(service, req).await.status(), expected_status);
+    }
 
     let req = test::TestRequest::get()
         .uri("/api/title-groups?id=1")
@@ -92,19 +99,25 @@ async fn test_add_title_group_to_series(pool: PgPool) {
 )]
 async fn test_remove_title_group_from_series_without_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (editor_service, editor) = create_test_app_and_login(
+        pool.clone(),
+        MockRedisPool::default(),
+        TestUser::EditTitleGroup,
+    )
+    .await;
     let (service, user) =
         create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
 
     // First assign the title group to the series
     let req = test::TestRequest::post()
         .uri("/api/series/title-group")
-        .insert_header(auth_header(&user.token))
+        .insert_header(auth_header(&editor.token))
         .set_json(serde_json::json!({
             "series_id": 1,
             "title_group_id": 1
         }))
         .to_request();
-    let _ = call_service(&service, req).await;
+    let _ = call_service(&editor_service, req).await;
 
     // Try to remove without permission
     let req = test::TestRequest::delete()

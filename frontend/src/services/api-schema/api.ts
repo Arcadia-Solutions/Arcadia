@@ -1589,6 +1589,9 @@ export interface ForumThread {
     'created_by_id': number;
     'forum_sub_category_id': number;
     'id': number;
+    /**
+     * only stops new replies in the thread, its author can still edit it
+     */
     'locked': boolean;
     'name': string;
     'pinned': boolean;

@@ -1,7 +1,7 @@
-use crate::Arcadia;
+use crate::{middlewares::auth_middleware::Authdata, Arcadia};
 use actix_web::{
     web::{Data, Json},
-    HttpResponse,
+    HttpRequest, HttpResponse,
 };
 use arcadia_common::error::Result;
 use arcadia_storage::{models::title_group::TitleGroup, redis::RedisPoolInterface};
@@ -29,7 +29,13 @@ pub struct AddTitleGroupToSeriesRequest {
 pub async fn exec<R: RedisPoolInterface + 'static>(
     form: Json<AddTitleGroupToSeriesRequest>,
     arc: Data<Arcadia<R>>,
+    user: Authdata,
+    req: HttpRequest,
 ) -> Result<HttpResponse> {
+    arc.pool
+        .require_title_groups_edit_rights(user.sub, &[form.title_group_id], req.path())
+        .await?;
+
     arc.pool
         .assign_title_group_to_series(form.title_group_id, form.series_id)
         .await?;

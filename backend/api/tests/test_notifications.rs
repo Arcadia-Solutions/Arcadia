@@ -1389,8 +1389,12 @@ async fn test_subscriber_receives_notification_on_artist_affiliated_to_existing_
 ) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
-    let (service, user_a) =
-        create_test_app_and_login(pool.clone(), MockRedisPool::default(), TestUser::Standard).await;
+    let (service, user_a) = create_test_app_and_login(
+        pool.clone(),
+        MockRedisPool::default(),
+        TestUser::EditTitleGroup,
+    )
+    .await;
     let service_b = create_test_app(pool.clone(), MockRedisPool::default()).await;
     let user_b = login_second_user(&service_b).await;
 
@@ -1571,8 +1575,12 @@ async fn test_visiting_title_group_marks_torrent_notifications_as_read(pool: PgP
 async fn test_visiting_title_group_marks_artist_notifications_as_read(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
-    let (service, user_a) =
-        create_test_app_and_login(pool.clone(), MockRedisPool::default(), TestUser::Standard).await;
+    let (service, user_a) = create_test_app_and_login(
+        pool.clone(),
+        MockRedisPool::default(),
+        TestUser::EditTitleGroup,
+    )
+    .await;
     let service_b = create_test_app(pool.clone(), MockRedisPool::default()).await;
     let user_b = login_second_user(&service_b).await;
 

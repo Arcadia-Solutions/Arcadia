@@ -232,7 +232,7 @@ async fn test_user_without_permission_cannot_delete_artist(pool: PgPool) {
 async fn test_duplicate_artist_affiliation_returns_conflict(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
-        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::EditTitleGroup).await;
 
     // Artist 1 is already affiliated to title_group 1 via fixture
     let req_body = vec![UserCreatedAffiliatedArtist {
@@ -250,4 +250,47 @@ async fn test_duplicate_artist_affiliation_returns_conflict(pool: PgPool) {
 
     let resp = test::call_service(&service, req).await;
     assert_eq!(resp.status(), StatusCode::CONFLICT);
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_artist",
+        "with_test_title_group",
+        "with_test_affiliated_artist"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_user_cannot_change_artist_affiliations_of_title_group_created_by_another_user(
+    pool: PgPool,
+) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+
+    // title group 2 was created by another user
+    let req = test::TestRequest::post()
+        .uri("/api/affiliated-artists")
+        .insert_header(auth_header(&user.token))
+        .set_json(vec![UserCreatedAffiliatedArtist {
+            title_group_id: 2,
+            artist_id: 1,
+            roles: vec![ArtistRole::Main],
+            nickname: None,
+        }])
+        .to_request();
+    assert_eq!(
+        test::call_service(&service, req).await.status(),
+        StatusCode::FORBIDDEN
+    );
+
+    let req = test::TestRequest::delete()
+        .uri("/api/affiliated-artists")
+        .insert_header(auth_header(&user.token))
+        .set_json(serde_json::json!({ "affiliation_ids": [1] }))
+        .to_request();
+    assert_eq!(
+        test::call_service(&service, req).await.status(),
+        StatusCode::FORBIDDEN
+    );
 }

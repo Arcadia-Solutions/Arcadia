@@ -155,6 +155,7 @@ pub enum TestUser {
     RequestReseed,
     ViewRegistrationIps,
     ManageAdventCalendars,
+    EditTitleGroup,
 }
 
 impl TestUser {
@@ -242,6 +243,7 @@ impl TestUser {
             TestUser::RequestReseed => "user_reseed",
             TestUser::ViewRegistrationIps => "user_reg_ips",
             TestUser::ManageAdventCalendars => "user_advent_cal",
+            TestUser::EditTitleGroup => "user_tg_edit",
         };
 
         Login {

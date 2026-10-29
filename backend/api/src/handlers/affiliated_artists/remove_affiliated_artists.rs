@@ -1,7 +1,7 @@
 use crate::{middlewares::auth_middleware::Authdata, Arcadia};
 use actix_web::{
     web::{Data, Json},
-    HttpResponse,
+    HttpRequest, HttpResponse,
 };
 use arcadia_common::error::Result;
 use arcadia_storage::redis::RedisPoolInterface;
@@ -28,10 +28,18 @@ pub struct RemoveAffiliatedArtistsForm {
 )]
 pub async fn exec<R: RedisPoolInterface + 'static>(
     arc: Data<Arcadia<R>>,
-    _: Authdata,
+    user: Authdata,
     form: Json<RemoveAffiliatedArtistsForm>,
+    req: HttpRequest,
 ) -> Result<HttpResponse> {
-    // TODO: add protection based on user class
+    let title_group_ids = arc
+        .pool
+        .find_title_group_ids_of_artists_affiliation(&form.affiliation_ids)
+        .await?;
+    arc.pool
+        .require_title_groups_edit_rights(user.sub, &title_group_ids, req.path())
+        .await?;
+
     arc.pool
         .delete_artists_affiliation(&form.affiliation_ids)
         .await?;

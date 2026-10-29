@@ -19,7 +19,7 @@ use crate::{
         },
         torrent_report::TorrentReport,
         torrent_request::{TorrentRequest, TorrentRequestBounty, TorrentRequestHierarchyLite},
-        user::{UserLite, UserLiteAvatar},
+        user::{UserLite, UserLiteAvatar, UserPermission},
     },
 };
 use arcadia_common::error::{Error, Result};
@@ -938,6 +938,33 @@ impl ConnectionPool {
         Ok(title_groups
             .jsonb_agg
             .unwrap_or_else(|| serde_json::Value::Array(vec![])))
+    }
+
+    /// The creator of a title group can edit it, other users need the `EditTitleGroup` permission
+    pub async fn require_title_groups_edit_rights(
+        &self,
+        user_id: i32,
+        title_group_ids: &[i32],
+        path: &str,
+    ) -> Result<()> {
+        let are_all_created_by_user = sqlx::query_scalar!(
+            r#"
+            SELECT NOT EXISTS(
+                SELECT 1 FROM title_groups WHERE id = ANY($1) AND created_by_id <> $2
+            ) AS "are_all_created_by_user!"
+            "#,
+            title_group_ids,
+            user_id
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        if !are_all_created_by_user {
+            self.require_permission(user_id, &UserPermission::EditTitleGroup, path)
+                .await?;
+        }
+
+        Ok(())
     }
 
     pub async fn find_title_group(&self, title_group_id: i32) -> Result<TitleGroup> {

@@ -382,6 +382,18 @@ impl ConnectionPool {
         Ok(())
     }
 
+    pub async fn find_title_group_ids_of_artists_affiliation(
+        &self,
+        affiliation_ids: &[i64],
+    ) -> Result<Vec<i32>> {
+        Ok(sqlx::query_scalar!(
+            "SELECT DISTINCT title_group_id FROM affiliated_artists WHERE id = ANY($1)",
+            affiliation_ids
+        )
+        .fetch_all(&self.pool)
+        .await?)
+    }
+
     pub async fn delete_artists_affiliation(&self, affiliation_ids: &Vec<i64>) -> Result<()> {
         // Get artist_id for affiliations being deleted
         let affected_affiliations: Vec<(i64,)> = sqlx::query_as(

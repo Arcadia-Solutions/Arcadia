@@ -75,6 +75,8 @@
     "yaml": "^2.9.0"
   },
   "overrides": {
-    "basic-ftp": "^6.2.3"
+    "basic-ftp": "^6.2.3",
+    "glob": "^14.0.3",
+    "minimatch": "^11.0.4"
   }
 }

@@ -1,7 +1,7 @@
 <template>
   <ContentContainer class="header-wrapper artist-full-header">
     <div class="header">
-      <ImagePreview :imageLink="artist.pictures[0]" />
+      <ImagePreview class="artist-pictures" :imageLink="artist.pictures[0]" />
       <div class="textual-information">
         <div class="name">{{ artist.name }}</div>
         <div class="description">

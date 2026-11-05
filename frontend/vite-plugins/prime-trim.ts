@@ -2,7 +2,7 @@
 // - PrimeFlex ships thousands of utility classes but we only use a handful. Every class-like token
 //   found in src/ and index.html is collected, and PrimeFlex rules whose selectors reference none of
 //   them are dropped (rules without class selectors are always kept). On HMR, only the changed file
-//   is rescanned and its tokens are added to the set (removed tokens stay until the server restarts).
+//   (or created) is rescanned and its tokens are added to the set (removed tokens stay until the server restarts).
 // - PrimeIcons declares its font in several formats (eot, ttf, svg, woff, woff2). Every browser we
 //   support reads woff2, so the @font-face is rewritten to that single source.
 // The token scan is a superset match (any word in the code counts as "used"), so it can keep
@@ -11,11 +11,12 @@
 
 import { globSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import type { Plugin } from 'vite'
+import type { ModuleNode, Plugin, ViteDevServer } from 'vite'
 
 // Matches the resolved id of PrimeFlex / PrimeIcons stylesheets (ignoring query suffix).
 const PRIMEFLEX_CSS = /[\\/]primeflex[\\/]primeflex\.css$/
 const PRIMEICONS_CSS = /[\\/]primeicons[\\/]primeicons\.css$/
+const SOURCE_FILE = /\.(vue|ts|js|html)$/
 
 // Pull class tokens out of a selector, preserving escaped characters (e.g. `.md\:flex` -> `md:flex`).
 const selectorClassTokens = (selector: string): string[] => [...selector.matchAll(/\.((?:[A-Za-z0-9_-]|\\.)+)/g)].map((m) => m[1].replace(/\\(.)/g, '$1'))
@@ -67,6 +68,18 @@ export const primeTrimPlugin = (): Plugin => {
     for (const m of code.matchAll(/[A-Za-z0-9_:/-]+/g)) usedClasses.add(m[0])
   }
 
+  // Adds the tokens of a source file and, when they include new ones, invalidates the already
+  // loaded PrimeFlex stylesheet so its next load keeps the matching rules.
+  const addFileTokens = (file: string, code: string, server: ViteDevServer): ModuleNode | undefined => {
+    if (!SOURCE_FILE.test(file)) return
+    const before = usedClasses.size
+    addTokens(code)
+    if (usedClasses.size === before || !primeflexId) return
+    const mod = server.moduleGraph.getModuleById(primeflexId)
+    if (mod) server.moduleGraph.invalidateModule(mod)
+    return mod
+  }
+
   const scan = () => {
     usedClasses = new Set<string>()
     for (const file of globSync(['src/**/*.{vue,ts,js}', 'index.html'], { cwd: root })) addTokens(readFileSync(resolve(root, file), 'utf8'))
@@ -79,14 +92,16 @@ export const primeTrimPlugin = (): Plugin => {
       root = config.root
       scan()
     },
+    configureServer(server) {
+      // Vite does not call handleHotUpdate for created files
+      server.watcher.on('add', (file) => {
+        const mod = addFileTokens(file, readFileSync(file, 'utf8'), server)
+        if (mod) server.reloadModule(mod)
+      })
+    },
     async handleHotUpdate(ctx) {
-      if (!primeflexId || !/\.(vue|ts|js|html)$/.test(ctx.file)) return
-      const before = usedClasses.size
-      addTokens(await ctx.read())
-      if (usedClasses.size === before) return
-      const mod = ctx.server.moduleGraph.getModuleById(primeflexId)
+      const mod = addFileTokens(ctx.file, await ctx.read(), ctx.server)
       if (!mod) return
-      ctx.server.moduleGraph.invalidateModule(mod)
       // the returned list replaces the modules Vite updates, so the edited file's own modules must stay in it
       return [...ctx.modules, mod]
     },

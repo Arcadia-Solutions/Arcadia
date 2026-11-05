@@ -27,8 +27,8 @@
       :class="{ 'p-inputtext-sm p-inputfield-sm': $attrs.size === 'small' }"
       :placeholder="placeholder"
       :value="modelValue"
-      v-bind="placeholderAttrs"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+      v-bind="placeholderAttrs"
       @focus="activate"
     />
   </div>
@@ -51,6 +51,7 @@ const emit = defineEmits<{
 const attrs = useAttrs()
 // AutoComplete props (suggestions, optionLabel, size...) would end up as bogus DOM attributes on the
 // plain input, so it only receives the listeners (e.g. @input, @keydown.enter) and class/style.
+// The template binds them after its own @input, so the model is updated before a parent's @input reads it.
 const placeholderAttrs = computed(() => Object.fromEntries(Object.entries(attrs).filter(([key]) => /^on[A-Z]/.test(key) || key === 'class' || key === 'style')))
 
 // Loads (and parses) primevue/autocomplete + virtualscroller only when the field is first used.

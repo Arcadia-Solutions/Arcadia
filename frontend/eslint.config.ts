@@ -39,6 +39,8 @@ export default defineConfigWithVueTs(
   {
     rules: {
       'vue/no-reserved-component-names': 'off',
+      // Only the router components are registered globally, everything else must be imported.
+      'vue/no-undef-components': ['error', { ignorePatterns: ['^Router(Link|View)$', '^router-(link|view)$'] }],
     },
   },
 )

@@ -42,18 +42,16 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue'
 import ContentContainer from '@/components/ContentContainer.vue'
-import { Chart } from 'highcharts-vue'
-import Highcharts from 'highcharts'
-import 'highcharts/modules/map'
+import type Highcharts from 'highcharts'
 import worldMap from '@/assets/world.topo.json'
 import ProgressSpinner from 'primevue/progressspinner'
 import Select from 'primevue/select'
 import FloatLabel from 'primevue/floatlabel'
 import { useI18n } from 'vue-i18n'
-import { computed, onMounted, ref, watch } from 'vue'
 import { getUserStats, StatsInterval, type UserStatsResponse } from '@/services/api-schema'
-import { baseChartOptions, CHART_COLORS, sideLegend, textColor } from '@/services/charts'
+import { baseChartOptions, CHART_COLORS, sideLegend, textColor, MapChart as Chart } from '@/services/charts'
 import { formatDateToLocalString, formatDateTimeLabel, formatNumber } from '@/services/helpers'
 
 const { t } = useI18n()

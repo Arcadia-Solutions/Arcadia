@@ -3,8 +3,25 @@
     <template #top-right>
       <slot name="top-right"></slot>
     </template>
-    <div class="last-uploads" v-if="titleGroups">
-      <TitleGroupPreviewCoverOnly v-for="titleGroup in titleGroups" :key="titleGroup.id" :titleGroup="titleGroup" :showUploader class="title-group" />
+    <!-- While loading, reserve the height of one cover row (covers are 17% wide with a 2:3
+         aspect ratio, so the placeholder scales with the viewport) so this block does not push
+         the content below it down once the data arrives. -->
+    <div class="last-uploads" :class="{ 'with-uploader': showUploader }" v-if="loading" aria-hidden="true">
+      <div class="title-group">
+        <Skeleton class="cover-placeholder" width="100%" height="auto" borderRadius="7px" />
+        <div class="info-placeholder">&nbsp;</div>
+      </div>
+    </div>
+    <div class="last-uploads" :class="{ 'with-uploader': showUploader }" v-else-if="titleGroups">
+      <TitleGroupPreviewCoverOnly
+        v-for="titleGroup in titleGroups"
+        :key="titleGroup.id"
+        :titleGroup="titleGroup"
+        :showUploader
+        :loading="priority ? 'eager' : 'lazy'"
+        :priority="priority"
+        class="title-group"
+      />
     </div>
     <div v-else>
       {{ t(`user.no_${props.type}_explanation`) }}
@@ -16,6 +33,7 @@
 import type { TitleGroupLite } from '@/services/api-schema'
 import ContentContainer from '../ContentContainer.vue'
 import TitleGroupPreviewCoverOnly from '../title_group/TitleGroupPreviewCoverOnly.vue'
+import Skeleton from 'primevue/skeleton'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -26,6 +44,9 @@ const props = defineProps<{
   containerTitle: string
   type?: 'snatches' | 'uploads'
   showUploader?: boolean
+  loading?: boolean
+  /** Above-the-fold hero row: load covers eagerly with a high priority hint (used for the LCP image). */
+  priority?: boolean
 }>()
 </script>
 
@@ -41,5 +62,19 @@ const props = defineProps<{
 }
 .title-group {
   width: 17%;
+}
+</style>
+<style scoped>
+.cover-placeholder {
+  aspect-ratio: 2 / 3;
+}
+/* The real cover row keeps a constant height: reserve the same 3 lines of info text the real
+   items use (timeAgo + "by <uploader>"), so the block never grows once the data arrives. */
+.with-uploader .info-placeholder,
+.with-uploader :deep(.latest-torrent-info) {
+  min-height: 4.8em;
+}
+.info-placeholder {
+  visibility: hidden;
 }
 </style>

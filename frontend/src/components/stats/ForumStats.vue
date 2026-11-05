@@ -87,8 +87,6 @@
 
 <script setup lang="ts">
 import ContentContainer from '@/components/ContentContainer.vue'
-import { Chart } from 'highcharts-vue'
-import Highcharts from 'highcharts'
 import MultiSelect from 'primevue/multiselect'
 import ProgressSpinner from 'primevue/progressspinner'
 import Select from 'primevue/select'
@@ -96,7 +94,7 @@ import FloatLabel from 'primevue/floatlabel'
 import { useI18n } from 'vue-i18n'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { getForumStats, ForumStatsGroupBy, ForumStatsMetric, StatsInterval, type ForumStatsResponse } from '@/services/api-schema'
-import { baseChartOptions, CHART_COLORS, groupedAttributePieChartOptions, textColor } from '@/services/charts'
+import { baseChartOptions, CHART_COLORS, groupedAttributePieChartOptions, textColor, Chart } from '@/services/charts'
 import { formatDateToLocalString, formatDateTimeLabel, formatNumber } from '@/services/helpers'
 
 const { t } = useI18n()

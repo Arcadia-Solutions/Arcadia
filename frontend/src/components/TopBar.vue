@@ -92,6 +92,7 @@ const publicArcadiaSettings = usePublicArcadiaSettingsStore()
   gap: 10px;
 }
 .left .logo {
+  width: 40px;
   height: 40px;
   vertical-align: middle;
 }

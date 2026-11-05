@@ -1,7 +1,7 @@
 <template>
   <ContentContainer class="header-wrapper artist-full-header">
     <div class="header">
-      <ImagePreview :imageLink="artist.pictures[0]" />
+      <ImagePreview class="artist-pictures" :imageLink="artist.pictures[0]" />
       <div class="textual-information">
         <div class="name">{{ artist.name }}</div>
         <div class="description">
@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import ContentContainer from '@/components/ContentContainer.vue'
 import BBCodeRenderer from '@/components/community/BBCodeRenderer.vue'
-import type ImagePreview from '../ImagePreview.vue'
+import ImagePreview from '../ImagePreview.vue'
 import type { Artist } from '@/services/api-schema'
 
 defineProps<{

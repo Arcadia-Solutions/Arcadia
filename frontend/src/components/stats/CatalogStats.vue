@@ -17,11 +17,10 @@
 
 <script setup lang="ts">
 import ContentContainer from '@/components/ContentContainer.vue'
-import { Chart } from 'highcharts-vue'
 import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
 import { type TitleGroupStatsResponse } from '@/services/api-schema'
-import { attributePieChartOptions, titleGroupsPerReleaseYearBarChartOptions } from '@/services/charts'
+import { attributePieChartOptions, Chart, titleGroupsPerReleaseYearBarChartOptions } from '@/services/charts'
 import { formatNumber } from '@/services/helpers'
 
 const { t } = useI18n()

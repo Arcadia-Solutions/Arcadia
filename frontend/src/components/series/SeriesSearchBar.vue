@@ -1,5 +1,5 @@
 <template>
-  <AutoComplete
+  <LazyAutoComplete
     v-model="name"
     :suggestions="foundSeries"
     @complete="search"
@@ -15,12 +15,13 @@
       </RouterLink>
       <div v-else>{{ slotProps.option.name }}</div>
     </template>
-  </AutoComplete>
+  </LazyAutoComplete>
 </template>
 
 <script lang="ts" setup>
 import { ref, watch } from 'vue'
-import { AutoComplete, type AutoCompleteOptionSelectEvent } from 'primevue'
+import type { AutoCompleteOptionSelectEvent } from 'primevue'
+import LazyAutoComplete from '@/components/LazyAutoComplete.vue'
 import { searchSeriesLite, type SeriesLite } from '@/services/api-schema'
 import type { RouterLink } from 'vue-router'
 

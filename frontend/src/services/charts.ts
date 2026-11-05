@@ -1,6 +1,19 @@
 import type Highcharts from 'highcharts'
 import type { TitleGroupAttributeCountDataPoint, TitleGroupsPerReleaseYearDataPoint } from '@/services/api-schema'
 import { formatNumber } from '@/services/helpers'
+import { defineAsyncComponent } from 'vue'
+import ProgressSpinner from 'primevue/progressspinner'
+
+const loadChart = () => import('highcharts-vue').then((m) => m.Chart)
+
+// Highcharts is only downloaded once a component actually renders a chart.
+export const Chart = defineAsyncComponent({ loader: loadChart, loadingComponent: ProgressSpinner })
+
+// The map module registers the mapChart constructor, it must run after highcharts core (pulled in by highcharts-vue) is evaluated.
+export const MapChart = defineAsyncComponent({
+  loader: () => loadChart().then((chart) => import('highcharts/modules/map').then(() => chart)),
+  loadingComponent: ProgressSpinner,
+})
 
 export const CHART_COLORS = [
   '#3B82F6',

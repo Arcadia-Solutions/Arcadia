@@ -31,3 +31,10 @@ coverage
 
 test-results/
 playwright-report/
+
+/dist/
+#transpiled configs
+eslint.config.js
+playwright.config.js
+vite.config.js
+vitest.config.js

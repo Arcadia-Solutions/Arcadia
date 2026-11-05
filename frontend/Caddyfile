@@ -1,4 +1,7 @@
 :80 {
+	# Compress responses on the fly. Caddy serves files uncompressed unless this is set.
+	encode zstd gzip
+
 	handle /api* {
 		reverse_proxy backend:8080
 	}
@@ -14,6 +17,19 @@
 		reverse_proxy ergo:8097
 	}
 
+	# Vite emits content-hashed filenames under /assets, so they never change
+	# for a given name and can be cached forever. Missing assets get a plain,
+	# uncached 404 instead of the SPA fallback, so a cache can't pin index.html
+	# to an asset URL during a rollout.
+	handle /assets/* {
+		root * /srv/arcadia
+		@exists file
+		header @exists Cache-Control "public, max-age=31536000, immutable"
+		@missing not file
+		header @missing Cache-Control "no-store"
+		file_server
+	}
+
 	handle {
 		root * /srv/arcadia
 		# logged out visitors get the custom front page (if any) at /, see docs/src/customization.md
@@ -23,6 +39,11 @@
 			file /home/index.html
 		}
 		rewrite @customFrontPage /home/index.html
+
+		# Everything else (index.html, SPA fallback, unhashed static files) must be
+		# revalidated so deploys are picked up immediately.
+		header Cache-Control "no-cache"
+
 		try_files {path} /index.html
 		file_server
 	}

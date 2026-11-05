@@ -231,7 +231,7 @@
 
 <script setup lang="ts">
 import { config } from '@/config'
-import { ref, watch } from 'vue'
+import { defineAsyncComponent, ref, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
 import BBCodeRenderer from '@/components/community/BBCodeRenderer.vue'
 import TitleGroupComments from '@/components/title_group/TitleGroupComments.vue'
@@ -248,23 +248,23 @@ import { useTitleGroupStore } from '@/stores/titleGroup'
 import TitleGroupRatings from '@/components/title_group/TitleGroupRatings.vue'
 import FloatLabel from 'primevue/floatlabel'
 import Select from 'primevue/select'
-import CustomGalleria from '@/components/CustomGalleria.vue'
+const CustomGalleria = defineAsyncComponent(() => import('@/components/CustomGalleria.vue'))
 import { useRoute, useRouter } from 'vue-router'
 import { getEditionGroupSlug, isAttributeUsed } from '@/services/helpers'
 import { useI18n } from 'vue-i18n'
 import { showToast } from '@/main'
-import EditArtistsModal from '@/components/artist/EditArtistsModal.vue'
+const EditArtistsModal = defineAsyncComponent(() => import('@/components/artist/EditArtistsModal.vue'))
 import { Dialog } from 'primevue'
-import EmbeddedLinks from '@/components/title_group/EmbeddedLinks.vue'
-import CreateOrEditTitleGroup from '@/components/title_group/CreateOrEditTitleGroup.vue'
+const EmbeddedLinks = defineAsyncComponent(() => import('@/components/title_group/EmbeddedLinks.vue'))
+const CreateOrEditTitleGroup = defineAsyncComponent(() => import('@/components/title_group/CreateOrEditTitleGroup.vue'))
 import { useEditionGroupStore } from '@/stores/editionGroup'
 import { onBeforeRouteLeave } from 'vue-router'
-import AddCollagesToEntryDialog from '@/components/collage/AddCollagesToEntryDialog.vue'
-import CollagesTable from '@/components/collage/CollagesTable.vue'
-import LinkSimilarTitleGroupDialog from '@/components/title_group/LinkSimilarTitleGroupDialog.vue'
-import DeleteDialog from '@/components/DeleteDialog.vue'
-import MergeTitleGroupDialog from '@/components/title_group/MergeTitleGroupDialog.vue'
-import BookmarkTitleGroupDialog from '@/components/title_group/BookmarkTitleGroupDialog.vue'
+const AddCollagesToEntryDialog = defineAsyncComponent(() => import('@/components/collage/AddCollagesToEntryDialog.vue'))
+const CollagesTable = defineAsyncComponent(() => import('@/components/collage/CollagesTable.vue'))
+const LinkSimilarTitleGroupDialog = defineAsyncComponent(() => import('@/components/title_group/LinkSimilarTitleGroupDialog.vue'))
+const DeleteDialog = defineAsyncComponent(() => import('@/components/DeleteDialog.vue'))
+const MergeTitleGroupDialog = defineAsyncComponent(() => import('@/components/title_group/MergeTitleGroupDialog.vue'))
+const BookmarkTitleGroupDialog = defineAsyncComponent(() => import('@/components/title_group/BookmarkTitleGroupDialog.vue'))
 import {
   createTitleGroupCommentsSubscription,
   createTitleGroupTorrentsSubscription,

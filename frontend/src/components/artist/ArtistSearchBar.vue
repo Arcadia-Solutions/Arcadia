@@ -1,5 +1,5 @@
 <template>
-  <AutoComplete
+  <LazyAutoComplete
     v-model="name"
     :suggestions="foundArtists"
     @complete="search"
@@ -30,12 +30,12 @@
         {{ slotProps.option.name }}
       </div>
     </template>
-  </AutoComplete>
+  </LazyAutoComplete>
 </template>
 
 <script lang="ts" setup>
 import { ref, watch } from 'vue'
-import { AutoComplete } from 'primevue'
+import LazyAutoComplete from '@/components/LazyAutoComplete.vue'
 import { searchArtistsLite, type ArtistLite } from '@/services/api-schema'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'

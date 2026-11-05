@@ -54,8 +54,10 @@ import { config } from '@/config'
 
 // The Drawer (and the PanelMenus inside it) is only needed once the user opens the mobile menu,
 // so keep it out of the entry bundle and mount it on first use.
-const Drawer = defineAsyncComponent(() => import('primevue/drawer'))
-const PanelMenu = defineAsyncComponent(() => import('primevue/panelmenu'))
+// A failed chunk load is parked until the next tap on the menu button, which retries it.
+const pendingRetries: (() => void)[] = []
+const Drawer = defineAsyncComponent({ loader: () => import('primevue/drawer'), onError: (_err, retry) => pendingRetries.push(retry) })
+const PanelMenu = defineAsyncComponent({ loader: () => import('primevue/panelmenu'), onError: (_err, retry) => pendingRetries.push(retry) })
 
 const { t } = useI18n()
 const user = useUserStore()
@@ -63,6 +65,7 @@ const visible = ref(false)
 const drawerMounted = ref(false)
 
 const onOpenMenu = () => {
+  pendingRetries.splice(0).forEach((retry) => retry())
   drawerMounted.value = true
   visible.value = true
 }

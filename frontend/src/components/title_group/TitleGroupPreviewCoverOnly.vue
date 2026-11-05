@@ -3,9 +3,7 @@
     <RouterLink :to="`/title-group/${titleGroup.id}`">
       <img
         class="title-group-cover"
-        :src="coverSrc"
-        :srcset="coverSrcset"
-        :sizes="coverSrcset ? sizes : undefined"
+        :src="titleGroup.covers[0]"
         :loading="loading"
         :fetchpriority="priority ? 'high' : undefined"
         v-tooltip.top="titleGroup.name"
@@ -24,16 +22,14 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
 import TimeAgo from '@/components/TimeAgo.vue'
 import type { TitleGroupLite } from '@/services/api-schema'
 import UsernameEnriched from '../user/UsernameEnriched.vue'
 import { useI18n } from 'vue-i18n'
-import { tmdbImageAtWidth, tmdbImageSrcset } from '@/services/helpers'
 
 const { t } = useI18n()
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     titleGroup: TitleGroupLite
     showUploader?: boolean
@@ -41,16 +37,9 @@ const props = withDefaults(
     priority?: boolean
     /** Native `loading` mode. Above-the-fold rows should use `eager`; large grids default to `lazy`. */
     loading?: 'eager' | 'lazy'
-    /** `sizes` for the responsive srcset. Defaults to the width of the preview grids. */
-    sizes?: string
   }>(),
-  { loading: 'lazy', sizes: '(max-width: 767px) 18vw, 15vw' },
+  { loading: 'lazy' },
 )
-
-// The preview grids render covers at most a few hundred pixels wide, so never request the full w500
-// original. This is a no-op for non-TMDB (user supplied) cover URLs.
-const coverSrc = computed(() => tmdbImageAtWidth(props.titleGroup.covers[0], 342))
-const coverSrcset = computed(() => tmdbImageSrcset(props.titleGroup.covers[0], [185, 342, 500]))
 </script>
 <style scoped>
 .latest-torrent-info {

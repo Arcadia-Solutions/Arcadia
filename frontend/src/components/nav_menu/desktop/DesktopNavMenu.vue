@@ -70,11 +70,10 @@ import { nextTick, ref, shallowRef } from 'vue'
 import router from '@/router'
 import { setLoggedInCookie } from '@/services/helpers'
 import { useTitleGroupStore } from '@/stores/titleGroup'
+import type PopoverComponent from 'primevue/popover'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const Popover = shallowRef<any>(null)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const op = ref<{ show: (event: Event, target?: any) => void; hide: () => void } | null>(null)
+const Popover = shallowRef<typeof PopoverComponent | null>(null)
+const op = ref<InstanceType<typeof PopoverComponent> | null>(null)
 const userStore = useUserStore()
 const user = useUserStore()
 const isHoveringDropdown = ref(false)

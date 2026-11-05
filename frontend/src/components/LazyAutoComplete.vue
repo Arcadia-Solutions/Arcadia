@@ -21,6 +21,7 @@
   </component>
   <div v-else class="p-autocomplete p-component p-inputwrapper lazy-autocomplete" @click="activate">
     <input
+      ref="placeholderRef"
       type="text"
       class="p-inputtext p-component p-inputtext-sm p-inputfield-sm"
       :placeholder="placeholder"
@@ -37,7 +38,7 @@ import { shallowRef, ref, watch, markRaw, type ComponentPublicInstance } from 'v
 
 defineOptions({ inheritAttrs: false })
 
-defineProps<{
+const props = defineProps<{
   modelValue?: string
   placeholder?: string
 }>()
@@ -49,6 +50,9 @@ const emit = defineEmits<{
 // Loads (and parses) primevue/autocomplete + virtualscroller only when the field is first used.
 const AutoCompleteComponent = shallowRef()
 const realRef = ref<ComponentPublicInstance | null>(null)
+const placeholderRef = ref<HTMLInputElement | null>(null)
+// Only steal focus back if the user is still on this field when the chunk arrives.
+let restoreFocus = false
 
 let loading = false
 const activate = async () => {
@@ -56,16 +60,20 @@ const activate = async () => {
   loading = true
   try {
     const mod = await import('primevue/autocomplete')
+    restoreFocus = document.activeElement === placeholderRef.value
     AutoCompleteComponent.value = markRaw(mod.default ?? mod)
   } catch {
     loading = false
   }
 }
 
-// Move focus into the real AutoComplete once it has mounted.
+// Move focus into the real AutoComplete once it has mounted, and replay the text typed while the
+// chunk was downloading (the placeholder never emitted `complete` for it).
 watch(realRef, (instance) => {
-  const el = instance?.$el as HTMLElement | undefined
-  el?.querySelector('input')?.focus()
+  if (!instance || !restoreFocus) return
+  ;(instance.$el as HTMLElement).querySelector('input')?.focus()
+  const autoComplete = instance as unknown as { search: (event: Event, query: string, source: string) => void }
+  if (props.modelValue) autoComplete.search(new Event('input'), props.modelValue, 'input')
 })
 </script>
 

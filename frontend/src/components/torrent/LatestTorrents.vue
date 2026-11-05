@@ -8,7 +8,7 @@
          the content below it down once the data arrives. -->
     <div class="last-uploads" v-if="loading" aria-hidden="true">
       <div class="title-group">
-        <div class="cover-placeholder" />
+        <Skeleton class="cover-placeholder" width="100%" height="auto" borderRadius="7px" />
         <div class="info-placeholder">&nbsp;</div>
       </div>
     </div>
@@ -33,6 +33,7 @@
 import type { TitleGroupLite } from '@/services/api-schema'
 import ContentContainer from '../ContentContainer.vue'
 import TitleGroupPreviewCoverOnly from '../title_group/TitleGroupPreviewCoverOnly.vue'
+import Skeleton from 'primevue/skeleton'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -63,13 +64,7 @@ const props = defineProps<{
   width: 17%;
 }
 .cover-placeholder {
-  width: 100%;
-  /* Reserve a 2:3 box. `padding-top` is a percentage of the containing block width, so the
-     reserved height always matches the real cover (which is width: 100% + aspect-ratio 2/3)
-     and scales with the viewport. */
-  padding-top: 150%;
-  border-radius: 7px;
-  background-color: var(--color-background-primary);
+  aspect-ratio: 2 / 3;
 }
 /* The real cover row keeps a constant height: reserve the same 3 lines of info text the real
    items use (timeAgo + "by <uploader>"), so the block never grows once the data arrives. */

@@ -1,3 +1,13 @@
+// Vite plugin that shrinks two global stylesheets we import whole:
+// - PrimeFlex ships thousands of utility classes but we only use a handful. Every class-like token
+//   found in src/ and index.html is collected, and PrimeFlex rules whose selectors reference none of
+//   them are dropped (rules without class selectors are always kept). Rescanned on HMR.
+// - PrimeIcons declares its font in several formats (eot, ttf, svg, woff, woff2). Every browser we
+//   support reads woff2, so the @font-face is rewritten to that single source.
+// The token scan is a superset match (any word in the code counts as "used"), so it can keep
+// unused rules but never removes a class that is referenced, as long as it is not built from a
+// runtime string concatenation.
+
 import { globSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import type { Plugin } from 'vite'
@@ -7,8 +17,7 @@ const PRIMEFLEX_CSS = /[\\/]primeflex[\\/]primeflex\.css$/
 const PRIMEICONS_CSS = /[\\/]primeicons[\\/]primeicons\.css$/
 
 // Pull class tokens out of a selector, preserving escaped characters (e.g. `.md\:flex` -> `md:flex`).
-const selectorClassTokens = (selector: string): string[] =>
-  [...selector.matchAll(/\.((?:[A-Za-z0-9_-]|\\.)+)/g)].map((m) => m[1].replace(/\\(.)/g, '$1'))
+const selectorClassTokens = (selector: string): string[] => [...selector.matchAll(/\.((?:[A-Za-z0-9_-]|\\.)+)/g)].map((m) => m[1].replace(/\\(.)/g, '$1'))
 
 // Split stylesheet body into `prelude { body }` rules, supporting one level of nesting (e.g. @media).
 const splitTopLevelRules = (css: string): { prelude: string; body: string }[] =>

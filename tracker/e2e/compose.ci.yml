@@ -1,0 +1,16 @@
+# CI only, added through COMPOSE_FILE: keeps the image layers in the GitHub Actions cache. The
+# cargo cache mounts of the Dockerfiles are not part of the layers, the workflow restores them.
+services:
+  init_db:
+    build:
+      cache_from: ["type=gha,scope=tracker-e2e-init-db"]
+      cache_to: ["type=gha,mode=max,scope=tracker-e2e-init-db"]
+
+  tracker:
+    build:
+      # the cached artifacts are reused on runners with other CPUs, target-cpu=native crashes
+      # them with SIGILL
+      args:
+        RUSTFLAGS: "-C target-cpu=x86-64"
+      cache_from: ["type=gha,scope=tracker-e2e-tracker"]
+      cache_to: ["type=gha,mode=max,scope=tracker-e2e-tracker"]

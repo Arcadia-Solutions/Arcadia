@@ -1,0 +1,15 @@
+{
+    "dht-enabled": false,
+    "lpd-enabled": false,
+    "pex-enabled": false,
+    "announce-ip-enabled": true,
+    "announce-ip": "127.0.0.1",
+    "peer-port": 6881,
+    "port-forwarding-enabled": false,
+    "download-dir": "/downloads",
+    "incomplete-dir-enabled": false,
+    "watch-dir-enabled": false,
+    "rpc-authentication-required": false,
+    "rpc-whitelist-enabled": false,
+    "rpc-host-whitelist-enabled": false
+}

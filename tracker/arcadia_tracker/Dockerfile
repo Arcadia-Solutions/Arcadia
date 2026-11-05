@@ -26,6 +26,9 @@ COPY .cargo .cargo
 
 # Set to "false" to build without optimizations, for faster builds.
 ARG PRODUCTION_BUILD=true
+# Overrides the target-cpu=native of .cargo/config.toml when set, for images built on one machine
+# and run on another (CI runners don't all share the same CPU).
+ARG RUSTFLAGS
 
 # Caches the target directory for intermediate build artifacts.
 # `cargo chef cook` downloads, builds, and caches all of the dependencies for future builds.

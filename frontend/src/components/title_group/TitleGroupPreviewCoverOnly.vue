@@ -54,7 +54,7 @@ withDefaults(
   display: block;
   width: 100%;
   aspect-ratio: 2 / 3;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 7px;
 }
 .title-group-preview-cover-only a:hover {

@@ -2,8 +2,9 @@
   <div id="home-page">
     <div class="main">
       <LatestTorrents
+        v-if="homeLoading || latestUploads"
         :titleGroups="latestUploads ?? []"
-        :loading="!latestUploads"
+        :loading="homeLoading"
         containerTitleLink="/torrents"
         :containerTitle="t('torrent.latest_uploads')"
         showUploader
@@ -36,8 +37,8 @@
         :containerTitleLink="`/forum/thread/${highlight.forum_thread_id}`"
         style="margin-bottom: 10px"
       >
-        <RouterLink :to="siteHighlightLink(highlight.item_type, highlight.item_id)">
-          <img v-if="highlight.item_image" class="site-highlight-image" :src="highlight.item_image" />
+        <RouterLink v-if="highlight.item_image" class="site-highlight-link" :to="siteHighlightLink(highlight.item_type, highlight.item_id)">
+          <img class="site-highlight-image" :src="highlight.item_image" />
         </RouterLink>
       </ContentContainer>
       <ContentContainer :containerTitle="t('statistics.community_stats')" v-if="stats">
@@ -122,19 +123,22 @@ const { t } = useI18n()
 const recentAnnouncements = ref<ForumPostAndThreadName[]>()
 const stats = ref<HomeStats>()
 const latestUploads = ref<TitleGroupLite[]>()
+const homeLoading = ref(true)
 const latestPostsInThreads = ref<ForumSearchResult[]>([])
 const latestTitleGroupComments = ref<TitleGroupCommentSearchResult[]>([])
 const siteHighlights = ref<SiteHighlightForHome[]>([])
 
 const fetchHome = async () => {
-  getHomeData().then((data) => {
-    recentAnnouncements.value = data.recent_announcements
-    stats.value = data.stats
-    latestUploads.value = data.latest_uploads
-    latestPostsInThreads.value = data.latest_posts_in_threads
-    latestTitleGroupComments.value = data.latest_title_group_comments
-    siteHighlights.value = data.site_highlights ?? []
-  })
+  getHomeData()
+    .then((data) => {
+      recentAnnouncements.value = data.recent_announcements
+      stats.value = data.stats
+      latestUploads.value = data.latest_uploads
+      latestPostsInThreads.value = data.latest_posts_in_threads
+      latestTitleGroupComments.value = data.latest_title_group_comments
+      siteHighlights.value = data.site_highlights ?? []
+    })
+    .finally(() => (homeLoading.value = false))
 }
 
 onMounted(() => {
@@ -153,14 +157,18 @@ onMounted(() => {
 .sidebar {
   width: 22%;
 }
-.site-highlight-image {
-  display: block;
-  width: 100%;
-  height: auto;
-  /* Site highlights are TMDB posters/profiles (2:3); reserve the box so the remote image
-     loading does not grow the sidebar and shift the content below it. */
+/* Reserve a 2:3 box so the remote image loading does not grow the sidebar and shift the content
+   below it, images with another ratio are centered in it without being cropped. */
+.site-highlight-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   aspect-ratio: 2 / 3;
-  object-fit: cover;
+}
+.site-highlight-image {
+  width: 100%;
+  max-height: 100%;
+  object-fit: contain;
   border-radius: 7px;
 }
 .announcement {

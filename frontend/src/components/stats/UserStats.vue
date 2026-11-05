@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import ContentContainer from '@/components/ContentContainer.vue'
 import type Highcharts from 'highcharts'
 import worldMap from '@/assets/world.topo.json'
@@ -51,15 +51,8 @@ import Select from 'primevue/select'
 import FloatLabel from 'primevue/floatlabel'
 import { useI18n } from 'vue-i18n'
 import { getUserStats, StatsInterval, type UserStatsResponse } from '@/services/api-schema'
-import { baseChartOptions, CHART_COLORS, sideLegend, textColor } from '@/services/charts'
+import { baseChartOptions, CHART_COLORS, sideLegend, textColor, MapChart as Chart } from '@/services/charts'
 import { formatDateToLocalString, formatDateTimeLabel, formatNumber } from '@/services/helpers'
-
-const Chart = defineAsyncComponent({
-  // the map module registers the mapChart constructor used by the countries chart,
-  // it must run after highcharts core (pulled in by highcharts-vue) is evaluated
-  loader: () => import('highcharts-vue').then((m) => import('highcharts/modules/map').then(() => m.Chart)),
-  loadingComponent: ProgressSpinner,
-})
 
 const { t } = useI18n()
 

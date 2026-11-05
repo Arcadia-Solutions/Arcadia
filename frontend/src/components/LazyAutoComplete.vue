@@ -15,18 +15,19 @@
     :placeholder="placeholder"
     @update:modelValue="emit('update:modelValue', $event)"
   >
-    <template #option="slotProps">
-      <slot name="option" v-bind="slotProps" />
+    <template v-for="(_, name) in $slots" #[name]="slotProps">
+      <slot :name="name" v-bind="slotProps ?? {}" />
     </template>
   </component>
   <div v-else class="p-autocomplete p-component p-inputwrapper lazy-autocomplete" @click="activate">
     <input
       ref="placeholderRef"
       type="text"
-      class="p-inputtext p-component p-inputtext-sm p-inputfield-sm"
+      class="p-inputtext p-component"
+      :class="{ 'p-inputtext-sm p-inputfield-sm': $attrs.size === 'small' }"
       :placeholder="placeholder"
       :value="modelValue"
-      v-bind="$attrs"
+      v-bind="placeholderAttrs"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
       @focus="activate"
     />
@@ -34,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { shallowRef, ref, watch, markRaw, type ComponentPublicInstance } from 'vue'
+import { shallowRef, ref, watch, markRaw, computed, useAttrs, type ComponentPublicInstance } from 'vue'
 
 defineOptions({ inheritAttrs: false })
 
@@ -46,6 +47,11 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
+
+const attrs = useAttrs()
+// AutoComplete props (suggestions, optionLabel, size...) would end up as bogus DOM attributes on the
+// plain input, so it only receives the listeners (e.g. @input, @keydown.enter) and class/style.
+const placeholderAttrs = computed(() => Object.fromEntries(Object.entries(attrs).filter(([key]) => /^on[A-Z]/.test(key) || key === 'class' || key === 'style')))
 
 // Loads (and parses) primevue/autocomplete + virtualscroller only when the field is first used.
 const AutoCompleteComponent = shallowRef()

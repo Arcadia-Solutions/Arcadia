@@ -76,6 +76,7 @@ import {
   type UserLite,
 } from '@/services/api-schema'
 import UsernameEnriched from '../user/UsernameEnriched.vue'
+import TimeAgo from '../TimeAgo.vue'
 
 const { t } = useI18n()
 

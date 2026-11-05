@@ -6,13 +6,13 @@
     <!-- While loading, reserve the height of one cover row (covers are 17% wide with a 2:3
          aspect ratio, so the placeholder scales with the viewport) so this block does not push
          the content below it down once the data arrives. -->
-    <div class="last-uploads" v-if="loading" aria-hidden="true">
+    <div class="last-uploads" :class="{ 'with-uploader': showUploader }" v-if="loading" aria-hidden="true">
       <div class="title-group">
         <Skeleton class="cover-placeholder" width="100%" height="auto" borderRadius="7px" />
         <div class="info-placeholder">&nbsp;</div>
       </div>
     </div>
-    <div class="last-uploads" v-else-if="titleGroups">
+    <div class="last-uploads" :class="{ 'with-uploader': showUploader }" v-else-if="titleGroups">
       <TitleGroupPreviewCoverOnly
         v-for="titleGroup in titleGroups"
         :key="titleGroup.id"
@@ -63,14 +63,15 @@ const props = defineProps<{
 .title-group {
   width: 17%;
 }
+</style>
+<style scoped>
 .cover-placeholder {
   aspect-ratio: 2 / 3;
 }
 /* The real cover row keeps a constant height: reserve the same 3 lines of info text the real
    items use (timeAgo + "by <uploader>"), so the block never grows once the data arrives. */
-.info-placeholder,
-.last-uploads .latest-torrent-info {
-  text-align: center;
+.with-uploader .info-placeholder,
+.with-uploader :deep(.latest-torrent-info) {
   min-height: 4.8em;
 }
 .info-placeholder {

@@ -89,7 +89,9 @@ const show = async (event: Event) => {
   isHoveringUserIcon = true
   const target = event.currentTarget as HTMLElement
   if (!Popover.value) {
-    const mod = await import('primevue/popover')
+    // a failed chunk load is retried on the next hover
+    const mod = await import('primevue/popover').catch(() => null)
+    if (!mod) return
     Popover.value = mod.default ?? mod
     await nextTick()
   }

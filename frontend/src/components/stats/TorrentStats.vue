@@ -91,7 +91,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent } from 'vue'
 import ContentContainer from '@/components/ContentContainer.vue'
 import MultiSelect from 'primevue/multiselect'
 import ProgressSpinner from 'primevue/progressspinner'
@@ -100,13 +99,8 @@ import FloatLabel from 'primevue/floatlabel'
 import { useI18n } from 'vue-i18n'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { getTorrentStats, StatsInterval, TorrentStatsGroupBy, type TorrentStatsDataPoint, type TorrentStatsResponse } from '@/services/api-schema'
-import { baseChartOptions, CHART_COLORS, groupedAttributePieChartOptions, textColor, titleGroupsPerReleaseYearChartOptions } from '@/services/charts'
+import { baseChartOptions, CHART_COLORS, groupedAttributePieChartOptions, textColor, titleGroupsPerReleaseYearChartOptions, Chart } from '@/services/charts'
 import { bytesToReadable, formatDateToLocalString, formatDateTimeLabel, formatNumber } from '@/services/helpers'
-
-const Chart = defineAsyncComponent({
-  loader: () => import('highcharts-vue').then((m) => m.Chart),
-  loadingComponent: ProgressSpinner,
-})
 
 const { t } = useI18n()
 

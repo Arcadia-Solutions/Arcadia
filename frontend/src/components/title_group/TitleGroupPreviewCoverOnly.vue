@@ -47,13 +47,17 @@ withDefaults(
 }
 </style>
 <style>
+/* Reserve a 2:3 box so the row does not grow while covers load, covers with another ratio are
+   centered in it without being cropped. */
 .title-group-preview-cover-only > a {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 2 / 3;
 }
 .title-group-preview-cover-only .title-group-cover {
-  display: block;
   width: 100%;
-  aspect-ratio: 2 / 3;
+  max-height: 100%;
   object-fit: contain;
   border-radius: 7px;
 }

@@ -227,7 +227,7 @@ restore_elysia() {
         owner=$(cfg elysia_db_user)
         runuser -u postgres -- dropdb --if-exists --force "$(cfg elysia_db)"
         runuser -u postgres -- createdb -O "$owner" "$(cfg elysia_db)"
-        { printf 'SET ROLE "%s";\n' "$owner"; cat "$dump"; } | elysia_psql -q -v ON_ERROR_STOP=1
+        { printf 'SET ROLE "%s";\n' "${owner//\"/\"\"}"; cat "$dump"; } | elysia_psql -q -v ON_ERROR_STOP=1
     fi
 }
 

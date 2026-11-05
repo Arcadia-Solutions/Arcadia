@@ -26,29 +26,36 @@ pub enum ImageHost {
 }
 
 /// The configured image host: Elysia when `image_host.elysia_url` and `oidc` are both set,
-/// otherwise Chevereto.
+/// otherwise Chevereto. Warns about a half configured Elysia and about Chevereto's deprecation.
 pub fn configured_image_host(config: &Config) -> Option<ImageHost> {
-    if let (Some(url), Some(oidc)) = (&config.image_host.elysia_url, &config.oidc) {
-        return Some(ImageHost::Elysia {
-            url: url.trim_end_matches('/').to_string(),
-            client_id: oidc.client_id.clone(),
-            client_secret: oidc.client_secret.clone(),
-        });
+    if let Some(url) = &config.image_host.elysia_url {
+        match &config.oidc {
+            Some(oidc) => {
+                return Some(ImageHost::Elysia {
+                    url: url.trim_end_matches('/').to_string(),
+                    client_id: oidc.client_id.clone(),
+                    client_secret: oidc.client_secret.clone(),
+                })
+            }
+            None => log::warn!(
+                "image_host.elysia_url is set but the oidc section is missing, Elysia uploads are disabled"
+            ),
+        }
     }
-    match (
+    let (Some(api_url), Some(api_key)) = (
         &config.image_host.chevereto_api_url,
         &config.image_host.chevereto_api_key,
-    ) {
-        (Some(api_url), Some(api_key)) => Some(ImageHost::Chevereto {
-            api_url: api_url.clone(),
-            api_key: api_key.clone(),
-        }),
-        _ => None,
-    }
+    ) else {
+        return None;
+    };
+    log::warn!("Chevereto image hosting is deprecated, switch to Elysia (image_host.elysia_url)");
+    Some(ImageHost::Chevereto {
+        api_url: api_url.clone(),
+        api_key: api_key.clone(),
+    })
 }
 
 /// The Arcadia user an image is uploaded for.
-#[derive(Clone)]
 pub struct Uploader {
     pub id: i32,
     pub username: String,
@@ -56,7 +63,7 @@ pub struct Uploader {
 
 /// What to upload: the image itself with its file name, or a link to an image to rehost.
 enum ImageSource<'a> {
-    Bytes(&'a [u8], &'a str),
+    Bytes { data: &'a [u8], file_name: &'a str },
     Url(&'a str),
 }
 
@@ -100,7 +107,6 @@ async fn send<T: DeserializeOwned>(request: RequestBuilder) -> Result<T> {
         .map_err(|e| Error::ImageHostUploadFailed(e.to_string()))
 }
 
-/// Uploads the image, returning its URL on the image host.
 async fn upload_with_client(
     client: &Client,
     image_host: &ImageHost,
@@ -114,11 +120,11 @@ async fn upload_with_client(
             client_secret,
         } => {
             let request = match source {
-                ImageSource::Bytes(bytes, file_name) => client
+                ImageSource::Bytes { data, file_name } => client
                     .post(format!("{url}/api/upload"))
                     .multipart(multipart::Form::new().part(
                         "file",
-                        multipart::Part::bytes(bytes.to_vec()).file_name(file_name.to_string()),
+                        multipart::Part::bytes(data.to_vec()).file_name(file_name.to_string()),
                     )),
                 ImageSource::Url(image_url) => client
                     .post(format!("{url}/api/upload-url"))
@@ -132,7 +138,7 @@ async fn upload_with_client(
         }
         ImageHost::Chevereto { api_url, api_key } => {
             let source = match source {
-                ImageSource::Bytes(bytes, _) => BASE64.encode(bytes),
+                ImageSource::Bytes { data, .. } => BASE64.encode(data),
                 ImageSource::Url(image_url) => image_url.to_string(),
             };
             let request = client.post(api_url).form(&[
@@ -156,7 +162,10 @@ pub async fn upload_image(
         &build_client()?,
         image_host,
         uploader,
-        ImageSource::Bytes(image_bytes, file_name),
+        ImageSource::Bytes {
+            data: image_bytes,
+            file_name,
+        },
     )
     .await
 }

@@ -25,7 +25,11 @@ In `.env`, define a secure password for Elysia's database:
 ELYSIA_DB_PASSWORD=your_secure_elysia_password
 ```
 
-In `elysia/config.yml`, set `server.public_url` to where users reach Elysia: Arcadia's frontend serves it under `/elysia` (e.g. `https://arcadia.example.com/elysia`, or `http://localhost:5173/elysia` locally), before the first upload, since links already stored in Arcadia keep the old value, and set `auth.jwt_secret` to a long random value (e.g. `openssl rand -hex 32`).
+In `elysia/config.yml`:
+
+- Set `server.public_url` to where users reach Elysia. Arcadia's frontend serves it under `/elysia`, e.g. `https://arcadia.example.com/elysia` (or `http://localhost:5173/elysia` locally).
+- Set it before the first upload: links already stored in Arcadia keep the old value.
+- Set `auth.jwt_secret` to a long random value (e.g. `openssl rand -hex 32`).
 
 ### 2. Connect Elysia and Arcadia
 
@@ -90,12 +94,12 @@ Elysia ships an importer that copies every Chevereto image, keeping its uploader
 
 When upgrading an existing deployment:
 
-- Keep the Chevereto block of your `Caddyfile` enabled until the import has rewritten the links, otherwise the existing image links stop resolving.
+- Keep Chevereto running (`--profile chevereto`, no longer part of `full`) and the Chevereto block of your `Caddyfile` enabled until the import has rewritten the links, otherwise the existing image links stop resolving.
 - Add `elysia_storage` to `backup.volumes` in `config.yml` (docker mode), otherwise the backups hold Elysia's database but not its images, then recreate `backup_cron` so it mounts the new volume: `docker compose --profile backup up -d --force-recreate backup_cron`.
 
 ## Chevereto (deprecated)
 
-[Chevereto](https://chevereto.com/) is still supported but deprecated. Its containers (`chevereto_php`, `chevereto_database`) start with the `chevereto` and `full` profiles. When `image_host.elysia_url` and `oidc` are set, the Chevereto settings are ignored.
+[Chevereto](https://chevereto.com/) is still supported but deprecated. Its containers (`chevereto_php`, `chevereto_database`) start with the `chevereto` profile only, not `full`. When `image_host.elysia_url` and `oidc` are set, the Chevereto settings are ignored.
 
 1. In `.env`, set `CHEVERETO_DB_PASS` and `CHEVERETO_DB_ROOT_PASS`, then run `docker compose --profile chevereto up -d`.
 2. Open `http://localhost:8083`, complete the installation wizard, then generate an **API v1 key** in **Dashboard** &rarr; **Settings** &rarr; **API**.

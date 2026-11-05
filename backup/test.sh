@@ -80,6 +80,7 @@ EOF
   ergo_db: ergo_history
   chevereto_db: chevereto
   elysia_db: $ELY
+  elysia_db_user: postgres
 EOF
 }
 
@@ -97,7 +98,9 @@ EOF
 
 setup() {
     mkdir -p "$W" "$BDUMPS" "$(dirname "$BPULLED")"
-    git -C "$SRC" ls-files -co --exclude-standard -z | (cd "$SRC" && xargs -0 cp --parents -t "$W")
+    # without the elysia submodule, a directory: elysia_database is a plain postgres image
+    git -C "$SRC" ls-files -co --exclude-standard -z | grep -zvx elysia |
+        (cd "$SRC" && xargs -0 cp --parents -t "$W")
     cd "$W"
     # compose reads the ARCADIA_<section>__<key> database credentials from .env (it only auto-loads
     # .env, not example.env). restore.sh runs on the host via sudo (no exported env), so the docker-mode

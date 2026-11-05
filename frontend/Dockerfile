@@ -50,4 +50,4 @@ FROM caddy:2-alpine
 COPY --from=build-frontend /home/node/app/frontend/dist/ /srv/arcadia/
 COPY --from=kiwi-assets /kiwi/dist/ /srv/kiwiirc/
 COPY --from=build-elysia /elysia/dist/ /srv/elysia/
-COPY frontend/Caddyfile /etc/caddy/Caddyfile
+COPY frontend/Caddyfile frontend/elysia.caddy /etc/caddy/

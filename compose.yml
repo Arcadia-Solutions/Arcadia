@@ -137,6 +137,9 @@ services:
         - path: ./frontend/Caddyfile
           action: sync+restart
           target: /etc/caddy/Caddyfile
+        - path: ./frontend/elysia.caddy
+          action: sync+restart
+          target: /etc/caddy/elysia.caddy
 
   otel-lgtm:
     profiles: [full, telemetry]
@@ -202,10 +205,10 @@ services:
       elysia_database:
         condition: service_healthy
 
-  # Deprecated: use Elysia (profile `images`) instead. Still in `full` so upgrades keep serving the
-  # images already hosted there.
+  # Deprecated: use Elysia (profile `images`) instead. Not in `full`: upgrades add `--profile chevereto`
+  # to keep serving the images already hosted there.
   chevereto_database:
-    profiles: [full, chevereto]
+    profiles: [chevereto]
     image: mariadb:jammy
     volumes:
       - chevereto_database:/var/lib/mysql
@@ -223,7 +226,7 @@ services:
 
 
   chevereto_php:
-    profiles: [full, chevereto]
+    profiles: [chevereto]
     image: chevereto/chevereto:4.5.7
     volumes:
       - chevereto_storage:/var/www/html/images/

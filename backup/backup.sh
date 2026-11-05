@@ -50,22 +50,22 @@ dump_mariadb() {
     fi
 }
 
-# Elysia's postgres, same rules as dump_mariadb. -C: the dump recreates the database with its owner,
-# so restore.sh needs no credentials. $1: database name (host mode, dumped as the postgres user).
+# Elysia's postgres, same rules as dump_mariadb. Without owners, like dump_postgres: restore.sh
+# replays it as the database owner. $1: database name (host mode, dumped as the postgres user).
 dump_elysia() {
     if [ "$MODE" = docker ]; then
         [ -n "${ELYSIA_DB_USER:-}" ] && [ -n "${ELYSIA_DB_NAME:-}" ] || return 0
         (exec 3<> /dev/tcp/elysia_database/5432) 2> /dev/null || return 0
         local tmp
         tmp=$(mktemp "$DUMP_DIR/.tmp.elysia_database.XXXXXX")
-        if ! PGPASSWORD="${ELYSIA_DB_PASSWORD:-}" pg_dump -C -h elysia_database -U "$ELYSIA_DB_USER" \
-                -d "$ELYSIA_DB_NAME" > "$tmp"; then
+        if ! PGPASSWORD="${ELYSIA_DB_PASSWORD:-}" pg_dump -h elysia_database -U "$ELYSIA_DB_USER" \
+                -d "$ELYSIA_DB_NAME" --no-owner --no-privileges > "$tmp"; then
             echo "pg_dump failed for elysia_database (reachable but dump errored)" >&2; rm -f "$tmp"; return 1
         fi
         [ -s "$tmp" ] || { echo "empty postgres dump for elysia_database" >&2; rm -f "$tmp"; return 1; }
         mv "$tmp" "$DUMP_DIR/elysia_database.sql"
     elif [ -n "$1" ]; then
-        runuser -u postgres -- pg_dump -C "$1" > "$DUMP_DIR/elysia_database.sql"
+        runuser -u postgres -- pg_dump --no-owner --no-privileges "$1" > "$DUMP_DIR/elysia_database.sql"
     fi
 }
 

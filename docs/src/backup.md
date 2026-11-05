@@ -31,7 +31,8 @@ dumps cover them.
 Everything is in the `backup` section of `config.yml`, documented in `config.example.yml`. The
 database credentials are read from the `database` section, and in docker mode the ergo, elysia and
 chevereto credentials come from the environment of the `backup_cron` service. In host mode Elysia's
-database (`backup.elysia_db`) is dumped and restored as the `postgres` user.
+database (`backup.elysia_db`) is dumped and restored as the `postgres` user, and recreated owned by
+`backup.elysia_db_user`.
 
 Environment variables named `ARCADIA_<SECTION>__<KEY>` (upper-cased, `-` replaced by `_`, e.g.
 `ARCADIA_DATABASE__PASSWORD`) override the values of `config.yml`. The `ARCADIA_` prefix and `__`

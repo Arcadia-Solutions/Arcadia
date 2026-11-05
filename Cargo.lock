@@ -35,29 +35,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "actix-files"
-version = "0.6.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df8c4f30e3272d7c345f88ae0aac3848507ef5ba871f9cc2a41c8085a0f0523b"
-dependencies = [
- "actix-http",
- "actix-service",
- "actix-utils",
- "actix-web",
- "bitflags",
- "bytes",
- "derive_more 2.1.1",
- "futures-core",
- "http-range",
- "log",
- "mime",
- "mime_guess",
- "percent-encoding",
- "pin-project-lite",
- "v_htmlescape",
-]
-
-[[package]]
 name = "actix-http"
 version = "3.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -435,7 +412,6 @@ name = "arcadia-api"
 version = "0.1.0"
 dependencies = [
  "actix-cors",
- "actix-files",
  "actix-http",
  "actix-multipart",
  "actix-multipart-rfc7578",
@@ -2111,12 +2087,6 @@ dependencies = [
  "http-body",
  "pin-project-lite",
 ]
-
-[[package]]
-name = "http-range"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2149c4b4b83390c71fab669730347d578ec6bdf759f2160c581ad8b8819733b4"
 
 [[package]]
 name = "httparse"
@@ -5119,12 +5089,6 @@ dependencies = [
  "js-sys",
  "wasm-bindgen",
 ]
-
-[[package]]
-name = "v_htmlescape"
-version = "0.15.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e8257fbc510f0a46eb602c10215901938b5c2a7d5e70fc11483b1d3c9b5b18c"
 
 [[package]]
 name = "valuable"

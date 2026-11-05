@@ -49,7 +49,7 @@ check_current_state() {
     mariadb_state ergo_database "$(cfg ergo_db)"
     mariadb_state chevereto_database "$(cfg chevereto_db)"
     echo "--- Postgres elysia_database ---"
-    elysia_psql "" -qAt -c "SELECT pg_size_pretty(pg_database_size(current_database()))" 2> /dev/null || echo "(unavailable)"
+    elysia_psql -qAt -c "SELECT pg_size_pretty(pg_database_size(current_database()))" 2> /dev/null || echo "(unavailable)"
     echo "=========================================="
 }
 
@@ -193,47 +193,42 @@ restore_mariadb() {
     mariadb_cli "$1" "$db" < "$DUMP_DIR_HOST/$1.sql"
 }
 
-# psql on Elysia's postgres as its superuser (docker) or the postgres user (host). $1: database,
-# empty = Elysia's (fails in host mode when backup.elysia_db is empty).
+# psql on Elysia's database as its owner (docker) or the postgres user (host, fails when
+# backup.elysia_db is empty).
 elysia_psql() {
-    local db=$1
-    shift
     if [ "$MODE" = docker ]; then
-        docker compose exec -T elysia_database sh -c 'd=$1; shift; exec psql -U "$POSTGRES_USER" -d "${d:-$POSTGRES_DB}" "$@"' - "$db" "$@"
+        docker compose exec -T elysia_database sh -c 'exec psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" "$@"' - "$@"
     else
-        db=${db:-$(cfg elysia_db)}
-        [ -n "$db" ] || return 1
-        runuser -u postgres -- psql -d "$db" "$@"
+        [ -n "$(cfg elysia_db)" ] || return 1
+        runuser -u postgres -- psql -d "$(cfg elysia_db)" "$@"
     fi
 }
 
-# The elysia dump holds CREATE DATABASE (pg_dump -C), which recreates the database under its name
-# at backup time: it must still be the configured one. Checked before anything of elysia is dropped.
-check_elysia_dump() {
-    local dump=$DUMP_DIR_HOST/elysia_database.sql name dumped
-    [ -f "$dump" ] || return 0
-    if [ "$MODE" = docker ]; then
-        name=$(docker compose run --rm --no-deps -T --entrypoint printenv elysia_database POSTGRES_DB)
-    else
-        name=$(cfg elysia_db)
-    fi
-    dumped=$(sed -nE '/^CREATE DATABASE /{s/^CREATE DATABASE ("(([^"]|"")*)"|([^ ]+)) .*/\2\4/;s/""/"/g;p;q}' "$dump")
-    if [ "$dumped" != "$name" ]; then
-        echo "the elysia dump holds database '$dumped' but '$name' is configured" >&2
+# Host mode recreates Elysia's database owned by backup.elysia_db_user. Checked before anything of
+# elysia is dropped.
+check_elysia() {
+    [ "$MODE" = host ] && [ -f "$DUMP_DIR_HOST/elysia_database.sql" ] || return 0
+    if [ -z "$(cfg elysia_db)" ] || [ -z "$(cfg elysia_db_user)" ]; then
+        echo "restoring the elysia dump needs backup.elysia_db and backup.elysia_db_user" >&2
         exit 1
     fi
 }
 
-# The dump is replayed from the postgres database, see check_elysia_dump.
+# The dump holds no owners: it is replayed as the owner, so the objects are created owned by it.
 restore_elysia() {
-    [ -f "$DUMP_DIR_HOST/elysia_database.sql" ] || return 0
+    local dump=$DUMP_DIR_HOST/elysia_database.sql owner
+    [ -f "$dump" ] || return 0
     if [ "$MODE" = docker ]; then
         docker compose up -d --wait elysia_database
-        docker compose exec -T elysia_database sh -c 'dropdb -U "$POSTGRES_USER" --if-exists --force "$POSTGRES_DB"'
+        docker compose exec -T elysia_database sh -c \
+            'dropdb -U "$POSTGRES_USER" --if-exists --force "$POSTGRES_DB" && createdb -U "$POSTGRES_USER" "$POSTGRES_DB"'
+        elysia_psql -q -v ON_ERROR_STOP=1 < "$dump"
     else
+        owner=$(cfg elysia_db_user)
         runuser -u postgres -- dropdb --if-exists --force "$(cfg elysia_db)"
+        runuser -u postgres -- createdb -O "$owner" "$(cfg elysia_db)"
+        { printf 'SET ROLE "%s";\n' "$owner"; cat "$dump"; } | elysia_psql -q -v ON_ERROR_STOP=1
     fi
-    elysia_psql postgres -q -v ON_ERROR_STOP=1 < "$DUMP_DIR_HOST/elysia_database.sql"
 }
 
 mkdir -p "$DUMP_DIR_HOST"
@@ -243,7 +238,7 @@ trap clean_dumps EXIT
 stop_services
 check_postgres
 restore_files
-check_elysia_dump
+check_elysia
 reset_db_volumes
 restore_data
 restore_postgres

@@ -396,3 +396,5 @@ backup:
   # host mode: Elysia's postgres database, dumped and restored as the postgres user through the
   # unix socket, empty = skipped. In docker mode it is dumped when elysia_database runs.
   elysia_db: ""
+  # host mode: the role owning Elysia's database, which restore recreates it owned by.
+  elysia_db_user: ""

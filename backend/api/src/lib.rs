@@ -89,16 +89,6 @@ impl<R: RedisPoolInterface> Arcadia<R> {
 
         let internal_http_client = pool.internal_http_client.clone();
 
-        let image_host = configured_image_host(&config);
-        if config.image_host.elysia_url.is_some() && config.oidc.is_none() {
-            log::warn!("image_host.elysia_url is set but the oidc section is missing, Elysia uploads are disabled");
-        }
-        if matches!(image_host, Some(ImageHost::Chevereto { .. })) {
-            log::warn!(
-                "Chevereto image hosting is deprecated, switch to Elysia (image_host.elysia_url)"
-            );
-        }
-
         Self {
             pool,
             auth: Auth::new(Arc::clone(&redis_pool)),
@@ -108,7 +98,7 @@ impl<R: RedisPoolInterface> Arcadia<R> {
             notification_streams: Arc::new(Mutex::new(HashMap::new())),
             http_client,
             internal_http_client,
-            image_host,
+            image_host: configured_image_host(&config),
             config,
         }
     }

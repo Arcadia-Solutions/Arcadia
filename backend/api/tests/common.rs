@@ -371,23 +371,27 @@ pub fn spawn_http_server(
             let mut request = Vec::new();
             let mut buffer = [0u8; 4096];
             // read the whole request, so the answer is not sent before the body is consumed
-            loop {
+            let mut request_length = None;
+            while request_length.is_none_or(|length| request.len() < length) {
                 let read = stream.read(&mut buffer).unwrap_or(0);
-                request.extend_from_slice(&buffer[..read]);
-                let text = String::from_utf8_lossy(&request).to_lowercase();
-                let Some(header_end) = text.find("\r\n\r\n") else {
-                    if read == 0 {
-                        break;
-                    }
-                    continue;
-                };
-                let content_length = text
-                    .lines()
-                    .find_map(|line| line.strip_prefix("content-length: "))
-                    .and_then(|length| length.trim().parse::<usize>().ok())
-                    .unwrap_or(0);
-                if read == 0 || request.len() >= header_end + 4 + content_length {
+                if read == 0 {
                     break;
+                }
+                request.extend_from_slice(&buffer[..read]);
+                if request_length.is_none() {
+                    request_length = request
+                        .windows(4)
+                        .position(|window| window == b"\r\n\r\n")
+                        .map(|header_end| {
+                            let headers = String::from_utf8_lossy(&request[..header_end]);
+                            let content_length = headers
+                                .lines()
+                                .filter_map(|line| line.split_once(':'))
+                                .find(|(name, _)| name.eq_ignore_ascii_case("content-length"))
+                                .and_then(|(_, value)| value.trim().parse::<usize>().ok())
+                                .unwrap_or(0);
+                            header_end + 4 + content_length
+                        });
                 }
             }
             let response = format!(

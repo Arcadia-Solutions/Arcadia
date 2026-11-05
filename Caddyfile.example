@@ -37,20 +37,8 @@ arcadia.example.com {
         reverse_proxy ergo:8097
     }
 
-    # Elysia image host (profile `images`): its web UI is built into /srv/elysia by
-    # frontend/Dockerfile. Same routing as elysia/frontend/Caddyfile.
-    redir /elysia /elysia/
-    handle_path /elysia/* {
-        @backend path_regexp ^/(api|api-docs|swagger-ui|t)/|^/i/[^/]+\.[^/]+$
-        handle @backend {
-            reverse_proxy elysia:8090
-        }
-        handle {
-            root * /srv/elysia
-            try_files {path} /index.html
-            file_server
-        }
-    }
+    # Elysia image host, served under /elysia (profile `images`)
+    import elysia.caddy
 
     # Arcadia Vue SPA (Frontend static files and client-side router fallback)
     handle {
@@ -79,7 +67,7 @@ tracker.example.com {
 }
 
 # ------------------------------------------------------------------------------
-# 3. Chevereto Image Host (Deprecated - containers start with --profile chevereto or full)
+# 3. Chevereto Image Host (Deprecated - containers start with --profile chevereto)
 # ------------------------------------------------------------------------------
 # Elysia, which replaces it, is served under https://arcadia.example.com/elysia/
 # (see the main block above). Uncomment to serve Chevereto on images.example.com.

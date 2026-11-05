@@ -68,14 +68,18 @@ confirm() {
 
 # Docker: postgres and mariadb apply the passwords of .env only when their volume is first created, so
 # a volume created before .env was edited refuses them (mariadb root during the restore, the backend
-# afterwards). The dumps hold the databases only, so nothing else is lost. Asked in confirm, skipped
-# with -y.
+# afterwards). The dumps hold the databases only, so nothing else is lost. A volume whose dump the
+# snapshot lacks is kept, as nothing would refill it. Runs after restore_files, which brings the
+# dumps. Asked in confirm, skipped with -y.
 DB_VOLUMES="db_data ergo_database chevereto_database elysia_database"
 reset_db_volumes() {
     [ -n "$RESET" ] || return 0
-    local v
+    local v dump
     # by volume rather than by service: the mariadb services may sit in a profile that is not enabled
     for v in $DB_VOLUMES; do
+        dump=$v
+        [ "$v" = db_data ] && dump=arcadia
+        [ -f "$DUMP_DIR_HOST/$dump.sql" ] || continue
         v=${COMPOSE_PROJECT_NAME}_$v
         docker ps -aq --filter volume="$v" | xargs -r docker rm -f
         docker volume rm -f "$v"
@@ -203,7 +207,24 @@ elysia_psql() {
     fi
 }
 
-# The dump holds CREATE DATABASE (pg_dump -C), so it is replayed from the postgres database.
+# The elysia dump holds CREATE DATABASE (pg_dump -C), which recreates the database under its name
+# at backup time: it must still be the configured one. Checked before anything of elysia is dropped.
+check_elysia_dump() {
+    local dump=$DUMP_DIR_HOST/elysia_database.sql name dumped
+    [ -f "$dump" ] || return 0
+    if [ "$MODE" = docker ]; then
+        name=$(docker compose run --rm --no-deps -T --entrypoint printenv elysia_database POSTGRES_DB)
+    else
+        name=$(cfg elysia_db)
+    fi
+    dumped=$(sed -n 's/^CREATE DATABASE "\{0,1\}\([^" ]*\)"\{0,1\} .*/\1/p' "$dump" | head -n 1)
+    if [ "$dumped" != "$name" ]; then
+        echo "the elysia dump holds database '$dumped' but '$name' is configured" >&2
+        exit 1
+    fi
+}
+
+# The dump is replayed from the postgres database, see check_elysia_dump.
 restore_elysia() {
     [ -f "$DUMP_DIR_HOST/elysia_database.sql" ] || return 0
     if [ "$MODE" = docker ]; then
@@ -220,9 +241,10 @@ confirm
 clean_dumps
 trap clean_dumps EXIT
 stop_services
-reset_db_volumes
 check_postgres
 restore_files
+check_elysia_dump
+reset_db_volumes
 restore_data
 restore_postgres
 restore_mariadb ergo_database "$(cfg ergo_db)"

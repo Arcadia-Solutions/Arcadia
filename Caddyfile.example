@@ -79,10 +79,12 @@ tracker.example.com {
 }
 
 # ------------------------------------------------------------------------------
-# 3. Chevereto Image Host (Deprecated - enabled with --profile chevereto or full)
+# 3. Chevereto Image Host (Deprecated - containers start with --profile chevereto or full)
 # ------------------------------------------------------------------------------
 # Elysia, which replaces it, is served under https://arcadia.example.com/elysia/
 # (see the main block above). Uncomment to serve Chevereto on images.example.com.
+# Upgrading: keep this block enabled until Elysia's Chevereto importer has rewritten
+# the stored links, or existing images.example.com links stop resolving.
 # ------------------------------------------------------------------------------
 # images.example.com {
 #     encode zstd gzip

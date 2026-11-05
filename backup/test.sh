@@ -14,6 +14,7 @@ T=$(mktemp -d)
 W=$T/arcadia
 export COMPOSE_PROJECT_NAME=arcadia_backup_test
 DB=arcadia_backup_test
+ELY=${DB}_elysia # host mode elysia database, dropped by the cleanup
 # Docker mode runs backup.sh in the backup_cron container: the host BACKUP_DIR (set in .env) is
 # bind-mounted at the fixed /var/backups/arcadia and the volumes at /data/<name>. The repo and dumps
 # live under BACKUP_DIR, so the test points at different repos by moving BACKUP_DIR (set_backup_dir),
@@ -78,7 +79,7 @@ EOF
   paths: $PATHS
   ergo_db: ergo_history
   chevereto_db: chevereto
-  elysia_db: elysia
+  elysia_db: $ELY
 EOF
 }
 
@@ -138,9 +139,9 @@ my() { # $1: compose service, $2: mariadb or mariadb-dump, run as root on the se
     fi
 }
 
-ely() { # psql on elysia's database, as its owner (docker) or postgres (host)
-    if [ "$MODE" = docker ]; then dc exec -T elysia_database psql -q -v ON_ERROR_STOP=1 -U elysia -d elysia "$@"
-    else sudo runuser -u postgres -- psql -q -v ON_ERROR_STOP=1 -d elysia "$@"; fi
+ely() { # $1: psql or pg_dump on elysia's database, as its owner (docker) or postgres (host)
+    if [ "$MODE" = docker ]; then dc exec -T elysia_database sh -c 'p=$1; shift; exec "$p" -U "$POSTGRES_USER" -d "$POSTGRES_DB" "$@"' - "$@"
+    else sudo runuser -u postgres -- "$1" -d "$ELY" "${@:2}"; fi
 }
 
 in_data() { # runs the shell script $1 in every volume (docker) or path (host), printing their names
@@ -168,7 +169,7 @@ INSERT INTO b SELECT g, g FROM generate_series(1, 1000) g;
 UPDATE a SET b_id = id;
 EOF
     sudo mariadb -e "CREATE DATABASE ergo_history; CREATE DATABASE chevereto"
-    sudo runuser -u postgres -- createdb elysia
+    sudo runuser -u postgres -- createdb "$ELY"
 }
 
 seed_docker() {
@@ -190,7 +191,7 @@ seed() {
     for s in ergo_database chevereto_database; do
         my "$s" mariadb -e "CREATE TABLE t (id INT PRIMARY KEY, v TEXT); INSERT INTO t VALUES (1, 'a'), (2, 'b')"
     done
-    ely -c "CREATE TABLE t (id INT PRIMARY KEY, v TEXT); INSERT INTO t VALUES (1, 'a'), (2, 'b')"
+    ely psql -q -v ON_ERROR_STOP=1 -c "CREATE TABLE t (id INT PRIMARY KEY, v TEXT); INSERT INTO t VALUES (1, 'a'), (2, 'b')"
     in_data "$FILL" > /dev/null
 }
 
@@ -201,7 +202,7 @@ wipe() { # what a fresh host lacks: containers, volumes, databases, data directo
     else
         sudo runuser -u postgres -- dropdb --if-exists --force "$DB"
         sudo mariadb -e "DROP DATABASE IF EXISTS ergo_history; DROP DATABASE IF EXISTS chevereto"
-        sudo runuser -u postgres -- dropdb --if-exists --force elysia
+        sudo runuser -u postgres -- dropdb --if-exists --force "$ELY"
         sudo rm -rf $PATHS
     fi
 }
@@ -218,7 +219,7 @@ pull() { ARCADIA_CONFIG="$T/$1" backup/pull.sh; }
 mutate() {
     pg -c "CREATE TABLE IF NOT EXISTS backup_test (v text); INSERT INTO backup_test VALUES ('$RANDOM')"
     my ergo_database mariadb -e "INSERT INTO t (id, v) SELECT MAX(id) + 1, 'm' FROM t"
-    ely -c "INSERT INTO t (id, v) SELECT MAX(id) + 1, 'm' FROM t"
+    ely psql -q -v ON_ERROR_STOP=1 -c "INSERT INTO t (id, v) SELECT MAX(id) + 1, 'm' FROM t"
     in_data 'date +%N > "$0/sub/mutated"' > /dev/null
 }
 
@@ -229,8 +230,7 @@ fingerprint() {
     else PGPASSWORD=password pg_dump -h localhost -U arcadia -d "$DB" --no-owner; fi |
         grep -Ev '^\\(un)?restrict ' | sort
     for s in ergo_database chevereto_database; do my "$s" mariadb-dump --skip-extended-insert --skip-dump-date | sort; done
-    if [ "$MODE" = docker ]; then dc exec -T elysia_database pg_dump -U elysia -d elysia
-    else sudo runuser -u postgres -- pg_dump elysia; fi | grep -Ev '^\\(un)?restrict ' | sort
+    ely pg_dump | grep -Ev '^\\(un)?restrict ' | sort
     in_data 'cd "$0" && find . -type f -exec sha256sum {} + | sort'
     sha256sum config.yml ergo/ergo-conf.yaml ergo/ergo.motd kiwiirc/config.json
 }

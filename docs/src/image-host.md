@@ -88,6 +88,11 @@ Elysia is served under `/elysia` of Arcadia's domain by the main block of [`Cadd
 
 Elysia ships an importer that copies every Chevereto image, keeping its uploader, and rewrites the Chevereto links stored in Arcadia's database: see [Importing from Chevereto](https://github.com/Arcadia-Solutions/Elysia/blob/main/backend/README.md#importing-from-chevereto).
 
+When upgrading an existing deployment:
+
+- Keep the Chevereto block of your `Caddyfile` enabled until the import has rewritten the links, otherwise the existing image links stop resolving.
+- Add `elysia_storage` to `backup.volumes` in `config.yml` (docker mode), otherwise the backups hold Elysia's database but not its images.
+
 ## Chevereto (deprecated)
 
 [Chevereto](https://chevereto.com/) is still supported but deprecated. Its containers (`chevereto_php`, `chevereto_database`) start with the `chevereto` and `full` profiles. When `image_host.elysia_url` and `oidc` are set, the Chevereto settings are ignored.

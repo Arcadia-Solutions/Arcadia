@@ -55,8 +55,9 @@ import { baseChartOptions, CHART_COLORS, sideLegend, textColor } from '@/service
 import { formatDateToLocalString, formatDateTimeLabel, formatNumber } from '@/services/helpers'
 
 const Chart = defineAsyncComponent({
-  // the map module registers the mapChart constructor used by the countries chart
-  loader: () => Promise.all([import('highcharts-vue'), import('highcharts/modules/map')]).then(([m]) => m.Chart),
+  // the map module registers the mapChart constructor used by the countries chart,
+  // it must run after highcharts core (pulled in by highcharts-vue) is evaluated
+  loader: () => import('highcharts-vue').then((m) => import('highcharts/modules/map').then(() => m.Chart)),
   loadingComponent: ProgressSpinner,
 })
 

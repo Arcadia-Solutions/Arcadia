@@ -91,7 +91,7 @@ Elysia ships an importer that copies every Chevereto image, keeping its uploader
 When upgrading an existing deployment:
 
 - Keep the Chevereto block of your `Caddyfile` enabled until the import has rewritten the links, otherwise the existing image links stop resolving.
-- Add `elysia_storage` to `backup.volumes` in `config.yml` (docker mode), otherwise the backups hold Elysia's database but not its images.
+- Add `elysia_storage` to `backup.volumes` in `config.yml` (docker mode), otherwise the backups hold Elysia's database but not its images, then recreate `backup_cron` so it mounts the new volume: `docker compose --profile backup up -d --force-recreate backup_cron`.
 
 ## Chevereto (deprecated)
 

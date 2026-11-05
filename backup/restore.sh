@@ -217,7 +217,7 @@ check_elysia_dump() {
     else
         name=$(cfg elysia_db)
     fi
-    dumped=$(sed -n 's/^CREATE DATABASE "\{0,1\}\([^" ]*\)"\{0,1\} .*/\1/p' "$dump" | head -n 1)
+    dumped=$(sed -nE '/^CREATE DATABASE /{s/^CREATE DATABASE ("(([^"]|"")*)"|([^ ]+)) .*/\2\4/;s/""/"/g;p;q}' "$dump")
     if [ "$dumped" != "$name" ]; then
         echo "the elysia dump holds database '$dumped' but '$name' is configured" >&2
         exit 1

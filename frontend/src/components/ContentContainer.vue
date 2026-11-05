@@ -8,7 +8,10 @@
         </RouterLink>
         <div v-else-if="containerTitle" class="container-title">{{ containerTitle }}</div>
       </div>
-      <slot name="top-right"></slot>
+      <!-- wrapped so the slot content is a single flex item instead of being spread out by space-between -->
+      <div v-if="$slots['top-right']">
+        <slot name="top-right"></slot>
+      </div>
     </div>
     <div class="content-body">
       <slot></slot>

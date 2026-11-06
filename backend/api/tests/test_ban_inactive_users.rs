@@ -1,5 +1,4 @@
-pub mod common;
-pub mod mocks;
+use crate::mocks;
 
 use arcadia_api::services::auth::Auth;
 use arcadia_periodic_tasks::periodic_tasks::inactive_users;

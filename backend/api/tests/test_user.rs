@@ -1,5 +1,4 @@
-pub mod common;
-pub mod mocks;
+use crate::{common, mocks};
 
 use actix_web::test;
 use arcadia_storage::connection_pool::ConnectionPool;

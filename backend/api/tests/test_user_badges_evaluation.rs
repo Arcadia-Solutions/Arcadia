@@ -1,6 +1,3 @@
-pub mod common;
-pub mod mocks;
-
 use arcadia_periodic_tasks::periodic_tasks::user_badges::evaluate_user_badges_inner;
 use arcadia_storage::connection_pool::ConnectionPool;
 use sqlx::PgPool;

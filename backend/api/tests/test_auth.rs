@@ -1,6 +1,4 @@
-pub mod common;
-pub mod mocks;
-
+use crate::mocks;
 use actix_web::{
     http::{StatusCode, header::HeaderValue},
     test::{TestRequest, call_service, read_body},

@@ -1,5 +1,4 @@
-pub mod common;
-pub mod mocks;
+use crate::{common, mocks};
 
 use std::io::{Cursor, Read};
 use std::sync::Arc;

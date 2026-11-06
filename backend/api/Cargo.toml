@@ -3,6 +3,8 @@ name = "arcadia-api"
 version = "0.1.0"
 edition = "2024"
 license = "AGPL-3.0"
+# every file in tests/ is a module of the single `it` binary, so the app is linked once
+autotests = false
 
 [lints]
 workspace = true
@@ -56,3 +58,7 @@ sqlx = { version = "0.9", features = [ "runtime-tokio", "postgres", "chrono", "i
 redis = "1.2.1"
 urlencoding = "2.1"
 zip = { version = "9", default-features = false, features = ["deflate"] }
+
+[[test]]
+name = "it"
+path = "tests/main.rs"

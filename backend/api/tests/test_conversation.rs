@@ -1,5 +1,4 @@
-pub mod common;
-pub mod mocks;
+use crate::{common, mocks};
 
 use actix_http::Request;
 use actix_web::Error;

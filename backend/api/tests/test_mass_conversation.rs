@@ -1,5 +1,4 @@
-pub mod common;
-pub mod mocks;
+use crate::{common, mocks};
 
 use crate::common::TestUser;
 use actix_web::http::StatusCode;

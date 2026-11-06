@@ -1,5 +1,4 @@
-pub mod common;
-pub mod mocks;
+use crate::mocks;
 
 use std::sync::Arc;
 

@@ -62,9 +62,6 @@ jobs:
         working-directory: ./
         run: cp config.ci.yml config.yml
 
-      - name: Build
-        run: cargo build
-
       - name: Run tests
         run: cargo test
 

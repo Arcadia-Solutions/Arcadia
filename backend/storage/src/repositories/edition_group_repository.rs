@@ -77,9 +77,9 @@ impl ConnectionPool {
             "#,
             edition_group_id
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::EditionGroupNotFound)?;
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::EditionGroupNotFound)?;
 
         Ok(edition_group)
     }

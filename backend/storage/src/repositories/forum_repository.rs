@@ -1219,9 +1219,9 @@ impl ConnectionPool {
             r#"SELECT id, name, sort_order, created_at, created_by_id FROM forum_categories WHERE id = $1"#,
             category_id
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::ForumCategoryNotFound)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::ForumCategoryNotFound)
     }
 
     pub async fn find_forum_sub_category_raw(

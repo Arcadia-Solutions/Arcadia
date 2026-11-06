@@ -354,9 +354,9 @@ impl ConnectionPool {
             "#,
             torrent_id
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::TorrentNotFound)?;
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::TorrentNotFound)?;
 
         Ok(torrent)
     }
@@ -1896,9 +1896,9 @@ impl ConnectionPool {
             "#,
             torrent_id
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::TorrentNotFound)?;
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::TorrentNotFound)?;
 
         Ok(title_group_id)
     }
@@ -1916,9 +1916,9 @@ impl ConnectionPool {
             "#,
             torrent_id
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::TorrentNotFound)?;
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::TorrentNotFound)?;
 
         Ok(format_title_group_name(
             title_group.series_name.as_deref(),

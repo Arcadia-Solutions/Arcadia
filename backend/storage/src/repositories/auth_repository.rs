@@ -206,9 +206,9 @@ impl ConnectionPool {
             "#,
             &value_hash[..]
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::InvalidAPIKeyOrBanned)?;
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::InvalidAPIKeyOrBanned)?;
 
         Ok((api_key.user_id, api_key.scopes))
     }
@@ -266,9 +266,9 @@ impl ConnectionPool {
             "#,
             id
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::WrongUsernameOrPassword)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::WrongUsernameOrPassword)
     }
 
     pub async fn create_api_key(
@@ -544,8 +544,8 @@ impl ConnectionPool {
             "#,
             username
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::UserNotFound(username.to_string()))
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or_else(|| Error::UserNotFound(username.to_string()))
     }
 }

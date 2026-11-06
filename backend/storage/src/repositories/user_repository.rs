@@ -153,9 +153,9 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::UserWithIdNotFound(user_id))?;
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::UserWithIdNotFound(user_id))?;
 
         Ok(UserSettingsResponse {
             settings: UserSettings {
@@ -229,9 +229,9 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::UserWithIdNotFound(user_id))
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::UserWithIdNotFound(user_id))
     }
 
     pub async fn update_user_custom_title(
@@ -322,9 +322,9 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::UserWithIdNotFound(user_id))
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::UserWithIdNotFound(user_id))
     }
 
     pub async fn find_users_without_registration_ip_check(&self) -> Result<Vec<(i32, IpNetwork)>> {
@@ -646,9 +646,9 @@ impl ConnectionPool {
             "#,
             name
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::UserClassNotFound(name.to_string()))
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or_else(|| Error::UserClassNotFound(name.to_string()))
     }
 
     pub async fn get_all_user_classes(&self) -> Result<Vec<UserClass>> {
@@ -989,9 +989,9 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .fetch_one(&mut *tx)
-        .await
-        .map_err(|_| Error::UserWithIdNotFound(user_id))?;
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or(Error::UserWithIdNotFound(user_id))?;
 
         let old_class_name = user.class_name.clone();
 
@@ -1029,9 +1029,9 @@ impl ConnectionPool {
             "#,
             old_class_name
         )
-        .fetch_one(&mut *tx)
-        .await
-        .map_err(|_| Error::UserClassNotFound(old_class_name.clone()))?;
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or_else(|| Error::UserClassNotFound(old_class_name.clone()))?;
 
         // Get new class details
         let new_class = sqlx::query_as!(
@@ -1062,9 +1062,9 @@ impl ConnectionPool {
             "#,
             new_class_name
         )
-        .fetch_one(&mut *tx)
-        .await
-        .map_err(|_| Error::UserClassNotFound(new_class_name.to_string()))?;
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or_else(|| Error::UserClassNotFound(new_class_name.to_string()))?;
 
         let mut updated_permissions = user.permissions.clone();
 
@@ -1364,9 +1364,9 @@ impl ConnectionPool {
             "#,
             user_id
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::UserWithIdNotFound(user_id))
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::UserWithIdNotFound(user_id))
     }
 
     /// Get the users that can still change class (not banned, not class locked and belonging to

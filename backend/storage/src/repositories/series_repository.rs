@@ -44,9 +44,9 @@ impl ConnectionPool {
             "#,
             series_id
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::SeriesWithIdNotFound(*series_id))?;
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::SeriesWithIdNotFound(*series_id))?;
 
         Ok(series)
     }
@@ -74,9 +74,9 @@ impl ConnectionPool {
             "#,
             series_id
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::SeriesWithIdNotFound(series_id))?;
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::SeriesWithIdNotFound(series_id))?;
 
         let title_group_stats = self
             .get_title_group_catalog_stats(CatalogKind::Series, series_id)

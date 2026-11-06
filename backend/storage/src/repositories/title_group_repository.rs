@@ -993,9 +993,9 @@ impl ConnectionPool {
             "#,
             title_group_id
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::TitleGroupNotFound)?;
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::TitleGroupNotFound)?;
 
         Ok(title_group)
     }

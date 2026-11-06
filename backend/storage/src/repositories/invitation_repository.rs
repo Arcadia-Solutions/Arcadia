@@ -79,9 +79,9 @@ impl ConnectionPool {
             "#,
             invitation_key
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::InvitationKeyInvalid)?;
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::InvitationKeyInvalid)?;
 
         Ok(invitation)
     }

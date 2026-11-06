@@ -116,9 +116,9 @@ impl ConnectionPool {
             "#,
             torrent_id
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::TorrentNotFound)?;
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::TorrentNotFound)?;
 
         let mut tx = self.pool.begin().await?;
 
@@ -554,9 +554,9 @@ impl ConnectionPool {
             "#,
             torrent_request_id
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::TorrentRequestNotFound)?;
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::TorrentRequestNotFound)?;
 
         Ok(torrent_request)
     }

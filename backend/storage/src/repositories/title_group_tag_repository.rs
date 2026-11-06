@@ -186,9 +186,9 @@ impl ConnectionPool {
             "#,
             tag_id
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|_| Error::TitleGroupTagNotFound)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::TitleGroupTagNotFound)
     }
 
     pub async fn update_title_group_tag(

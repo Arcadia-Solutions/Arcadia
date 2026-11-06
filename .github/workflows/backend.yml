@@ -5,6 +5,8 @@ on:
   push:
     paths:
       - "backend/**"
+      - "shared/**"
+      - "tracker/**"
       - "!**.md" # In the case that markdown is going to be used for documentation, don't forget to change this ;)
       - ".github/workflows/backend.yml"
   pull_request:
@@ -12,6 +14,8 @@ on:
       - main
     paths:
       - "backend/**"
+      - "shared/**"
+      - "tracker/**"
       - "!**.md"
       - ".github/workflows/backend.yml"
 
@@ -137,4 +141,8 @@ jobs:
           sqlx migrate run
 
       - name: Ensure schema and query metadata are in sync
-        run: cargo sqlx prepare --check
+        working-directory: ./
+        run: |
+          for crate in backend/storage backend/periodic-tasks shared tracker/arcadia_tracker; do
+            (cd "$crate" && cargo sqlx prepare --check)
+          done

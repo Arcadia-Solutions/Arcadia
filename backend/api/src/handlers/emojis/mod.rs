@@ -7,8 +7,8 @@ pub mod get_emojis_usage;
 pub mod reorder_emojis;
 pub mod set_emoji_enabled;
 
-use actix_multipart::form::{bytes::Bytes, text::Text, MultipartFormConfig};
-use actix_web::web::{delete, get, post, put, resource, ServiceConfig};
+use actix_multipart::form::{MultipartFormConfig, bytes::Bytes, text::Text};
+use actix_web::web::{ServiceConfig, delete, get, post, put, resource};
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::redis::RedisPoolInterface;
 

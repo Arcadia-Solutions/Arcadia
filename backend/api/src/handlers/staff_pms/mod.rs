@@ -5,7 +5,7 @@ pub mod list_staff_pms;
 pub mod resolve_staff_pm;
 pub mod unresolve_staff_pm;
 
-use actix_web::web::{get, post, put, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, get, post, put, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

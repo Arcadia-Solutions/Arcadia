@@ -21,7 +21,7 @@ use arcadia_storage::{
         },
     },
 };
-use common::{auth_header, call_and_read_body_json, create_test_app_and_login, login_as, TestUser};
+use common::{TestUser, auth_header, call_and_read_body_json, create_test_app_and_login, login_as};
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;

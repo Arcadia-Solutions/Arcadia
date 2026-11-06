@@ -1,11 +1,11 @@
 use actix_web::{
-    web::{Data, Query},
     HttpRequest, HttpResponse,
+    web::{Data, Query},
 };
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{middlewares::auth_middleware::Authdata, Arcadia};
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use arcadia_common::error::Result;
 use arcadia_storage::{
     models::{peer::PublicPeer, user::UserPermission},

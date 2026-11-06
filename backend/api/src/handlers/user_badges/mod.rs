@@ -9,7 +9,7 @@ pub mod list_user_badge_categories;
 pub mod list_user_badges;
 pub mod revoke_user_earned_badge;
 
-use actix_web::web::{delete, get, post, put, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, delete, get, post, put, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

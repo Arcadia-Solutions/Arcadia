@@ -1,11 +1,11 @@
 use crate::{
+    Arcadia,
     middlewares::auth_middleware::Authdata,
     services::auth_service::{validate_password, validate_password_verification, verify_password},
-    Arcadia,
 };
 use actix_web::{
-    web::{Data, Json},
     HttpResponse,
+    web::{Data, Json},
 };
 use arcadia_common::error::Result;
 use arcadia_storage::{
@@ -13,8 +13,8 @@ use arcadia_storage::{
     redis::RedisPoolInterface,
 };
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
+    password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
 };
 use chrono::{Duration, Utc};
 

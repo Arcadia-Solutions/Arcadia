@@ -1,6 +1,6 @@
 use actix_web::{
-    web::{Data, Path},
     HttpResponse,
+    web::{Data, Path},
 };
 use log::info;
 

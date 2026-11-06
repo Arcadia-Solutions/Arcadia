@@ -1,9 +1,9 @@
 use actix_multipart::form::MultipartForm;
-use actix_web::{web::Data, HttpRequest, HttpResponse};
+use actix_web::{HttpRequest, HttpResponse, web::Data};
 use arcadia_shared::tracker::models::torrent::APIInsertTorrent;
 use reqwest::Method;
 
-use crate::{middlewares::auth_middleware::Authdata, Arcadia};
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use arcadia_common::error::Result;
 use arcadia_storage::{
     models::{

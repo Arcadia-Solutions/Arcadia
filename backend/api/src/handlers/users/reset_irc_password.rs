@@ -1,7 +1,7 @@
 use crate::{
-    middlewares::auth_middleware::Authdata, services::irc_service::generate_irc_password, Arcadia,
+    Arcadia, middlewares::auth_middleware::Authdata, services::irc_service::generate_irc_password,
 };
-use actix_web::{web::Data, HttpResponse};
+use actix_web::{HttpResponse, web::Data};
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::redis::RedisPoolInterface;
 

@@ -1,4 +1,4 @@
-use actix_web::{dev, web::Data, FromRequest, HttpRequest};
+use actix_web::{FromRequest, HttpRequest, dev, web::Data};
 use arcadia_shared::tracker::models::{peer_id::PeerId, torrent::InfoHash};
 use std::{
     borrow::Cow,
@@ -6,7 +6,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::{announce::error::AnnounceError, Tracker};
+use crate::{Tracker, announce::error::AnnounceError};
 
 #[derive(Debug)]
 pub struct Announce {

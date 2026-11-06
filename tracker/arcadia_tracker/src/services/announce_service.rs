@@ -139,7 +139,10 @@ pub async fn check_and_deduct_snatch_cost(
     if cost > 0 && !is_uploader && !has_already_paid_activity && !deducted {
         log::info!(
             "check_and_deduct_snatch_cost: user=\"{}\" (id={}) has insufficient bonus points for torrent_id={}, charged={}",
-            username, user_id, torrent_id, charged
+            username,
+            user_id,
+            torrent_id,
+            charged
         );
         return Err(AnnounceError::InsufficientBonusPoints(charged));
     }
@@ -247,7 +250,16 @@ pub async fn check_and_deduct_snatch_cost(
         Ok(tg_row) => {
             log::info!(
                 "check_and_deduct_snatch_cost: user=\"{}\" (id={}), title_group=\"{:?}\" (title_group_id={:?}, torrent_id={}), cost={}, is_uploader={}, has_already_paid_activity={}, deducted={}, transfer_to={:?}",
-                username, user_id, tg_row.title_group_name, tg_row.title_group_id, torrent_id, cost, is_uploader, has_already_paid_activity, deducted, transfer_to
+                username,
+                user_id,
+                tg_row.title_group_name,
+                tg_row.title_group_id,
+                torrent_id,
+                cost,
+                is_uploader,
+                has_already_paid_activity,
+                deducted,
+                transfer_to
             );
         }
         Err(e) => {

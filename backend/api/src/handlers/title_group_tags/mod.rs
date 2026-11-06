@@ -7,7 +7,7 @@ pub mod remove_tag;
 pub mod restore_tag;
 pub mod search_applied_tags;
 
-use actix_web::web::{delete, get, post, put, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, delete, get, post, put, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

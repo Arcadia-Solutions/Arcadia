@@ -3,12 +3,12 @@ use arcadia_storage::{
     models::user::{Claims, LoginResponse, TokenType},
     redis::{RedisInterface, RedisPool, RedisPoolInterface},
     services::token_invalidation_service::{
-        invalidate_user_tokens, InvalidationEntry, REFRESH_TOKEN_DURATION,
+        InvalidationEntry, REFRESH_TOKEN_DURATION, invalidate_user_tokens,
     },
 };
-use base64::{engine::general_purpose::URL_SAFE_NO_PAD as BASE64_URL, Engine};
+use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD as BASE64_URL};
 use chrono::{DateTime, Duration, Utc};
-use jsonwebtoken::{encode, EncodingKey, Header};
+use jsonwebtoken::{EncodingKey, Header, encode};
 use rand::RngExt as _;
 use serde_json::from_str;
 use std::sync::{Arc, LazyLock};

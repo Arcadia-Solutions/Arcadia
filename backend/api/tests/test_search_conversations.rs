@@ -5,7 +5,7 @@ use actix_web::test;
 use arcadia_storage::connection_pool::ConnectionPool;
 use arcadia_storage::models::common::PaginatedResults;
 use arcadia_storage::models::conversation::ConversationSearchResult;
-use common::{auth_header, call_and_read_body_json, create_test_app_and_login, TestUser};
+use common::{TestUser, auth_header, call_and_read_body_json, create_test_app_and_login};
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;

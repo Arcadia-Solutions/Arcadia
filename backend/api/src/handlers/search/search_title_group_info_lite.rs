@@ -1,6 +1,6 @@
 use actix_web::{
-    web::{Data, Query},
     HttpResponse,
+    web::{Data, Query},
 };
 use arcadia_storage::{
     models::title_group::{ContentType, TitleGroupLite},

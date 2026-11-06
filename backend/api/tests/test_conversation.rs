@@ -2,16 +2,16 @@ pub mod common;
 pub mod mocks;
 
 use actix_http::Request;
+use actix_web::Error;
 use actix_web::dev::{Service, ServiceResponse};
 use actix_web::http::StatusCode;
 use actix_web::test;
-use actix_web::Error;
 use arcadia_storage::connection_pool::ConnectionPool;
 use arcadia_storage::models::conversation::{
     ConversationHierarchy, UserCreatedConversationMessage,
 };
 use chrono::{DateTime, TimeZone, Utc};
-use common::{auth_header, call_and_read_body_json, create_test_app_and_login, login_as, TestUser};
+use common::{TestUser, auth_header, call_and_read_body_json, create_test_app_and_login, login_as};
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;

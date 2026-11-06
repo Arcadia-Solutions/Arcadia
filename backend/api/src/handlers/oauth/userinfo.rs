@@ -1,8 +1,8 @@
-use actix_web::{http::header::AUTHORIZATION, web, HttpRequest, HttpResponse};
+use actix_web::{HttpRequest, HttpResponse, http::header::AUTHORIZATION, web};
 use arcadia_storage::redis::RedisPoolInterface;
 use serde::Serialize;
 
-use crate::{services::oauth::find_by_token, Arcadia};
+use crate::{Arcadia, services::oauth::find_by_token};
 
 use super::OAuthErrorResponse;
 

@@ -1,6 +1,6 @@
 use actix_web::{
-    web::{Data, Json},
     HttpResponse,
+    web::{Data, Json},
 };
 use arcadia_storage::utils::compute_diff;
 use arcadia_storage::{
@@ -12,7 +12,7 @@ use arcadia_storage::{
     redis::RedisPoolInterface,
 };
 
-use crate::{middlewares::auth_middleware::Authdata, Arcadia};
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use arcadia_common::error::{Error, Result};
 
 #[utoipa::path(

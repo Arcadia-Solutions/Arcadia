@@ -18,7 +18,7 @@ use serde::Deserialize;
 use sqlx::PgPool;
 
 use crate::common::{
-    auth_header, call_and_read_body_json_with_status, create_test_app_and_login, TestUser,
+    TestUser, auth_header, call_and_read_body_json_with_status, create_test_app_and_login,
 };
 
 /// The stats of an artist, a series or a collage ride along with the rest of its information, so a

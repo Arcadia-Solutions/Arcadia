@@ -1,14 +1,14 @@
 use crate::{
+    Arcadia,
     middlewares::auth_middleware::Authdata,
     services::{
         auth_service::{validate_email, verify_password},
         image_service::validate_image_url,
     },
-    Arcadia,
 };
 use actix_web::{
-    web::{Data, Json},
     HttpResponse,
+    web::{Data, Json},
 };
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::{models::user::EditedUser, redis::RedisPoolInterface};

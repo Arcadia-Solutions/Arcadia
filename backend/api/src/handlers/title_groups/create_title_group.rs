@@ -1,6 +1,6 @@
 use actix_web::{
-    web::{Data, Json},
     HttpRequest, HttpResponse,
+    web::{Data, Json},
 };
 use arcadia_storage::{
     models::{
@@ -12,10 +12,10 @@ use arcadia_storage::{
 use futures::future::join_all;
 
 use crate::{
+    Arcadia,
     handlers::external_db::get_tmdb_data::get_tmdb_rating,
     middlewares::auth_middleware::Authdata,
     services::image_service::{validate_image_urls, validate_trailer_urls},
-    Arcadia,
 };
 use arcadia_common::error::{Error, Result};
 

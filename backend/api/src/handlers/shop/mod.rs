@@ -3,7 +3,7 @@ pub mod buy_promotion;
 pub mod buy_upload;
 pub mod get_pricing;
 
-use actix_web::web::{get, post, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, get, post, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

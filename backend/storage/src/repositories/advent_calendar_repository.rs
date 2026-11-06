@@ -13,7 +13,7 @@ use crate::{
 };
 use arcadia_common::error::{Error, Result};
 use chrono::{DateTime, Utc};
-use sqlx::{types::Json, PgExecutor, Postgres, Transaction};
+use sqlx::{PgExecutor, Postgres, Transaction, types::Json};
 
 fn map_advent_calendar_write_error(error: sqlx::Error) -> Error {
     if let sqlx::Error::Database(database_error) = &error

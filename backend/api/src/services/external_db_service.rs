@@ -13,7 +13,7 @@ use chrono::Utc;
 
 use crate::{
     handlers::scrapers::{ExternalDBData, ScrapedAffiliatedArtist},
-    services::image_host_service::{rehost_image_urls, ImageHost, Uploader},
+    services::image_host_service::{ImageHost, Uploader, rehost_image_urls},
 };
 
 /// The treatment every scraper answer goes through, so that no scraper has to

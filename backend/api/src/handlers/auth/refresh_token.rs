@@ -1,12 +1,12 @@
 use crate::Arcadia;
-use actix_web::{web, HttpResponse};
+use actix_web::{HttpResponse, web};
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::{
     models::user::{Claims, LoginResponse, RefreshToken, TokenType},
     redis::RedisPoolInterface,
 };
 use chrono::prelude::Utc;
-use jsonwebtoken::{decode, DecodingKey, Validation};
+use jsonwebtoken::{DecodingKey, Validation, decode};
 
 #[utoipa::path(
     post,

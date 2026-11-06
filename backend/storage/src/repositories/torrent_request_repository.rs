@@ -15,7 +15,7 @@ use arcadia_common::error::{Error, Result};
 use arcadia_shared::utils::format_title_group_name;
 use chrono::{Duration, Utc};
 use serde_json::Value;
-use sqlx::{query_as, Postgres, Transaction};
+use sqlx::{Postgres, Transaction, query_as};
 use std::collections::HashMap;
 
 impl ConnectionPool {

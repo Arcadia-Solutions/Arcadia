@@ -1,7 +1,7 @@
 use actix_web::body::MessageBody;
 use actix_web::dev::ServiceResponse;
-use actix_web::{dev::ServiceRequest, error::ErrorUnauthorized, web::Data};
 use actix_web::{Error, HttpMessage};
+use actix_web::{dev::ServiceRequest, error::ErrorUnauthorized, web::Data};
 use subtle::ConstantTimeEq;
 use tracing::Span;
 use tracing_actix_web::{DefaultRootSpanBuilder, RequestId, RootSpanBuilder};

@@ -24,7 +24,7 @@ use crate::{
 };
 use arcadia_common::error::{Error, Result};
 use chrono::Local;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use sqlx::types::Json;
 use std::collections::HashMap;
 

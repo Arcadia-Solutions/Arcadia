@@ -2,7 +2,7 @@ pub mod delete_all_user_edit_change_logs;
 pub mod delete_user_edit_change_log;
 pub mod search;
 
-use actix_web::web::{delete, get, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, delete, get, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

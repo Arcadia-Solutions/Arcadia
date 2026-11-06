@@ -1,11 +1,11 @@
 use chrono::{DateTime, Utc};
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
-use sqlx::{types::ipnetwork::IpNetwork, PgPool};
+use sqlx::{PgPool, types::ipnetwork::IpNetwork};
 
 use crate::{
     error::Error,
-    tracker::models::{peer_id::PeerId, Flushable, Mergeable, Queue},
+    tracker::models::{Flushable, Mergeable, Queue, peer_id::PeerId},
 };
 
 // Fields must be in same order as database primary key

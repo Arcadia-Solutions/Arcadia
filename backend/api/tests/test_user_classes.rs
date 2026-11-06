@@ -10,8 +10,8 @@ use arcadia_storage::{
     },
 };
 use common::{
-    auth_header, call_and_read_body_json_with_status, create_test_app, create_test_app_and_login,
-    TestUser,
+    TestUser, auth_header, call_and_read_body_json_with_status, create_test_app,
+    create_test_app_and_login,
 };
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
@@ -639,25 +639,33 @@ async fn test_edit_class_permissions_propagate_to_classes_above(pool: PgPool) {
         .await
         .expect("Failed to fetch basic_class user");
     assert!(basic_user.permissions.contains(&UserPermission::EditArtist));
-    assert!(!basic_user
-        .permissions
-        .contains(&UserPermission::DownloadTorrent));
+    assert!(
+        !basic_user
+            .permissions
+            .contains(&UserPermission::DownloadTorrent)
+    );
 
     // Class above (advanced_class) - propagation target
     let advanced_user = pool_arc
         .find_user_with_id(1001)
         .await
         .expect("Failed to fetch advanced_class user");
-    assert!(advanced_user
-        .permissions
-        .contains(&UserPermission::EditArtist));
-    assert!(!advanced_user
-        .permissions
-        .contains(&UserPermission::DownloadTorrent));
+    assert!(
+        advanced_user
+            .permissions
+            .contains(&UserPermission::EditArtist)
+    );
+    assert!(
+        !advanced_user
+            .permissions
+            .contains(&UserPermission::DownloadTorrent)
+    );
     // advanced_class's own permission stays intact
-    assert!(advanced_user
-        .permissions
-        .contains(&UserPermission::UploadTorrent));
+    assert!(
+        advanced_user
+            .permissions
+            .contains(&UserPermission::UploadTorrent)
+    );
 
     // Class 2 levels above (elite_class) - transitive propagation
     let elite_user = pool_arc
@@ -665,16 +673,22 @@ async fn test_edit_class_permissions_propagate_to_classes_above(pool: PgPool) {
         .await
         .expect("Failed to fetch elite_class user");
     assert!(elite_user.permissions.contains(&UserPermission::EditArtist));
-    assert!(!elite_user
-        .permissions
-        .contains(&UserPermission::DownloadTorrent));
+    assert!(
+        !elite_user
+            .permissions
+            .contains(&UserPermission::DownloadTorrent)
+    );
     // elite_class's and advanced_class's own permissions stay intact
-    assert!(elite_user
-        .permissions
-        .contains(&UserPermission::UploadTorrent));
-    assert!(elite_user
-        .permissions
-        .contains(&UserPermission::EditWikiArticle));
+    assert!(
+        elite_user
+            .permissions
+            .contains(&UserPermission::UploadTorrent)
+    );
+    assert!(
+        elite_user
+            .permissions
+            .contains(&UserPermission::EditWikiArticle)
+    );
 }
 
 #[sqlx::test(

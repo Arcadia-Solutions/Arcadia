@@ -1,4 +1,4 @@
-use actix_multipart::form::{bytes::Bytes, text::Text, MultipartForm};
+use actix_multipart::form::{MultipartForm, bytes::Bytes, text::Text};
 use arcadia_shared::tracker::models::torrent::InfoHash;
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};

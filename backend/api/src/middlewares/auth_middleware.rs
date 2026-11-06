@@ -1,20 +1,20 @@
 use crate::{
-    middlewares::api_key_scopes::{is_endpoint_allowed_for_scopes, requires_no_authentication},
     Arcadia,
+    middlewares::api_key_scopes::{is_endpoint_allowed_for_scopes, requires_no_authentication},
 };
 use actix_web::{
+    Error, FromRequest, HttpMessage as _, HttpRequest,
     dev::{Payload, ServiceRequest},
     error::ErrorUnauthorized,
     web::Data,
-    Error, FromRequest, HttpMessage as _, HttpRequest,
 };
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 use arcadia_storage::{
     models::user::{Claims, TokenType},
     redis::RedisPoolInterface,
 };
-use futures_util::future::{err, ok, Ready};
-use jsonwebtoken::{decode, errors::ErrorKind, DecodingKey, Validation};
+use futures_util::future::{Ready, err, ok};
+use jsonwebtoken::{DecodingKey, Validation, decode, errors::ErrorKind};
 use subtle::ConstantTimeEq;
 
 #[derive(Debug, Clone)]

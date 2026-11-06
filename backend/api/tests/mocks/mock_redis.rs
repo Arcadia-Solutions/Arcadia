@@ -1,4 +1,4 @@
-use arcadia_storage::redis::{error::Result, RedisInterface, RedisPoolInterface};
+use arcadia_storage::redis::{RedisInterface, RedisPoolInterface, error::Result};
 use redis::ToRedisArgs;
 #[cfg(test)]
 use std::collections::HashMap;

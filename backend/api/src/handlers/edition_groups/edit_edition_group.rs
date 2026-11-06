@@ -1,6 +1,6 @@
 use actix_web::{
-    web::{Data, Json},
     HttpResponse,
+    web::{Data, Json},
 };
 use arcadia_storage::utils::compute_diff;
 use arcadia_storage::{
@@ -13,7 +13,7 @@ use arcadia_storage::{
 };
 
 use crate::{
-    middlewares::auth_middleware::Authdata, services::image_service::validate_image_urls, Arcadia,
+    Arcadia, middlewares::auth_middleware::Authdata, services::image_service::validate_image_urls,
 };
 use arcadia_common::error::{Error, Result};
 

@@ -97,7 +97,7 @@ impl IpCheckProvidersConfig {
                     return Ok(IpCheck {
                         provider: provider.kind(),
                         result,
-                    })
+                    });
                 }
                 // the url of the request holds the api key of the provider
                 Err(error) => match error.downcast::<reqwest::Error>() {

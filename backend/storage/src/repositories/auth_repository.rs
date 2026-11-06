@@ -13,13 +13,14 @@ use crate::{
 };
 use arcadia_common::error::{Error, Result};
 use argon2::{
-    password_hash::{PasswordHash, PasswordVerifier},
     Argon2,
+    password_hash::{PasswordHash, PasswordVerifier},
 };
 use chrono::{DateTime, Duration, Utc};
 use rand::{
+    RngExt,
     distr::{Alphanumeric, SampleString},
-    rng, RngExt,
+    rng,
 };
 use sha2::{Digest, Sha256};
 use sqlx::types::ipnetwork::IpNetwork;

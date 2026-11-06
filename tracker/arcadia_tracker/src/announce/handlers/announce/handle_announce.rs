@@ -5,6 +5,7 @@ use std::{
 };
 
 use crate::{
+    Tracker,
     announce::{
         error::{AnnounceError, Result},
         models::{
@@ -13,12 +14,10 @@ use crate::{
         },
     },
     services::announce_service::{check_and_deduct_snatch_cost, is_torrent_client_allowed},
-    Tracker,
 };
 use actix_web::{
-    dev,
+    FromRequest, HttpRequest, HttpResponse, dev,
     web::{Data, Path},
-    FromRequest, HttpRequest, HttpResponse,
 };
 use arcadia_shared::tracker::models::{
     announce_error_update::{self, AnnounceErrorUpdate},
@@ -33,7 +32,7 @@ use arcadia_shared::tracker::models::{
 use chrono::{Duration, Utc};
 use log::debug;
 use opentelemetry::KeyValue;
-use rand::{rng, seq::IteratorRandom, RngExt};
+use rand::{RngExt, rng, seq::IteratorRandom};
 
 #[derive(Debug)]
 pub struct UserAgent(pub String);

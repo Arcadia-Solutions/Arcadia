@@ -1,21 +1,22 @@
 use actix_http::Request;
 use actix_web::{
+    App, Error,
     body::MessageBody,
     dev::{Service, ServiceResponse},
     http::{
-        header::{HeaderValue, TryIntoHeaderPair, AUTHORIZATION, CONTENT_TYPE},
         StatusCode,
+        header::{AUTHORIZATION, CONTENT_TYPE, HeaderValue, TryIntoHeaderPair},
     },
-    test, web, App, Error,
+    test, web,
 };
-use arcadia_api::{config::Config, Arcadia};
+use arcadia_api::{Arcadia, config::Config};
 use arcadia_storage::models::{notification::NotificationEvent, user::Login};
 use arcadia_storage::{
     connection_pool::ConnectionPool,
     models::user::{LoginResponse, User},
     redis::RedisPoolInterface,
 };
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{Deserialize, de::DeserializeOwned};
 use std::sync::Arc;
 use tokio::sync::broadcast;
 

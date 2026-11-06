@@ -1,5 +1,5 @@
 use crate::Arcadia;
-use actix_web::{web::Data, HttpResponse};
+use actix_web::{HttpResponse, web::Data};
 use arcadia_common::error::Result;
 use arcadia_storage::{
     models::{

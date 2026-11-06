@@ -1,7 +1,7 @@
 use std::sync::LazyLock;
 
 use arcadia_common::error::{Error, Result};
-use argon2::{password_hash::PasswordHash, Argon2, PasswordVerifier};
+use argon2::{Argon2, PasswordVerifier, password_hash::PasswordHash};
 use regex::Regex;
 
 static EMAIL_REGEX: LazyLock<Regex> =

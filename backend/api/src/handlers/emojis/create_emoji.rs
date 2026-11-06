@@ -1,12 +1,12 @@
 use crate::{
+    Arcadia,
     handlers::emojis::{
         extract_emoji_representation, validate_emoji_name, validate_emoji_representation,
     },
     middlewares::auth_middleware::Authdata,
-    Arcadia,
 };
-use actix_multipart::form::{bytes::Bytes, text::Text, MultipartForm};
-use actix_web::{web::Data, HttpRequest, HttpResponse};
+use actix_multipart::form::{MultipartForm, bytes::Bytes, text::Text};
+use actix_web::{HttpRequest, HttpResponse, web::Data};
 use arcadia_common::error::Result;
 use arcadia_storage::{
     models::{emoji::Emoji, user::UserPermission},

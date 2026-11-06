@@ -1,7 +1,7 @@
 pub mod get_user_applications;
 pub mod update_user_application_status;
 
-use actix_web::web::{get, put, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, get, put, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

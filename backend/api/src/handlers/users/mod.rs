@@ -30,7 +30,7 @@ pub mod update_uploaded_torrents_anonymity;
 pub mod update_user_settings;
 pub mod warn_user;
 
-use actix_web::web::{delete, get, post, put, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, delete, get, post, put, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

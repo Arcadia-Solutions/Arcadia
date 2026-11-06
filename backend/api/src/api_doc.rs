@@ -3,7 +3,7 @@ use crate::handlers::edition_groups::delete_edition_group::DeleteEditionGroupQue
 use crate::handlers::title_groups::delete_title_group::DeleteTitleGroupQuery;
 use crate::handlers::title_groups::merge_title_groups::MergeTitleGroupsQuery;
 use crate::handlers::users::download_user_torrents::UserTorrentsArchiveKind;
-use crate::middlewares::api_key_scopes::{api_key_access_of_endpoint, APIKeyAccess};
+use crate::middlewares::api_key_scopes::{APIKeyAccess, api_key_access_of_endpoint};
 use actix_web::http::Method;
 use arcadia_storage::models::artist::SearchArtistsQuery;
 use arcadia_storage::models::bonus_points_log::{
@@ -49,12 +49,12 @@ use arcadia_storage::models::user::{
 use arcadia_storage::models::wiki::SimilarWikiArticlesLink;
 use arcadia_storage::models::{collage::SearchCollagesQuery, forum::GetForumThreadPostsQuery};
 use utoipa::{
+    Modify, OpenApi, PartialSchema,
     openapi::{
+        ContentBuilder, RefOr, ResponseBuilder,
         schema::{Array, Object, Ref, Schema},
         security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
-        ContentBuilder, RefOr, ResponseBuilder,
     },
-    Modify, OpenApi, PartialSchema,
 };
 
 use arcadia_storage::models::arcadia_settings::AvailableShopItem;

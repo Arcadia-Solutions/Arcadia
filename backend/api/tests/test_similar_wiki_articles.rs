@@ -3,9 +3,9 @@ pub mod mocks;
 
 use actix_web::{http::StatusCode, test};
 use arcadia_storage::connection_pool::ConnectionPool;
-use common::{auth_header, call_and_read_body_json, create_test_app_and_login, TestUser};
+use common::{TestUser, auth_header, call_and_read_body_json, create_test_app_and_login};
 use mocks::mock_redis::MockRedisPool;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::sync::Arc;
 
 #[sqlx::test(
@@ -115,10 +115,12 @@ async fn test_unlink_similar_wiki_articles(pool: sqlx::PgPool) {
         .insert_header(auth_header(&user.token))
         .to_request();
     let article: Value = call_and_read_body_json(&service, req).await;
-    assert!(article["similar_wiki_articles"]
-        .as_array()
-        .unwrap()
-        .is_empty());
+    assert!(
+        article["similar_wiki_articles"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
 }
 
 #[sqlx::test(

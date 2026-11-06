@@ -18,7 +18,7 @@ use crate::{
         },
         user::UserLite,
     },
-    utils::{compute_torrent_info_hash, NormalizedInfoFields},
+    utils::{NormalizedInfoFields, compute_torrent_info_hash},
 };
 use arcadia_common::{
     error::{Error, Result},
@@ -26,7 +26,7 @@ use arcadia_common::{
 };
 use arcadia_shared::{tracker::models::torrent::InfoHash, utils::format_title_group_name};
 use bip_metainfo::{Info, Metainfo, MetainfoBuilder};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use sqlx::types::Json;
 use std::{collections::HashMap, str::FromStr};
 use tokio::sync::broadcast;
@@ -152,13 +152,14 @@ impl ConnectionPool {
 
         let file_list = json!({"parent_folder": parent_folder, "files": files});
 
-        let file_amount_per_type = json!(info
-            .files()
-            .flat_map(|file| file.path().to_str().unwrap().split('.').next_back())
-            .fold(std::collections::HashMap::new(), |mut acc, ext| {
-                *acc.entry(ext.to_string()).or_insert(0) += 1;
-                acc
-            }));
+        let file_amount_per_type = json!(
+            info.files()
+                .flat_map(|file| file.path().to_str().unwrap().split('.').next_back())
+                .fold(std::collections::HashMap::new(), |mut acc, ext| {
+                    *acc.entry(ext.to_string()).or_insert(0) += 1;
+                    acc
+                })
+        );
 
         let features = torrent_form
             .features

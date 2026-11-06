@@ -1,15 +1,15 @@
 use std::time::Duration;
 
 use crate::{
+    Arcadia,
     handlers::scrapers::{ExternalDBData, ScrapedExternalData},
     middlewares::auth_middleware::Authdata,
     services::external_db_service::{
         check_if_existing_title_group_with_link_exists, create_affiliated_artists,
         respond_with_scraped_data,
     },
-    Arcadia,
 };
-use actix_web::{web::Data, HttpResponse};
+use actix_web::{HttpResponse, web::Data};
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::{models::title_group::ContentType, redis::RedisPoolInterface};
 use serde::{Deserialize, Serialize};

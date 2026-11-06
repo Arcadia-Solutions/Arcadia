@@ -1,15 +1,15 @@
 use actix_web::{
+    HttpRequest, HttpResponse,
     http::header::{
         Charset, ContentDisposition, ContentType, DispositionParam, DispositionType, ExtendedValue,
     },
     web::{Data, Query},
-    HttpRequest, HttpResponse,
 };
 use arcadia_storage::{models::user::UserPermission, redis::RedisPoolInterface};
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{middlewares::auth_middleware::Authdata, Arcadia};
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use arcadia_common::error::Result;
 
 #[derive(Debug, Deserialize, IntoParams, ToSchema)]

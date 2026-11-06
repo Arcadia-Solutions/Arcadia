@@ -1,4 +1,5 @@
 use crate::{
+    Arcadia,
     services::{
         auth_service::{
             validate_email, validate_password, validate_password_verification, validate_username,
@@ -6,9 +7,8 @@ use crate::{
         email_service::EmailService,
         ip_check,
     },
-    Arcadia,
 };
-use actix_web::{web, HttpRequest, HttpResponse};
+use actix_web::{HttpRequest, HttpResponse, web};
 use arcadia_common::error::{Error, Result};
 use arcadia_shared::tracker::models::user::APIInsertUser;
 use arcadia_storage::{
@@ -19,8 +19,8 @@ use arcadia_storage::{
     redis::RedisPoolInterface,
 };
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
+    password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
 };
 use reqwest::Method;
 use serde::Deserialize;

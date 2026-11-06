@@ -1,16 +1,16 @@
-use actix_web::{web, HttpRequest, HttpResponse};
+use actix_web::{HttpRequest, HttpResponse, web};
 use arcadia_storage::redis::RedisPoolInterface;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    services::oauth::{
-        pkce_challenge_matches, store_with_new_token, take_by_token, AuthorizationCode,
-        OAUTH_TOKEN_LIFETIME_SECONDS,
-    },
     Arcadia,
+    services::oauth::{
+        AuthorizationCode, OAUTH_TOKEN_LIFETIME_SECONDS, pkce_challenge_matches,
+        store_with_new_token, take_by_token,
+    },
 };
 
-use super::{authenticate_client, OAuthErrorResponse};
+use super::{OAuthErrorResponse, authenticate_client};
 
 /// Raw `application/x-www-form-urlencoded` token request. Every field is optional so that
 /// malformed requests answer with a proper OAuth2 JSON error instead of the plain-text error

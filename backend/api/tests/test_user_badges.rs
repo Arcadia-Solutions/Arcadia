@@ -7,7 +7,7 @@ use arcadia_storage::connection_pool::ConnectionPool;
 use arcadia_storage::models::user_badge::{
     UserBadgeCategory, UserBadgeManualAward, UserCreatedUserBadgeCategory,
 };
-use common::{auth_header, create_test_app_and_login, TestUser};
+use common::{TestUser, auth_header, create_test_app_and_login};
 use mocks::mock_redis::MockRedisPool;
 use serde_json::Value;
 use sqlx::PgPool;

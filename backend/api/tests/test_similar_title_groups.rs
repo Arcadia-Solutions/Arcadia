@@ -7,7 +7,7 @@ use actix_web::test;
 use arcadia_storage::connection_pool::ConnectionPool;
 use common::{auth_header, create_test_app_and_login, login_as, read_body_json_data};
 use mocks::mock_redis::MockRedisPool;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use sqlx::PgPool;
 use std::sync::Arc;
 

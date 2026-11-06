@@ -1,7 +1,7 @@
-use actix_web::{web::Data, App, HttpServer};
+use actix_web::{App, HttpServer, web::Data};
 use arcadia_tracker::{
-    api_doc::ApiDoc, config::Config, middleware::RootSpanBuilderWithoutTarget, routes::init,
-    scheduler, Tracker,
+    Tracker, api_doc::ApiDoc, config::Config, middleware::RootSpanBuilderWithoutTarget,
+    routes::init, scheduler,
 };
 use tracing_actix_web::TracingLogger;
 use utoipa::OpenApi;

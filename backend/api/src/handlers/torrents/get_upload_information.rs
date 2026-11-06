@@ -1,12 +1,12 @@
-use actix_web::{web::Data, HttpResponse};
+use actix_web::{HttpResponse, web::Data};
 use arcadia_storage::redis::RedisPoolInterface;
 use serde::Serialize;
 use utoipa::ToSchema;
 
 use crate::{
+    Arcadia,
     handlers::{external_db::built_in_external_sources, scrapers::ExternalSource},
     middlewares::auth_middleware::Authdata,
-    Arcadia,
 };
 use arcadia_common::{error::Result, services::torrent_service::get_announce_url};
 

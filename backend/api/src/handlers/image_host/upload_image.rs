@@ -1,14 +1,14 @@
-use actix_multipart::form::{bytes::Bytes, MultipartForm};
-use actix_web::{web::Data, HttpResponse};
+use actix_multipart::form::{MultipartForm, bytes::Bytes};
+use actix_web::{HttpResponse, web::Data};
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::redis::RedisPoolInterface;
 use serde::Serialize;
 use utoipa::ToSchema;
 
 use crate::{
+    Arcadia,
     middlewares::auth_middleware::Authdata,
     services::image_host_service::{self, Uploader},
-    Arcadia,
 };
 
 #[derive(Debug, MultipartForm, ToSchema)]

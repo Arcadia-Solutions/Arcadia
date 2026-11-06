@@ -1,5 +1,5 @@
-use opentelemetry::metrics::Counter;
 use opentelemetry::KeyValue;
+use opentelemetry::metrics::Counter;
 use std::sync::OnceLock;
 
 static INSTRUMENTS: OnceLock<Instruments> = OnceLock::new();

@@ -1,7 +1,7 @@
 use crate::{
-    middlewares::auth_middleware::Authdata, services::image_service::validate_image_urls, Arcadia,
+    Arcadia, middlewares::auth_middleware::Authdata, services::image_service::validate_image_urls,
 };
-use actix_web::{web::Data, web::Json, HttpResponse};
+use actix_web::{HttpResponse, web::Data, web::Json};
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::models::artist::Artist;
 use arcadia_storage::models::user::UserPermission;

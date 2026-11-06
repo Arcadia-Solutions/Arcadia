@@ -1,7 +1,7 @@
 pub mod search;
 
 use crate::middlewares::auth_middleware;
-use actix_web::web::{get, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, get, resource};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use arcadia_storage::redis::RedisPoolInterface;
 

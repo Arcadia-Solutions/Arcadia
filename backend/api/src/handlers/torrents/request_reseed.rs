@@ -1,9 +1,9 @@
 use actix_web::{
-    web::{Data, Path},
     HttpRequest, HttpResponse,
+    web::{Data, Path},
 };
 
-use crate::{middlewares::auth_middleware::Authdata, Arcadia};
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use arcadia_common::error::Result;
 use arcadia_storage::{
     models::{notification::NotificationEvent, user::UserPermission},

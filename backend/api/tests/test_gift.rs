@@ -6,7 +6,7 @@ use actix_web::test;
 use arcadia_storage::connection_pool::ConnectionPool;
 use arcadia_storage::models::gift::{Gift, UserCreatedGift};
 use common::{
-    auth_header, call_and_read_body_json_with_status, create_test_app_and_login, TestUser,
+    TestUser, auth_header, call_and_read_body_json_with_status, create_test_app_and_login,
 };
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;

@@ -4,8 +4,8 @@ use crate::tracker::models::peer_update;
 use chrono::serde::ts_seconds;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize, Serializer};
-use sqlx::types::chrono::{DateTime, Utc};
 use sqlx::PgPool;
+use sqlx::types::chrono::{DateTime, Utc};
 use std::fmt::Display;
 use std::ops::{Deref, DerefMut};
 

@@ -2,7 +2,7 @@ use actix_web::web;
 use arcadia_shared::tracker::models::{
     env::ArcadiaSettingsForTracker, infohash_2_id, passkey_2_id, torrent, user,
 };
-use arcadia_tracker::{config::Config, Tracker};
+use arcadia_tracker::{Tracker, config::Config};
 use parking_lot::{Mutex, RwLock};
 use sqlx::PgPool;
 use std::sync::OnceLock;

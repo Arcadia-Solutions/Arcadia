@@ -3,13 +3,13 @@ pub mod mocks;
 
 use actix_web::{
     http::StatusCode,
-    test::{call_service, TestRequest},
+    test::{TestRequest, call_service},
 };
 use arcadia_storage::{
     connection_pool::ConnectionPool,
     models::user::{EditedUser, GeneratedPasswordResetToken, Login, LoginResponse},
 };
-use common::{auth_header, create_test_app_and_login, login_as, read_body_json_data, TestUser};
+use common::{TestUser, auth_header, create_test_app_and_login, login_as, read_body_json_data};
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;

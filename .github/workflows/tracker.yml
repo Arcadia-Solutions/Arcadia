@@ -90,7 +90,6 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           components: rustfmt
-          toolchain: 1.86
           cache-workspaces: ./tracker/arcadia_tracker
       - name: Rustfmt Check
         run: cargo fmt --all -- --check

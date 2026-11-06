@@ -2,8 +2,8 @@ pub mod common;
 pub mod mocks;
 
 use actix_web::{
-    http::{header::HeaderValue, StatusCode},
-    test::{call_service, read_body, TestRequest},
+    http::{StatusCode, header::HeaderValue},
+    test::{TestRequest, call_service, read_body},
 };
 use arcadia_api::config::Config;
 use arcadia_storage::services::token_invalidation_service::InvalidationEntry;
@@ -19,8 +19,8 @@ use std::{sync::Arc, time::Duration};
 use crate::common::TestUser;
 use crate::{
     common::{
-        auth_header, call_and_read_body_json, create_test_app, create_test_app_and_login,
-        create_test_app_with_config, read_body_json_data, Profile,
+        Profile, auth_header, call_and_read_body_json, create_test_app, create_test_app_and_login,
+        create_test_app_with_config, read_body_json_data,
     },
     mocks::mock_redis::MockRedis,
 };
@@ -489,12 +489,14 @@ async fn test_registration_assigns_class_permissions(pool: PgPool) {
     let user = pool.find_user_with_id(registered_user.id).await.unwrap();
 
     assert_eq!(user.permissions.len(), 2);
-    assert!(user
-        .permissions
-        .contains(&arcadia_storage::models::user::UserPermission::UploadTorrent));
-    assert!(user
-        .permissions
-        .contains(&arcadia_storage::models::user::UserPermission::DownloadTorrent));
+    assert!(
+        user.permissions
+            .contains(&arcadia_storage::models::user::UserPermission::UploadTorrent)
+    );
+    assert!(
+        user.permissions
+            .contains(&arcadia_storage::models::user::UserPermission::DownloadTorrent)
+    );
 }
 
 #[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]

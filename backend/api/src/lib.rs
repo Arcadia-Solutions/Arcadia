@@ -14,7 +14,7 @@ use crate::{
     config::Config,
     services::{
         auth::Auth,
-        image_host_service::{configured_image_host, ImageHost},
+        image_host_service::{ImageHost, configured_image_host},
     },
 };
 

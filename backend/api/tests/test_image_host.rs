@@ -4,10 +4,10 @@ pub mod mocks;
 use actix_web::test;
 use arcadia_api::config::{Config, OidcConfig};
 use arcadia_storage::connection_pool::ConnectionPool;
-use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
+use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
 use common::{
-    auth_header, call_and_read_body_json, create_test_app_with_config, login_as, spawn_http_server,
-    TestUser,
+    TestUser, auth_header, call_and_read_body_json, create_test_app_with_config, login_as,
+    spawn_http_server,
 };
 use mocks::mock_redis::MockRedisPool;
 use serde::Deserialize;

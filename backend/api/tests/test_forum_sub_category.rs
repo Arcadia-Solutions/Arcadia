@@ -8,7 +8,7 @@ use arcadia_storage::models::forum::{
     EditedForumSubCategory, ForumSubCategory, ForumThreadSortBy, ForumThreadSortDirection,
     UserCreatedForumSubCategory,
 };
-use common::{auth_header, create_test_app_and_login, TestUser};
+use common::{TestUser, auth_header, create_test_app_and_login};
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;

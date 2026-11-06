@@ -8,7 +8,7 @@ use arcadia_storage::{
     models::user::{UserSettings, UserSettingsResponse},
 };
 use common::{
-    auth_header, call_and_read_body_json, create_test_app, create_test_app_and_login, TestUser,
+    TestUser, auth_header, call_and_read_body_json, create_test_app, create_test_app_and_login,
 };
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;

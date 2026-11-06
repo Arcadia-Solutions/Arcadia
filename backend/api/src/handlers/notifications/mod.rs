@@ -4,7 +4,7 @@ pub mod mark_reseed_requests_as_read;
 pub mod mark_torrent_deletions_as_read;
 pub mod notification_stream;
 
-use actix_web::web::{get, post, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, get, post, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

@@ -12,7 +12,7 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use sqlx::{query_as_unchecked, query_scalar, Postgres, Transaction};
+use sqlx::{Postgres, Transaction, query_as_unchecked, query_scalar};
 use tokio::sync::broadcast;
 
 impl ConnectionPool {

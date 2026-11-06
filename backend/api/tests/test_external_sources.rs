@@ -3,18 +3,19 @@ pub mod mocks;
 
 use actix_http::Request;
 use actix_web::{
+    App, Error,
     dev::{Service, ServiceResponse},
     http::StatusCode,
-    test, web, App, Error,
+    test, web,
 };
 use arcadia_api::{
-    config::{Config, ExternalSourcePlugin},
     Arcadia,
+    config::{Config, ExternalSourcePlugin},
 };
 use arcadia_storage::{connection_pool::ConnectionPool, models::title_group::ContentType};
 use common::{
-    auth_header, call_and_read_body_json, call_and_read_body_json_with_status,
-    create_test_app_and_login, login_as, spawn_http_server, TestUser,
+    TestUser, auth_header, call_and_read_body_json, call_and_read_body_json_with_status,
+    create_test_app_and_login, login_as, spawn_http_server,
 };
 use mocks::mock_redis::MockRedisPool;
 use serde::Deserialize;

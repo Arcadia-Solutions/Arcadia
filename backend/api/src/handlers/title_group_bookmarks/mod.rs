@@ -3,7 +3,7 @@ pub mod edit_title_group_bookmark;
 pub mod get_title_group_bookmark;
 pub mod remove_title_group_bookmark;
 
-use actix_web::web::{delete, get, post, put, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, delete, get, post, put, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

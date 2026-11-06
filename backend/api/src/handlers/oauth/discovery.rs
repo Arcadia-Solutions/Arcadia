@@ -1,4 +1,4 @@
-use actix_web::{web::Data, HttpResponse};
+use actix_web::{HttpResponse, web::Data};
 use arcadia_storage::redis::RedisPoolInterface;
 use serde::Serialize;
 

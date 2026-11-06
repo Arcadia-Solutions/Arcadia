@@ -1,6 +1,6 @@
 use actix_web::{
-    web::{Data, Json},
     HttpResponse,
+    web::{Data, Json},
 };
 use arcadia_shared::tracker::models::user::{APIInsertUser, User};
 use log::{debug, info};

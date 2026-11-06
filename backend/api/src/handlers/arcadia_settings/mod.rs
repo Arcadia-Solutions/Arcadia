@@ -2,7 +2,7 @@ pub mod get_arcadia_settings;
 pub mod get_public_arcadia_settings;
 pub mod update_arcadia_settings;
 
-use actix_web::web::{get, put, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, get, put, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

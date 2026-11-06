@@ -1,7 +1,7 @@
 pub mod upload_image;
 
 use actix_multipart::form::MultipartFormConfig;
-use actix_web::web::{post, resource, PayloadConfig, ServiceConfig};
+use actix_web::web::{PayloadConfig, ServiceConfig, post, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 // max file size: 40MB. the img host will block requests

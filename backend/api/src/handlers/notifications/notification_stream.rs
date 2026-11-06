@@ -1,4 +1,4 @@
-use crate::{middlewares::auth_middleware, Arcadia};
+use crate::{Arcadia, middlewares::auth_middleware};
 use actix_web::web::{Data, Query};
 use actix_web_lab::sse;
 use arcadia_common::error::Error;

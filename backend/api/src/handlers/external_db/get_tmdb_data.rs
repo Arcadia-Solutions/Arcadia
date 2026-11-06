@@ -1,31 +1,31 @@
 use std::str::FromStr;
 
 use crate::{
+    Arcadia,
     handlers::scrapers::{ExternalDBData, ScrapedAffiliatedArtist},
     middlewares::auth_middleware::Authdata,
     services::external_db_service::{
         check_if_existing_title_group_with_link_exists, create_affiliated_artists,
         respond_with_scraped_data,
     },
-    Arcadia,
 };
-use actix_web::{web::Data, HttpResponse};
+use actix_web::{HttpResponse, web::Data};
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::{
     models::{
         artist::ArtistRole,
-        edition_group::{create_default_edition_group, UserCreatedEditionGroup},
+        edition_group::{UserCreatedEditionGroup, create_default_edition_group},
         title_group::{
-            create_default_title_group, ContentType, ExternalDB, PublicRating,
-            UserCreatedTitleGroup,
+            ContentType, ExternalDB, PublicRating, UserCreatedTitleGroup,
+            create_default_title_group,
         },
         torrent::Language,
     },
     redis::RedisPoolInterface,
 };
 use regex::Regex;
-use tmdb_api::client::reqwest::Client as ReqwestClient;
 use tmdb_api::client::Client;
+use tmdb_api::client::reqwest::Client as ReqwestClient;
 use tmdb_api::common::credits::{Cast, Crew};
 
 fn map_crew_job_to_role(job: &str) -> Option<ArtistRole> {
@@ -105,11 +105,13 @@ async fn get_tmdb_movie_data(client: &Client<ReqwestClient>, id: u64) -> Result<
             Language::from_str(&tmdb_movie.inner.original_language).unwrap_or(Language::Other),
         ),
         original_release_date: tmdb_movie.inner.release_date,
-        covers: vec![tmdb_movie
-            .inner
-            .poster_path
-            .map(|path| format!("https://image.tmdb.org/t/p/w1280{path}"))
-            .unwrap_or("".to_string())],
+        covers: vec![
+            tmdb_movie
+                .inner
+                .poster_path
+                .map(|path| format!("https://image.tmdb.org/t/p/w1280{path}"))
+                .unwrap_or("".to_string()),
+        ],
         content_type: ContentType::Movie,
         ..create_default_title_group()
     };

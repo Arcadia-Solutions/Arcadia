@@ -8,8 +8,8 @@ pub mod register;
 pub mod reset_password;
 
 use actix_web::{
-    web::{post, resource, ServiceConfig},
     HttpRequest,
+    web::{ServiceConfig, post, resource},
 };
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::{redis::RedisPoolInterface, sqlx::types::ipnetwork::IpNetwork};

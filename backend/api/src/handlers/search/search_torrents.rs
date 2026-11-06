@@ -1,6 +1,6 @@
-use actix_web::{web::Data, HttpRequest, HttpResponse};
+use actix_web::{HttpRequest, HttpResponse, web::Data};
 
-use crate::{middlewares::auth_middleware::Authdata, Arcadia};
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::{
     models::{

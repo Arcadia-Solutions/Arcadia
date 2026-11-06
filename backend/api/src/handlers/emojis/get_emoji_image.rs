@@ -1,8 +1,8 @@
 use crate::Arcadia;
 use actix_web::{
+    HttpResponse,
     http::header::{CacheControl, CacheDirective, ETag, EntityTag},
     web::{Data, Path},
-    HttpResponse,
 };
 use arcadia_common::error::Result;
 use arcadia_storage::redis::RedisPoolInterface;

@@ -4,12 +4,13 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use actix_http::Request;
 use actix_web::{
+    App, Error,
     body::MessageBody,
     dev::{Service, ServiceResponse},
-    test, App, Error,
+    test,
 };
 use arcadia_tracker::routes::init;
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{Deserialize, de::DeserializeOwned};
 use sqlx::PgPool;
 
 async fn create_test_app(

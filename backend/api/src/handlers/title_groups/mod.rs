@@ -10,7 +10,7 @@ pub mod link_similar_title_groups;
 pub mod merge_title_groups;
 pub mod unlink_similar_title_groups;
 
-use actix_web::web::{delete, get, post, put, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, delete, get, post, put, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

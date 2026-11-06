@@ -1,5 +1,5 @@
-use crate::{middlewares::auth_middleware::Authdata, Arcadia};
-use actix_web::{web::Data, HttpResponse};
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
+use actix_web::{HttpResponse, web::Data};
 use arcadia_common::error::Result;
 use arcadia_storage::{
     models::arcadia_settings::AvailableShopItem,

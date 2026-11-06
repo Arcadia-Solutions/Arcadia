@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::Decode;
 use sqlx::prelude::FromRow;
 use sqlx::types::ipnetwork::IpNetwork;
-use sqlx::Decode;
 use utoipa::ToSchema;
 
 use crate::models::arcadia_settings::DisplayableUserStats;

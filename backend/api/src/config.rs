@@ -1,6 +1,6 @@
 use arcadia_periodic_tasks::config::PeriodicTasksConfig;
 use arcadia_shared::config::{
-    default_log_level, deserialize_secret, DatabaseConfig, TelemetryConfig,
+    DatabaseConfig, TelemetryConfig, default_log_level, deserialize_secret,
 };
 use reqwest::Url;
 use serde::Deserialize;

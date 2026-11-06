@@ -1,6 +1,6 @@
 use std::net::TcpListener;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
 /// Spawns a TCP listener that counts incoming connections.
@@ -88,10 +88,12 @@ async fn test_ip_checks_route_through_proxy() {
             .unwrap();
 
     // every provider fails, the fake proxy not being a real one
-    assert!(config
-        .check_ip(&client, "8.8.8.8".parse().unwrap())
-        .await
-        .is_err());
+    assert!(
+        config
+            .check_ip(&client, "8.8.8.8".parse().unwrap())
+            .await
+            .is_err()
+    );
     tokio::time::sleep(Duration::from_millis(100)).await;
 
     assert!(

@@ -10,7 +10,7 @@ use mocks::mock_redis::MockRedisPool;
 use serde::Deserialize;
 use sqlx::PgPool;
 
-use crate::common::{auth_header, TestUser};
+use crate::common::{TestUser, auth_header};
 
 const BASIC_USER_PASSKEY: &str = "d2037c66dd3e13044e0d2f9b891c3837";
 

@@ -546,12 +546,12 @@ impl ConnectionPool {
             None => {
                 return Err(Error::ReseedNotEligible(
                     "the torrent has never been seeded".into(),
-                ))
+                ));
             }
             Some(false) => {
                 return Err(Error::ReseedNotEligible(format!(
                     "the torrent must have had no seeders for at least {threshold_hours} hours"
-                )))
+                )));
             }
             Some(true) => {}
         }

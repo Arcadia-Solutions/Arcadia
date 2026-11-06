@@ -1,6 +1,6 @@
 use actix_web::{
-    web::{Data, Query},
     HttpResponse,
+    web::{Data, Query},
 };
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};

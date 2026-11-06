@@ -1,6 +1,6 @@
 pub mod create_gift;
 
-use actix_web::web::{post, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, post, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

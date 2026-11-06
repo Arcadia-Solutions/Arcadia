@@ -1,12 +1,12 @@
 use actix_web::{
-    web::{Data, Json},
     HttpRequest, HttpResponse,
+    web::{Data, Json},
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use utoipa::ToSchema;
 
-use crate::{middlewares::auth_middleware::Authdata, Arcadia};
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use arcadia_common::error::Result;
 use arcadia_storage::{models::user::UserPermission, redis::RedisPoolInterface};
 

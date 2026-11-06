@@ -5,7 +5,7 @@ pub mod get_musicbrainz_data;
 pub mod get_plugin_data;
 pub mod get_tmdb_data;
 
-use actix_web::web::{get, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, get, resource};
 use arcadia_storage::{models::title_group::ContentType, redis::RedisPoolInterface};
 use std::collections::BTreeMap;
 

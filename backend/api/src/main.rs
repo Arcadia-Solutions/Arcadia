@@ -1,7 +1,7 @@
 use actix_cors::Cors;
-use actix_web::{web::Data, App, HttpServer};
+use actix_web::{App, HttpServer, web::Data};
 use arcadia_api::routes::init;
-use arcadia_api::{api_doc::ApiDoc, config::Config, Arcadia};
+use arcadia_api::{Arcadia, api_doc::ApiDoc, config::Config};
 use arcadia_periodic_tasks::periodic_tasks::scheduler::run_periodic_tasks;
 use arcadia_storage::connection_pool::ConnectionPool;
 use arcadia_storage::redis::{RedisPool, RedisPoolInterface};

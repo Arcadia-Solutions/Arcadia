@@ -8,7 +8,7 @@ use arcadia_storage::models::common::PaginatedResults;
 use arcadia_storage::models::forum::ForumPostHierarchy;
 use arcadia_storage::models::reaction::ForumPostReactionUsers;
 use common::{
-    auth_header, call_and_read_body_json, create_test_app_and_login, login_as, Profile, TestUser,
+    Profile, TestUser, auth_header, call_and_read_body_json, create_test_app_and_login, login_as,
 };
 use mocks::mock_redis::MockRedisPool;
 use serde_json::json;
@@ -197,10 +197,10 @@ async fn test_deleting_a_post_deletes_its_reactions(pool: PgPool) {
 async fn current_user_id<S>(service: &S, token: &str) -> i32
 where
     S: actix_web::dev::Service<
-        actix_http::Request,
-        Response = actix_web::dev::ServiceResponse,
-        Error = actix_web::Error,
-    >,
+            actix_http::Request,
+            Response = actix_web::dev::ServiceResponse,
+            Error = actix_web::Error,
+        >,
 {
     let req = test::TestRequest::get()
         .uri("/api/users/me")

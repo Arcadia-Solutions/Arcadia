@@ -9,7 +9,7 @@ use arcadia_storage::models::forum::{
     ForumPost, ForumPostHierarchy, ForumThread, ForumThreadEnriched, UserCreatedForumPost,
     UserCreatedForumThread,
 };
-use common::{auth_header, create_test_app_and_login, TestUser};
+use common::{TestUser, auth_header, create_test_app_and_login};
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -90,10 +90,10 @@ async fn get_thread_read_status<S>(
 ) -> (bool, bool)
 where
     S: actix_web::dev::Service<
-        actix_http::Request,
-        Response = actix_web::dev::ServiceResponse,
-        Error = actix_web::Error,
-    >,
+            actix_http::Request,
+            Response = actix_web::dev::ServiceResponse,
+            Error = actix_web::Error,
+        >,
 {
     let req = test::TestRequest::get()
         .uri(&format!("/api/forum/sub-category?id={}", sub_category_id))

@@ -1,8 +1,8 @@
 use arcadia_common::error::Result;
 use arcadia_storage::redis::{RedisInterface, RedisPoolInterface};
-use base64::{engine::general_purpose::URL_SAFE_NO_PAD as BASE64_URL, Engine};
+use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD as BASE64_URL};
 use rand::RngExt as _;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::{from_str, to_string};
 use sha2::{Digest, Sha256};
 use subtle::ConstantTimeEq;

@@ -1,6 +1,6 @@
 use crate::Arcadia;
-use actix_web::web::{Data, Query};
 use actix_web::HttpResponse;
+use actix_web::web::{Data, Query};
 use arcadia_common::error::Result;
 use arcadia_storage::models::common::PaginatedResults;
 use arcadia_storage::models::torrent_request::{

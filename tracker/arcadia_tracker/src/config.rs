@@ -1,5 +1,5 @@
 use arcadia_shared::config::{
-    default_log_level, deserialize_secret, DatabaseConfig, TelemetryConfig,
+    DatabaseConfig, TelemetryConfig, default_log_level, deserialize_secret,
 };
 use serde::{Deserialize, Deserializer};
 use std::collections::HashSet;

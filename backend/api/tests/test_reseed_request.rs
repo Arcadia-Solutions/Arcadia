@@ -8,7 +8,7 @@ use arcadia_storage::{connection_pool::ConnectionPool, models::notification::Not
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 
-use crate::common::{auth_header, TestUser};
+use crate::common::{TestUser, auth_header};
 
 const REQUESTER_ID: i32 = 197;
 const PAST_SEEDER_ID: i32 = 100;

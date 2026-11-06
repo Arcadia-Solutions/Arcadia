@@ -5,7 +5,7 @@ use actix_web::http::StatusCode;
 use actix_web::test;
 use arcadia_storage::connection_pool::ConnectionPool;
 use arcadia_storage::models::shop::{BuyFreeleechTokensRequest, BuyUploadRequest, ShopPricing};
-use common::{auth_header, call_and_read_body_json, create_test_app_and_login, TestUser};
+use common::{TestUser, auth_header, call_and_read_body_json, create_test_app_and_login};
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -35,11 +35,13 @@ async fn test_get_shop_pricing_no_promotion(pool: PgPool) {
     assert_eq!(pricing.upload_base_price_per_gb, Some(100));
     assert_eq!(pricing.freeleech_token_base_price, Some(500));
     assert!(!pricing.upload_discount_tiers.as_ref().unwrap().is_empty());
-    assert!(!pricing
-        .freeleech_token_discount_tiers
-        .as_ref()
-        .unwrap()
-        .is_empty());
+    assert!(
+        !pricing
+            .freeleech_token_discount_tiers
+            .as_ref()
+            .unwrap()
+            .is_empty()
+    );
     // No next class available for newbie in default config
     assert!(pricing.promotion.is_none());
 }

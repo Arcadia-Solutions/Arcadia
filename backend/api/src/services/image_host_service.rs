@@ -1,9 +1,9 @@
 use std::time::Duration;
 
 use arcadia_common::error::{Error, Result};
-use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
-use reqwest::{multipart, Client, RequestBuilder};
-use serde::{de::DeserializeOwned, Deserialize};
+use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
+use reqwest::{Client, RequestBuilder, multipart};
+use serde::{Deserialize, de::DeserializeOwned};
 
 use crate::{
     config::Config,
@@ -35,7 +35,7 @@ pub fn configured_image_host(config: &Config) -> Option<ImageHost> {
                     url: url.trim_end_matches('/').to_string(),
                     client_id: oidc.client_id.clone(),
                     client_secret: oidc.client_secret.clone(),
-                })
+                });
             }
             None => log::warn!(
                 "image_host.elysia_url is set but the oidc section is missing, Elysia uploads are disabled"

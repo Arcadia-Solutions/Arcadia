@@ -1,5 +1,5 @@
 use serde::Serialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// Computes the diff between two serializable structs.
 /// Returns None if there are no changes, otherwise returns a JSON object with the changes.

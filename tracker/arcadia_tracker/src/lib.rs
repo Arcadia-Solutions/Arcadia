@@ -1,13 +1,13 @@
 use arcadia_shared::tracker::models::{
+    Queue,
     announce_error_update::{self, AnnounceErrorUpdate},
     env::ArcadiaSettingsForTracker,
     peer_update::{self, PeerUpdate},
     torrent_update::{self, TorrentUpdate},
     user_update::{self, UserUpdate},
-    Queue,
 };
 use parking_lot::{Mutex, RwLock};
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use sqlx::{PgPool, postgres::PgPoolOptions};
 
 use crate::config::{Config, TrackerConfig};
 use arcadia_shared::config::DatabaseConfig;

@@ -1,14 +1,14 @@
 use actix_web::{
-    web::{Data, Query},
     HttpRequest, HttpResponse,
+    web::{Data, Query},
 };
 use arcadia_storage::{models::user::UserPermission, redis::RedisPoolInterface};
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    handlers::torrents::download_torrents_archive::stream_torrents_archive,
-    middlewares::auth_middleware::Authdata, Arcadia,
+    Arcadia, handlers::torrents::download_torrents_archive::stream_torrents_archive,
+    middlewares::auth_middleware::Authdata,
 };
 use arcadia_common::error::Result;
 

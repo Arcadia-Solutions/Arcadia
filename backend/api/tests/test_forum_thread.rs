@@ -10,7 +10,7 @@ use arcadia_storage::models::forum::{
     ForumSubCategoryHierarchy, ForumThread, ForumThreadEnriched, ForumThreadSortBy,
     ForumThreadSortDirection, UserCreatedForumPost, UserCreatedForumThread,
 };
-use common::{auth_header, create_test_app_and_login, TestUser};
+use common::{TestUser, auth_header, create_test_app_and_login};
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -839,11 +839,13 @@ async fn test_get_forum_latest_post_in_sub_category(pool: PgPool) {
         serde_json::json!({"id": 100, "username": "user_basic", "warned": false, "banned": false})
     );
     // a sub category without any post has no latest post
-    assert!(sub_categories
-        .iter()
-        .find(|sub_category| sub_category["id"] == 102)
-        .unwrap()["latest_post_in_thread"]
-        .is_null());
+    assert!(
+        sub_categories
+            .iter()
+            .find(|sub_category| sub_category["id"] == 102)
+            .unwrap()["latest_post_in_thread"]
+            .is_null()
+    );
 }
 
 #[sqlx::test(
@@ -1114,10 +1116,10 @@ async fn set_thread_sort_by<S>(
     thread_sort_direction: ForumThreadSortDirection,
 ) where
     S: actix_web::dev::Service<
-        actix_http::Request,
-        Response = actix_web::dev::ServiceResponse,
-        Error = actix_web::Error,
-    >,
+            actix_http::Request,
+            Response = actix_web::dev::ServiceResponse,
+            Error = actix_web::Error,
+        >,
 {
     let edit_body = EditedForumSubCategory {
         id: 100,
@@ -1140,10 +1142,10 @@ async fn set_thread_sort_by<S>(
 async fn get_sub_category_thread_ids<S>(service: &S, token: &str) -> Vec<i64>
 where
     S: actix_web::dev::Service<
-        actix_http::Request,
-        Response = actix_web::dev::ServiceResponse,
-        Error = actix_web::Error,
-    >,
+            actix_http::Request,
+            Response = actix_web::dev::ServiceResponse,
+            Error = actix_web::Error,
+        >,
 {
     let req = test::TestRequest::get()
         .uri("/api/forum/sub-category?id=100")

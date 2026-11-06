@@ -1,6 +1,6 @@
 pub mod handle_announce;
 
-use actix_web::web::{get, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, get, resource};
 
 /// Registers the primary announce endpoint: `/{passkey}` (mounted under `/announce` scope).
 pub fn config(cfg: &mut ServiceConfig) {

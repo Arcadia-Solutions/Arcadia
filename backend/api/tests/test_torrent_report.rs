@@ -8,7 +8,7 @@ use arcadia_storage::{connection_pool::ConnectionPool, models::torrent_report::T
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 
-use crate::common::{auth_header, create_test_app_and_login, TestUser};
+use crate::common::{TestUser, auth_header, create_test_app_and_login};
 
 #[sqlx::test(
     fixtures(

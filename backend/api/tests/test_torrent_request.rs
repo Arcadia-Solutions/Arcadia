@@ -11,7 +11,7 @@ use arcadia_storage::{
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 
-use crate::common::{auth_header, read_body_json_data, TestUser};
+use crate::common::{TestUser, auth_header, read_body_json_data};
 
 #[sqlx::test(
     fixtures(

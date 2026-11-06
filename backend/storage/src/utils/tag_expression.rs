@@ -1,4 +1,4 @@
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// Bounds the parser recursion depth, which grows with the amount of tokens.
 const MAXIMUM_TOKENS: usize = 100;

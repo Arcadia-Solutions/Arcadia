@@ -7,7 +7,7 @@ use arcadia_storage::connection_pool::ConnectionPool;
 use arcadia_storage::models::bonus_points_log::{BonusPointsLog, BonusPointsLogAction};
 use arcadia_storage::models::common::PaginatedResults;
 use arcadia_storage::models::shop::BuyUploadRequest;
-use common::{auth_header, call_and_read_body_json, create_test_app_and_login, TestUser};
+use common::{TestUser, auth_header, call_and_read_body_json, create_test_app_and_login};
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;

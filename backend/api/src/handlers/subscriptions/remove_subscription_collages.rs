@@ -1,10 +1,10 @@
 use crate::{
-    handlers::subscriptions::create_subscription_collages::AddSubscriptionCollagesQuery,
-    middlewares::auth_middleware::Authdata, Arcadia,
+    Arcadia, handlers::subscriptions::create_subscription_collages::AddSubscriptionCollagesQuery,
+    middlewares::auth_middleware::Authdata,
 };
 use actix_web::{
-    web::{Data, Query},
     HttpResponse,
+    web::{Data, Query},
 };
 use arcadia_common::error::Result;
 use arcadia_storage::redis::RedisPoolInterface;

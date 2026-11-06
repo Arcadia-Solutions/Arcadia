@@ -5,7 +5,7 @@ use sqlx::PgPool;
 
 use crate::{
     error::Error,
-    tracker::models::{peer_id::PeerId, Flushable, Mergeable, Queue},
+    tracker::models::{Flushable, Mergeable, Queue, peer_id::PeerId},
 };
 
 /// Announce errors that are reported to the user, the other ones are either

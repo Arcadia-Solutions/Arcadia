@@ -1,13 +1,13 @@
-use crate::middlewares::auth_middleware::Authdata;
 use crate::Arcadia;
+use crate::middlewares::auth_middleware::Authdata;
 use actix_http::body::to_bytes;
 use actix_web::{
+    HttpMessage as _, HttpResponse,
     body::{BoxBody, MessageBody},
     dev::{ServiceRequest, ServiceResponse},
     http::Method,
     middleware::Next,
     web::Data,
-    HttpMessage as _, HttpResponse,
 };
 use arcadia_storage::models::arcadia_settings::HttpMethod;
 use arcadia_storage::models::bonus_points_log::BonusPointsLogAction;

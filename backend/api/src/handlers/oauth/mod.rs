@@ -4,16 +4,16 @@ pub mod user_status;
 pub mod userinfo;
 
 use actix_web::{
-    http::header::AUTHORIZATION,
-    web::{get, post, resource, ServiceConfig},
     HttpRequest, HttpResponse,
+    http::header::AUTHORIZATION,
+    web::{ServiceConfig, get, post, resource},
 };
 use arcadia_storage::redis::RedisPoolInterface;
-use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
+use base64::{Engine, engine::general_purpose::STANDARD as BASE64_STANDARD};
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use crate::{config::OidcConfig, services::oauth::secrets_match, Arcadia};
+use crate::{Arcadia, config::OidcConfig, services::oauth::secrets_match};
 
 /// An OAuth2 error answer, shaped as `{error}`.
 #[derive(Debug, Serialize, ToSchema)]

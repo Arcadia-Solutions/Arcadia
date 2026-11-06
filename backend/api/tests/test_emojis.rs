@@ -7,7 +7,7 @@ use arcadia_storage::connection_pool::ConnectionPool;
 use arcadia_storage::models::emoji::{
     Emoji, EmojiEnabledUpdate, EmojiUsage, ReorderEmojiEntry, ReorderEmojis,
 };
-use common::{auth_header, create_test_app_and_login, login_as, TestUser};
+use common::{TestUser, auth_header, create_test_app_and_login, login_as};
 use mocks::mock_redis::MockRedisPool;
 use serde::Deserialize;
 use sqlx::PgPool;

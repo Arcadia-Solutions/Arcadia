@@ -2,7 +2,7 @@ pub mod check_missing_registration_ips;
 pub mod recompute_cached_amounts;
 pub mod rehash_torrents;
 
-use actix_web::web::{post, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, post, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

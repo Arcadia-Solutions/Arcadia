@@ -1,6 +1,6 @@
 use actix_web::{
-    web::{Data, Json},
     HttpResponse,
+    web::{Data, Json},
 };
 use arcadia_common::error::Result;
 use arcadia_storage::redis::RedisPoolInterface;
@@ -9,10 +9,10 @@ use url::form_urlencoded;
 use utoipa::ToSchema;
 
 use crate::{
+    Arcadia,
     handlers::oauth::OAuthErrorResponse,
     middlewares::auth_middleware::Authdata,
-    services::oauth::{store_with_new_token, AuthorizationCode},
-    Arcadia,
+    services::oauth::{AuthorizationCode, store_with_new_token},
 };
 
 #[derive(Debug, Deserialize, ToSchema)]

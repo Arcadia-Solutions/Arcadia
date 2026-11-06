@@ -27,7 +27,7 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 
 use crate::common::{
-    auth_header, call_and_read_body_json_with_status, create_test_app_and_login, login_as, TestUser,
+    TestUser, auth_header, call_and_read_body_json_with_status, create_test_app_and_login, login_as,
 };
 
 const STANDARD_USER_ID: i32 = 100;

@@ -1,10 +1,10 @@
 use actix_web::{
-    web::{Data, Query},
     HttpResponse,
+    web::{Data, Query},
 };
 use arcadia_storage::{models::title_group::TitleGroupLite, redis::RedisPoolInterface};
 
-use crate::{handlers::title_groups::get_title_group::GetTitleGroupQuery, Arcadia};
+use crate::{Arcadia, handlers::title_groups::get_title_group::GetTitleGroupQuery};
 use arcadia_common::error::Result;
 
 pub type GetTitleGroupLiteQuery = GetTitleGroupQuery;

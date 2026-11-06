@@ -1,5 +1,5 @@
-use crate::{middlewares::auth_middleware::Authdata, Arcadia};
-use actix_web::{web::Data, web::Json, HttpResponse};
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
+use actix_web::{HttpResponse, web::Data, web::Json};
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::models::collage::{Collage, EditedCollage};
 use arcadia_storage::models::user::UserPermission;

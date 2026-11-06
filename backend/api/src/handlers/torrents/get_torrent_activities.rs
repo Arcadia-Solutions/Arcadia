@@ -1,6 +1,6 @@
 use actix_web::{
-    web::{Data, Query},
     HttpRequest, HttpResponse,
+    web::{Data, Query},
 };
 use arcadia_common::error::Result;
 use arcadia_storage::{
@@ -14,7 +14,7 @@ use arcadia_storage::{
 use serde::Deserialize;
 use utoipa::IntoParams;
 
-use crate::{middlewares::auth_middleware::Authdata, Arcadia};
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct GetTorrentActivitiesOfTorrentQuery {

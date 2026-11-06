@@ -1,18 +1,18 @@
 use crate::{
+    Arcadia,
     handlers::scrapers::ExternalDBData,
     middlewares::auth_middleware::Authdata,
     services::external_db_service::{
         check_if_existing_title_group_with_link_exists, respond_with_scraped_data,
     },
-    Arcadia,
 };
-use actix_web::{web::Data, HttpResponse};
+use actix_web::{HttpResponse, web::Data};
 use arcadia_common::error::Result;
 use arcadia_storage::{
     models::{
         artist::{AffiliatedArtistHierarchy, UserCreatedAffiliatedArtist, UserCreatedArtist},
-        edition_group::{create_default_edition_group, UserCreatedEditionGroup},
-        title_group::{create_default_title_group, ContentType, UserCreatedTitleGroup},
+        edition_group::{UserCreatedEditionGroup, create_default_edition_group},
+        title_group::{ContentType, UserCreatedTitleGroup, create_default_title_group},
     },
     redis::RedisPoolInterface,
 };

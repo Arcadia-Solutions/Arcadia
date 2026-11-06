@@ -19,7 +19,7 @@ pub mod remove_subscription_forum_thread_posts;
 pub mod remove_subscription_title_group_comments;
 pub mod remove_subscription_title_group_torrents;
 pub mod remove_subscription_torrent_request_comments;
-use actix_web::web::{delete, get, post, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, delete, get, post, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

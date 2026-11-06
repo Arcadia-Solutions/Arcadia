@@ -1,6 +1,6 @@
 //! IPQualityScore does not return the name of the country.
 
-use super::{non_empty, ProviderResult, REQUEST_TIMEOUT};
+use super::{ProviderResult, REQUEST_TIMEOUT, non_empty};
 use arcadia_storage::models::ip_check::IpCheckResult;
 use serde::Deserialize;
 use std::net::IpAddr;

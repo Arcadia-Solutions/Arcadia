@@ -4,10 +4,10 @@ use std::sync::OnceLock;
 use std::time::Duration;
 use tokio_cron_scheduler::{Job, JobScheduler, JobSchedulerError};
 
-use arcadia_shared::telemetry::{instrument_periodic_task, PeriodicTaskInstruments};
+use arcadia_shared::telemetry::{PeriodicTaskInstruments, instrument_periodic_task};
 use arcadia_storage::{connection_pool::ConnectionPool, redis::RedisPool};
 
-use crate::config::{formula_to_sql, PeriodicTasksConfig};
+use crate::config::{PeriodicTasksConfig, formula_to_sql};
 
 use super::bonus_points::update_seedtime_and_bonus_points;
 use super::inactive_users::ban_inactive_users;

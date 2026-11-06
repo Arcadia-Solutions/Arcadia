@@ -1,4 +1,5 @@
 use crate::{
+    Arcadia,
     handlers::{
         external_db::{
             get_comic_vine_data, get_isbn_data, get_musicbrainz_data, get_plugin_data,
@@ -7,11 +8,10 @@ use crate::{
         scrapers::ExternalDBData,
     },
     middlewares::auth_middleware::Authdata,
-    Arcadia,
 };
 use actix_web::{
-    web::{Data, Path, Query},
     HttpResponse,
+    web::{Data, Path, Query},
 };
 use arcadia_common::error::Result;
 use arcadia_storage::{models::title_group::ContentType, redis::RedisPoolInterface};

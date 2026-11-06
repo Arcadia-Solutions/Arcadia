@@ -9,7 +9,7 @@ use arcadia_storage::models::forum::{
     ReorderForumSubCategories, ReorderForumSubCategoryEntry, UserCreatedForumCategory,
     UserCreatedForumSubCategory,
 };
-use common::{auth_header, create_test_app_and_login, TestUser};
+use common::{TestUser, auth_header, create_test_app_and_login};
 use mocks::mock_redis::MockRedisPool;
 use serde_json::Value;
 use sqlx::PgPool;

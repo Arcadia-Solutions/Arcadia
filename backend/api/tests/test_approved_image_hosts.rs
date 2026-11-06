@@ -6,7 +6,7 @@ use actix_web::http::StatusCode;
 use actix_web::test;
 use arcadia_storage::connection_pool::ConnectionPool;
 use arcadia_storage::models::artist::UserCreatedArtist;
-use arcadia_storage::models::title_group::{create_default_title_group, UserCreatedTitleGroup};
+use arcadia_storage::models::title_group::{UserCreatedTitleGroup, create_default_title_group};
 use arcadia_storage::models::user::EditedUser;
 use common::auth_header;
 use common::create_test_app_and_login;

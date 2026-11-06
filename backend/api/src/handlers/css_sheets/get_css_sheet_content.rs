@@ -1,7 +1,7 @@
 use crate::Arcadia;
 use actix_web::{
-    web::{Data, Path},
     HttpResponse,
+    web::{Data, Path},
 };
 use arcadia_common::error::Result;
 use arcadia_storage::redis::RedisPoolInterface;

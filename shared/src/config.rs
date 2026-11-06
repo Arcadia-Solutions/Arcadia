@@ -1,4 +1,4 @@
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{Deserialize, de::DeserializeOwned};
 use std::path::{Path, PathBuf};
 
 /// Name of the single configuration file of the project, located at the root of the repository.

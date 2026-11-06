@@ -218,10 +218,12 @@ async fn test_search_users_with_permission_returns_results(pool: PgPool) {
     assert_eq!(response.total_items, 2);
     assert_eq!(response.results.len(), 2);
     assert!(response.results.iter().any(|u| u.username == "alice_smith"));
-    assert!(response
-        .results
-        .iter()
-        .any(|u| u.username == "alice_wonder"));
+    assert!(
+        response
+            .results
+            .iter()
+            .any(|u| u.username == "alice_wonder")
+    );
 }
 
 #[sqlx::test(

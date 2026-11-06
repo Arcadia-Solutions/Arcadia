@@ -2,7 +2,7 @@ pub mod error;
 
 use self::error::{RedisError, Result};
 use deadpool_redis::{Config, Connection, Pool, Runtime};
-use redis::{cmd, ToRedisArgs};
+use redis::{ToRedisArgs, cmd};
 
 pub trait RedisPoolInterface {
     fn connection(&self) -> impl Future<Output = Result<impl RedisInterface>> + Send;

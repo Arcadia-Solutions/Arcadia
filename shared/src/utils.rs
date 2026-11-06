@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 
 pub fn format_title_group_name(series_name: Option<&str>, title_group_name: &str) -> String {
     match series_name {

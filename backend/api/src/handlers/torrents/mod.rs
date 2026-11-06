@@ -15,7 +15,7 @@ pub mod move_torrent_to_edition_group;
 pub mod request_reseed;
 pub mod set_torrent_staff_checked;
 
-use actix_web::web::{delete, get, post, put, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, delete, get, post, put, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

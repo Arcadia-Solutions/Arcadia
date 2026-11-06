@@ -5,9 +5,10 @@ use std::sync::Arc;
 
 use actix_http::Request;
 use actix_web::{
+    Error,
     dev::{Service, ServiceResponse},
     http::StatusCode,
-    test, Error,
+    test,
 };
 use arcadia_storage::{
     connection_pool::ConnectionPool,
@@ -22,10 +23,10 @@ use arcadia_storage::{
     },
 };
 use mocks::mock_redis::MockRedisPool;
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{Deserialize, de::DeserializeOwned};
 use sqlx::PgPool;
 
-use crate::common::{auth_header, TestUser};
+use crate::common::{TestUser, auth_header};
 
 async fn build_test_torrent_upload_request(token: &str, release_group: &str) -> Request {
     let torrent_data = bytes::Bytes::from_static(include_bytes!(
@@ -1830,7 +1831,9 @@ async fn test_marking_a_torrent_as_trumpable_notifies_its_uploader(pool: PgPool)
         .unwrap();
     assert_eq!(
         conversation.messages[0].content,
-        format!("Your torrent [url=/torrent/900]Love Me Do / P.S. I Love You[/url] has been marked as trumpable for the following reason: a new trump reason.\n{message_footer}")
+        format!(
+            "Your torrent [url=/torrent/900]Love Me Do / P.S. I Love You[/url] has been marked as trumpable for the following reason: a new trump reason.\n{message_footer}"
+        )
     );
 }
 

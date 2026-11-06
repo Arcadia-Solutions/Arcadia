@@ -5,7 +5,7 @@ use actix_web::http::StatusCode;
 use actix_web::test;
 use arcadia_storage::connection_pool::ConnectionPool;
 use arcadia_storage::models::forum::{ForumPoll, ForumPollHierarchy, ForumThreadEnrichedHierarchy};
-use common::{auth_header, create_test_app_and_login, login_as, TestUser};
+use common::{TestUser, auth_header, create_test_app_and_login, login_as};
 use mocks::mock_redis::MockRedisPool;
 use serde_json::json;
 use sqlx::PgPool;

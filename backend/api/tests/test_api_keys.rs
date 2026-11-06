@@ -3,9 +3,10 @@ pub mod mocks;
 
 use actix_http::Request;
 use actix_web::{
+    Error,
     dev::{Service, ServiceResponse},
     http::StatusCode,
-    test, Error,
+    test,
 };
 use arcadia_storage::{
     connection_pool::ConnectionPool,
@@ -13,8 +14,8 @@ use arcadia_storage::{
     repositories::auth_repository::MAXIMUM_API_KEYS_PER_USER,
 };
 use common::{
-    auth_header, call_and_read_body_json, call_and_read_body_json_with_status,
-    create_test_app_and_login, TestUser,
+    TestUser, auth_header, call_and_read_body_json, call_and_read_body_json_with_status,
+    create_test_app_and_login,
 };
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;

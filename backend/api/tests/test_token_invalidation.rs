@@ -5,7 +5,7 @@ use std::{sync::Arc, time::Duration};
 
 use actix_web::{
     http::StatusCode,
-    test::{call_service, TestRequest},
+    test::{TestRequest, call_service},
 };
 use arcadia_storage::services::token_invalidation_service::InvalidationEntry;
 use arcadia_storage::{connection_pool::ConnectionPool, redis::RedisInterface};
@@ -14,7 +14,7 @@ use sqlx::PgPool;
 
 use crate::common::TestUser;
 use crate::{
-    common::{create_test_app_and_login, read_body_json_data, Profile},
+    common::{Profile, create_test_app_and_login, read_body_json_data},
     mocks::mock_redis::{MockRedis, MockRedisPool},
 };
 

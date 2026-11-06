@@ -3,12 +3,13 @@ pub mod mocks;
 
 use actix_http::Request;
 use actix_web::{
+    Error,
     dev::{Service, ServiceResponse},
     http::{
-        header::{AUTHORIZATION, CONTENT_TYPE},
         StatusCode,
+        header::{AUTHORIZATION, CONTENT_TYPE},
     },
-    test, Error,
+    test,
 };
 use arcadia_api::config::{Config, OidcConfig};
 use arcadia_storage::{
@@ -16,10 +17,10 @@ use arcadia_storage::{
     models::user::{LoginResponse, UserCreatedUserWarning},
 };
 use base64::{
-    engine::general_purpose::{STANDARD as BASE64_STANDARD, URL_SAFE_NO_PAD as BASE64_URL},
     Engine,
+    engine::general_purpose::{STANDARD as BASE64_STANDARD, URL_SAFE_NO_PAD as BASE64_URL},
 };
-use common::{auth_header, create_test_app_with_config, login_as, read_body_json_data, TestUser};
+use common::{TestUser, auth_header, create_test_app_with_config, login_as, read_body_json_data};
 use mocks::mock_redis::MockRedisPool;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
@@ -273,8 +274,10 @@ async fn test_openid_configuration_uses_the_configured_issuer(pool: PgPool) {
         configuration["token_endpoint"],
         format!("{TEST_ISSUER}/token")
     );
-    assert!(configuration["authorization_endpoint"]
-        .as_str()
-        .unwrap()
-        .ends_with("/oauth/authorize"));
+    assert!(
+        configuration["authorization_endpoint"]
+            .as_str()
+            .unwrap()
+            .ends_with("/oauth/authorize")
+    );
 }

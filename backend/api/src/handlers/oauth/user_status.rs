@@ -1,11 +1,11 @@
-use actix_web::{web, HttpRequest, HttpResponse};
+use actix_web::{HttpRequest, HttpResponse, web};
 use arcadia_common::error::Error;
 use arcadia_storage::redis::RedisPoolInterface;
 use serde::Serialize;
 
 use crate::Arcadia;
 
-use super::{authenticate_client, OAuthErrorResponse};
+use super::{OAuthErrorResponse, authenticate_client};
 
 #[derive(Debug, Serialize)]
 pub struct OAuthUserStatus {
@@ -30,7 +30,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         Err(Error::UserWithIdNotFound(_)) => false,
         Err(_) => {
             return HttpResponse::InternalServerError()
-                .json(OAuthErrorResponse::new("server_error"))
+                .json(OAuthErrorResponse::new("server_error"));
         }
     };
     HttpResponse::Ok().json(OAuthUserStatus { active })

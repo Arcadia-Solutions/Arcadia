@@ -1,10 +1,10 @@
 use actix_web::web::Data;
-use arcadia_shared::telemetry::{instrument_periodic_task, PeriodicTaskInstruments};
+use arcadia_shared::telemetry::{PeriodicTaskInstruments, instrument_periodic_task};
 use arcadia_shared::tracker::models::{
+    Flushable,
     peer::{mark_peers_inactive_in_database, remove_peers_from_database},
     peer_update,
     torrent_update::{self, TorrentUpdate},
-    Flushable,
 };
 use chrono::{Duration, Utc};
 use std::convert::Infallible;

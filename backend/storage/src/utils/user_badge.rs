@@ -120,11 +120,13 @@ mod tests {
         assert!(
             validate_badge_criteria_shape(&UserBadgeType::ForumThreads, Some(&threads)).is_ok()
         );
-        assert!(validate_badge_criteria_shape(
-            &UserBadgeType::AdventCalendarDoors,
-            Some(&advent_calendar_doors)
-        )
-        .is_ok());
+        assert!(
+            validate_badge_criteria_shape(
+                &UserBadgeType::AdventCalendarDoors,
+                Some(&advent_calendar_doors)
+            )
+            .is_ok()
+        );
     }
 
     #[test]

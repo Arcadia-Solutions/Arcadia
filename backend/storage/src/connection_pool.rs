@@ -1,6 +1,6 @@
 use arcadia_shared::config::DatabaseConfig;
 use serde::Serialize;
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use sqlx::{PgPool, postgres::PgPoolOptions};
 use std::{borrow::Borrow, time::Duration};
 use url::Url;
 

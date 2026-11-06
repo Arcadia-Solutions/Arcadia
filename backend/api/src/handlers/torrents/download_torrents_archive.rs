@@ -1,16 +1,16 @@
 use std::sync::{
-    atomic::{AtomicBool, Ordering},
     Arc,
+    atomic::{AtomicBool, Ordering},
 };
 
 use actix_web::{
+    HttpResponse,
     http::header::{Charset, ContentDisposition, DispositionParam, DispositionType, ExtendedValue},
     web::{Bytes, Data},
-    HttpResponse,
 };
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::redis::RedisPoolInterface;
-use async_zip::{base::write::ZipFileWriter, Compression, ZipEntryBuilder};
+use async_zip::{Compression, ZipEntryBuilder, base::write::ZipFileWriter};
 use chrono::Utc;
 use tokio::io::AsyncReadExt;
 

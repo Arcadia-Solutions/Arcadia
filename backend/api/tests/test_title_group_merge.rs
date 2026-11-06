@@ -138,15 +138,21 @@ async fn test_merge_title_groups_moves_all_related_data(pool: PgPool) {
     // After merge: target should have all 3 unique links
     let target_title_group = pool.find_title_group(11).await.unwrap();
     assert_eq!(target_title_group.external_links.len(), 3);
-    assert!(target_title_group
-        .external_links
-        .contains(&"https://source-only.example.com".to_string()));
-    assert!(target_title_group
-        .external_links
-        .contains(&"https://target-only.example.com".to_string()));
-    assert!(target_title_group
-        .external_links
-        .contains(&"https://shared.example.com".to_string()));
+    assert!(
+        target_title_group
+            .external_links
+            .contains(&"https://source-only.example.com".to_string())
+    );
+    assert!(
+        target_title_group
+            .external_links
+            .contains(&"https://target-only.example.com".to_string())
+    );
+    assert!(
+        target_title_group
+            .external_links
+            .contains(&"https://shared.example.com".to_string())
+    );
 
     // Conflicts keep the target's row
     let target_hierarchy = pool.find_title_group_hierarchy(11, 146).await.unwrap();

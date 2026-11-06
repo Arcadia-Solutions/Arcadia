@@ -1,7 +1,7 @@
 pub mod create_invitation;
 pub mod search_sent_invitations;
 
-use actix_web::web::{get, post, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, get, post, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

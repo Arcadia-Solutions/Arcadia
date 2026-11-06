@@ -4,7 +4,7 @@ pub mod get_css_sheet;
 pub mod get_css_sheet_content;
 pub mod get_css_sheets;
 
-use actix_web::web::{get, post, put, resource, ServiceConfig};
+use actix_web::web::{ServiceConfig, get, post, put, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

@@ -3,7 +3,7 @@ pub mod mocks;
 
 use actix_web::test;
 use arcadia_storage::connection_pool::ConnectionPool;
-use common::{auth_header, call_and_read_body_json, create_test_app_and_login, Profile, TestUser};
+use common::{Profile, TestUser, auth_header, call_and_read_body_json, create_test_app_and_login};
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;

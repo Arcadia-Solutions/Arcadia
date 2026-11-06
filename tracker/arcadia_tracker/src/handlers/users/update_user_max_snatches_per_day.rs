@@ -1,6 +1,6 @@
 use actix_web::{
-    web::{Data, Json, Path},
     HttpResponse,
+    web::{Data, Json, Path},
 };
 use arcadia_shared::tracker::models::user::APIUpdateUserMaxSnatchesPerDay;
 use log::info;

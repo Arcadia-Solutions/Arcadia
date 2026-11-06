@@ -16,6 +16,10 @@ use arcadia_storage::{
     redis::RedisPoolInterface,
 };
 use musicbrainz_rs::{
+    api_bindium::{
+        ureq::{config::Config, Agent, Proxy},
+        ApiClient,
+    },
     client::MusicBrainzClient,
     entity::{
         release::Release,
@@ -131,8 +135,20 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .captures(url).map(|caps| (match caps[1].as_ref() { "release" => MusicBrainzResourceType::Release, _ => MusicBrainzResourceType::ReleaseGroup }, caps[2].to_string()))
         .ok_or_else(|| Error::InvalidMusicbrainzUrl)?;
     // .expect("No MusicBrainz release/release-group match found in URL");
-    let client =
-        MusicBrainzClient::new(&format!("{} ({})", arc.tracker.name, arc.api.frontend_url));
+    // musicbrainz_rs uses its own ureq agent instead of reqwest, so the proxy is set on it directly
+    let agent_config = Config::builder()
+        .user_agent(format!("{} ({})", arc.tracker.name, arc.api.frontend_url))
+        .proxy(arc.api.http_proxy.as_deref().map(|proxy_url| {
+            Proxy::new(proxy_url).expect("HTTP_PROXY contains an invalid proxy URL")
+        }))
+        .build();
+    let client = MusicBrainzClient::builder()
+        .api_client(
+            ApiClient::builder()
+                .agent(Agent::new_with_config(agent_config))
+                .build(),
+        )
+        .build();
 
     let mut title_group: Option<UserCreatedTitleGroup> = None;
     let mut edition_group: Option<UserCreatedEditionGroup> = None;

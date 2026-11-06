@@ -102,11 +102,23 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     user: Authdata,
 ) -> Result<HttpResponse> {
     let book_url = format!("https://openlibrary.org/isbn/{isbn}.json");
-    let book = reqwest::get(&book_url).await?.json::<Book>().await?;
+    let book = arc
+        .http_client
+        .get(&book_url)
+        .send()
+        .await?
+        .json::<Book>()
+        .await?;
     // there usually is only 1 work for an isbn (and there should only be 1 in theory as well)
     let work_path = &book.works.first().unwrap().key;
     let work_url = format!("https://openlibrary.org/{}.json", &work_path);
-    let work = reqwest::get(&work_url).await?.json::<Work>().await?;
+    let work = arc
+        .http_client
+        .get(&work_url)
+        .send()
+        .await?
+        .json::<Work>()
+        .await?;
 
     let work_group_url = format!("https://openlibrary.org{}", work_path);
 
@@ -126,7 +138,10 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     let mut authors: Vec<(Author, String)> = vec![];
 
     for link in book.authors {
-        let author = reqwest::get(format!("https://openlibrary.org{}.json", link.key))
+        let author = arc
+            .http_client
+            .get(format!("https://openlibrary.org{}.json", link.key))
+            .send()
             .await?
             .json::<Author>()
             .await?;

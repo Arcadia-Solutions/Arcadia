@@ -132,6 +132,10 @@ pub struct DatabaseConfig {
     pub user: String,
     pub password: String,
     pub name: String,
+    /// Size of the connection pool.
+    pub max_connections: u32,
+    /// Seconds a query waits for a free connection of the pool before failing.
+    pub acquire_timeout_seconds: u64,
 }
 
 impl DatabaseConfig {
@@ -154,6 +158,8 @@ impl std::fmt::Debug for DatabaseConfig {
             .field("user", &self.user)
             .field("password", &"[redacted]")
             .field("name", &self.name)
+            .field("max_connections", &self.max_connections)
+            .field("acquire_timeout_seconds", &self.acquire_timeout_seconds)
             .finish()
     }
 }
@@ -212,6 +218,8 @@ database:
   user: arcadia
   password: old_password
   name: arcadia
+  max_connections: 20
+  acquire_timeout_seconds: 30
 api:
   port: 8080
   host: 127.0.0.1
@@ -242,6 +250,8 @@ database:
   user: arcadia
   password: old_password
   name: arcadia
+  max_connections: 20
+  acquire_timeout_seconds: 30
 api:
   port: 8080
   host: 127.0.0.1

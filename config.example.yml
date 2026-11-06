@@ -9,8 +9,8 @@
 #   - the `frontend` section is inlined in the bundle by vite.config.ts at build time, so
 #     the frontend has to be rebuilt after changing it.
 #   - in Docker Compose, db and redis credentials are configured in .env and injected
-#     into the containers as environment variables; the `database` and `redis` sections
-#     below are only needed for bare-metal installations.
+#     into the containers as environment variables; the commented credentials of the
+#     `database` and `redis` sections below are only needed for bare-metal installations.
 #
 # Nothing is reloaded at runtime: changing a value means restarting the affected service.
 #
@@ -29,15 +29,21 @@
 # `.env` file at the root of the repository. It is a build-time requirement for development.
 
 
-# Bare-metal: uncomment and configure for host PostgreSQL and Redis.
-# In Docker Compose, database and Redis credentials are configured in .env instead.
-#
-# database:
-#   host: 127.0.0.1
-#   port: 5432
-#   user: arcadia
-#   password: your_secure_password
-#   name: arcadia
+database:
+  # Size of the connection pool, of the api and of the tracker each.
+  max_connections: 20
+  # Seconds a query waits for a free pooled connection before failing.
+  acquire_timeout_seconds: 30
+  # Bare-metal: uncomment and configure for host PostgreSQL.
+  # In Docker Compose, database credentials are configured in .env instead.
+  # host: 127.0.0.1
+  # port: 5432
+  # user: arcadia
+  # password: your_secure_password
+  # name: arcadia
+
+# Bare-metal: uncomment and configure for host Redis.
+# In Docker Compose, Redis credentials are configured in .env instead.
 #
 # redis:
 #   host: 127.0.0.1

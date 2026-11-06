@@ -1,6 +1,7 @@
+use arcadia_shared::config::DatabaseConfig;
 use serde::Serialize;
 use sqlx::{postgres::PgPoolOptions, PgPool};
-use std::borrow::Borrow;
+use std::{borrow::Borrow, time::Duration};
 use url::Url;
 
 #[derive(Clone)]
@@ -17,13 +18,14 @@ pub struct ConnectionPool {
 
 impl ConnectionPool {
     pub async fn try_new(
-        db_uri: &str,
+        database_config: &DatabaseConfig,
         tracker_config: TrackerConfig,
         internal_http_client: reqwest::Client,
     ) -> Result<Self, sqlx::Error> {
         let pool = PgPoolOptions::new()
-            .max_connections(5)
-            .connect(db_uri)
+            .max_connections(database_config.max_connections)
+            .acquire_timeout(Duration::from_secs(database_config.acquire_timeout_seconds))
+            .connect(&database_config.url())
             .await
             .expect("Error building a connection pool");
 

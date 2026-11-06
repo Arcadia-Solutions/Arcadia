@@ -8,6 +8,8 @@ database:
   user: arcadia
   password: password
   name: arcadia
+  max_connections: 20
+  acquire_timeout_seconds: 30
 
 redis:
   password: ""

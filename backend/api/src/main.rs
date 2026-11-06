@@ -67,7 +67,7 @@ async fn main() -> std::io::Result<()> {
 
     let internal_http_client = arcadia_api::build_no_proxy_http_client();
     let pool = Arc::new(
-        ConnectionPool::try_new(&config.database.url(), tracker_config, internal_http_client)
+        ConnectionPool::try_new(&config.database, tracker_config, internal_http_client)
             .await
             .expect("db connection"),
     );

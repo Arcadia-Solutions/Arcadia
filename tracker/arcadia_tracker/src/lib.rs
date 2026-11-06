@@ -10,6 +10,7 @@ use parking_lot::{Mutex, RwLock};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
 use crate::config::{Config, TrackerConfig};
+use arcadia_shared::config::DatabaseConfig;
 use std::{io::Write, ops::Deref, sync::OnceLock, time::Duration};
 
 pub mod announce;
@@ -54,7 +55,7 @@ impl Tracker {
     pub async fn new(config: Config) -> Self {
         print!("Connecting to database... ");
         std::io::stdout().flush().unwrap();
-        let pool = connect_to_database(&config.database.url()).await;
+        let pool = connect_to_database(&config.database).await;
         println!("[Finished]");
 
         log::info!("[Setup] Getting shared settings from database...");
@@ -104,15 +105,15 @@ impl Tracker {
     }
 }
 
-async fn connect_to_database(database_url: &str) -> sqlx::Pool<sqlx::Postgres> {
+async fn connect_to_database(database_config: &DatabaseConfig) -> sqlx::Pool<sqlx::Postgres> {
     // Get pool of database connections.
     PgPoolOptions::new()
         .min_connections(0)
-        .max_connections(60)
+        .max_connections(database_config.max_connections)
         .max_lifetime(Duration::from_secs(30 * 60))
         .idle_timeout(Duration::from_secs(10 * 60))
-        .acquire_timeout(Duration::from_secs(30))
-        .connect(database_url)
+        .acquire_timeout(Duration::from_secs(database_config.acquire_timeout_seconds))
+        .connect(&database_config.url())
         .await
         .expect("Could not connect to the database using the 'database' section of the configuration file. Aborting.")
 }

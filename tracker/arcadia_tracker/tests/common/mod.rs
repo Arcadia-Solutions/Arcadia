@@ -12,7 +12,7 @@ use std::sync::OnceLock;
 pub(crate) fn test_config() -> Config {
     yaml_serde::from_str(
         r#"
-        database: { host: localhost, port: 5432, user: arcadia, password: password, name: arcadia }
+        database: { host: localhost, port: 5432, user: arcadia, password: password, name: arcadia, max_connections: 60, acquire_timeout_seconds: 30 }
         tracker:
           api_key: amazing_api_key_of_32_characters
           allowed_torrent_clients: [lt0F01-, qB, UTorrent]

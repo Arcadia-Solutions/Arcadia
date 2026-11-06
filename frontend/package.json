@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.51.0",
-    "@tsconfig/node22": "^22.0.0",
+    "@tsconfig/node24": "^24.0.0",
     "@types/debug": "^4.1.12",
     "@types/diff": "^7.0.2",
     "@types/jsdom": "^21.1.7",

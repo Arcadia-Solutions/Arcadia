@@ -180,7 +180,13 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         title_group.external_links.push(url.to_string());
     }
 
-    respond_with_scraped_data(&arc.pool, &arc.image_host, external_db_data).await
+    respond_with_scraped_data(
+        &arc.pool,
+        arc.rehost_image_host(),
+        user.sub,
+        external_db_data,
+    )
+    .await
 }
 
 pub async fn get_tmdb_rating(

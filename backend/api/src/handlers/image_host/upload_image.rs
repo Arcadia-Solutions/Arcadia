@@ -5,7 +5,11 @@ use arcadia_storage::redis::RedisPoolInterface;
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use crate::{middlewares::auth_middleware::Authdata, services::image_host_service, Arcadia};
+use crate::{
+    middlewares::auth_middleware::Authdata,
+    services::image_host_service::{self, Uploader},
+    Arcadia,
+};
 
 #[derive(Debug, MultipartForm, ToSchema)]
 pub struct UploadImageForm {
@@ -34,17 +38,24 @@ pub struct UploadImageResponse {
 pub async fn exec<R: RedisPoolInterface + 'static>(
     form: MultipartForm<UploadImageForm>,
     arc: Data<Arcadia<R>>,
-    _user: Authdata,
+    user: Authdata,
 ) -> Result<HttpResponse> {
-    let (Some(api_url), Some(api_key)) = (
-        &arc.image_host.chevereto_api_url,
-        &arc.image_host.chevereto_api_key,
-    ) else {
-        return Err(Error::ImageHostNotConfigured);
+    let image_host = arc
+        .image_host
+        .as_ref()
+        .ok_or(Error::ImageHostNotConfigured)?;
+    let uploader = Uploader {
+        id: user.sub,
+        username: arc.pool.find_user_with_id(user.sub).await?.username,
     };
 
-    let url =
-        image_host_service::upload_image_to_chevereto(api_url, api_key, &form.image.data).await?;
+    let url = image_host_service::upload_image(
+        image_host,
+        &uploader,
+        &form.image.data,
+        form.image.file_name.as_deref().unwrap_or("image"),
+    )
+    .await?;
 
     Ok(HttpResponse::Ok().json(UploadImageResponse { url }))
 }

@@ -14,6 +14,7 @@ T=$(mktemp -d)
 W=$T/arcadia
 export COMPOSE_PROJECT_NAME=arcadia_backup_test
 DB=arcadia_backup_test
+ELY=${DB}_elysia # host mode elysia database, dropped by the cleanup
 # Docker mode runs backup.sh in the backup_cron container: the host BACKUP_DIR (set in .env) is
 # bind-mounted at the fixed /var/backups/arcadia and the volumes at /data/<name>. The repo and dumps
 # live under BACKUP_DIR, so the test points at different repos by moving BACKUP_DIR (set_backup_dir),
@@ -26,7 +27,7 @@ if [ "$MODE" = docker ]; then
     BREPO="$T/backup/repo"; BDUMPS="$T/backup/dumps"
     BREMOTE="$T/backup/remote"; BREMOTE2="$T/backup/remote2"
     BPULLED="$T/pulled/repo"; BPASS="$T/password"
-    VOLUMES="redis_data ergo_data chevereto_storage"
+    VOLUMES="redis_data ergo_data chevereto_storage elysia_storage"
     CDUMPS=/var/backups/arcadia/dumps
     CREMOTES="/var/backups/arcadia/remote /var/backups/arcadia/remote2"
 else
@@ -78,6 +79,8 @@ EOF
   paths: $PATHS
   ergo_db: ergo_history
   chevereto_db: chevereto
+  elysia_db: $ELY
+  elysia_db_user: postgres
 EOF
 }
 
@@ -95,7 +98,9 @@ EOF
 
 setup() {
     mkdir -p "$W" "$BDUMPS" "$(dirname "$BPULLED")"
-    git -C "$SRC" ls-files -co --exclude-standard -z | (cd "$SRC" && xargs -0 cp --parents -t "$W")
+    # without the elysia submodule, a directory: elysia_database is a plain postgres image
+    git -C "$SRC" ls-files -co --exclude-standard -z | grep -zvx elysia |
+        (cd "$SRC" && xargs -0 cp --parents -t "$W")
     cd "$W"
     # compose reads the ARCADIA_<section>__<key> database credentials from .env (it only auto-loads
     # .env, not example.env). restore.sh runs on the host via sudo (no exported env), so the docker-mode
@@ -137,6 +142,11 @@ my() { # $1: compose service, $2: mariadb or mariadb-dump, run as root on the se
     fi
 }
 
+ely() { # $1: psql or pg_dump on elysia's database, as its owner (docker) or postgres (host)
+    if [ "$MODE" = docker ]; then dc exec -T elysia_database sh -c 'p=$1; shift; exec "$p" -U "$POSTGRES_USER" -d "$POSTGRES_DB" "$@"' - "$@"
+    else sudo runuser -u postgres -- "$1" -d "$ELY" "${@:2}"; fi
+}
+
 in_data() { # runs the shell script $1 in every volume (docker) or path (host), printing their names
     local t
     if [ "$MODE" = docker ]; then
@@ -162,10 +172,11 @@ INSERT INTO b SELECT g, g FROM generate_series(1, 1000) g;
 UPDATE a SET b_id = id;
 EOF
     sudo mariadb -e "CREATE DATABASE ergo_history; CREATE DATABASE chevereto"
+    sudo runuser -u postgres -- createdb "$ELY"
 }
 
 seed_docker() {
-    dc up -d --wait db redis ergo_database chevereto_database
+    dc up -d --wait db redis ergo_database chevereto_database elysia_database
     dc run --rm init_db
     pg < backend/storage/migrations/fixtures/fixtures.sql
     # redis_data is backed up raw, so it needs content: the fingerprint compares the bytes of every
@@ -183,6 +194,7 @@ seed() {
     for s in ergo_database chevereto_database; do
         my "$s" mariadb -e "CREATE TABLE t (id INT PRIMARY KEY, v TEXT); INSERT INTO t VALUES (1, 'a'), (2, 'b')"
     done
+    ely psql -q -v ON_ERROR_STOP=1 -c "CREATE TABLE t (id INT PRIMARY KEY, v TEXT); INSERT INTO t VALUES (1, 'a'), (2, 'b')"
     in_data "$FILL" > /dev/null
 }
 
@@ -193,6 +205,7 @@ wipe() { # what a fresh host lacks: containers, volumes, databases, data directo
     else
         sudo runuser -u postgres -- dropdb --if-exists --force "$DB"
         sudo mariadb -e "DROP DATABASE IF EXISTS ergo_history; DROP DATABASE IF EXISTS chevereto"
+        sudo runuser -u postgres -- dropdb --if-exists --force "$ELY"
         sudo rm -rf $PATHS
     fi
 }
@@ -209,6 +222,7 @@ pull() { ARCADIA_CONFIG="$T/$1" backup/pull.sh; }
 mutate() {
     pg -c "CREATE TABLE IF NOT EXISTS backup_test (v text); INSERT INTO backup_test VALUES ('$RANDOM')"
     my ergo_database mariadb -e "INSERT INTO t (id, v) SELECT MAX(id) + 1, 'm' FROM t"
+    ely psql -q -v ON_ERROR_STOP=1 -c "INSERT INTO t (id, v) SELECT MAX(id) + 1, 'm' FROM t"
     in_data 'date +%N > "$0/sub/mutated"' > /dev/null
 }
 
@@ -219,6 +233,7 @@ fingerprint() {
     else PGPASSWORD=password pg_dump -h localhost -U arcadia -d "$DB" --no-owner; fi |
         grep -Ev '^\\(un)?restrict ' | sort
     for s in ergo_database chevereto_database; do my "$s" mariadb-dump --skip-extended-insert --skip-dump-date | sort; done
+    ely pg_dump | grep -Ev '^\\(un)?restrict ' | sort
     in_data 'cd "$0" && find . -type f -exec sha256sum {} + | sort'
     sha256sum config.yml ergo/ergo-conf.yaml ergo/ergo.motd kiwiirc/config.json
 }
@@ -236,7 +251,7 @@ run_backup
 [ "$(count "$BREMOTE2")" = 1 ] || fail "backup.sh did not copy to the second remote_repo"
 [ "$(ls -A "$BDUMPS")" = unrelated ] || fail "dump_dir not cleaned, or more than the dumps removed: $(ls -A "$BDUMPS")"
 r "$BREPO" ls latest > "$T/ls"
-for f in arcadia.sql ergo_database.sql chevereto_database.sql config/config.yml config/ergo/ergo-conf.yaml \
+for f in arcadia.sql ergo_database.sql chevereto_database.sql elysia_database.sql config/config.yml config/ergo/ergo-conf.yaml \
     config/ergo/ergo.motd config/kiwiirc/config.json; do
     grep -qx "$CDUMPS/$f" "$T/ls" || fail "$f missing from the snapshot"
 done

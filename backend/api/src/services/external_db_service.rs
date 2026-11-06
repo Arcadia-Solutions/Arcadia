@@ -12,25 +12,27 @@ use arcadia_storage::{
 use chrono::Utc;
 
 use crate::{
-    config::ImageHostConfig,
     handlers::scrapers::{ExternalDBData, ScrapedAffiliatedArtist},
-    services::image_host_service::rehost_image_urls,
+    services::image_host_service::{rehost_image_urls, ImageHost, Uploader},
 };
 
 /// The treatment every scraper answer goes through, so that no scraper has to
 /// remember it: the tags are put in the form arcadia stores them (sanitized,
 /// replaced by the tag they are a synonym of, without the deleted ones), and
-/// the images are rehosted.
+/// the images are rehosted to `rehost_image_host` when set.
 pub async fn respond_with_scraped_data(
     pool: &Arc<ConnectionPool>,
-    image_host: &ImageHostConfig,
+    rehost_image_host: Option<&ImageHost>,
+    current_user_id: i32,
     mut external_db_data: ExternalDBData,
 ) -> Result<HttpResponse> {
     if let Some(title_group) = &mut external_db_data.title_group {
         title_group.tags = pool.resolve_tag_names(&title_group.tags).await?;
     }
 
-    rehost_external_db_images(image_host, pool, &mut external_db_data).await;
+    if let Some(image_host) = rehost_image_host {
+        rehost_external_db_images(image_host, pool, current_user_id, &mut external_db_data).await;
+    }
 
     Ok(HttpResponse::Ok().json(external_db_data))
 }
@@ -128,31 +130,48 @@ pub async fn create_affiliated_artists(
 }
 
 /// Rehosts the covers of the scraped title group, and the pictures of the scraped artists in the
-/// background to avoid blocking the response.
+/// background to avoid blocking the response. They are uploaded on behalf of the current user.
 async fn rehost_external_db_images(
-    image_host: &ImageHostConfig,
+    image_host: &ImageHost,
     pool: &Arc<ConnectionPool>,
+    current_user_id: i32,
     external_db_data: &mut ExternalDBData,
 ) {
-    if let Some(title_group) = &mut external_db_data.title_group {
-        rehost_image_urls(image_host, &mut title_group.covers).await;
+    let artists: Vec<(i64, Vec<String>)> = external_db_data
+        .affiliated_artists
+        .iter()
+        .filter(|affiliation| !affiliation.artist.pictures.is_empty())
+        .map(|affiliation| (affiliation.artist.id, affiliation.artist.pictures.clone()))
+        .collect();
+    let covers = external_db_data
+        .title_group
+        .as_mut()
+        .map(|title_group| &mut title_group.covers)
+        .filter(|covers| !covers.is_empty());
+    if covers.is_none() && artists.is_empty() {
+        return;
     }
 
-    if !image_host.rehost_external_images {
-        return;
+    let uploader = match pool.find_user_with_id(current_user_id).await {
+        Ok(user) => Uploader {
+            id: user.id,
+            username: user.username,
+        },
+        Err(error) => {
+            log::warn!("Failed to find the user to rehost images for: {error}");
+            return;
+        }
+    };
+
+    if let Some(covers) = covers {
+        rehost_image_urls(image_host, &uploader, covers).await;
     }
 
     let image_host = image_host.clone();
     let pool = Arc::clone(pool);
-    let artists: Vec<(i64, Vec<String>)> = external_db_data
-        .affiliated_artists
-        .iter()
-        .map(|affiliation| (affiliation.artist.id, affiliation.artist.pictures.clone()))
-        .collect();
-
     tokio::spawn(async move {
         for (artist_id, mut pictures) in artists {
-            rehost_image_urls(&image_host, &mut pictures).await;
+            rehost_image_urls(&image_host, &uploader, &mut pictures).await;
             if let Err(error) = pool.update_artist_pictures(artist_id, &pictures).await {
                 log::warn!("Failed to update rehosted pictures for artist {artist_id}: {error}");
             }

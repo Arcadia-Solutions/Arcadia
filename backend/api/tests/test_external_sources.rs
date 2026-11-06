@@ -14,14 +14,12 @@ use arcadia_api::{
 use arcadia_storage::{connection_pool::ConnectionPool, models::title_group::ContentType};
 use common::{
     auth_header, call_and_read_body_json, call_and_read_body_json_with_status,
-    create_test_app_and_login, login_as, TestUser,
+    create_test_app_and_login, login_as, spawn_http_server, TestUser,
 };
 use mocks::mock_redis::MockRedisPool;
 use serde::Deserialize;
 use sqlx::PgPool;
 use std::collections::BTreeMap;
-use std::io::{Read, Write};
-use std::net::TcpListener;
 use std::sync::Arc;
 
 #[derive(Deserialize)]
@@ -62,26 +60,6 @@ struct ExternalDBData {
 #[derive(Deserialize)]
 struct ErrorResponse {
     error: String,
-}
-
-/// Spawns a fake plugin answering every request with the given status line and JSON body.
-fn spawn_plugin(status: &'static str, body: String) -> String {
-    let listener = TcpListener::bind("127.0.0.1:0").expect("failed to bind the plugin listener");
-    let address = listener.local_addr().unwrap().to_string();
-
-    std::thread::spawn(move || {
-        for stream in listener.incoming() {
-            let Ok(mut stream) = stream else { break };
-            let _ = stream.read(&mut [0u8; 4096]);
-            let response = format!(
-                "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
-                body.len()
-            );
-            let _ = stream.write_all(response.as_bytes());
-        }
-    });
-
-    address
 }
 
 /// The plugins are loaded from the configuration file at startup, tests declare them by hand instead.
@@ -181,7 +159,7 @@ async fn test_getting_data_from_a_plugin(pool: PgPool) {
             {"name": "Another Person", "aliases": [], "description": "", "pictures": [], "roles": ["actor"], "nickname": "The Hero"}
         ]
     });
-    let plugin_address = spawn_plugin("200 OK", scraped_data.to_string());
+    let (plugin_url, _) = spawn_http_server("200 OK", scraped_data.to_string());
 
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app_with_plugin(
@@ -190,7 +168,7 @@ async fn test_getting_data_from_a_plugin(pool: PgPool) {
             id: String::from("example"),
             placeholder: String::from("Example url"),
             sources: BTreeMap::from([(String::from("Example"), vec![ContentType::Movie])]),
-            url: format!("http://{plugin_address}/scrape"),
+            url: format!("{plugin_url}/scrape"),
             timeout_seconds: 30,
         },
     )
@@ -227,7 +205,7 @@ async fn test_getting_data_from_a_plugin(pool: PgPool) {
 
 #[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
 async fn test_the_error_a_plugin_answers_with_is_given_to_the_uploader(pool: PgPool) {
-    let plugin_address = spawn_plugin(
+    let (plugin_url, _) = spawn_http_server(
         "502 Bad Gateway",
         serde_json::json!({"error": "example.com is unreachable"}).to_string(),
     );
@@ -239,7 +217,7 @@ async fn test_the_error_a_plugin_answers_with_is_given_to_the_uploader(pool: PgP
             id: String::from("example"),
             placeholder: String::from("Example url"),
             sources: BTreeMap::from([(String::from("Example"), vec![ContentType::Movie])]),
-            url: format!("http://{plugin_address}/scrape"),
+            url: format!("{plugin_url}/scrape"),
             timeout_seconds: 30,
         },
     )

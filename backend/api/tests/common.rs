@@ -351,3 +351,57 @@ where
 {
     call_and_read_body_json_with_status(service, req, StatusCode::OK).await
 }
+
+/// Spawns a fake HTTP server answering every request with the given status line and JSON body.
+/// Returns its base URL, and a receiver getting the raw text of every request it answered.
+pub fn spawn_http_server(
+    status: &'static str,
+    body: String,
+) -> (String, std::sync::mpsc::Receiver<String>) {
+    use std::io::{Read, Write};
+
+    let listener =
+        std::net::TcpListener::bind("127.0.0.1:0").expect("failed to bind the fake server");
+    let address = listener.local_addr().unwrap();
+    let (sender, receiver) = std::sync::mpsc::channel();
+
+    std::thread::spawn(move || {
+        for stream in listener.incoming() {
+            let Ok(mut stream) = stream else { break };
+            let mut request = Vec::new();
+            let mut buffer = [0u8; 4096];
+            // read the whole request, so the answer is not sent before the body is consumed
+            let mut request_length = None;
+            while request_length.is_none_or(|length| request.len() < length) {
+                let read = stream.read(&mut buffer).unwrap_or(0);
+                if read == 0 {
+                    break;
+                }
+                request.extend_from_slice(&buffer[..read]);
+                if request_length.is_none() {
+                    request_length = request
+                        .windows(4)
+                        .position(|window| window == b"\r\n\r\n")
+                        .map(|header_end| {
+                            let headers = String::from_utf8_lossy(&request[..header_end]);
+                            let content_length = headers
+                                .lines()
+                                .filter_map(|line| line.split_once(':'))
+                                .find(|(name, _)| name.eq_ignore_ascii_case("content-length"))
+                                .and_then(|(_, value)| value.trim().parse::<usize>().ok())
+                                .unwrap_or(0);
+                            header_end + 4 + content_length
+                        });
+                }
+            }
+            let response = format!(
+                "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            );
+            let _ = stream.write_all(response.as_bytes());
+            let _ = sender.send(String::from_utf8_lossy(&request).into_owned());
+        }
+    });
+
+    (format!("http://{address}"), receiver)
+}

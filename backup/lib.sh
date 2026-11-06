@@ -105,4 +105,4 @@ restic() {
 
 # Only what the scripts write: dump_dir may hold other files. DUMP_DIR_HOST so restore.sh cleans the
 # dumps where they land on the host (equal to DUMP_DIR in the container and in host mode).
-clean_dumps() { rm -rf "$DUMP_DIR_HOST"/{arcadia,ergo_database,chevereto_database}.sql "$DUMP_DIR_HOST"/.tmp.* "$DUMP_DIR_HOST/config"; }
+clean_dumps() { rm -rf "$DUMP_DIR_HOST"/{arcadia,ergo_database,chevereto_database,elysia_database}.sql "$DUMP_DIR_HOST"/.tmp.* "$DUMP_DIR_HOST/config"; }

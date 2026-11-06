@@ -13,7 +13,7 @@
   - [Bare-Metal Installation](run-bare-metal.md)
 - [Optional Integrations](integrations.md)
   - [IRC Server (Ergo & KiwiIRC)](irc-server.md)
-  - [Image Hosting (Chevereto)](image-host.md)
+  - [Image Hosting (Elysia)](image-host.md)
   - [Monitoring (OpenTelemetry)](telemetry.md)
 
 # Operations & Maintenance

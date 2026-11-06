@@ -4,6 +4,8 @@
 config.yml
 
 .git
+# Elysia's images are built from its own directories, the frontend gets elysia/frontend as a named context
+elysia
 .github
 .devcontainer
 target

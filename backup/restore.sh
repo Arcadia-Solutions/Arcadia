@@ -48,6 +48,8 @@ check_current_state() {
     fi
     mariadb_state ergo_database "$(cfg ergo_db)"
     mariadb_state chevereto_database "$(cfg chevereto_db)"
+    echo "--- Postgres elysia_database ---"
+    elysia_psql -qAt -c "SELECT pg_size_pretty(pg_database_size(current_database()))" 2> /dev/null || echo "(unavailable)"
     echo "=========================================="
 }
 
@@ -66,14 +68,18 @@ confirm() {
 
 # Docker: postgres and mariadb apply the passwords of .env only when their volume is first created, so
 # a volume created before .env was edited refuses them (mariadb root during the restore, the backend
-# afterwards). The dumps hold the databases only, so nothing else is lost. Asked in confirm, skipped
-# with -y.
-DB_VOLUMES="db_data ergo_database chevereto_database"
+# afterwards). The dumps hold the databases only, so nothing else is lost. A volume whose dump the
+# snapshot lacks is kept, as nothing would refill it. Runs after restore_files, which brings the
+# dumps. Asked in confirm, skipped with -y.
+DB_VOLUMES="db_data ergo_database chevereto_database elysia_database"
 reset_db_volumes() {
     [ -n "$RESET" ] || return 0
-    local v
+    local v dump
     # by volume rather than by service: the mariadb services may sit in a profile that is not enabled
     for v in $DB_VOLUMES; do
+        dump=$v
+        [ "$v" = db_data ] && dump=arcadia
+        [ -f "$DUMP_DIR_HOST/$dump.sql" ] || continue
         v=${COMPOSE_PROJECT_NAME}_$v
         docker ps -aq --filter volume="$v" | xargs -r docker rm -f
         docker volume rm -f "$v"
@@ -187,16 +193,56 @@ restore_mariadb() {
     mariadb_cli "$1" "$db" < "$DUMP_DIR_HOST/$1.sql"
 }
 
+# psql on Elysia's database as its owner (docker) or the postgres user (host, fails when
+# backup.elysia_db is empty).
+elysia_psql() {
+    if [ "$MODE" = docker ]; then
+        docker compose exec -T elysia_database sh -c 'exec psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" "$@"' - "$@"
+    else
+        [ -n "$(cfg elysia_db)" ] || return 1
+        runuser -u postgres -- psql -d "$(cfg elysia_db)" "$@"
+    fi
+}
+
+# Host mode recreates Elysia's database owned by backup.elysia_db_user. Checked before anything of
+# elysia is dropped.
+check_elysia() {
+    [ "$MODE" = host ] && [ -f "$DUMP_DIR_HOST/elysia_database.sql" ] || return 0
+    if [ -z "$(cfg elysia_db)" ] || [ -z "$(cfg elysia_db_user)" ]; then
+        echo "restoring the elysia dump needs backup.elysia_db and backup.elysia_db_user" >&2
+        exit 1
+    fi
+}
+
+# The dump holds no owners: it is replayed as the owner, so the objects are created owned by it.
+restore_elysia() {
+    local dump=$DUMP_DIR_HOST/elysia_database.sql owner
+    [ -f "$dump" ] || return 0
+    if [ "$MODE" = docker ]; then
+        docker compose up -d --wait elysia_database
+        docker compose exec -T elysia_database sh -c \
+            'dropdb -U "$POSTGRES_USER" --if-exists --force "$POSTGRES_DB" && createdb -U "$POSTGRES_USER" "$POSTGRES_DB"'
+        elysia_psql -q -v ON_ERROR_STOP=1 < "$dump"
+    else
+        owner=$(cfg elysia_db_user)
+        runuser -u postgres -- dropdb --if-exists --force "$(cfg elysia_db)"
+        runuser -u postgres -- createdb -O "$owner" "$(cfg elysia_db)"
+        { printf 'SET ROLE "%s";\n' "${owner//\"/\"\"}"; cat "$dump"; } | elysia_psql -q -v ON_ERROR_STOP=1
+    fi
+}
+
 mkdir -p "$DUMP_DIR_HOST"
 confirm
 clean_dumps
 trap clean_dumps EXIT
 stop_services
-reset_db_volumes
 check_postgres
 restore_files
+check_elysia
+reset_db_volumes
 restore_data
 restore_postgres
 restore_mariadb ergo_database "$(cfg ergo_db)"
 restore_mariadb chevereto_database "$(cfg chevereto_db)"
+restore_elysia
 if [ -n "$SERVICES" ]; then docker compose up -d $SERVICES; fi

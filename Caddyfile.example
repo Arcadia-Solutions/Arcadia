@@ -37,6 +37,9 @@ arcadia.example.com {
         reverse_proxy ergo:8097
     }
 
+    # Elysia image host, served under /elysia (profile `images`)
+    import elysia.caddy
+
     # Arcadia Vue SPA (Frontend static files and client-side router fallback)
     handle {
         root * /srv/arcadia
@@ -64,25 +67,26 @@ tracker.example.com {
 }
 
 # ------------------------------------------------------------------------------
-# 3. Chevereto Image Host (Optional - enabled with --profile images)
+# 3. Chevereto Image Host (Deprecated - containers start with --profile chevereto)
 # ------------------------------------------------------------------------------
-# Image URLs: https://images.example.com/
-# Set CHEVERETO_HOSTNAME: images.example.com and CHEVERETO_HTTPS: 1 in your
-# compose.override.yml or .env.
+# Elysia, which replaces it, is served under https://arcadia.example.com/elysia/
+# (see the main block above). Uncomment to serve Chevereto on images.example.com.
+# Upgrading: keep this block enabled until Elysia's Chevereto importer has rewritten
+# the stored links, or existing images.example.com links stop resolving.
 # ------------------------------------------------------------------------------
-images.example.com {
-    encode zstd gzip
-
-    # Allow larger image uploads
-    request_body {
-        max_size 50MB
-    }
-
-    reverse_proxy chevereto_php:80 {
-        header_up Host {upstream_hostport}
-        header_up X-Forwarded-Proto https
-    }
-}
+# images.example.com {
+#     encode zstd gzip
+#
+#     # Allow larger image uploads
+#     request_body {
+#         max_size 50MB
+#     }
+#
+#     reverse_proxy chevereto_php:80 {
+#         header_up Host {upstream_hostport}
+#         header_up X-Forwarded-Proto https
+#     }
+# }
 
 # ------------------------------------------------------------------------------
 # 4. Grafana & Telemetry Dashboard (Optional - enabled with --profile telemetry)

@@ -30,6 +30,9 @@
 		file_server
 	}
 
+	# Elysia image host, served under /elysia (profile `images`)
+	import elysia.caddy
+
 	handle {
 		root * /srv/arcadia
 		# logged out visitors get the custom front page (if any) at /, see docs/src/customization.md

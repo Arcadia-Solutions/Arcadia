@@ -102,5 +102,11 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     // to clean it on  its own), so it is not added here.
     // The built-in scrapers still add their own.
 
-    respond_with_scraped_data(&arc.pool, &arc.image_host, external_db_data).await
+    respond_with_scraped_data(
+        &arc.pool,
+        arc.rehost_image_host(),
+        user.sub,
+        external_db_data,
+    )
+    .await
 }

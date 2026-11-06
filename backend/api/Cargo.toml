@@ -24,7 +24,7 @@ futures = "0.3"
 rand = "0.10.1"
 bip_metainfo = "0.12.0"
 actix-multipart = "0.7.2"
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.12", features = ["json", "multipart"] }
 actix-cors = "0.7.1"
 actix-http = "3.12.1"
 tracing = "0.1"

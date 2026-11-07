@@ -152,6 +152,10 @@ services:
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:-arcadia}
       GF_AUTH_ANONYMOUS_ENABLED: false
+      # keep metrics, logs and traces for ~3 months (90 days)
+      PROMETHEUS_EXTRA_ARGS: --storage.tsdb.retention.time=90d
+      LOKI_EXTRA_ARGS: -compactor.retention-enabled=true -compactor.delete-request-store=filesystem -store.retention=2160h
+      TEMPO_EXTRA_ARGS: -backend-scheduler.provider.work.compaction.block-retention=2160h -backend-worker.compaction.block-retention=2160h
 
   hostmetrics:
     profiles: [full, telemetry]

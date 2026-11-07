@@ -60,7 +60,7 @@ oidc:
   redirect_uri: https://arcadia.example.com/elysia/auth/sso/callback
 
 image_host:
-  elysia_url: http://elysia:8090
+  elysia_url: http://elysia_backend:8090
   # Automatically rehost posters and covers retrieved by scrapers (TMDB, MusicBrainz)
   rehost_external_images: true
 ```

@@ -114,6 +114,7 @@ services:
         - path: ./config.yml
           action: restart
 
+  # serves: arcadia's frontend, elysia's frontend and kiwiirc
   frontend:
     build:
       # the repository root, so that the build can read config.yml
@@ -184,7 +185,7 @@ services:
       timeout: 5s
       retries: 5
 
-  elysia:
+  elysia_backend:
     profiles: [full, images]
     build:
       context: ./elysia/backend

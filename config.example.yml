@@ -281,7 +281,7 @@ periodic_tasks:
 # are authenticated with its client credentials and attributed to the uploading user.
 # The chevereto_* keys are deprecated, and ignored when Elysia is configured.
 # image_host:
-#   elysia_url: http://elysia:8090
+#   elysia_url: http://elysia_backend:8090
 #   # chevereto_api_url: http://chevereto_php/api/1/upload
 #   # chevereto_api_key: your_chevereto_api_key
 #   # Automatically rehost the images coming from the external database scrapers.

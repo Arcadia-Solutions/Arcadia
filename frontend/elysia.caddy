@@ -4,7 +4,7 @@ redir /elysia /elysia/
 handle_path /elysia/* {
 	@backend path_regexp ^/(api|api-docs|swagger-ui|t)/|^/i/[^/]+\.[^/]+$
 	handle @backend {
-		reverse_proxy elysia:8090
+		reverse_proxy elysia_backend:8090
 	}
 	handle {
 		root * /srv/elysia

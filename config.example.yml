@@ -392,7 +392,7 @@ backup:
   # docker mode: volumes backed up raw, unprefixed compose volume names, mounted at /data/<name> by
   # the backup_cron service. Each name must ALSO be mounted at /data/<name> in the backup_cron
   # service in compose.yml. The database volumes are never listed: they are dumped.
-  volumes: elysia_storage chevereto_storage ergo_data redis_data
+  volumes: elysia_storage elysia_database chevereto_storage ergo_data redis_data
   # host mode: directories backed up raw
   paths: ""
   # host mode: mariadb databases, dumped as root through the unix socket, empty = skipped.

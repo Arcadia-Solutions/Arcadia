@@ -108,14 +108,14 @@ router.afterEach(async (to) => {
 })
 
 const getAppReady = async (forceGetUser: boolean = false) => {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('arcadia_token')
 
   if (isRouteProtected(route.path) || forceGetUser) {
     if (token) {
       try {
         // refresh user on page reload or fetch user after registration
         const [profile, publicArcadiaSettings] = await Promise.all([getMe(), getPublicArcadiaSettings()])
-        localStorage.setItem('user', JSON.stringify(profile.user))
+        localStorage.setItem('arcadia_user', JSON.stringify(profile.user))
         const userStore = useUserStore()
         userStore.setUser(profile.user)
         // refresh public arcadia settings
@@ -142,8 +142,8 @@ const getAppReady = async (forceGetUser: boolean = false) => {
         // token is invalid, redirect to login
         disconnectNotificationStream()
         await setLoggedInCookie(false)
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
+        localStorage.removeItem('arcadia_token')
+        localStorage.removeItem('arcadia_user')
         router.push(loginLocation())
       }
     } else {

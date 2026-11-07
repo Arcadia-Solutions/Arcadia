@@ -83,8 +83,8 @@ const submit = ({ valid }: FormSubmitEvent) => {
   })
     .then((tokens) => {
       // changing the password closes every session, the returned tokens keep this one open
-      localStorage.setItem('token', tokens.token)
-      localStorage.setItem('refreshToken', tokens.refresh_token)
+      localStorage.setItem('arcadia_token', tokens.token)
+      localStorage.setItem('arcadia_refreshToken', tokens.refresh_token)
       showToast('Success', t('user.password_changed_success'), 'success', 4000)
       emit('saved')
     })

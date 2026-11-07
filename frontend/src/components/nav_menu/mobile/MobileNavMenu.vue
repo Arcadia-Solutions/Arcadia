@@ -76,9 +76,9 @@ const handleLogout = async () => {
   } catch {
     // Ignore errors (token may already be expired)
   }
-  localStorage.removeItem('token')
-  localStorage.removeItem('refreshToken')
-  localStorage.removeItem('user')
+  localStorage.removeItem('arcadia_token')
+  localStorage.removeItem('arcadia_refreshToken')
+  localStorage.removeItem('arcadia_user')
   await setLoggedInCookie(false)
   user.removeUser()
   router.push('/login')

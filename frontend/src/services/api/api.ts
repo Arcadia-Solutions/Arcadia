@@ -35,7 +35,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     trackRequestStart()
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('arcadia_token')
     if (token && !config.url?.includes('/login') && !config.url?.includes('/register')) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -75,16 +75,16 @@ api.interceptors.response.use(
         return api(originalRequest) // Return the promise of the re-attempted request
       } catch (refreshError) {
         console.error('Failed to refresh token:', refreshError)
-        localStorage.removeItem('token')
-        localStorage.removeItem('refreshToken')
+        localStorage.removeItem('arcadia_token')
+        localStorage.removeItem('arcadia_refreshToken')
         await setLoggedInCookie(false)
         window.location.replace(loginLocation())
         return Promise.reject(refreshError)
       }
     }
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('arcadia_token')
+      localStorage.removeItem('arcadia_refreshToken')
       await setLoggedInCookie(false)
       window.location.replace(loginLocation())
       return new Promise(() => {})

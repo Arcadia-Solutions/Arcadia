@@ -126,7 +126,7 @@ function verifyConnection() {
 export function connectNotificationStream() {
   disconnectNotificationStream()
 
-  if (!localStorage.getItem('token')) return
+  if (!localStorage.getItem('arcadia_token')) return
 
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission()

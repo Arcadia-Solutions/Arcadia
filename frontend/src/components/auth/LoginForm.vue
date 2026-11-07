@@ -35,8 +35,8 @@ const handleLogin = async () => {
   loading.value = true
   login(form.value)
     .then(async (data) => {
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('refreshToken', data.refresh_token)
+      localStorage.setItem('arcadia_token', data.token)
+      localStorage.setItem('arcadia_refreshToken', data.refresh_token)
       // honor a ?redirect target (e.g. the SSO authorize page sends the user here to log in)
       const redirect = route.query.redirect
       router.push(typeof redirect === 'string' ? redirect : '/')

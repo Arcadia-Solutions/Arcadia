@@ -1,0 +1,13 @@
+# Grafana loads these dashboards at startup, see the otel-lgtm volumes in compose.yml.
+apiVersion: 1
+
+providers:
+  - name: Arcadia
+    type: file
+    options:
+      path: /arcadia/opentelemetry/sample-dashboard.json
+  # Shipped by the `elysia` submodule, missing (and skipped) when it is not checked out.
+  - name: Elysia
+    type: file
+    options:
+      path: /elysia/opentelemetry/dashboard.json

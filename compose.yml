@@ -149,6 +149,10 @@ services:
       - 3000:3000 # Grafana UI
     volumes:
       - lgtm_data:/data
+      - ./opentelemetry/dashboards.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/arcadia.yaml:ro
+      - ./opentelemetry:/arcadia/opentelemetry:ro
+      # the whole submodule, so that a missing checkout does not make docker create the dashboard path
+      - ./elysia:/elysia:ro
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:-arcadia}
       GF_AUTH_ANONYMOUS_ENABLED: false

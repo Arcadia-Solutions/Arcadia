@@ -41,17 +41,17 @@ Restart `backend` and `tracker` to begin exporting data:
 docker compose restart backend tracker
 ```
 
-### 4. Import the Pre-Built Dashboard
+If [Elysia](image-host.md) runs too, set the same section in `elysia/config.yml` and restart it:
 
-1. Open your browser and navigate to `http://localhost:3000`.
-2. Sign in with:
-   - **Username**: `admin`
-   - **Password**: the value of `GF_SECURITY_ADMIN_PASSWORD` (defaults to `arcadia`).
-3. In the left navigation bar, go to **Dashboards** &rarr; **New** &rarr; **Import**.
-4. Click **Upload dashboard JSON file** and select [`opentelemetry/sample-dashboard.json`](https://github.com/Arcadia-Solutions/arcadia/blob/main/opentelemetry/sample-dashboard.json) from the repository.
-5. Click **Import**.
+```bash
+docker compose restart elysia_backend
+```
 
-The imported dashboard provides real-time visibility into:
+### 4. Open the Dashboards
+
+Open `http://localhost:3000` and sign in as `admin` with the value of `GF_SECURITY_ADMIN_PASSWORD` (defaults to `arcadia`). Grafana loads the dashboards at startup: **Arcadia and Host metrics** from [`opentelemetry/sample-dashboard.json`](https://github.com/Arcadia-Solutions/arcadia/blob/main/opentelemetry/sample-dashboard.json) and, when the `elysia` submodule is checked out, **Elysia** from Elysia's own `opentelemetry/dashboard.json`. Grafana picks up edits to these files within seconds.
+
+The Arcadia dashboard provides real-time visibility into:
 - API endpoint request rates, response latency percentiles (p50, p95, p99), and HTTP status codes.
 - BitTorrent tracker announce and scrape request throughput.
 - Peer connection tracking, caching ratios, and active peer counts.

@@ -1,7 +1,11 @@
 <template>
   <div class="title-group-preview-cover-only">
     <RouterLink :to="`/title-group/${titleGroup.id}`">
+      <Skeleton v-if="!coverLoaded" class="cover-skeleton" width="100%" height="100%" borderRadius="7px" />
       <img
+        :class="{ 'cover-loading': !coverLoaded }"
+        @load="coverLoaded = true"
+        @error="coverLoaded = true"
         class="title-group-cover"
         :src="titleGroup.covers[0]"
         :loading="loading"
@@ -25,11 +29,13 @@
 import TimeAgo from '@/components/TimeAgo.vue'
 import type { TitleGroupLite } from '@/services/api-schema'
 import UsernameEnriched from '../user/UsernameEnriched.vue'
+import Skeleton from 'primevue/skeleton'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     titleGroup: TitleGroupLite
     showUploader?: boolean
@@ -40,6 +46,9 @@ withDefaults(
   }>(),
   { loading: 'lazy' },
 )
+
+// Without a cover there is nothing to wait for (no load/error event would ever fire)
+const coverLoaded = ref(!props.titleGroup.covers[0])
 </script>
 <style scoped>
 .latest-torrent-info {
@@ -50,6 +59,7 @@ withDefaults(
 /* Reserve a 2:3 box so the row does not grow while covers load, covers with another ratio are
    centered in it without being cropped. */
 .title-group-preview-cover-only > a {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -60,6 +70,14 @@ withDefaults(
   max-height: 100%;
   object-fit: contain;
   border-radius: 7px;
+}
+/* The image stays rendered (not display: none) while loading, otherwise lazy images never load */
+.title-group-preview-cover-only .cover-skeleton {
+  position: absolute;
+  inset: 0;
+}
+.title-group-preview-cover-only .cover-loading {
+  opacity: 0;
 }
 .title-group-preview-cover-only a:hover {
   background-color: transparent;

@@ -3,11 +3,10 @@
     <template #top-right>
       <slot name="top-right"></slot>
     </template>
-    <!-- While loading, reserve the height of one cover row (covers are 17% wide with a 2:3
-         aspect ratio, so the placeholder scales with the viewport) so this block does not push
-         the content below it down once the data arrives. -->
+    <!-- While loading, show one placeholder per cover (same 17% width and 2:3 ratio as the real
+         covers) so this block does not push the content below it down once the data arrives. -->
     <div class="last-uploads" :class="{ 'with-uploader': showUploader }" v-if="loading" aria-hidden="true">
-      <div class="title-group">
+      <div class="title-group" v-for="n in 5" :key="n">
         <Skeleton class="cover-placeholder" width="100%" height="auto" borderRadius="7px" />
         <div class="info-placeholder">&nbsp;</div>
       </div>

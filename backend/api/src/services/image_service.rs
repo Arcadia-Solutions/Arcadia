@@ -33,7 +33,10 @@ pub fn validate_image_url(image_url: &str, approved_image_hosts: &[String]) -> R
             approved_hosts: approved_image_hosts.to_vec(),
         })?;
 
-    if approved_image_hosts.iter().any(|h| h == image_host) {
+    if approved_image_hosts
+        .iter()
+        .any(|approved| matches_approved_host(image_host, parsed_url.path(), approved))
+    {
         return Ok(());
     }
 
@@ -41,6 +44,25 @@ pub fn validate_image_url(image_url: &str, approved_image_hosts: &[String]) -> R
         url: image_url.to_string(),
         approved_hosts: approved_image_hosts.to_vec(),
     })
+}
+
+/// An approved entry is either a bare host (`domain.com`) or a host followed by a path prefix
+/// (`domain.com/elysia`), in which case the url path must be that prefix or lie under it.
+fn matches_approved_host(host: &str, path: &str, approved: &str) -> bool {
+    let (approved_host, approved_path) = match approved.trim_end_matches('/').split_once('/') {
+        Some((h, p)) => (h, Some(p)),
+        None => (approved.trim_end_matches('/'), None),
+    };
+    if host != approved_host {
+        return false;
+    }
+    match approved_path {
+        None => true,
+        Some(prefix) => path
+            .strip_prefix('/')
+            .and_then(|p| p.strip_prefix(prefix))
+            .is_some_and(|rest| rest.is_empty() || rest.starts_with('/')),
+    }
 }
 
 /// Whether the url can be fetched without reaching the internal network, judging from the url
@@ -77,6 +99,26 @@ pub fn validate_trailer_urls(trailer_urls: &[String]) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn approved_hosts_with_path_prefix() {
+        let approved = vec!["imgur.com".to_string(), "domain.com/elysia".to_string()];
+        for url in [
+            "https://imgur.com/a.png",
+            "https://domain.com/elysia/a.png",
+            "https://domain.com/elysia/sub/a.png",
+        ] {
+            assert!(validate_image_url(url, &approved).is_ok(), "{url}");
+        }
+        for url in [
+            "https://domain.com/a.png",
+            "https://domain.com/elysiafake/a.png",
+            "https://domain.com/elysia/../other/a.png",
+            "https://evil.com/elysia/a.png",
+        ] {
+            assert!(validate_image_url(url, &approved).is_err(), "{url}");
+        }
+    }
 
     #[test]
     fn only_public_urls_are_public() {

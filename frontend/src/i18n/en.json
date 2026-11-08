@@ -1136,7 +1136,7 @@
     "bonus_points_alias": "Bonus points alias",
     "bonus_points_decimal_places": "Bonus points decimal places",
     "approved_image_hosts": "Approved image hosts",
-    "approved_image_hosts_hint": "Enter domains only, press enter to add",
+    "approved_image_hosts_hint": "Enter domains, optionally followed by a path (e.g. domain.com/elysia), press enter to add",
     "display_image_host_drag_and_drop": "Display image upload drag and drop",
     "upload_page_top_text": "Upload page top text",
     "automated_message_on_torrent_marked_trumpable": "Message sent after a torrent is marked as trumpable",

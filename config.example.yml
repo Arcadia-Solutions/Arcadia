@@ -337,6 +337,10 @@ frontend:
   # Typically the public URL of Elysia when it only serves its images to allowed referrers.
   # referrer_allowed_domains:
   #   - images.example.com
+  # Optional: public URLs of Elysia instances. Their images are displayed as their medium version
+  # in most places on the frontend, the original is only loaded when an image is enlarged (clicked on).
+  # elysia_public_urls:
+  #   - https://images.example.com
 
 # Optional: external sources (scrapers) provided by plugins running as separate services.
 # The `id` must not clash with a built in source (tmdb, musicbrainz, isbn, comic-vine), and is

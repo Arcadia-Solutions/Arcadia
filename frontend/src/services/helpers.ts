@@ -544,3 +544,12 @@ export const onFormKeydown = (event: KeyboardEvent) => {
 }
 
 export const referrerPolicy = (url: string | null | undefined) => referrerPolicyFor(url, config.referrer_allowed_domains ?? [])
+
+// `<elysia>/i/<file>` becomes `<elysia>/m/<file>`, which Elysia serves as the original when no medium was generated
+export const mediumImageUrl = (url: string) => {
+  for (const base of config.elysia_public_urls ?? []) {
+    const prefix = `${base.replace(/\/+$/, '')}/i/`
+    if (url.startsWith(prefix)) return `${prefix.slice(0, -3)}/m/${url.slice(prefix.length)}`
+  }
+  return url
+}

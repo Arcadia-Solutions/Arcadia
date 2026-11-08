@@ -21,6 +21,8 @@ export interface ArcadiaFrontendConfig {
   irc_webchat_guest_channels?: string[]
   /** Domains (`domain.com` or `domain.com/path`) sent the site's origin as referrer, every other one gets none. */
   referrer_allowed_domains?: string[]
+  /** Public URLs of Elysia instances: their images are displayed as their medium, the original only loads when enlarged. */
+  elysia_public_urls?: string[]
 }
 
 declare const __ARCADIA_CONFIG__: ArcadiaFrontendConfig

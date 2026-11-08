@@ -1,8 +1,8 @@
 <template>
   <Image
-    :src="imageLink"
+    :src="mediumImageUrl(imageLink)"
     :referrerpolicy="referrerPolicy(imageLink)"
-    :pt="{ original: { referrerpolicy: referrerPolicy(imageLink) } }"
+    :pt="{ original: { src: imageLink, referrerpolicy: referrerPolicy(imageLink) } }"
     :alt
     preview
     loading="lazy"
@@ -14,7 +14,7 @@
 </template>
 <script setup lang="ts">
 import { Image } from 'primevue'
-import { referrerPolicy } from '@/services/helpers'
+import { mediumImageUrl, referrerPolicy } from '@/services/helpers'
 
 defineProps<{
   imageLink: string

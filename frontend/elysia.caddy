@@ -2,7 +2,7 @@
 # Imported by frontend/Caddyfile and Caddyfile.example. Same routing as elysia/frontend/Caddyfile.
 redir /elysia /elysia/
 handle_path /elysia/* {
-	@backend path_regexp ^/(api|api-docs|swagger-ui|t)/|^/i/[^/]+\.[^/]+$
+	@backend path_regexp ^/(api|api-docs|swagger-ui|m|t)/|^/i/[^/]+\.[^/]+$
 	handle @backend {
 		reverse_proxy elysia_backend:8090
 	}

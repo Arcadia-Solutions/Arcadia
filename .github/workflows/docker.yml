@@ -1,0 +1,46 @@
+name: Docker images
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [backend, init_db, tracker, frontend, backup_cron]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # the frontend image bundles Elysia's web UI from the submodule
+          submodules: true
+
+      - name: Setup configuration
+        run: cp config.ci.yml config.yml
+
+      # the default docker driver cannot export to the gha cache
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build
+        uses: docker/bake-action@v6
+        with:
+          # the local checkout rather than the git context, which lacks config.yml
+          source: .
+          files: compose.yml
+          targets: ${{ matrix.service }}
+          set: |
+            *.cache-from=type=gha,scope=${{ matrix.service }}
+            *.cache-to=type=gha,scope=${{ matrix.service }},mode=max

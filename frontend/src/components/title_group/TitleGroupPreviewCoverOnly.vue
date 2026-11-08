@@ -1,7 +1,7 @@
 <template>
   <div class="title-group-preview-cover-only">
     <RouterLink :to="`/title-group/${titleGroup.id}`">
-      <Skeleton v-if="!coverLoaded" class="cover-skeleton" width="100%" height="100%" borderRadius="7px" />
+      <Skeleton v-if="!coverLoaded" style="position: absolute; inset: 0" width="100%" height="100%" borderRadius="7px" />
       <img
         :class="{ 'cover-loading': !coverLoaded }"
         @load="coverLoaded = true"
@@ -72,10 +72,6 @@ const coverLoaded = ref(!props.titleGroup.covers[0])
   border-radius: 7px;
 }
 /* The image stays rendered (not display: none) while loading, otherwise lazy images never load */
-.title-group-preview-cover-only .cover-skeleton {
-  position: absolute;
-  inset: 0;
-}
 .title-group-preview-cover-only .cover-loading {
   opacity: 0;
 }

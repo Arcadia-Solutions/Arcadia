@@ -33,6 +33,16 @@ pub struct Config {
     /// The service (Elysia) allowed to SSO its users via Arcadia's OpenID Connect provider.
     #[serde(default)]
     pub oidc: Option<OidcConfig>,
+    #[serde(default)]
+    pub frontend: FrontendConfig,
+}
+
+/// The only part of the frontend section the API needs.
+#[derive(Clone, Default, Deserialize)]
+pub struct FrontendConfig {
+    /// Domains sent the site's origin as referrer, every other one gets none.
+    #[serde(default)]
+    pub referrer_allowed_domains: Vec<String>,
 }
 
 #[derive(Clone, Deserialize)]

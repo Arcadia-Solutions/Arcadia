@@ -19,6 +19,8 @@ import {
   StatsInterval,
   OrderByDirection,
 } from './api-schema'
+import { config } from '@/config'
+import { referrerPolicyFor } from './referrerPolicy'
 
 const videoContentTypes: ContentType[] = [ContentType.Movie, ContentType.TvShow, ContentType.Video, ContentType.LivePerformance, ContentType.Collection]
 const audioContentTypes: ContentType[] = [...videoContentTypes, ContentType.Music, ContentType.Podcast]
@@ -540,3 +542,5 @@ export const onFormKeydown = (event: KeyboardEvent) => {
     event.preventDefault()
   }
 }
+
+export const referrerPolicy = (url: string | null | undefined) => referrerPolicyFor(url, config.referrer_allowed_domains ?? [])

@@ -329,6 +329,14 @@ frontend:
   # only channels closed with the +r (registered-only) channel mode.
   irc_webchat_guest_channels:
     - "#help"
+  # Optional: domains sent the site's origin as referrer (never the page path), every other one
+  # gets no referrer at all. An entry is a host (`domain.com`) or a host followed by a path
+  # (`domain.com/elysia`) to only match the urls under it. Applied to the frontend's images, links
+  # and iframes at build time, to the custom front page and to the CSS sheets served by the API,
+  # which send the origin only if every url in them is allowed.
+  # Typically the public URL of Elysia when it only serves its images to allowed referrers.
+  # referrer_allowed_domains:
+  #   - images.example.com
 
 # Optional: external sources (scrapers) provided by plugins running as separate services.
 # The `id` must not clash with a built in source (tmdb, musicbrainz, isbn, comic-vine), and is

@@ -2,6 +2,17 @@ import bbobHTML from '@bbob/html'
 import presetHTML5 from '@bbob/preset-html5'
 import DOMPurify from 'dompurify'
 import { isEOL } from '@bbob/plugin-helper'
+import { referrerPolicy } from '@/services/helpers'
+import { URL_ATTRIBUTES } from '@/services/referrerPolicy'
+
+// v-html content is not compiled, so it misses the referrerpolicy the templates get at build time.
+// DOMPurify strips any referrerpolicy from the input, this one is the only one the element gets.
+DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+  const urlAttribute = URL_ATTRIBUTES[node.nodeName.toLowerCase()]
+  if (!urlAttribute) return
+  const policy = referrerPolicy(node.getAttribute(urlAttribute))
+  if (policy) node.setAttribute('referrerpolicy', policy)
+})
 
 export function parseBBCode(bbcode: string): string {
   if (!bbcode) return ''

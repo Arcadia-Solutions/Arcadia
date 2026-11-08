@@ -1,4 +1,4 @@
-use crate::Arcadia;
+use crate::{Arcadia, services::image_service::css_referrer_policy};
 use actix_web::{
     HttpResponse,
     web::{Data, Path},
@@ -28,5 +28,10 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
             "no-store, no-cache, must-revalidate, max-age=0",
         ))
         .insert_header(("Pragma", "no-cache"))
+        // the images of a sheet ignore the page's referrer policy and follow this header
+        .insert_header((
+            "Referrer-Policy",
+            css_referrer_policy(&css, &arc.frontend.referrer_allowed_domains),
+        ))
         .body(css))
 }

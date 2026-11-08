@@ -4,6 +4,7 @@ import { resolve } from 'node:path'
 
 import { defineConfig, type Plugin } from 'vite'
 import { primeTrimPlugin } from './vite-plugins/prime-trim'
+import { addReferrerPolicies, addReferrerPoliciesToDirectory, referrerPolicyTransform } from './vite-plugins/referrer-policy'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import { parse } from 'yaml'
@@ -19,6 +20,8 @@ const configuration = parse(readFileSync(configurationPath, 'utf8'))
 if (!configuration?.frontend) {
   throw new Error(`no 'frontend' section found in ${configurationPath}`)
 }
+
+const referrerAllowedDomains: string[] = configuration.frontend.referrer_allowed_domains ?? []
 
 const customIconsPlugin = (): Plugin => {
   const virtualModuleId = 'virtual:custom-icons.css'
@@ -109,7 +112,8 @@ const kiwiDevServer = (): Plugin => ({
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    vue(),
+    // PrimeVue renders its own elements, ImagePreview passes them the referrerpolicy by hand
+    vue({ template: { compilerOptions: { nodeTransforms: [referrerPolicyTransform(referrerAllowedDomains)] } } }),
     vueJsx(),
     kiwiDevServer(),
     customIconsPlugin(),
@@ -130,6 +134,8 @@ export default defineConfig({
       closeBundle() {
         if (!configuration.frontend.enable_custom_front_page) {
           rmSync(resolve(__dirname, 'dist/home'), { recursive: true, force: true })
+        } else if (existsSync(resolve(__dirname, 'dist/home'))) {
+          addReferrerPoliciesToDirectory(resolve(__dirname, 'dist/home'), referrerAllowedDomains)
         }
       },
     },
@@ -149,7 +155,7 @@ export default defineConfig({
             return next()
           }
           res.setHeader('Content-Type', 'text/html; charset=utf-8')
-          res.end(readFileSync(frontPage))
+          res.end(addReferrerPolicies(readFileSync(frontPage, 'utf8'), referrerAllowedDomains))
         })
       },
     },

@@ -19,6 +19,8 @@ export interface ArcadiaFrontendConfig {
   irc_websocket_url?: string
   /** Channels guests auto join from the webchat link of the login page. Empty hides the link. */
   irc_webchat_guest_channels?: string[]
+  /** Domains (`domain.com` or `domain.com/path`) sent the site's origin as referrer, every other one gets none. */
+  referrer_allowed_domains?: string[]
 }
 
 declare const __ARCADIA_CONFIG__: ArcadiaFrontendConfig

@@ -1,5 +1,6 @@
 import { createApp, toRaw } from 'vue'
 import App from './App.vue'
+import { referrerPolicy } from './services/helpers'
 import PrimeVue from 'primevue/config'
 import 'primeicons/primeicons.css'
 import 'virtual:custom-icons.css'
@@ -17,6 +18,8 @@ import en from './i18n/en.json'
 import fr from './i18n/fr.json'
 
 const app = createApp(App)
+// called by the referrerpolicy bindings the templates get at build time (vite-plugins/referrer-policy.ts)
+app.config.globalProperties.$referrerPolicy = referrerPolicy
 
 const CustomThemePreset = definePreset(Aura, {
   semantic: {

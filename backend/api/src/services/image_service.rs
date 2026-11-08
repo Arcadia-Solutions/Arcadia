@@ -1,4 +1,7 @@
+use std::sync::LazyLock;
+
 use arcadia_common::error::{Error, Result};
+use regex::Regex;
 use url::{Host, Url};
 
 use crate::services::ip_check::is_public;
@@ -48,7 +51,7 @@ pub fn validate_image_url(image_url: &str, approved_image_hosts: &[String]) -> R
 
 /// An approved entry is either a bare host (`domain.com`) or a host followed by a path prefix
 /// (`domain.com/elysia`), in which case the url path must be that prefix or lie under it.
-fn matches_approved_host(host: &str, path: &str, approved: &str) -> bool {
+pub fn matches_approved_host(host: &str, path: &str, approved: &str) -> bool {
     let (approved_host, approved_path) = match approved.trim_end_matches('/').split_once('/') {
         Some((h, p)) => (h, Some(p)),
         None => (approved.trim_end_matches('/'), None),
@@ -86,6 +89,36 @@ pub fn is_public_url(url: &Url) -> bool {
     }
 }
 
+/// Referrer policy of a CSS sheet, which applies to every url it loads at once: the origin is only
+/// sent when all its absolute urls (`//host` ones included) are under `referrer_allowed_domains`.
+pub fn css_referrer_policy(css: &str, referrer_allowed_domains: &[String]) -> &'static str {
+    // every absolute url anywhere in the sheet, comments included, to never miss one. Browsers read
+    // `\` as `/` and accept any number of slashes after the scheme, a malformed match only parses
+    // to a host that is not allowed.
+    static ABSOLUTE_URL: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r#"(?i)(?:https?:|[/\\]{2})[^\s'"()]*"#).unwrap());
+    // CSS escapes (`\/`, `\2f`, `\5c`...) can spell slashes the regex above cannot see
+    static ESCAPED_SLASH: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"(?i)\\(?:[/\\]|0*(?:2f|5c))").unwrap());
+    static BASE: LazyLock<Url> = LazyLock::new(|| Url::parse("https://relative.invalid").unwrap());
+    let all_allowed = !referrer_allowed_domains.is_empty()
+        && !ESCAPED_SLASH.is_match(css)
+        && ABSOLUTE_URL.find_iter(css).all(|found| {
+            BASE.join(found.as_str()).is_ok_and(|url| {
+                url.host_str().is_some_and(|host| {
+                    referrer_allowed_domains
+                        .iter()
+                        .any(|allowed| matches_approved_host(host, url.path(), allowed))
+                })
+            })
+        });
+    if all_allowed {
+        "strict-origin"
+    } else {
+        "no-referrer"
+    }
+}
+
 // trailers end up in a <video>/<iframe> src, any other scheme (javascript:, data:...) must never be stored
 pub fn validate_trailer_urls(trailer_urls: &[String]) -> Result<()> {
     for trailer_url in trailer_urls {
@@ -99,6 +132,31 @@ pub fn validate_trailer_urls(trailer_urls: &[String]) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn css_referrer_policy_needs_every_url_allowed() {
+        let allowed = vec!["domain.com/elysia".to_string()];
+        let only_allowed = ".a { background: url(https://domain.com/elysia/a.png) }
+            .b { background: url('//domain.com/elysia/b.png') } .c { background: url(/local.png) }";
+        assert_eq!(css_referrer_policy(only_allowed, &allowed), "strict-origin");
+        for css in [
+            ".a { background: url(https://domain.com/other/a.png) }",
+            ".a { background: url(\"//evil.com/a.png\") }",
+            "@import 'https://evil.com/a.css';",
+            "/* https://evil.com */",
+            ".a { background: url(https:/evil.com/a.png) }",
+            ".a { background: url('https:\\\\evil.com/a.png') }",
+            ".a { background: url(\\2f\\2f evil.com/a.png) }",
+            ".a { background: url(\\/\\/evil.com/a.png) }",
+        ] {
+            assert_eq!(
+                css_referrer_policy(&format!("{only_allowed} {css}"), &allowed),
+                "no-referrer",
+                "{css}"
+            );
+        }
+        assert_eq!(css_referrer_policy(".a { color: red }", &[]), "no-referrer");
+    }
 
     #[test]
     fn approved_hosts_with_path_prefix() {

@@ -1333,18 +1333,26 @@ impl ConnectionPool {
         .execute(&self.pool)
         .await?;
 
-        // Merge external_links from source into target (deduplicated)
+        // Append the source's covers, external_links and trailers to the target's,
+        // deduplicated while keeping first-occurrence order so the target's main cover stays first
         sqlx::query!(
             r#"
-            UPDATE title_groups
-            SET external_links = (
-                SELECT ARRAY(
-                    SELECT DISTINCT unnest(t.external_links || s.external_links)
-                    FROM title_groups t, title_groups s
-                    WHERE t.id = $2 AND s.id = $1
+            UPDATE title_groups t
+            SET
+                covers = ARRAY(
+                    SELECT value FROM unnest(t.covers || s.covers) WITH ORDINALITY merged(value, position)
+                    GROUP BY value ORDER BY MIN(position)
+                ),
+                external_links = ARRAY(
+                    SELECT value FROM unnest(t.external_links || s.external_links) WITH ORDINALITY merged(value, position)
+                    GROUP BY value ORDER BY MIN(position)
+                ),
+                trailers = ARRAY(
+                    SELECT value FROM unnest(t.trailers || s.trailers) WITH ORDINALITY merged(value, position)
+                    GROUP BY value ORDER BY MIN(position)
                 )
-            )
-            WHERE id = $2
+            FROM title_groups s
+            WHERE t.id = $2 AND s.id = $1
             "#,
             source_title_group_id,
             target_title_group_id

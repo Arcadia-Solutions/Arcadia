@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE title_groups t\n            SET\n                covers = ARRAY(\n                    SELECT value FROM unnest(t.covers || s.covers) WITH ORDINALITY merged(value, position)\n                    GROUP BY value ORDER BY MIN(position)\n                ),\n                external_links = ARRAY(\n                    SELECT value FROM unnest(t.external_links || s.external_links) WITH ORDINALITY merged(value, position)\n                    GROUP BY value ORDER BY MIN(position)\n                ),\n                trailers = ARRAY(\n                    SELECT value FROM unnest(t.trailers || s.trailers) WITH ORDINALITY merged(value, position)\n                    GROUP BY value ORDER BY MIN(position)\n                )\n            FROM title_groups s\n            WHERE t.id = $2 AND s.id = $1\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f2be283fb0971173cc195a8932978b35a167c48c9969bc4b2f84d71821a29cf1"
+}

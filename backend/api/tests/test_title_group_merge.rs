@@ -133,24 +133,30 @@ async fn test_merge_title_groups_moves_all_related_data(pool: PgPool) {
             .unwrap();
     assert_eq!(target_request_count.0, 1);
 
-    // External links: source had {source-only, shared}, target had {target-only, shared}
-    // After merge: target should have all 3 unique links
+    // Covers, external links and trailers: target's entries first, then source's new ones, deduplicated
     let target_title_group = pool.find_title_group(11).await.unwrap();
-    assert_eq!(target_title_group.external_links.len(), 3);
-    assert!(
-        target_title_group
-            .external_links
-            .contains(&"https://source-only.example.com".to_string())
+    assert_eq!(
+        target_title_group.covers,
+        [
+            "https://target-cover.example.com",
+            "https://shared-cover.example.com",
+            "https://source-cover.example.com"
+        ]
     );
-    assert!(
-        target_title_group
-            .external_links
-            .contains(&"https://target-only.example.com".to_string())
+    assert_eq!(
+        target_title_group.external_links,
+        [
+            "https://target-only.example.com",
+            "https://shared.example.com",
+            "https://source-only.example.com"
+        ]
     );
-    assert!(
-        target_title_group
-            .external_links
-            .contains(&"https://shared.example.com".to_string())
+    assert_eq!(
+        target_title_group.trailers,
+        [
+            "https://shared-trailer.example.com",
+            "https://source-trailer.example.com"
+        ]
     );
 
     // Conflicts keep the target's row

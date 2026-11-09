@@ -1,6 +1,6 @@
 import { config } from '@/config'
 import { showToast, i18n } from '@/main'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import { type SideEffect } from '../api-schema'
 import { formatBp, loginLocation, setLoggedInCookie } from '../helpers'
 import { refreshAccessToken } from './tokenRefresh'
@@ -30,6 +30,8 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   paramsSerializer: serializeParams,
+  // timeouts get ETIMEDOUT so ECONNABORTED only means the request was aborted (e.g. page navigation)
+  transitional: { clarifyTimeoutError: true },
 })
 
 api.interceptors.request.use(
@@ -88,6 +90,9 @@ api.interceptors.response.use(
       await setLoggedInCookie(false)
       window.location.replace(loginLocation())
       return new Promise(() => {})
+    }
+    if (axios.isCancel(error) || error.code === AxiosError.ECONNABORTED) {
+      return Promise.reject(error)
     }
     if (error.response && error.response.data && error.response.data.error) {
       showToast('error', error.response.data.error, 'error', 4000)

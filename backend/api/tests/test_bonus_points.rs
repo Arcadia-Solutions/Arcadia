@@ -1,7 +1,11 @@
+use crate::common::{TestUser, auth_header, create_test_app_and_login};
+use crate::mocks::mock_redis::MockRedisPool;
+use actix_web::test::{TestRequest, call_service, read_body_json};
 use arcadia_periodic_tasks::{
     config::formula_to_sql, periodic_tasks::bonus_points::update_seedtime_and_bonus_points,
 };
 use arcadia_storage::connection_pool::ConnectionPool;
+use serde_json::{Value, json};
 use sqlx::PgPool;
 use std::borrow::Borrow;
 use std::sync::Arc;
@@ -214,4 +218,42 @@ async fn test_bonus_points_only_rewarded_for_staff_checked_torrents(pool: PgPool
         .unwrap();
 
     assert_eq!(user_100_bonus.0, 1);
+}
+
+#[sqlx::test(
+    fixtures("with_test_users", "with_bonus_points_per_endpoint"),
+    migrations = "../storage/migrations"
+)]
+async fn test_side_effects_award_bonus_points_of_the_matching_endpoint(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) = create_test_app_and_login(
+        Arc::clone(&pool),
+        MockRedisPool::default(),
+        TestUser::Standard,
+    )
+    .await;
+    let bonus_points_before = pool.find_user_with_id(100).await.unwrap().bonus_points;
+
+    let request = TestRequest::get()
+        .uri("/api/users/me")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+    let body: Value = read_body_json(call_service(&service, request).await).await;
+    assert_eq!(
+        body["side_effects"],
+        json!([{ "type": "bonus_points", "amount": 7 }])
+    );
+
+    // matches a rule that never awards anything
+    let request = TestRequest::get()
+        .uri("/api/user-badges")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+    let body: Value = read_body_json(call_service(&service, request).await).await;
+    assert_eq!(body["side_effects"], json!([]));
+
+    assert_eq!(
+        pool.find_user_with_id(100).await.unwrap().bonus_points,
+        bonus_points_before + 7
+    );
 }

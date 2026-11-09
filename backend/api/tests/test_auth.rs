@@ -4,10 +4,13 @@ use actix_web::{
     test::{TestRequest, call_service, read_body},
 };
 use arcadia_api::config::Config;
+use arcadia_storage::models::user::{Claims, TokenType};
 use arcadia_storage::services::token_invalidation_service::InvalidationEntry;
 use arcadia_storage::{
     connection_pool::ConnectionPool, models::user::RefreshToken, redis::RedisInterface,
 };
+use chrono::{TimeDelta, Utc};
+use jsonwebtoken::{EncodingKey, Header, encode};
 use mocks::mock_redis::MockRedisPool;
 use serde::{Deserialize, Serialize};
 use serde_json::to_string;
@@ -765,4 +768,34 @@ async fn test_access_and_refresh_tokens_are_not_interchangeable(pool: PgPool) {
         .to_request();
     let resp = call_service(&service, req).await;
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+async fn test_expired_token_is_rejected(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let service = create_test_app(pool, MockRedisPool::default()).await;
+
+    let config = arcadia_shared::config::load::<Config>();
+    let issued_at = Utc::now() - TimeDelta::hours(2);
+    let claims = Claims {
+        sub: 100,
+        exp: (issued_at + TimeDelta::hours(1)).timestamp(),
+        iat: issued_at.timestamp(),
+        typ: TokenType::Access,
+        jti: None,
+    };
+    let expired_token = encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(config.api.jwt_secret.as_bytes()),
+    )
+    .unwrap();
+
+    let request = TestRequest::get()
+        .uri("/api/users/me")
+        .insert_header(auth_header(&expired_token))
+        .to_request();
+    let response = call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    assert_eq!(read_body(response).await, "jwt token expired");
 }

@@ -1,4 +1,5 @@
 use crate::{common, mocks};
+use common::create_test_app;
 
 use actix_http::Request;
 use actix_web::{
@@ -188,4 +189,17 @@ async fn test_user_cannot_delete_the_api_key_of_another_user(pool: PgPool) {
     let response = test::call_service(&service, req).await;
 
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+async fn test_unknown_api_key_is_rejected(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let service = create_test_app(pool, MockRedisPool::default()).await;
+
+    let request = test::TestRequest::get()
+        .uri("/api/users/me")
+        .insert_header(("api-key", "unknown_api_key"))
+        .to_request();
+    let response = test::call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 }

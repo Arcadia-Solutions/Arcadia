@@ -38,6 +38,7 @@ mod test_gift;
 mod test_http_proxy;
 mod test_image_host;
 mod test_invitations;
+mod test_irc_auth;
 mod test_mass_conversation;
 mod test_notifications;
 mod test_oauth_flow;

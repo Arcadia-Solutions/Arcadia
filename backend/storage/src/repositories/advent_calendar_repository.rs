@@ -322,23 +322,32 @@ impl ConnectionPool {
         self.find_advent_calendar(calendar_id).await
     }
 
+    /// users who can manage advent calendars get the button text of the published calendar even if it isn't running
     pub async fn find_running_advent_calendar_button_text(
         &self,
         now: DateTime<Utc>,
+        user_id: i32,
     ) -> Result<Option<String>> {
         let button_text = sqlx::query_scalar!(
             r#"
                 SELECT calendars.button_text
                 FROM advent_calendars calendars
                 WHERE calendars.published = TRUE
-                    AND calendars.starts_at <= $1
-                    AND calendars.starts_at + INTERVAL '1 minute' * (
-                        SELECT COALESCE(SUM(doors.duration_minutes), 0)
-                        FROM advent_calendar_doors doors
-                        WHERE doors.calendar_id = calendars.id
-                    ) > $1
+                    AND (EXISTS(
+                        SELECT 1 FROM users
+                        WHERE users.id = $2
+                            AND 'manage_advent_calendars' = ANY(users.permissions)
+                    ) OR (
+                        calendars.starts_at <= $1
+                        AND calendars.starts_at + INTERVAL '1 minute' * (
+                            SELECT COALESCE(SUM(doors.duration_minutes), 0)
+                            FROM advent_calendar_doors doors
+                            WHERE doors.calendar_id = calendars.id
+                        ) > $1
+                    ))
             "#,
-            now
+            now,
+            user_id
         )
         .fetch_optional(&self.pool)
         .await?;

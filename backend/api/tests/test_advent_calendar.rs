@@ -585,7 +585,7 @@ async fn test_update_calendar_keeps_openings_of_kept_doors(pool: PgPool) {
 }
 
 #[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
-async fn test_public_settings_button_text_only_while_running(pool: PgPool) {
+async fn test_public_settings_button_text_visibility(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
         pool,
@@ -593,21 +593,22 @@ async fn test_public_settings_button_text_only_while_running(pool: PgPool) {
         TestUser::ManageAdventCalendars,
     )
     .await;
+    let user = login_as(&service, TestUser::Standard).await;
 
     let button_text = |service_response: serde_json::Value| {
         service_response["running_advent_calendar_button_text"].clone()
     };
-    let public_settings_request = || {
-        test::TestRequest::get()
+    let button_text_for = async |token: &str| {
+        let request = test::TestRequest::get()
             .uri("/api/arcadia-settings/public")
-            .insert_header(auth_header(&staff.token))
-            .to_request()
+            .insert_header(auth_header(token))
+            .to_request();
+        let settings: serde_json::Value =
+            call_and_read_body_json_with_status(&service, request, StatusCode::OK).await;
+        button_text(settings)
     };
 
-    let settings: serde_json::Value =
-        call_and_read_body_json_with_status(&service, public_settings_request(), StatusCode::OK)
-            .await;
-    assert_eq!(button_text(settings), serde_json::Value::Null);
+    assert_eq!(button_text_for(&staff.token).await, serde_json::Value::Null);
 
     let mut payload = calendar(Utc::now() + Duration::hours(1), true, vec![door("Day 1")]);
     let created: AdventCalendar = call_and_read_body_json_with_status(
@@ -616,10 +617,8 @@ async fn test_public_settings_button_text_only_while_running(pool: PgPool) {
         StatusCode::OK,
     )
     .await;
-    let settings: serde_json::Value =
-        call_and_read_body_json_with_status(&service, public_settings_request(), StatusCode::OK)
-            .await;
-    assert_eq!(button_text(settings), serde_json::Value::Null);
+    assert_eq!(button_text_for(&user.token).await, serde_json::Value::Null);
+    assert_eq!(button_text_for(&staff.token).await, "Advent calendar");
 
     payload.starts_at = Utc::now() - Duration::hours(1);
     payload.doors[0].id = Some(created.doors[0].id);
@@ -630,10 +629,7 @@ async fn test_public_settings_button_text_only_while_running(pool: PgPool) {
         .to_request();
     let _: AdventCalendar =
         call_and_read_body_json_with_status(&service, request, StatusCode::OK).await;
-    let settings: serde_json::Value =
-        call_and_read_body_json_with_status(&service, public_settings_request(), StatusCode::OK)
-            .await;
-    assert_eq!(button_text(settings), "Advent calendar");
+    assert_eq!(button_text_for(&user.token).await, "Advent calendar");
 }
 
 #[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]

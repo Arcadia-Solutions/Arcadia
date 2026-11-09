@@ -1,4 +1,4 @@
-use crate::Arcadia;
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use actix_web::{HttpResponse, web::Data};
 use arcadia_common::error::Result;
 use arcadia_storage::{models::arcadia_settings::PublicArcadiaSettings, redis::RedisPoolInterface};
@@ -16,11 +16,14 @@ use chrono::Utc;
         (status = 200, description = "Successfully retrieved Arcadia public settings", body=PublicArcadiaSettings),
     )
 )]
-pub async fn exec<R: RedisPoolInterface + 'static>(arc: Data<Arcadia<R>>) -> Result<HttpResponse> {
+pub async fn exec<R: RedisPoolInterface + 'static>(
+    arc: Data<Arcadia<R>>,
+    user: Authdata,
+) -> Result<HttpResponse> {
     let settings = arc.settings.lock().unwrap().clone();
     let running_advent_calendar_button_text = arc
         .pool
-        .find_running_advent_calendar_button_text(Utc::now())
+        .find_running_advent_calendar_button_text(Utc::now(), user.sub)
         .await?;
     Ok(HttpResponse::Ok().json(PublicArcadiaSettings {
         global_download_factor: settings.global_download_factor,

@@ -13,10 +13,7 @@ use std::sync::Arc;
 
 const BASIC_USER_ID: i32 = 100;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_staff_notes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_staff_notes"))]
 async fn test_get_user_staff_notes_requires_write_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -31,10 +28,7 @@ async fn test_get_user_staff_notes_requires_write_permission(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_staff_notes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_staff_notes"))]
 async fn test_note_writer_only_sees_own_notes(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -56,10 +50,7 @@ async fn test_note_writer_only_sees_own_notes(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_staff_notes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_staff_notes"))]
 async fn test_viewer_of_foreign_notes_sees_every_note(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -79,10 +70,7 @@ async fn test_viewer_of_foreign_notes_sees_every_note(pool: PgPool) {
     assert_eq!(notes.len(), 3);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_staff_notes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_staff_notes"))]
 async fn test_staff_can_create_note(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -105,10 +93,7 @@ async fn test_staff_can_create_note(pool: PgPool) {
     assert_eq!(note.content, "A brand new note");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_staff_notes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_staff_notes"))]
 async fn test_author_can_edit_and_delete_own_recent_note_without_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -156,10 +141,7 @@ async fn test_author_can_edit_and_delete_own_recent_note_without_permission(pool
     assert_eq!(remaining.len(), 1);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_staff_notes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_staff_notes"))]
 async fn test_author_cannot_edit_note_older_than_the_window(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -178,10 +160,7 @@ async fn test_author_cannot_edit_note_older_than_the_window(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_staff_notes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_staff_notes"))]
 async fn test_note_writer_cannot_edit_note_of_another_user(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -200,10 +179,7 @@ async fn test_note_writer_cannot_edit_note_of_another_user(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_staff_notes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_staff_notes"))]
 async fn test_permission_holder_can_edit_and_delete_old_note_of_another_user(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -228,10 +204,7 @@ async fn test_permission_holder_can_edit_and_delete_old_note_of_another_user(poo
     assert_eq!(resp.status(), StatusCode::OK);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_staff_notes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_staff_notes"))]
 async fn test_note_of_another_user_is_not_found(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

@@ -8,26 +8,23 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_artist",
-        "with_test_series",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_affiliated_artist",
-        "with_test_title_group_comments",
-        "with_test_torrent_request",
-        "with_test_torrent_request_vote",
-        "with_test_collage",
-        "with_test_collage_entry",
-        "with_test_peers",
-        "with_test_title_group_hierarchy",
-        "with_test_title_group_bookmark",
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_artist",
+    "with_test_series",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_affiliated_artist",
+    "with_test_title_group_comments",
+    "with_test_torrent_request",
+    "with_test_torrent_request_vote",
+    "with_test_collage",
+    "with_test_collage_entry",
+    "with_test_peers",
+    "with_test_title_group_hierarchy",
+    "with_test_title_group_bookmark",
+))]
 async fn test_get_title_group_hierarchy_returns_all_associated_data(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

@@ -12,10 +12,7 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_staff_pm"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_staff_pm"))]
 async fn test_cannot_reply_to_resolved_staff_pm(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -37,10 +34,7 @@ async fn test_cannot_reply_to_resolved_staff_pm(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_staff_pm"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_staff_pm"))]
 async fn test_staff_pm_is_only_visible_to_its_creator_and_staff(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(pool, MockRedisPool::default()).await;
@@ -70,10 +64,7 @@ async fn test_staff_pm_is_only_visible_to_its_creator_and_staff(pool: PgPool) {
     }
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_staff_pm"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_staff_pm"))]
 async fn test_staff_pm_can_only_be_unresolved_by_its_creator_or_with_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(pool, MockRedisPool::default()).await;

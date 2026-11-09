@@ -1,0 +1,2 @@
+[migrate]
+migrations-dir = "../../backend/storage/migrations"

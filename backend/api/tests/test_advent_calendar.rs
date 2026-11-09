@@ -86,7 +86,7 @@ fn create_request(token: &str, payload: &UserCreatedAdventCalendar) -> actix_htt
         .to_request()
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_create_and_get_advent_calendar(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -132,7 +132,7 @@ async fn test_create_and_get_advent_calendar(pool: PgPool) {
     assert_eq!(fetched.doors[1].settings.bonus_points_max, 50);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_update_calendar_reorders_and_removes_doors(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -185,7 +185,7 @@ async fn test_update_calendar_reorders_and_removes_doors(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_publish_second_calendar_conflicts(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -202,7 +202,7 @@ async fn test_publish_second_calendar_conflicts(pool: PgPool) {
     assert_eq!(second.status(), StatusCode::CONFLICT);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_create_calendar_rejects_invalid_rewards(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -237,7 +237,7 @@ fn published_request(token: &str) -> actix_http::Request {
         .to_request()
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_open_door_applies_rewards(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -320,7 +320,7 @@ async fn test_open_door_applies_rewards(pool: PgPool) {
     assert_eq!(logs.results[0].amount, 50);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_open_door_twice_fails(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -354,7 +354,7 @@ async fn test_open_door_twice_fails(pool: PgPool) {
     assert_eq!(after_second.bonus_points, after_first.bonus_points);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_download_removed_clamps_to_zero(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -388,7 +388,7 @@ async fn test_download_removed_clamps_to_zero(pool: PgPool) {
     assert_eq!(after.downloaded, 0);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_wrong_passphrase_rejected(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -422,7 +422,7 @@ async fn test_wrong_passphrase_rejected(pool: PgPool) {
     assert_eq!(right.status(), StatusCode::OK);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_locked_and_missed_doors_not_openable(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -469,7 +469,7 @@ async fn test_locked_and_missed_doors_not_openable(pool: PgPool) {
     assert_eq!(within_grace.status(), StatusCode::OK);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_published_calendar_hides_unopened_content(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -535,7 +535,7 @@ async fn test_published_calendar_hides_unopened_content(pool: PgPool) {
     );
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_update_calendar_keeps_openings_of_kept_doors(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -584,7 +584,7 @@ async fn test_update_calendar_keeps_openings_of_kept_doors(pool: PgPool) {
     assert_eq!(published.doors[0].state, AdventCalendarDoorState::Opened);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_public_settings_button_text_visibility(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -632,7 +632,7 @@ async fn test_public_settings_button_text_visibility(pool: PgPool) {
     assert_eq!(button_text_for(&user.token).await, "Advent calendar");
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_reset_own_progress_allows_reopening(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(

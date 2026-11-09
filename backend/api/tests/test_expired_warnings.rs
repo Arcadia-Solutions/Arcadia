@@ -2,10 +2,7 @@ use arcadia_storage::connection_pool::ConnectionPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures("with_expired_warnings"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_expired_warnings"))]
 async fn test_clears_warned_for_user_with_only_expired_warnings(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -20,10 +17,7 @@ async fn test_clears_warned_for_user_with_only_expired_warnings(pool: PgPool) {
     assert_eq!(warnings.len(), 1);
 }
 
-#[sqlx::test(
-    fixtures("with_expired_warnings"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_expired_warnings"))]
 async fn test_keeps_warned_for_user_with_active_warning(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -33,10 +27,7 @@ async fn test_keeps_warned_for_user_with_active_warning(pool: PgPool) {
     assert!(pool.is_user_warned(301).await.unwrap());
 }
 
-#[sqlx::test(
-    fixtures("with_expired_warnings"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_expired_warnings"))]
 async fn test_keeps_warned_for_user_with_permanent_warning(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -46,10 +37,7 @@ async fn test_keeps_warned_for_user_with_permanent_warning(pool: PgPool) {
     assert!(pool.is_user_warned(302).await.unwrap());
 }
 
-#[sqlx::test(
-    fixtures("with_expired_warnings"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_expired_warnings"))]
 async fn test_unbans_user_with_only_expired_ban_warning(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -64,10 +52,7 @@ async fn test_unbans_user_with_only_expired_ban_warning(pool: PgPool) {
     assert_eq!(warnings.len(), 1);
 }
 
-#[sqlx::test(
-    fixtures("with_expired_warnings"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_expired_warnings"))]
 async fn test_keeps_ban_when_active_ban_warning_exists(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -78,10 +63,7 @@ async fn test_keeps_ban_when_active_ban_warning_exists(pool: PgPool) {
     assert!(pool.is_user_warned(304).await.unwrap());
 }
 
-#[sqlx::test(
-    fixtures("with_expired_warnings"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_expired_warnings"))]
 async fn test_keeps_warned_when_mixed_expired_and_active_warnings(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -95,10 +77,7 @@ async fn test_keeps_warned_when_mixed_expired_and_active_warnings(pool: PgPool) 
     assert_eq!(warnings.len(), 2);
 }
 
-#[sqlx::test(
-    fixtures("with_expired_warnings"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_expired_warnings"))]
 async fn test_is_idempotent(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 

@@ -13,10 +13,7 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_approved_image_hosts"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_approved_image_hosts"))]
 async fn test_approved_image_host_allows_valid_urls(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -41,10 +38,7 @@ async fn test_approved_image_host_allows_valid_urls(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::CREATED);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_approved_image_hosts"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_approved_image_hosts"))]
 async fn test_approved_image_host_rejects_unapproved_urls(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -69,10 +63,7 @@ async fn test_approved_image_host_rejects_unapproved_urls(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_approved_image_hosts"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_approved_image_hosts"))]
 async fn test_user_avatar_rejects_unapproved_host(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -95,10 +86,7 @@ async fn test_user_avatar_rejects_unapproved_host(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_approved_image_hosts"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_approved_image_hosts"))]
 async fn test_user_avatar_allows_approved_host(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -121,7 +109,7 @@ async fn test_user_avatar_allows_approved_host(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::OK);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_empty_approved_image_hosts_allows_all_urls(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -146,7 +134,7 @@ async fn test_empty_approved_image_hosts_allows_all_urls(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::CREATED);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_title_group_rejects_non_http_trailer(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

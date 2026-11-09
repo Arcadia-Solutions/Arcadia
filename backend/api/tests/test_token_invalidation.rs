@@ -15,7 +15,7 @@ use crate::{
     mocks::mock_redis::{MockRedis, MockRedisPool},
 };
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_reject_invalidated_tokens(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let redis_pool = MockRedisPool::default();

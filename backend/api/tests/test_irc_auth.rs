@@ -42,10 +42,7 @@ async fn irc_login(
     read_body_json(response).await
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_irc_password"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_irc_password"))]
 async fn test_irc_auth_accepts_the_raw_password(pool: PgPool) {
     // ergo reads the answer as is, so it must not be wrapped in the side effects envelope
     let answer = irc_login(
@@ -58,10 +55,7 @@ async fn test_irc_auth_accepts_the_raw_password(pool: PgPool) {
     assert_eq!(answer, json!({ "success": true }));
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_irc_password"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_irc_password"))]
 async fn test_irc_auth_accepts_the_password_prefixed_with_the_account_name(pool: PgPool) {
     let answer = irc_login(
         pool,
@@ -73,19 +67,13 @@ async fn test_irc_auth_accepts_the_password_prefixed_with_the_account_name(pool:
     assert_eq!(answer["success"], true);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_irc_password"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_irc_password"))]
 async fn test_irc_auth_rejects_a_wrong_password(pool: PgPool) {
     let answer = irc_login(pool, Some(CALLBACK_TOKEN), "user_basic", "wrong_password").await;
     assert_eq!(answer["success"], false);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_irc_password"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_irc_password"))]
 async fn test_irc_auth_rejects_the_password_prefixed_with_another_account_name(pool: PgPool) {
     let answer = irc_login(
         pool,
@@ -97,19 +85,13 @@ async fn test_irc_auth_rejects_the_password_prefixed_with_another_account_name(p
     assert_eq!(answer["success"], false);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_irc_password"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_irc_password"))]
 async fn test_irc_auth_rejects_a_missing_callback_token(pool: PgPool) {
     let answer = irc_login(pool, None, "user_basic", "irc_secret_password").await;
     assert_eq!(answer["success"], false);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_irc_password"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_irc_password"))]
 async fn test_irc_auth_rejects_a_wrong_callback_token(pool: PgPool) {
     let answer = irc_login(
         pool,
@@ -121,26 +103,20 @@ async fn test_irc_auth_rejects_a_wrong_callback_token(pool: PgPool) {
     assert_eq!(answer["success"], false);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_irc_password"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_irc_password"))]
 async fn test_irc_auth_rejects_an_unknown_account(pool: PgPool) {
     let answer = irc_login(pool, Some(CALLBACK_TOKEN), "nobody", "irc_secret_password").await;
     assert_eq!(answer["success"], false);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_irc_auth_rejects_an_account_without_irc_password(pool: PgPool) {
     // an empty passphrase must not match the missing password
     let answer = irc_login(pool, Some(CALLBACK_TOKEN), "user_basic", "").await;
     assert_eq!(answer["success"], false);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_irc_password"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_irc_password"))]
 async fn test_irc_auth_fails_when_irc_is_disabled(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let mut config = arcadia_shared::config::load::<Config>();

@@ -12,14 +12,11 @@ use std::sync::Arc;
 // DELETE SUB-CATEGORY TESTS
 // ============================================================================
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category"
+))]
 async fn test_staff_can_delete_empty_sub_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -48,16 +45,13 @@ async fn test_staff_can_delete_empty_sub_category(pool: PgPool) {
     assert_eq!(resp2.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post"
+))]
 async fn test_delete_thread_decrements_author_forum_posts(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     pool.recompute_cached_amounts().await.unwrap();
@@ -80,15 +74,12 @@ async fn test_delete_thread_decrements_author_forum_posts(pool: PgPool) {
     assert_eq!(author.forum_posts, Some(3));
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread"
+))]
 async fn test_cannot_delete_sub_category_with_threads(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -108,14 +99,11 @@ async fn test_cannot_delete_sub_category_with_threads(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category"
+))]
 async fn test_non_staff_cannot_delete_sub_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -134,16 +122,13 @@ async fn test_non_staff_cannot_delete_sub_category(pool: PgPool) {
 // DELETE THREAD TESTS (CASCADE DELETE & COUNTER UPDATES)
 // ============================================================================
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post"
+))]
 async fn test_staff_can_delete_thread_with_posts(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -172,15 +157,12 @@ async fn test_staff_can_delete_thread_with_posts(pool: PgPool) {
     assert_eq!(resp2.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread"
+))]
 async fn test_non_staff_cannot_delete_thread(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -195,15 +177,12 @@ async fn test_non_staff_cannot_delete_thread(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread"
+))]
 async fn test_delete_thread_without_auth(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = common::create_test_app(pool, MockRedisPool::default()).await;
@@ -220,16 +199,13 @@ async fn test_delete_thread_without_auth(pool: PgPool) {
 // DELETE POST TESTS
 // ============================================================================
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post"
+))]
 async fn test_staff_can_delete_post(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -258,16 +234,13 @@ async fn test_staff_can_delete_post(pool: PgPool) {
     assert_eq!(resp2.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post"
+))]
 async fn test_non_staff_cannot_delete_post(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -282,16 +255,13 @@ async fn test_non_staff_cannot_delete_post(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post"
+))]
 async fn test_delete_post_without_auth(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = common::create_test_app(pool, MockRedisPool::default()).await;
@@ -304,7 +274,7 @@ async fn test_delete_post_without_auth(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_delete_nonexistent_post(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) =

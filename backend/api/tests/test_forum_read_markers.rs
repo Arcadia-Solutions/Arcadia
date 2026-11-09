@@ -17,16 +17,13 @@ use std::sync::Arc;
 // VIEWS COUNT TESTS
 // ============================================================================
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post"
+))]
 async fn test_views_count_increments_on_first_view(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -119,16 +116,13 @@ where
     (is_read, has_new_posts)
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post"
+))]
 async fn test_thread_is_unread_before_viewing_posts(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -139,16 +133,13 @@ async fn test_thread_is_unread_before_viewing_posts(pool: PgPool) {
     assert!(has_new_posts);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post"
+))]
 async fn test_thread_becomes_read_after_viewing_posts(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -168,14 +159,11 @@ async fn test_thread_becomes_read_after_viewing_posts(pool: PgPool) {
     assert!(!has_new_posts);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category"
+))]
 async fn test_thread_becomes_unread_after_new_post(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -240,14 +228,11 @@ async fn test_thread_becomes_unread_after_new_post(pool: PgPool) {
     assert!(has_new_posts);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category"
+))]
 async fn test_has_new_posts_clears_after_rereading(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

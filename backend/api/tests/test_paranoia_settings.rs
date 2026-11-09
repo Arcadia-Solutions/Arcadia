@@ -105,7 +105,7 @@ async fn hide_user_information<S>(
     );
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_paranoia_settings_hide_user_information(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, basic_user) =
@@ -158,17 +158,14 @@ async fn test_paranoia_settings_hide_user_information(pool: PgPool) {
     assert!(profile.user.forum_posts.is_some());
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrents_of_basic_user",
-        "with_test_snatch_of_basic_user",
-        "with_refreshed_title_group_hierarchy_lite"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrents_of_basic_user",
+    "with_test_snatch_of_basic_user",
+    "with_refreshed_title_group_hierarchy_lite"
+))]
 async fn test_hiding_a_count_also_hides_its_list(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, basic_user) =
@@ -217,17 +214,14 @@ async fn test_hiding_a_count_also_hides_its_list(pool: PgPool) {
     assert!(!profile.last_five_snatched_torrents.is_empty());
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrents_of_basic_user",
-        "with_test_snatch_of_basic_user",
-        "with_refreshed_title_group_hierarchy_lite"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrents_of_basic_user",
+    "with_test_snatch_of_basic_user",
+    "with_refreshed_title_group_hierarchy_lite"
+))]
 async fn test_paranoia_settings_hide_the_snatched_torrents_list(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, basic_user) =
@@ -306,17 +300,14 @@ async fn test_paranoia_settings_hide_the_snatched_torrents_list(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrents_of_basic_user",
-        "with_test_snatch_of_basic_user",
-        "with_refreshed_title_group_hierarchy_lite"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrents_of_basic_user",
+    "with_test_snatch_of_basic_user",
+    "with_refreshed_title_group_hierarchy_lite"
+))]
 async fn test_paranoia_settings_hide_the_uploaded_torrents_list(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, basic_user) =
@@ -390,7 +381,7 @@ async fn test_paranoia_settings_hide_the_uploaded_torrents_list(pool: PgPool) {
     );
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_paranoia_settings_hide_statistics_in_the_user_search(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, basic_user) =
@@ -438,15 +429,12 @@ async fn test_paranoia_settings_hide_statistics_in_the_user_search(pool: PgPool)
     assert!(found_user.seeding.is_some());
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrents_of_basic_user"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrents_of_basic_user"
+))]
 async fn test_updating_the_anonymity_of_all_uploaded_torrents(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, basic_user) =
@@ -479,16 +467,13 @@ async fn test_updating_the_anonymity_of_all_uploaded_torrents(pool: PgPool) {
     assert_eq!(settings.non_anonymous_uploaded_torrents, 0);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post"
+))]
 async fn test_paranoia_settings_hide_the_forum_posts_list(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, basic_user) =
@@ -537,15 +522,12 @@ async fn test_paranoia_settings_hide_the_forum_posts_list(pool: PgPool) {
     assert!(!posts.results.is_empty());
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_torrent_request",
-        "with_test_comments_of_the_basic_user"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_torrent_request",
+    "with_test_comments_of_the_basic_user"
+))]
 async fn test_paranoia_settings_hide_the_comment_lists(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, basic_user) =

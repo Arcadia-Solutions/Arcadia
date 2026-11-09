@@ -176,7 +176,7 @@ where
     read_raw_json(test::call_service(service, request).await, StatusCode::OK).await
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_oauth_roundtrip_and_ban(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_with_client_and_login(Arc::clone(&pool)).await;
@@ -223,7 +223,7 @@ async fn test_oauth_roundtrip_and_ban(pool: PgPool) {
     );
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_oauth_rejects_wrong_secret_and_pkce_mismatch(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_with_client_and_login(pool).await;
@@ -243,7 +243,7 @@ async fn test_oauth_rejects_wrong_secret_and_pkce_mismatch(pool: PgPool) {
     assert_eq!(wrong_verifier["error"], "invalid_grant");
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_oauth_untrusted_redirect(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_with_client_and_login(pool).await;
@@ -258,7 +258,7 @@ async fn test_oauth_untrusted_redirect(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_openid_configuration_uses_the_configured_issuer(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, _) = create_test_app_with_client_and_login(pool).await;

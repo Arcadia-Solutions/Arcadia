@@ -20,7 +20,7 @@ use std::sync::Arc;
 // CREATE USER CLASS TESTS
 // ============================================================================
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_staff_can_create_user_class(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -64,7 +64,7 @@ async fn test_staff_can_create_user_class(pool: PgPool) {
     assert_eq!(created.new_permissions.len(), 2);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_regular_user_cannot_create_user_class(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -102,7 +102,7 @@ async fn test_regular_user_cannot_create_user_class(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_create_user_class_requires_auth(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(pool, MockRedisPool::default()).await;
@@ -138,7 +138,7 @@ async fn test_create_user_class_requires_auth(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_create_user_class_with_invalid_name(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -181,10 +181,7 @@ async fn test_create_user_class_with_invalid_name(pool: PgPool) {
 // EDIT USER CLASS TESTS
 // ============================================================================
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_classes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_classes"))]
 async fn test_staff_can_edit_user_class(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -223,10 +220,7 @@ async fn test_staff_can_edit_user_class(pool: PgPool) {
     assert_eq!(updated.name, "advanced_user");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_classes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_classes"))]
 async fn test_edit_nonexistent_user_class(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -268,10 +262,7 @@ async fn test_edit_nonexistent_user_class(pool: PgPool) {
 // DELETE USER CLASS TESTS
 // ============================================================================
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_classes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_classes"))]
 async fn test_can_delete_user_class_with_migration(pool: PgPool) {
     let pool_arc = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -296,10 +287,7 @@ async fn test_can_delete_user_class_with_migration(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::OK);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_classes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_classes"))]
 async fn test_delete_with_nonexistent_target_class(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -319,10 +307,7 @@ async fn test_delete_with_nonexistent_target_class(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_classes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_classes"))]
 async fn test_delete_nonexistent_user_class(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -346,7 +331,7 @@ async fn test_delete_nonexistent_user_class(pool: PgPool) {
 // EDIT USER PERMISSIONS TESTS
 // ============================================================================
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_staff_can_edit_user_permissions(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -370,10 +355,7 @@ async fn test_staff_can_edit_user_permissions(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::OK);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_locked_user"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_locked_user"))]
 async fn test_cannot_edit_permissions_of_locked_user(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -401,7 +383,7 @@ async fn test_cannot_edit_permissions_of_locked_user(pool: PgPool) {
 // LOCK USER CLASS TESTS
 // ============================================================================
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_staff_can_lock_user_class(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -419,7 +401,7 @@ async fn test_staff_can_lock_user_class(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::OK);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_staff_can_unlock_user_class(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -443,10 +425,7 @@ async fn test_staff_can_unlock_user_class(pool: PgPool) {
 // CHANGE USER CLASS TESTS
 // ============================================================================
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_classes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_classes"))]
 async fn test_staff_can_change_user_class(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -466,10 +445,7 @@ async fn test_staff_can_change_user_class(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::OK);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_locked_user"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_locked_user"))]
 async fn test_cannot_change_class_of_locked_user(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -489,10 +465,7 @@ async fn test_cannot_change_class_of_locked_user(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_classes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_classes"))]
 async fn test_cannot_change_to_nonexistent_class(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -516,10 +489,7 @@ async fn test_cannot_change_to_nonexistent_class(pool: PgPool) {
 // 1-HOP PROMOTION/DEMOTION TESTS
 // ============================================================================
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_hierarchy_user_classes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_hierarchy_user_classes"))]
 async fn test_one_hop_promotion(pool: PgPool) {
     let pool_arc = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -542,10 +512,7 @@ async fn test_one_hop_promotion(pool: PgPool) {
     assert_eq!(user.permissions.len(), 2);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_hierarchy_user_classes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_hierarchy_user_classes"))]
 async fn test_one_hop_demotion(pool: PgPool) {
     let pool_arc = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -568,10 +535,7 @@ async fn test_one_hop_demotion(pool: PgPool) {
     assert_eq!(user.permissions.len(), 1);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_hierarchy_user_classes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_hierarchy_user_classes"))]
 async fn test_lateral_class_change_keeps_permissions(pool: PgPool) {
     let pool_arc = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -594,10 +558,7 @@ async fn test_lateral_class_change_keeps_permissions(pool: PgPool) {
     assert_eq!(user.permissions.len(), 1);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_hierarchy_user_classes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_hierarchy_user_classes"))]
 async fn test_edit_class_permissions_propagate_to_classes_above(pool: PgPool) {
     let pool_arc = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -690,10 +651,7 @@ async fn test_edit_class_permissions_propagate_to_classes_above(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_hierarchy_user_classes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_hierarchy_user_classes"))]
 async fn test_deduplicates_permissions(pool: PgPool) {
     let pool_arc = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -731,10 +689,7 @@ async fn test_deduplicates_permissions(pool: PgPool) {
 // USERS WITH STATS TESTS
 // ============================================================================
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_locked_user"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_locked_user"))]
 async fn test_get_users_with_stats_filters_and_paginates(pool: PgPool) {
     let pool = ConnectionPool::with_pg_pool(pool);
     let newbie_class = vec![String::from("newbie")];

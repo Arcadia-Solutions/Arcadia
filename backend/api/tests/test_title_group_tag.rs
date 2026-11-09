@@ -14,10 +14,7 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group_tag"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group_tag"))]
 async fn test_soft_delete_tag_then_recreate_is_rejected(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -68,10 +65,7 @@ async fn test_soft_delete_tag_then_recreate_is_rejected(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group_tag"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group_tag"))]
 async fn test_create_tag_returns_existing_non_deleted_tag(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -90,15 +84,12 @@ async fn test_create_tag_returns_existing_non_deleted_tag(pool: PgPool) {
     assert_eq!(response.id, 1);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_title_group_tag",
-        "with_test_title_group_tag_applied"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_title_group_tag",
+    "with_test_title_group_tag_applied"
+))]
 async fn test_delete_tag_removes_it_from_all_title_groups(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -133,10 +124,7 @@ async fn test_delete_tag_removes_it_from_all_title_groups(pool: PgPool) {
     assert!(title_group.tags.is_empty());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group_tag"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group_tag"))]
 async fn test_searching_deleted_tags(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, delete_user) = create_test_app_and_login(
@@ -191,10 +179,7 @@ async fn test_searching_deleted_tags(pool: PgPool) {
     assert!(deleted_tag.deleted_by.is_some());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group_tag"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group_tag"))]
 async fn test_restoring_deleted_tag(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, manage_user) = create_test_app_and_login(
@@ -239,16 +224,13 @@ async fn test_restoring_deleted_tag(pool: PgPool) {
     assert_eq!(response.results.len(), 1);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_title_group_tag",
-        "with_test_title_group_tag_applied",
-        "with_test_title_group_tag_merge_target"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_title_group_tag",
+    "with_test_title_group_tag_applied",
+    "with_test_title_group_tag_merge_target"
+))]
 async fn test_merging_tags(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, manage_user) = create_test_app_and_login(
@@ -279,14 +261,11 @@ async fn test_merging_tags(pool: PgPool) {
     assert_eq!(resolved_names, vec!["action.movies".to_string()]);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_title_group_tag"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_title_group_tag"
+))]
 async fn test_applying_deleted_tag_is_rejected(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, manage_user) = create_test_app_and_login(
@@ -318,10 +297,7 @@ async fn test_applying_deleted_tag_is_rejected(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group_tag_synonyms"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group_tag_synonyms"))]
 async fn test_resolving_scraped_tag_names(pool: PgPool) {
     let pool = ConnectionPool::with_pg_pool(pool);
 
@@ -340,15 +316,12 @@ async fn test_resolving_scraped_tag_names(pool: PgPool) {
     assert_eq!(resolved_names, vec!["science.fiction", "road.movie"]);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_title_group_tag",
-        "with_test_title_group_tag_applied"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_title_group_tag",
+    "with_test_title_group_tag_applied"
+))]
 async fn test_search_title_group_applied_tags(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, manage_user) = create_test_app_and_login(
@@ -404,16 +377,13 @@ async fn test_search_title_group_applied_tags(pool: PgPool) {
     assert_eq!(results.results[0].user_applied_tags_amount, 0);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_title_group_tag",
-        "with_test_title_group_tag_applied",
-        "with_test_title_group_tag_applied_by_title_group_creator"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_title_group_tag",
+    "with_test_title_group_tag_applied",
+    "with_test_title_group_tag_applied_by_title_group_creator"
+))]
 async fn test_search_title_group_applied_tags_excluding_title_group_creator(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, manage_user) = create_test_app_and_login(

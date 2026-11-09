@@ -51,17 +51,14 @@ fn peer(is_seeder: bool, is_active: bool, updated_at: DateTime<Utc>) -> Peer {
 ///
 /// Two torrents are used on purpose: expiration runs in parallel over the torrent store, so the
 /// peers removed by each thread have to end up attributed to the right torrent.
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_torrent_2",
-        "with_test_peers"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_torrent_2",
+    "with_test_peers"
+))]
 async fn test_reap_expires_stale_peers(pool: PgPool) {
     // Torrent 2 gets its own dead peer in the database, so that a peer removed by one thread
     // cannot be attributed to the torrent of another one without the deletion missing it
@@ -255,16 +252,13 @@ async fn test_reap_expires_stale_peers(pool: PgPool) {
 /// An announce can be flushed to the database between the moment reap marks the peer as inactive
 /// in memory and the moment it persists it, for example by the flush on shutdown. That newer row
 /// must stay active.
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_peers"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_peers"
+))]
 async fn test_reap_keeps_newer_announce_active_in_database(pool: PgPool) {
     let mut config = common::test_config();
     config.tracker.active_peer_ttl = ACTIVE_PEER_TTL;

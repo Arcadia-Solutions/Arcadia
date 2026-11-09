@@ -13,7 +13,7 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_get_user_settings(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -27,7 +27,7 @@ async fn test_get_user_settings(pool: PgPool) {
     let _ = call_and_read_body_json::<UserSettingsResponse, _>(&service, req).await;
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_update_user_settings(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -85,7 +85,7 @@ async fn test_update_user_settings(pool: PgPool) {
     assert!(updated_settings.settings.show_upload_method);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_get_user_settings_requires_auth(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(pool, MockRedisPool::default()).await;

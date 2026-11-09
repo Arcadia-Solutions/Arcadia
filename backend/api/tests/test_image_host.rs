@@ -20,7 +20,7 @@ struct UploadImageResponse {
     url: String,
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_uploading_an_image_to_elysia_keeps_the_uploader(pool: PgPool) {
     let (elysia_url, received_request) = spawn_http_server(
         "200 OK",

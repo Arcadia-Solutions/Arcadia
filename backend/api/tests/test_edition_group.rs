@@ -12,10 +12,7 @@ use serde_json::json;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"))]
 async fn test_user_with_permission_can_edit_edition_group(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -53,10 +50,7 @@ async fn test_user_with_permission_can_edit_edition_group(pool: PgPool) {
     assert_eq!(response.release_date, req_body.release_date);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"))]
 async fn test_user_without_permission_cannot_edit_edition_group(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -85,10 +79,7 @@ async fn test_user_without_permission_cannot_edit_edition_group(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"))]
 async fn test_user_with_permission_can_delete_edition_group(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -111,10 +102,7 @@ async fn test_user_with_permission_can_delete_edition_group(pool: PgPool) {
     assert!(result.is_err());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"))]
 async fn test_user_without_permission_cannot_delete_edition_group(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -133,10 +121,7 @@ async fn test_user_without_permission_cannot_delete_edition_group(pool: PgPool) 
     assert!(result.is_ok());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"))]
 async fn test_creator_can_delete_own_recent_edition_group(pool: PgPool) {
     let pool_arc = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -169,10 +154,7 @@ async fn test_creator_can_delete_own_recent_edition_group(pool: PgPool) {
     assert!(result.is_err());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"))]
 async fn test_creator_cannot_delete_old_edition_group(pool: PgPool) {
     let pool_arc = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -207,15 +189,12 @@ async fn test_creator_cannot_delete_old_edition_group(pool: PgPool) {
 
 // --- Move torrent to edition group tests ---
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_movable_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_movable_torrent"
+))]
 async fn test_user_with_permission_can_move_torrent(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -241,15 +220,12 @@ async fn test_user_with_permission_can_move_torrent(pool: PgPool) {
     assert_eq!(torrent.edition_group_id, 3);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_movable_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_movable_torrent"
+))]
 async fn test_user_with_permission_can_move_old_torrent(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -276,15 +252,12 @@ async fn test_user_with_permission_can_move_old_torrent(pool: PgPool) {
     assert_eq!(torrent.edition_group_id, 3);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_movable_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_movable_torrent"
+))]
 async fn test_creator_can_move_own_recent_torrent(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     // user_basic (id=100) is the creator of torrent 3 (created with NOW)
@@ -307,15 +280,12 @@ async fn test_creator_can_move_own_recent_torrent(pool: PgPool) {
     assert_eq!(torrent.edition_group_id, 3);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_movable_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_movable_torrent"
+))]
 async fn test_creator_cannot_move_own_old_torrent(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     // user_basic (id=100) is the creator of torrent 4 (created 48h ago)
@@ -339,15 +309,12 @@ async fn test_creator_cannot_move_own_old_torrent(pool: PgPool) {
     assert_eq!(torrent.edition_group_id, 1);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_movable_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_movable_torrent"
+))]
 async fn test_non_creator_without_permission_cannot_move_torrent(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     // user_edit_art (id=101) is NOT the creator of torrent 3
@@ -372,15 +339,12 @@ async fn test_non_creator_without_permission_cannot_move_torrent(pool: PgPool) {
     assert_eq!(torrent.edition_group_id, 1);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_movable_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_movable_torrent"
+))]
 async fn test_cannot_move_torrent_to_edition_group_in_different_title_group(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(

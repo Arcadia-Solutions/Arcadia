@@ -1,0 +1,2 @@
+[migrate]
+migrations-dir = "../storage/migrations"

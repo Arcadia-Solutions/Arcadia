@@ -16,10 +16,7 @@ use std::sync::Arc;
 // Search Donations Tests
 // ============================================================================
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_search_donations_requires_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -34,10 +31,7 @@ async fn test_search_donations_requires_permission(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_search_donations_with_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -60,10 +54,7 @@ async fn test_search_donations_with_permission(pool: PgPool) {
     assert_eq!(response.unique_donors_count, 4);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_search_donations_with_filters(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -84,10 +75,7 @@ async fn test_search_donations_with_filters(pool: PgPool) {
     assert_eq!(response.unique_donors_count, 1);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_search_donations_with_amount_filter(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -107,10 +95,7 @@ async fn test_search_donations_with_amount_filter(pool: PgPool) {
     assert_eq!(response.unique_donors_count, 2);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_search_donations_with_created_by_filter(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -133,10 +118,7 @@ async fn test_search_donations_with_created_by_filter(pool: PgPool) {
 // Create Donation Tests
 // ============================================================================
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_create_donation_requires_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -156,10 +138,7 @@ async fn test_create_donation_requires_permission(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_create_donation_with_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -185,10 +164,7 @@ async fn test_create_donation_with_permission(pool: PgPool) {
     assert_eq!(donation.created_by_id, 122); // user_don_crt
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_create_donation_with_invalid_amount(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -223,10 +199,7 @@ async fn test_create_donation_with_invalid_amount(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_create_donation_with_nonexistent_user(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -250,10 +223,7 @@ async fn test_create_donation_with_nonexistent_user(pool: PgPool) {
 // Edit Donation Tests
 // ============================================================================
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_edit_donation_as_creator_with_create_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -279,10 +249,7 @@ async fn test_edit_donation_as_creator_with_create_permission(pool: PgPool) {
     assert_eq!(donation.note, Some("Updated donation".to_string()));
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_edit_donation_as_non_creator_without_edit_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -305,10 +272,7 @@ async fn test_edit_donation_as_non_creator_without_edit_permission(pool: PgPool)
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_edit_donation_with_edit_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -334,10 +298,7 @@ async fn test_edit_donation_with_edit_permission(pool: PgPool) {
     assert_eq!(donation.note, Some("Edited by admin".to_string()));
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_edit_donation_with_invalid_amount(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -359,10 +320,7 @@ async fn test_edit_donation_with_invalid_amount(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_edit_nonexistent_donation(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -388,10 +346,7 @@ async fn test_edit_nonexistent_donation(pool: PgPool) {
 // Delete Donation Tests
 // ============================================================================
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_delete_donation_requires_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -409,10 +364,7 @@ async fn test_delete_donation_requires_permission(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_delete_donation_with_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -451,10 +403,7 @@ async fn test_delete_donation_with_permission(pool: PgPool) {
     assert_eq!(response.total_items, 5); // Down from 6
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_delete_nonexistent_donation(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -476,10 +425,7 @@ async fn test_delete_nonexistent_donation(pool: PgPool) {
 // Aggregates and Complex Query Tests
 // ============================================================================
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_search_donations_ordering(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -500,10 +446,7 @@ async fn test_search_donations_ordering(pool: PgPool) {
     assert_eq!(response.results[5].amount, 25.0);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_donations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_donations"))]
 async fn test_search_donations_pagination(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

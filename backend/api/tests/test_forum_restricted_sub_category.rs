@@ -18,15 +18,12 @@ use std::sync::Arc;
 // RESTRICTED THREAD CREATION TESTS
 // ============================================================================
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_restricted_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_restricted_forum_sub_category"
+))]
 async fn test_allowed_user_can_create_thread_in_restricted_sub_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -54,15 +51,12 @@ async fn test_allowed_user_can_create_thread_in_restricted_sub_category(pool: Pg
     assert_eq!(thread.forum_sub_category_id, 102);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_restricted_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_restricted_forum_sub_category"
+))]
 async fn test_non_allowed_user_cannot_create_thread_in_restricted_sub_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     // user_edit_art (id=101) has create_forum_thread permission but is NOT in the allowed posters
@@ -88,15 +82,12 @@ async fn test_non_allowed_user_cannot_create_thread_in_restricted_sub_category(p
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_restricted_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_restricted_forum_sub_category"
+))]
 async fn test_non_allowed_user_cannot_move_thread_into_restricted_sub_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     // user_edit_art (id=101) is NOT in the allowed posters of sub-category 102
@@ -131,14 +122,11 @@ async fn test_non_allowed_user_cannot_move_thread_into_restricted_sub_category(p
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category"
+))]
 async fn test_unrestricted_sub_category_allows_any_user(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -169,14 +157,11 @@ async fn test_unrestricted_sub_category_allows_any_user(pool: PgPool) {
 // EDIT SUB-CATEGORY RESTRICTION TOGGLE TESTS
 // ============================================================================
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category"
+))]
 async fn test_staff_can_enable_restriction_on_sub_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -210,14 +195,11 @@ async fn test_staff_can_enable_restriction_on_sub_category(pool: PgPool) {
 // ALLOWED POSTER MANAGEMENT TESTS
 // ============================================================================
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category"
+))]
 async fn test_staff_can_add_allowed_poster(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -254,15 +236,12 @@ async fn test_staff_can_add_allowed_poster(pool: PgPool) {
     assert_eq!(posters[0].id, 100);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_restricted_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_restricted_forum_sub_category"
+))]
 async fn test_staff_can_remove_allowed_poster(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -299,14 +278,11 @@ async fn test_staff_can_remove_allowed_poster(pool: PgPool) {
     assert!(posters.is_empty());
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category"
+))]
 async fn test_non_staff_cannot_manage_allowed_posters(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -331,14 +307,11 @@ async fn test_non_staff_cannot_manage_allowed_posters(pool: PgPool) {
 // INTEGRATION TEST
 // ============================================================================
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category"
+))]
 async fn test_restrict_sub_category_then_verify_enforcement(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(

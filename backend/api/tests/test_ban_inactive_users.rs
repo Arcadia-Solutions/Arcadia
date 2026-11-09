@@ -8,7 +8,7 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(fixtures("with_inactive_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_inactive_users"))]
 async fn test_ban_inactive_users_bans_only_eligible(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -35,7 +35,7 @@ async fn test_ban_inactive_users_bans_only_eligible(pool: PgPool) {
     assert!(!pool.is_user_banned(202).await.unwrap());
 }
 
-#[sqlx::test(fixtures("with_inactive_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_inactive_users"))]
 async fn test_ban_inactive_users_returns_zero_when_none_eligible(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -44,7 +44,7 @@ async fn test_ban_inactive_users_returns_zero_when_none_eligible(pool: PgPool) {
     assert!(banned_user_ids.is_empty());
 }
 
-#[sqlx::test(fixtures("with_inactive_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_inactive_users"))]
 async fn test_ban_inactive_users_skipped_when_setting_disabled(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -63,7 +63,7 @@ async fn test_ban_inactive_users_skipped_when_setting_disabled(pool: PgPool) {
     assert!(!pool.is_user_banned(202).await.unwrap());
 }
 
-#[sqlx::test(fixtures("with_inactive_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_inactive_users"))]
 async fn test_ban_inactive_users_is_idempotent(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -75,7 +75,7 @@ async fn test_ban_inactive_users_is_idempotent(pool: PgPool) {
     assert!(second_run.is_empty());
 }
 
-#[sqlx::test(fixtures("with_inactive_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_inactive_users"))]
 async fn test_ban_inactive_users_invalidates_their_tokens(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let mut settings = pool.get_arcadia_settings().await.unwrap();

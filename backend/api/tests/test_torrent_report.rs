@@ -9,15 +9,12 @@ use sqlx::PgPool;
 
 use crate::common::{TestUser, auth_header, create_test_app_and_login};
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_create_and_delete_torrent_report(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 

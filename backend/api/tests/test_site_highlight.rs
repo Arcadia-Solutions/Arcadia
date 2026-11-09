@@ -30,10 +30,7 @@ fn default_create_payload() -> CreateSiteHighlight {
     }
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_series"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_series"))]
 async fn test_create_site_highlight_inserts_related_thread(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -65,10 +62,7 @@ async fn test_create_site_highlight_inserts_related_thread(pool: PgPool) {
     assert_eq!(related[0].forum_thread_id, 1);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_series"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_series"))]
 async fn test_delete_site_highlight_keeps_related_thread(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -97,7 +91,7 @@ async fn test_delete_site_highlight_keeps_related_thread(pool: PgPool) {
     assert_eq!(related.len(), 1);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_create_site_highlight_without_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -113,16 +107,13 @@ async fn test_create_site_highlight_without_permission(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_series",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_series",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread"
+))]
 async fn test_edit_site_highlight_keeps_old_related_thread_when_toggle_off(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -165,16 +156,13 @@ async fn test_edit_site_highlight_keeps_old_related_thread_when_toggle_off(pool:
     assert_eq!(related.len(), 2);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_series",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_series",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread"
+))]
 async fn test_edit_site_highlight_removes_old_related_thread_by_default(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -218,10 +206,7 @@ async fn test_edit_site_highlight_removes_old_related_thread_by_default(pool: Pg
     assert_eq!(related[0].forum_thread_id, 101);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_series"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_series"))]
 async fn test_create_site_highlight_position_conflict_returns_409(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(

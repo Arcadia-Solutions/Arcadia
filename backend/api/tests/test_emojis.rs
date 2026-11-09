@@ -42,7 +42,7 @@ fn multipart_body(fields: &[(&str, &str)], image: Option<(&str, &[u8])>) -> (Vec
     (body, format!("multipart/form-data; boundary={boundary}"))
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_staff_creates_unicode_and_image_emojis(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -82,7 +82,7 @@ async fn test_staff_creates_unicode_and_image_emojis(pool: PgPool) {
     assert_eq!(party_emoji.sort_order + 1, custom_emoji.sort_order);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_emoji_payload_validation(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -188,10 +188,7 @@ async fn test_emoji_payload_validation(pool: PgPool) {
     assert_eq!(error.error, "the emoji name must not be blank");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_emojis"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_emojis"))]
 async fn test_editing_with_a_blank_unicode_character_keeps_the_image(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -230,10 +227,7 @@ async fn test_editing_with_a_blank_unicode_character_keeps_the_image(pool: PgPoo
     assert_eq!(response.status(), StatusCode::OK);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_emojis"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_emojis"))]
 async fn test_duplicate_emoji_name_is_rejected(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -277,18 +271,15 @@ async fn test_duplicate_emoji_name_is_rejected(pool: PgPool) {
     assert_eq!(error.error, "an emoji with this name already exists");
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_emojis",
-        "with_test_forum_post_reactions"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_emojis",
+    "with_test_forum_post_reactions"
+))]
 async fn test_list_edit_and_delete_emojis(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -352,10 +343,7 @@ async fn test_list_edit_and_delete_emojis(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_emojis"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_emojis"))]
 async fn test_regular_user_cannot_manage_emojis(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -405,18 +393,15 @@ async fn test_regular_user_cannot_manage_emojis(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_emojis",
-        "with_test_forum_post_reactions"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_emojis",
+    "with_test_forum_post_reactions"
+))]
 async fn test_emojis_usage(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -453,10 +438,7 @@ async fn test_emojis_usage(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_emojis"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_emojis"))]
 async fn test_edit_emoji_keeps_current_representation_when_unspecified(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -482,10 +464,7 @@ async fn test_edit_emoji_keeps_current_representation_when_unspecified(pool: PgP
     assert_eq!(edited.unicode_character.as_deref(), Some("👍"));
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_emojis"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_emojis"))]
 async fn test_edit_emoji_switching_to_an_image_clears_the_unicode_character(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -512,10 +491,7 @@ async fn test_edit_emoji_switching_to_an_image_clears_the_unicode_character(pool
     assert!(edited.unicode_character.is_none());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_emojis"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_emojis"))]
 async fn test_emoji_image_is_served_without_authentication(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = common::create_test_app(pool, MockRedisPool::default()).await;
@@ -584,10 +560,7 @@ async fn test_emoji_image_is_served_without_authentication(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_emojis"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_emojis"))]
 async fn test_emoji_management_requires_authentication(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = common::create_test_app(pool, MockRedisPool::default()).await;
@@ -614,7 +587,7 @@ async fn test_emoji_management_requires_authentication(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_staff_creates_and_serves_an_svg_emoji(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -651,10 +624,7 @@ async fn test_staff_creates_and_serves_an_svg_emoji(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_emojis"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_emojis"))]
 async fn test_staff_reorders_emojis(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -696,10 +666,7 @@ async fn test_staff_reorders_emojis(pool: PgPool) {
     assert_eq!(names, vec!["thumbs_down", "thumbs_up", "custom_smile"]);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_emojis"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_emojis"))]
 async fn test_reordering_an_unknown_emoji_is_not_found(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -724,10 +691,7 @@ async fn test_reordering_an_unknown_emoji_is_not_found(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_emojis"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_emojis"))]
 async fn test_reordering_a_mix_of_known_and_unknown_emojis_changes_nothing(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -776,10 +740,7 @@ async fn test_reordering_a_mix_of_known_and_unknown_emojis_changes_nothing(pool:
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_emojis"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_emojis"))]
 async fn test_regular_user_cannot_reorder_emojis(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -806,10 +767,7 @@ async fn test_regular_user_cannot_reorder_emojis(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_emojis"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_emojis"))]
 async fn test_staff_toggles_an_emoji_disabled_and_back_enabled(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -863,10 +821,7 @@ async fn test_staff_toggles_an_emoji_disabled_and_back_enabled(pool: PgPool) {
     assert!(emoji_100.enabled);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_emojis"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_emojis"))]
 async fn test_toggling_an_unknown_emoji_enabled_state_is_not_found(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -888,10 +843,7 @@ async fn test_toggling_an_unknown_emoji_enabled_state_is_not_found(pool: PgPool)
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_emojis"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_emojis"))]
 async fn test_regular_user_cannot_toggle_emoji_enabled(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

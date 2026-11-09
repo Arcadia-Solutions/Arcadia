@@ -7,10 +7,7 @@ async fn class_name_of(pool: &ConnectionPool, user_id: i32) -> String {
     pool.find_user_with_id(user_id).await.unwrap().class_name
 }
 
-#[sqlx::test(
-    fixtures("with_automatic_user_class_changes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_automatic_user_class_changes"))]
 async fn test_process_user_class_changes(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -30,10 +27,7 @@ async fn test_process_user_class_changes(pool: PgPool) {
     assert_eq!(class_name_of(&pool, 2000).await, "auto_elite");
 }
 
-#[sqlx::test(
-    fixtures("with_many_promotable_users"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_many_promotable_users"))]
 async fn test_process_user_class_changes_goes_through_every_batch(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 

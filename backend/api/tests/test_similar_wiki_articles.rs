@@ -7,10 +7,7 @@ use mocks::mock_redis::MockRedisPool;
 use serde_json::{Value, json};
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_wiki_articles"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_wiki_articles"))]
 async fn test_user_without_permission_cannot_link_similar_wiki_articles(pool: sqlx::PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -26,10 +23,7 @@ async fn test_user_without_permission_cannot_link_similar_wiki_articles(pool: sq
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_wiki_articles"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_wiki_articles"))]
 async fn test_link_and_get_similar_wiki_articles(pool: sqlx::PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -76,10 +70,7 @@ async fn test_link_and_get_similar_wiki_articles(pool: sqlx::PgPool) {
     assert_eq!(similar[0]["title"].as_str().unwrap(), "Upload Guidelines");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_wiki_articles"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_wiki_articles"))]
 async fn test_unlink_similar_wiki_articles(pool: sqlx::PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -122,10 +113,7 @@ async fn test_unlink_similar_wiki_articles(pool: sqlx::PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_wiki_articles"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_wiki_articles"))]
 async fn test_cannot_link_wiki_article_to_itself(pool: sqlx::PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(

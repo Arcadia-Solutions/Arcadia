@@ -11,10 +11,7 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_gift_balance"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_gift_balance"))]
 async fn test_gift_updates_sender_and_receiver_balances_and_sends_message(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -94,10 +91,7 @@ async fn test_gift_updates_sender_and_receiver_balances_and_sends_message(pool: 
     assert_eq!(gift_conversation.receiver_id, 101);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_gift_balance"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_gift_balance"))]
 async fn test_concurrent_gifts_can_not_spend_more_than_the_balance(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let gift = UserCreatedGift {
@@ -115,10 +109,7 @@ async fn test_concurrent_gifts_can_not_spend_more_than_the_balance(pool: PgPool)
     assert_eq!(sender_after.bonus_points, 400);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_gift_balance"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_gift_balance"))]
 async fn test_negative_gift_is_refused(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(

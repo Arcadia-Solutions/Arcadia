@@ -13,10 +13,7 @@ use crate::common::{
     TestUser, auth_header, call_and_read_body_json_with_status, create_test_app_and_login,
 };
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_torrent_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_torrent_stats"))]
 async fn test_torrent_stats_no_grouping(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -51,10 +48,7 @@ async fn test_torrent_stats_no_grouping(pool: PgPool) {
     assert_eq!(feb.total_size, 800000000);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_torrent_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_torrent_stats"))]
 async fn test_torrent_stats_group_by_video_resolution(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -80,10 +74,7 @@ async fn test_torrent_stats_group_by_video_resolution(pool: PgPool) {
     assert!(resolutions.contains(&"720p"));
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_torrent_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_torrent_stats"))]
 async fn test_torrent_stats_group_by_upload_method(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -107,10 +98,7 @@ async fn test_torrent_stats_group_by_upload_method(pool: PgPool) {
     assert!(upload_methods.contains(&"super-cli-tool"));
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_torrent_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_torrent_stats"))]
 async fn test_torrent_stats_group_by_content_type(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -133,10 +121,7 @@ async fn test_torrent_stats_group_by_content_type(pool: PgPool) {
     assert!(content_types.contains(&"music"));
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_torrent_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_torrent_stats"))]
 async fn test_torrent_stats_excludes_deleted(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -156,10 +141,7 @@ async fn test_torrent_stats_excludes_deleted(pool: PgPool) {
     assert_eq!(response.data[0].count, 2);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_torrent_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_torrent_stats"))]
 async fn test_torrent_stats_fills_empty_periods(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -191,10 +173,7 @@ async fn test_torrent_stats_fills_empty_periods(pool: PgPool) {
     assert_eq!(response.data[2].total_size, 0);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_torrent_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_torrent_stats"))]
 async fn test_torrent_stats_title_groups_per_release_year(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -224,10 +203,7 @@ async fn test_torrent_stats_title_groups_per_release_year(pool: PgPool) {
     assert_eq!(no_release_date.count, 1);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_torrent_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_torrent_stats"))]
 async fn test_torrent_stats_title_groups_per_release_year_respects_period(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -245,10 +221,7 @@ async fn test_torrent_stats_title_groups_per_release_year_respects_period(pool: 
     assert!(response.title_groups_per_release_year.is_empty());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_torrent_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_torrent_stats"))]
 async fn test_torrent_stats_deletions(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -277,10 +250,7 @@ async fn test_torrent_stats_deletions(pool: PgPool) {
     assert_eq!(feb.other, 1);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_torrent_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_torrent_stats"))]
 async fn test_torrent_stats_snatches(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

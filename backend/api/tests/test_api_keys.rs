@@ -37,7 +37,7 @@ where
     call_and_read_body_json_with_status::<CreatedAPIKey, _>(service, req, StatusCode::CREATED).await
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_user_can_create_list_and_delete_api_keys(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -76,7 +76,7 @@ async fn test_user_can_create_list_and_delete_api_keys(pool: PgPool) {
     assert!(api_keys.is_empty());
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_api_key_only_reaches_the_endpoints_of_its_scopes(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -107,7 +107,7 @@ async fn test_api_key_only_reaches_the_endpoints_of_its_scopes(pool: PgPool) {
     assert!(api_keys[0].last_used_at.is_some());
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_user_cannot_create_more_api_keys_than_the_maximum(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -130,7 +130,7 @@ async fn test_user_cannot_create_more_api_keys_than_the_maximum(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_api_key_cannot_manage_api_keys(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -156,7 +156,7 @@ async fn test_api_key_cannot_manage_api_keys(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_api_key_cannot_edit_the_account(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -173,7 +173,7 @@ async fn test_api_key_cannot_edit_the_account(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_user_cannot_delete_the_api_key_of_another_user(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -191,7 +191,7 @@ async fn test_user_cannot_delete_the_api_key_of_another_user(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_unknown_api_key_is_rejected(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(pool, MockRedisPool::default()).await;

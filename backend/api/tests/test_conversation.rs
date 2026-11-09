@@ -15,10 +15,7 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_conversation"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_conversation"))]
 async fn test_cannot_send_message_to_locked_conversation(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -39,10 +36,7 @@ async fn test_cannot_send_message_to_locked_conversation(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_conversation"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_conversation"))]
 async fn test_third_party_cannot_send_message_to_conversation(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, third_party) =
@@ -86,10 +80,7 @@ fn just_now_threshold() -> DateTime<Utc> {
     Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap()
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_conversation"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_conversation"))]
 async fn test_sender_reading_conversation_marks_only_sender_as_read(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, sender) =
@@ -109,10 +100,7 @@ async fn test_sender_reading_conversation_marks_only_sender_as_read(pool: PgPool
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_conversation"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_conversation"))]
 async fn test_receiver_reading_conversation_marks_only_receiver_as_read(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, receiver) =
@@ -136,10 +124,7 @@ async fn test_receiver_reading_conversation_marks_only_receiver_as_read(pool: Pg
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_conversation"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_conversation"))]
 async fn test_third_party_without_permission_cannot_read_conversation(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, third_party) =
@@ -161,10 +146,7 @@ async fn test_third_party_without_permission_cannot_read_conversation(pool: PgPo
     assert!(after.receiver_last_seen_at.is_none());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_conversation"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_conversation"))]
 async fn test_third_party_with_read_all_permission_does_not_change_read_status(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, observer) = create_test_app_and_login(
@@ -183,10 +165,7 @@ async fn test_third_party_with_read_all_permission_does_not_change_read_status(p
     assert!(after.receiver_last_seen_at.is_none());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_conversation"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_conversation"))]
 async fn test_conversation_member_reading_conversation_and_read_all_permission_still_marks_as_read(
     pool: PgPool,
 ) {

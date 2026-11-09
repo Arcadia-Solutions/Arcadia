@@ -31,10 +31,7 @@ fn edited_title_group(name: &str) -> Option<Value> {
     }))
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group"))]
 async fn test_title_group_can_only_be_edited_by_its_creator_or_with_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(Arc::clone(&pool), MockRedisPool::default()).await;
@@ -64,14 +61,11 @@ async fn test_title_group_can_only_be_edited_by_its_creator_or_with_permission(p
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_title_group_created_by_basic_user"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_title_group_created_by_basic_user"
+))]
 async fn test_title_group_can_be_edited_by_its_creator(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(

@@ -11,10 +11,7 @@ use sqlx::PgPool;
 use std::borrow::Borrow;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_merge_title_groups"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_merge_title_groups"))]
 async fn test_merge_title_groups_moves_all_related_data(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -194,10 +191,7 @@ async fn test_merge_title_groups_moves_all_related_data(pool: PgPool) {
     assert_eq!(source_anything.0, 0);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_merge_title_groups"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_merge_title_groups"))]
 async fn test_cannot_merge_title_groups_with_different_content_types(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(

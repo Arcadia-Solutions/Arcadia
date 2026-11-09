@@ -21,10 +21,7 @@ fn search_uri(show_foreign_invitations: bool) -> String {
     )
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_invitations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_invitations"))]
 async fn test_search_sent_invitations_without_permission_only_sees_own_invitations(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -50,10 +47,7 @@ async fn test_search_sent_invitations_without_permission_only_sees_own_invitatio
     assert!(results.results[0].sender.is_none());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_invitations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_invitations"))]
 async fn test_search_sent_invitations_with_show_foreign_invitations_without_permission_is_forbidden(
     pool: PgPool,
 ) {
@@ -74,10 +68,7 @@ async fn test_search_sent_invitations_with_show_foreign_invitations_without_perm
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_invitations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_invitations"))]
 async fn test_search_sent_invitations_with_permission_sees_foreign_invitations(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -107,10 +98,7 @@ async fn test_search_sent_invitations_with_permission_sees_foreign_invitations(p
     assert_eq!(sender.username, "user_basic");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_invitations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_invitations"))]
 async fn test_search_sent_invitations_with_permission_but_flag_unset_only_sees_own(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -138,10 +126,7 @@ fn invitation() -> Option<Value> {
     Some(json!({ "message": "hello", "receiver_email": "friend@testdomain.com" }))
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_invitation_available"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_invitation_available"))]
 async fn test_inviting_an_applicant_requires_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -165,7 +150,7 @@ async fn test_inviting_an_applicant_requires_permission(pool: PgPool) {
     assert_eq!(pool.find_user_with_id(100).await.unwrap().invitations, 1);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_invitation_requires_an_available_invitation(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -177,10 +162,7 @@ async fn test_invitation_requires_an_available_invitation(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::CONFLICT);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_invitation_available"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_invitation_available"))]
 async fn test_invitation_consumes_an_available_invitation(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(

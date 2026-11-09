@@ -22,10 +22,7 @@ fn search_uri(actions: &str, user_id: i32) -> String {
     )
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_shop_balance"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_shop_balance"))]
 async fn test_search_bonus_points_logs_returns_shop_purchase(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -71,10 +68,7 @@ async fn test_search_bonus_points_logs_returns_shop_purchase(pool: PgPool) {
     assert!(filtered.results.is_empty());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_shop_balance"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_shop_balance"))]
 async fn test_search_foreign_bonus_points_logs(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, standard_user) = create_test_app_and_login(

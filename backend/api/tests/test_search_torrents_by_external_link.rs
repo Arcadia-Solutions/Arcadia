@@ -31,14 +31,11 @@ async fn search_by_external_link(
     call_and_read_body_json_with_status(service, request, StatusCode::OK).await
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_groups_with_similar_external_links",
-        "with_refreshed_title_group_hierarchy_lite"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_groups_with_similar_external_links",
+    "with_refreshed_title_group_hierarchy_lite"
+))]
 async fn test_searching_by_external_link_only_matches_the_whole_link(pool: sqlx::PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

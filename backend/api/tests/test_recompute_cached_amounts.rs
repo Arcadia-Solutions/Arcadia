@@ -2,18 +2,15 @@ use arcadia_storage::connection_pool::ConnectionPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_artist",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_affiliated_artist",
-        "with_artist_peer_stats"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_artist",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_affiliated_artist",
+    "with_artist_peer_stats"
+))]
 async fn test_recompute_cached_amounts_recomputes_artist_stats(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 

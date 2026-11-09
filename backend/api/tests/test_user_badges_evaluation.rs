@@ -26,17 +26,14 @@ async fn user_has_badge(pool: &PgPool, user_id: i32, badge_id: i32) -> bool {
     exists.unwrap_or(false)
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_user_badges_evaluation"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_user_badges_evaluation"
+))]
 async fn test_awards_badge_to_qualifying_user(pool: PgPool) {
     let raw_pool = pool.clone();
     let conn_pool = Arc::new(ConnectionPool::with_pg_pool(pool));
@@ -49,17 +46,14 @@ async fn test_awards_badge_to_qualifying_user(pool: PgPool) {
     assert!(!user_has_badge(&raw_pool, QUALIFYING_USER_ID, FORUM_CENTURION_BADGE_ID).await);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_user_badges_evaluation"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_user_badges_evaluation"
+))]
 async fn test_evaluation_is_idempotent(pool: PgPool) {
     let raw_pool = pool.clone();
     let conn_pool = Arc::new(ConnectionPool::with_pg_pool(pool));
@@ -84,17 +78,14 @@ async fn test_evaluation_is_idempotent(pool: PgPool) {
     assert_eq!(earned_count, 1);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_user_badges_evaluation"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_user_badges_evaluation"
+))]
 async fn test_revokes_when_criteria_unmet_for_auto_award(pool: PgPool) {
     let raw_pool = pool.clone();
 
@@ -115,17 +106,14 @@ async fn test_revokes_when_criteria_unmet_for_auto_award(pool: PgPool) {
     assert!(!user_has_badge(&raw_pool, QUALIFYING_USER_ID, FORUM_CENTURION_BADGE_ID).await);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_user_badges_evaluation"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_user_badges_evaluation"
+))]
 async fn test_does_not_revoke_when_revoke_flag_off(pool: PgPool) {
     let raw_pool = pool.clone();
 
@@ -146,21 +134,18 @@ async fn test_does_not_revoke_when_revoke_flag_off(pool: PgPool) {
     assert!(user_has_badge(&raw_pool, QUALIFYING_USER_ID, NO_REVOKE_BADGE_ID).await);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_refreshed_title_group_hierarchy_lite",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_user_badges_evaluation"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_refreshed_title_group_hierarchy_lite",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_user_badges_evaluation"
+))]
 async fn test_awards_torrents_uploaded_badge_with_search_filters(pool: PgPool) {
     let raw_pool = pool.clone();
     let conn_pool = Arc::new(ConnectionPool::with_pg_pool(pool));
@@ -183,21 +168,18 @@ async fn test_awards_torrents_uploaded_badge_with_search_filters(pool: PgPool) {
     assert!(!user_has_badge(&raw_pool, QUALIFYING_USER_ID, LOVE_SINGLES_ONE_BADGE_ID).await);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_refreshed_title_group_hierarchy_lite",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_user_badges_evaluation"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_refreshed_title_group_hierarchy_lite",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_user_badges_evaluation"
+))]
 async fn test_revokes_torrents_uploaded_auto_award_when_threshold_unmet(pool: PgPool) {
     let raw_pool = pool.clone();
 
@@ -219,10 +201,7 @@ async fn test_revokes_torrents_uploaded_auto_award_when_threshold_unmet(pool: Pg
     assert!(user_has_badge(&raw_pool, SEED_CREATOR_USER_ID, UPLOADER_TWO_BADGE_ID).await);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_advent_calendar_badge"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_advent_calendar_badge"))]
 async fn test_awards_advent_calendar_doors_badge(pool: PgPool) {
     let raw_pool = pool.clone();
     let conn_pool = Arc::new(ConnectionPool::with_pg_pool(pool));

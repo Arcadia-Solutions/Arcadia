@@ -2,16 +2,13 @@ use arcadia_shared::tracker::models::announce_error_update::AnnounceErrorCode;
 use arcadia_storage::connection_pool::ConnectionPool;
 use sqlx::PgPool;
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_announce_errors"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_announce_errors"
+))]
 async fn test_removes_resolved_and_stale_announce_errors(pool: PgPool) {
     let pool = ConnectionPool::with_pg_pool(pool);
 

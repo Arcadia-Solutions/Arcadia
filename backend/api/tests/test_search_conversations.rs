@@ -9,10 +9,7 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_searchable_conversations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_searchable_conversations"))]
 async fn test_search_conversations_no_filter(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -30,10 +27,7 @@ async fn test_search_conversations_no_filter(pool: PgPool) {
     assert_eq!(results.total_items, 3);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_searchable_conversations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_searchable_conversations"))]
 async fn test_search_conversations_by_subject(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -52,10 +46,7 @@ async fn test_search_conversations_by_subject(pool: PgPool) {
     assert_eq!(results.results[0].subject, "Jazz collection");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_searchable_conversations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_searchable_conversations"))]
 async fn test_search_conversations_by_content(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -79,10 +70,7 @@ async fn test_search_conversations_by_content(pool: PgPool) {
     assert!(subjects.contains(&"Music recommendations"));
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_searchable_conversations"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_searchable_conversations"))]
 async fn test_search_conversations_content_only_match(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

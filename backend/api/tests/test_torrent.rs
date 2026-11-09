@@ -95,15 +95,12 @@ where
     common::call_and_read_body_json_with_status::<T, _>(service, req, StatusCode::CREATED).await
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_valid_torrent(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -153,10 +150,7 @@ async fn test_valid_torrent(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"))]
 async fn test_upload_torrent_with_negative_file_length_is_rejected(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -170,10 +164,7 @@ async fn test_upload_torrent_with_negative_file_length_is_rejected(pool: PgPool)
     assert!(resp.status().is_client_error());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"))]
 async fn test_upload_torrent(pool: PgPool) {
     let pg_pool = pool.clone();
 
@@ -223,10 +214,7 @@ async fn test_upload_torrent(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"))]
 async fn test_fill_torrent_request_uploader_only_within_first_hour(pool: PgPool) {
     #[derive(Debug, Deserialize)]
     struct CreatedTorrent {
@@ -449,16 +437,13 @@ async fn test_fill_torrent_request_uploader_only_within_first_hour(pool: PgPool)
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_refreshed_title_group_hierarchy_lite"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_refreshed_title_group_hierarchy_lite"
+))]
 async fn test_find_torrents_by_external_link(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -508,16 +493,13 @@ async fn test_find_torrents_by_external_link(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_refreshed_title_group_hierarchy_lite"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_refreshed_title_group_hierarchy_lite"
+))]
 async fn test_find_torrents_by_external_link_with_trailing_slash(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -567,16 +549,13 @@ async fn test_find_torrents_by_external_link_with_trailing_slash(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_refreshed_title_group_hierarchy_lite"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_refreshed_title_group_hierarchy_lite"
+))]
 async fn test_find_torrents_by_name(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -626,16 +605,13 @@ async fn test_find_torrents_by_name(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_refreshed_title_group_hierarchy_lite"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_refreshed_title_group_hierarchy_lite"
+))]
 async fn test_find_torrents_no_link_or_name_provided(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -685,15 +661,12 @@ async fn test_find_torrents_no_link_or_name_provided(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_set_torrent_staff_checked_with_permission(pool: PgPool) {
     use serde_json::json;
 
@@ -726,15 +699,12 @@ async fn test_set_torrent_staff_checked_with_permission(pool: PgPool) {
     assert!(torrent.staff_checked);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_set_torrent_staff_checked_without_permission(pool: PgPool) {
     use serde_json::json;
 
@@ -761,16 +731,13 @@ async fn test_set_torrent_staff_checked_without_permission(pool: PgPool) {
     .await;
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_peers"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_peers"
+))]
 async fn test_get_torrent_peers_with_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = common::create_test_app_and_login(
@@ -805,16 +772,13 @@ async fn test_get_torrent_peers_with_permission(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_peers"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_peers"
+))]
 async fn test_get_torrent_peers_without_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -833,17 +797,14 @@ async fn test_get_torrent_peers_without_permission(pool: PgPool) {
     .await;
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_seeding_size",
-        "with_test_non_seeding_torrent_activity"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_seeding_size",
+    "with_test_non_seeding_torrent_activity"
+))]
 async fn test_get_torrent_activities_with_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = common::create_test_app_and_login(
@@ -903,15 +864,12 @@ async fn test_get_torrent_activities_with_permission(pool: PgPool) {
     assert!(!sorted_by_seeder.results[0].seeder);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_edit_torrent_up_down_factors_with_permission(pool: PgPool) {
     use serde_json::json;
 
@@ -943,15 +901,12 @@ async fn test_edit_torrent_up_down_factors_with_permission(pool: PgPool) {
     assert_eq!(torrent.download_factor, 50);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_edit_torrent_up_down_factors_without_permission(pool: PgPool) {
     use serde_json::json;
 
@@ -979,10 +934,7 @@ async fn test_edit_torrent_up_down_factors_without_permission(pool: PgPool) {
     .await;
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"))]
 async fn test_upload_torrent_blocked_by_release_date_cutoff(pool: PgPool) {
     #[derive(Debug, Deserialize)]
     struct ErrorResponse {
@@ -1060,10 +1012,7 @@ async fn test_upload_torrent_blocked_by_release_date_cutoff(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"))]
 async fn test_upload_torrent_bonus_points_cost_above_max(pool: PgPool) {
     #[derive(Debug, Deserialize)]
     struct ErrorResponse {
@@ -1139,10 +1088,7 @@ async fn test_upload_torrent_bonus_points_cost_above_max(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_edition_group"))]
 async fn test_upload_torrent_bonus_points_cost_below_min(pool: PgPool) {
     #[derive(Debug, Deserialize)]
     struct ErrorResponse {
@@ -1218,17 +1164,14 @@ async fn test_upload_torrent_bonus_points_cost_below_min(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_title_group_bookmark",
-        "with_refreshed_title_group_hierarchy_lite"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_title_group_bookmark",
+    "with_refreshed_title_group_hierarchy_lite"
+))]
 async fn test_search_torrents_by_own_bookmarks(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -1280,16 +1223,13 @@ async fn test_search_torrents_by_own_bookmarks(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_refreshed_title_group_hierarchy_lite"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_refreshed_title_group_hierarchy_lite"
+))]
 async fn test_create_bookmark_then_search(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -1373,17 +1313,14 @@ async fn test_create_bookmark_then_search(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_title_group_bookmark",
-        "with_refreshed_title_group_hierarchy_lite"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_title_group_bookmark",
+    "with_refreshed_title_group_hierarchy_lite"
+))]
 async fn test_search_torrents_by_other_user_bookmarks_forbidden(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -1429,17 +1366,14 @@ async fn test_search_torrents_by_other_user_bookmarks_forbidden(pool: PgPool) {
     .await;
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_torrent_bonus_points_snatch_costs",
-        "with_refreshed_title_group_hierarchy_lite"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_torrent_bonus_points_snatch_costs",
+    "with_refreshed_title_group_hierarchy_lite"
+))]
 async fn test_search_torrents_ordered_by_bonus_points_snatch_cost(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -1512,17 +1446,14 @@ async fn test_search_torrents_ordered_by_bonus_points_snatch_cost(pool: PgPool) 
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_trumpable_torrent",
-        "with_refreshed_title_group_hierarchy_lite"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_trumpable_torrent",
+    "with_refreshed_title_group_hierarchy_lite"
+))]
 async fn test_search_torrents_by_trumpable(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -1644,15 +1575,12 @@ fn edit_torrent_payload(torrent_id: i32, release_name: &str, trumpable: &str) ->
     })
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_edit_torrent_trumpable_with_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = common::create_test_app_and_login(
@@ -1683,15 +1611,12 @@ async fn test_edit_torrent_trumpable_with_permission(pool: PgPool) {
     assert_eq!(torrent.trumpable.as_deref(), Some("a new trump reason"));
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_edit_torrent_trumpable_without_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = common::create_test_app_and_login(
@@ -1725,15 +1650,12 @@ async fn test_edit_torrent_trumpable_without_permission(pool: PgPool) {
 
 // Editing other fields without the trumpable permission is allowed,
 // as long as the trumpable field itself is not changed.
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_edit_torrent_without_changing_trumpable(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = common::create_test_app_and_login(
@@ -1769,15 +1691,12 @@ async fn test_edit_torrent_without_changing_trumpable(pool: PgPool) {
 
 /// Marking a torrent as trumpable after its upload sends a message to its uploader,
 /// followed by the `automated_message_on_torrent_marked_trumpable` setting.
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrents_of_basic_user"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrents_of_basic_user"
+))]
 async fn test_marking_a_torrent_as_trumpable_notifies_its_uploader(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, editor) = common::create_test_app_and_login(
@@ -1840,15 +1759,12 @@ async fn test_marking_a_torrent_as_trumpable_notifies_its_uploader(pool: PgPool)
 }
 
 /// Saving the very same trumpable reason again is not a new mark, so it sends no second message.
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrents_of_basic_user"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrents_of_basic_user"
+))]
 async fn test_editing_an_existing_trumpable_reason_sends_no_message(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, editor) = common::create_test_app_and_login(
@@ -1890,15 +1806,12 @@ async fn test_editing_an_existing_trumpable_reason_sends_no_message(pool: PgPool
 }
 
 /// The uploader of a torrent needs no notification of their own action.
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent_of_edit_trump_user"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent_of_edit_trump_user"
+))]
 async fn test_marking_own_torrent_as_trumpable_sends_no_message(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, editor) = common::create_test_app_and_login(
@@ -1954,16 +1867,13 @@ fn search_uploads_of_anonymous_uploader_request(token: &str) -> Request {
         .to_request()
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_anonymous_torrent_of_basic_user",
-        "with_refreshed_title_group_hierarchy_lite"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_anonymous_torrent_of_basic_user",
+    "with_refreshed_title_group_hierarchy_lite"
+))]
 async fn test_searching_the_torrents_uploaded_anonymously_by_a_user(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, uploader) =
@@ -2011,17 +1921,14 @@ async fn test_searching_the_torrents_uploaded_anonymously_by_a_user(pool: PgPool
 /// `with_test_snatch_of_the_anonymous_torrent_by_the_edit_artist_user` fixture.
 const SNATCHING_USER_ID: i32 = 101;
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_anonymous_torrent_of_basic_user",
-        "with_refreshed_title_group_hierarchy_lite",
-        "with_test_snatch_of_the_anonymous_torrent_by_the_edit_artist_user"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_anonymous_torrent_of_basic_user",
+    "with_refreshed_title_group_hierarchy_lite",
+    "with_test_snatch_of_the_anonymous_torrent_by_the_edit_artist_user"
+))]
 async fn test_the_uploader_of_a_snatched_anonymous_torrent_stays_hidden(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, snatching_user) =
@@ -2043,15 +1950,12 @@ async fn test_the_uploader_of_a_snatched_anonymous_torrent_stays_hidden(pool: Pg
     assert!(torrent.created_by.is_none());
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_uploads_disabled"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_uploads_disabled"
+))]
 async fn test_cannot_create_title_group_edition_group_or_torrent_when_uploads_disabled(
     pool: PgPool,
 ) {
@@ -2111,19 +2015,16 @@ async fn test_cannot_create_title_group_edition_group_or_torrent_when_uploads_di
     }
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrents_of_basic_user",
-        "with_test_snatch_of_basic_user",
-        "with_test_artist",
-        "with_test_affiliated_artist",
-        "with_refreshed_title_group_hierarchy_lite"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrents_of_basic_user",
+    "with_test_snatch_of_basic_user",
+    "with_test_artist",
+    "with_test_affiliated_artist",
+    "with_refreshed_title_group_hierarchy_lite"
+))]
 async fn test_torrent_search_and_user_activities_include_affiliated_artists(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -2170,15 +2071,12 @@ async fn test_torrent_with_out_of_range_piece_length_is_rejected() {
     }
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrents_of_basic_user"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrents_of_basic_user"
+))]
 async fn test_uploader_can_not_change_the_snatch_cost_when_the_settings_forbid_it(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = common::create_test_app_and_login(
@@ -2210,16 +2108,13 @@ fn torrent_to_delete(id: i32) -> Option<Value> {
     Some(json!({ "id": id, "deletion_reason": "duplicate" }))
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_torrents_of_basic_user"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_torrents_of_basic_user"
+))]
 async fn test_uploader_can_delete_their_recent_torrent_only(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -2251,16 +2146,13 @@ async fn test_uploader_can_delete_their_recent_torrent_only(pool: PgPool) {
     assert!(pool.find_torrent(900).await.is_err());
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrents_of_basic_user",
-        "with_test_torrent_of_basic_user_uploaded_two_days_ago"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrents_of_basic_user",
+    "with_test_torrent_of_basic_user_uploaded_two_days_ago"
+))]
 async fn test_uploader_cannot_delete_their_torrent_after_a_day(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(

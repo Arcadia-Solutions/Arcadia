@@ -15,7 +15,7 @@ use std::sync::Arc;
 // CREATE CATEGORY TESTS
 // ============================================================================
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_staff_can_create_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -42,7 +42,7 @@ async fn test_staff_can_create_category(pool: PgPool) {
     assert_eq!(category.created_by_id, 107);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_non_staff_cannot_create_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -62,7 +62,7 @@ async fn test_non_staff_cannot_create_category(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_create_category_without_auth(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = common::create_test_app(pool, MockRedisPool::default()).await;
@@ -80,7 +80,7 @@ async fn test_create_category_without_auth(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_create_category_with_empty_name(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -102,7 +102,7 @@ async fn test_create_category_with_empty_name(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_create_category_with_whitespace_only_name(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -128,10 +128,7 @@ async fn test_create_category_with_whitespace_only_name(pool: PgPool) {
 // EDIT CATEGORY TESTS
 // ============================================================================
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_forum_category"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_forum_category"))]
 async fn test_staff_can_edit_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) =
@@ -156,10 +153,7 @@ async fn test_staff_can_edit_category(pool: PgPool) {
     assert_eq!(category.name, "Updated Category Name");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_forum_category"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_forum_category"))]
 async fn test_non_staff_cannot_edit_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -180,10 +174,7 @@ async fn test_non_staff_cannot_edit_category(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_forum_category"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_forum_category"))]
 async fn test_edit_category_without_auth(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = common::create_test_app(pool, MockRedisPool::default()).await;
@@ -202,7 +193,7 @@ async fn test_edit_category_without_auth(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_edit_nonexistent_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) =
@@ -224,10 +215,7 @@ async fn test_edit_nonexistent_category(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_forum_category"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_forum_category"))]
 async fn test_edit_category_with_empty_name(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) =
@@ -249,10 +237,7 @@ async fn test_edit_category_with_empty_name(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_forum_category"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_forum_category"))]
 async fn test_edit_category_with_whitespace_only_name(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) =
@@ -278,7 +263,7 @@ async fn test_edit_category_with_whitespace_only_name(pool: PgPool) {
 // INTEGRATION TESTS
 // ============================================================================
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_create_and_edit_category_flow(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) =
@@ -325,10 +310,7 @@ async fn test_create_and_edit_category_flow(pool: PgPool) {
 // DELETE CATEGORY TESTS
 // ============================================================================
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_forum_category"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_forum_category"))]
 async fn test_staff_can_delete_empty_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -357,14 +339,11 @@ async fn test_staff_can_delete_empty_category(pool: PgPool) {
     assert_eq!(resp2.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category"
+))]
 async fn test_cannot_delete_category_with_subcategories(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -384,10 +363,7 @@ async fn test_cannot_delete_category_with_subcategories(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_forum_category"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_forum_category"))]
 async fn test_non_staff_cannot_delete_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -402,10 +378,7 @@ async fn test_non_staff_cannot_delete_category(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_forum_category"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_forum_category"))]
 async fn test_delete_category_without_auth(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = common::create_test_app(pool, MockRedisPool::default()).await;
@@ -418,7 +391,7 @@ async fn test_delete_category_without_auth(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_delete_nonexistent_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(

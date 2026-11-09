@@ -11,7 +11,7 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_get_me_for_regular_user(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -27,7 +27,7 @@ async fn test_get_me_for_regular_user(pool: PgPool) {
     assert_eq!(profile.user.username, "user_basic");
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_user_moderation_requires_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -54,7 +54,7 @@ fn config_with_irc_enabled(ergo_api_url: &str) -> Config {
     config
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_irc_account_creation_and_password_reset(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (ergo_url, ergo_requests) =
@@ -108,7 +108,7 @@ async fn test_irc_account_creation_and_password_reset(pool: PgPool) {
     );
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_irc_account_creation_fails_when_ergo_refuses_it(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (ergo_url, _) = spawn_http_server(

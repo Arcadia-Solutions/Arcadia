@@ -58,10 +58,7 @@ async fn get_stats(
     catalog.title_group_stats
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group_stats"))]
 async fn test_title_group_catalog_stats_of_artist(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     // any logged in user can read them, unlike the site wide stats
@@ -88,10 +85,7 @@ async fn test_title_group_catalog_stats_of_artist(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group_stats"))]
 async fn test_title_group_catalog_stats_of_series(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -113,10 +107,7 @@ async fn test_title_group_catalog_stats_of_series(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group_stats"))]
 async fn test_title_group_catalog_stats_of_collage(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -139,10 +130,7 @@ async fn test_title_group_catalog_stats_of_collage(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group_stats"))]
 async fn test_title_group_catalog_stats_of_catalog_without_title_groups(pool: PgPool) {
     let pool = ConnectionPool::with_pg_pool(pool);
 

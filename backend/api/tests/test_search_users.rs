@@ -37,10 +37,7 @@ fn search_users_request(token: &str, query: SearchUsersQuery) -> actix_http::Req
         .to_request()
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_users_for_search"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_users_for_search"))]
 async fn test_search_users_lite_returns_results(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -60,10 +57,7 @@ async fn test_search_users_lite_returns_results(pool: PgPool) {
     assert!(response.iter().any(|u| u.username == "alice_wonder"));
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_users_for_search"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_users_for_search"))]
 async fn test_search_users_lite_case_insensitive(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -83,10 +77,7 @@ async fn test_search_users_lite_case_insensitive(pool: PgPool) {
     assert!(response.iter().any(|u| u.username == "alice_wonder"));
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_users_for_search"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_users_for_search"))]
 async fn test_search_users_lite_partial_match(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -105,10 +96,7 @@ async fn test_search_users_lite_partial_match(pool: PgPool) {
     assert_eq!(response[0].username, "charlie_brown");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_users_for_search"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_users_for_search"))]
 async fn test_search_users_lite_returns_user_lite_fields(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -129,10 +117,7 @@ async fn test_search_users_lite_returns_user_lite_fields(pool: PgPool) {
     assert!(!frank.banned);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_users_for_search"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_users_for_search"))]
 async fn test_search_users_lite_returns_banned_user(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -153,10 +138,7 @@ async fn test_search_users_lite_returns_banned_user(pool: PgPool) {
     assert!(grace.banned);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_users_for_search"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_users_for_search"))]
 async fn test_search_users_lite_no_results(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -173,10 +155,7 @@ async fn test_search_users_lite_no_results(pool: PgPool) {
     assert_eq!(response.len(), 0);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_users_for_search"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_users_for_search"))]
 async fn test_search_users_without_permission_is_forbidden(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -194,10 +173,7 @@ async fn test_search_users_without_permission_is_forbidden(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_users_for_search"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_users_for_search"))]
 async fn test_search_users_with_permission_returns_results(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -225,10 +201,7 @@ async fn test_search_users_with_permission_returns_results(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_users_for_search"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_users_for_search"))]
 async fn test_search_users_registration_date_range_filter(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -262,10 +235,7 @@ async fn test_search_users_registration_date_range_filter(pool: PgPool) {
     assert_eq!(response.results.len(), 0);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_users_with_permissions"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_users_with_permissions"))]
 async fn test_search_users_filters_by_any_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -300,10 +270,7 @@ async fn test_search_users_filters_by_any_permission(pool: PgPool) {
     assert_eq!(usernames, ["perm_both", "perm_download", "perm_upload"]);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_users_with_permissions"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_users_with_permissions"))]
 async fn test_search_users_filters_by_all_permissions(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -332,10 +299,7 @@ async fn test_search_users_filters_by_all_permissions(pool: PgPool) {
     assert_eq!(response.results[0].username, "perm_both");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_users_with_permissions"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_users_with_permissions"))]
 async fn test_search_users_permission_filter_requires_set_and_view_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -353,10 +317,7 @@ async fn test_search_users_permission_filter_requires_set_and_view_permission(po
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_users_for_search"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_users_for_search"))]
 async fn test_search_users_lite_limits_to_five_results(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

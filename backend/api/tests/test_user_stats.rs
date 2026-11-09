@@ -25,10 +25,7 @@ async fn get_stats(pool: PgPool, query: &str) -> UserStatsResponse {
     call_and_read_body_json_with_status(&service, request, StatusCode::OK).await
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_stats"))]
 async fn test_user_stats_registrations(pool: PgPool) {
     // Only the fixture users are registered in 2025, every other user is created at NOW().
     let response = get_stats(pool, "from=2025-01-01&to=2025-02-28&interval=month").await;
@@ -42,10 +39,7 @@ async fn test_user_stats_registrations(pool: PgPool) {
     assert_eq!(response.data[1].count, 1);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_stats"))]
 async fn test_user_stats_periods_start_at_the_first_registration(pool: PgPool) {
     // the first fixture user registered in january 2025, nothing to show before that
     let response = get_stats(pool, "from=2024-01-01&to=2025-02-28&interval=year").await;
@@ -54,10 +48,7 @@ async fn test_user_stats_periods_start_at_the_first_registration(pool: PgPool) {
     assert_eq!(response.data[0].count, 3);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_stats"))]
 async fn test_user_stats_only_counts_the_selected_period(pool: PgPool) {
     // the 2 users registered in january, not the one of february
     let response = get_stats(pool, "from=2025-01-01&to=2025-01-31&interval=month").await;
@@ -67,16 +58,13 @@ async fn test_user_stats_only_counts_the_selected_period(pool: PgPool) {
     assert_eq!(response.data[0].count, 2);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_user_stats_torrent_clients"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_user_stats_torrent_clients"
+))]
 async fn test_user_stats_torrent_clients_count_each_user_once(pool: PgPool) {
     let response = get_stats(pool, "from=2025-01-01&to=2025-02-28&interval=month").await;
 
@@ -92,16 +80,13 @@ async fn test_user_stats_torrent_clients_count_each_user_once(pool: PgPool) {
     assert_eq!(clients["Deluge/2.1.1"], 1);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_user_stats_torrent_clients"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_user_stats_torrent_clients"
+))]
 async fn test_user_stats_torrent_clients_only_counts_the_selected_period(pool: PgPool) {
     // Only one of user 100's qBittorrent peers announced after the 16th of january, the
     // Deluge peer stopped announcing on the 12th.
@@ -116,14 +101,11 @@ async fn test_user_stats_torrent_clients_only_counts_the_selected_period(pool: P
     assert_eq!(clients["qBittorrent/4.5.0"], 1);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_user_stats",
-        "with_test_user_stats_countries"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_user_stats",
+    "with_test_user_stats_countries"
+))]
 async fn test_user_stats_countries(pool: PgPool) {
     let response = get_stats(pool, "from=2025-01-01&to=2025-02-28&interval=month").await;
 
@@ -136,14 +118,11 @@ async fn test_user_stats_countries(pool: PgPool) {
     assert_eq!(countries, vec![("FR", 2), ("DE", 1)]);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_user_stats",
-        "with_test_user_stats_countries"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_user_stats",
+    "with_test_user_stats_countries"
+))]
 async fn test_user_stats_countries_only_counts_the_selected_period(pool: PgPool) {
     // user 102 (DE) registered in february
     let response = get_stats(pool, "from=2025-01-01&to=2025-01-31&interval=month").await;

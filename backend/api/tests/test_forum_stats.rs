@@ -11,10 +11,7 @@ use crate::common::{
     TestUser, auth_header, call_and_read_body_json_with_status, create_test_app_and_login,
 };
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_forum_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_forum_stats"))]
 async fn test_forum_stats_posts_no_grouping(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -38,10 +35,7 @@ async fn test_forum_stats_posts_no_grouping(pool: PgPool) {
     assert!((response.average_posts_per_thread - 5.0 / 3.0).abs() < 1e-9);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_forum_stats"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_forum_stats"))]
 async fn test_forum_stats_threads_group_by_user(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

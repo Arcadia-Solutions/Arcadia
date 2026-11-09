@@ -42,7 +42,7 @@ struct RegisterResponse {
     registered_from_ip: String,
 }
 
-#[sqlx::test(migrations = "../storage/migrations")]
+#[sqlx::test]
 async fn test_open_registration(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(pool, MockRedisPool::default()).await;
@@ -74,7 +74,7 @@ async fn test_open_registration(pool: PgPool) {
     assert_eq!(user.registered_from_ip, "10.10.4.88/32");
 }
 
-#[sqlx::test(migrations = "../storage/migrations")]
+#[sqlx::test]
 async fn test_registration_ip_only_trusts_the_configured_proxy_header(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -110,7 +110,7 @@ async fn test_registration_ip_only_trusts_the_configured_proxy_header(pool: PgPo
     assert_eq!(user.registered_from_ip, "10.10.4.90/32");
 }
 
-#[sqlx::test(migrations = "../storage/migrations")]
+#[sqlx::test]
 async fn test_duplicate_username_registration(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(pool, MockRedisPool::default()).await;
@@ -153,10 +153,7 @@ async fn test_duplicate_username_registration(pool: PgPool) {
     assert_eq!(error["error"], "username already exists");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_invite"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_invite"))]
 async fn test_closed_registration_failures(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(pool, MockRedisPool::default()).await;
@@ -204,10 +201,7 @@ async fn test_closed_registration_failures(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_invite"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_invite"))]
 async fn test_closed_registration_success(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(pool, MockRedisPool::default()).await;
@@ -256,10 +250,7 @@ async fn test_closed_registration_success(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_expired_test_user_invite"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_expired_test_user_invite"))]
 async fn test_closed_registration_expired_failure(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(pool, MockRedisPool::default()).await;
@@ -285,7 +276,7 @@ async fn test_closed_registration_expired_failure(pool: PgPool) {
     );
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_authorized_endpoint_after_login(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -310,10 +301,7 @@ async fn test_authorized_endpoint_after_login(pool: PgPool) {
     assert_eq!(user.user.username, "user_basic");
 }
 
-#[sqlx::test(
-    fixtures("with_test_banned_user"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_banned_user"))]
 async fn test_login_with_banned_user(pool: PgPool) {
     let service = create_test_app(
         Arc::new(ConnectionPool::with_pg_pool(pool)),
@@ -335,7 +323,7 @@ async fn test_login_with_banned_user(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_refresh_with_invalidated_token(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -382,7 +370,7 @@ async fn test_refresh_with_invalidated_token(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_banned_user_token_invalidation(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -455,10 +443,7 @@ async fn test_banned_user_token_invalidation(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(
-    fixtures("with_test_user_classes"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_user_classes"))]
 async fn test_registration_assigns_class_permissions(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -500,7 +485,7 @@ async fn test_registration_assigns_class_permissions(pool: PgPool) {
     );
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_registration_sends_automated_message_when_configured(pool: PgPool) {
     let sender_id = 1; // user from fixture
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
@@ -571,7 +556,7 @@ async fn test_registration_sends_automated_message_when_configured(pool: PgPool)
     );
 }
 
-#[sqlx::test(migrations = "../storage/migrations")]
+#[sqlx::test]
 async fn test_registration_no_automated_message_when_not_configured(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -621,7 +606,7 @@ async fn test_registration_no_automated_message_when_not_configured(pool: PgPool
     assert_eq!(conversations.results.len(), 0);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_registration_automated_message_replaces_username_placeholder(pool: PgPool) {
     let sender_id = 1;
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
@@ -682,7 +667,7 @@ async fn test_registration_automated_message_replaces_username_placeholder(pool:
     assert_eq!(messages[0]["content"].as_str().unwrap(), expected);
 }
 
-#[sqlx::test(migrations = "../storage/migrations")]
+#[sqlx::test]
 async fn test_registration_applies_default_values_from_settings(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -718,7 +703,7 @@ async fn test_registration_applies_default_values_from_settings(pool: PgPool) {
     assert_eq!(user.freeleech_tokens, 5);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_refresh_token_can_only_be_redeemed_once(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -743,7 +728,7 @@ async fn test_refresh_token_can_only_be_redeemed_once(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_access_and_refresh_tokens_are_not_interchangeable(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -770,7 +755,7 @@ async fn test_access_and_refresh_tokens_are_not_interchangeable(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_expired_token_is_rejected(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(pool, MockRedisPool::default()).await;

@@ -15,10 +15,7 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group"))]
 async fn test_owner_can_edit_their_comment(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -59,10 +56,7 @@ async fn test_owner_can_edit_their_comment(pool: PgPool) {
     assert_eq!(edited.content, "Edited comment");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group"))]
 async fn test_staff_can_edit_any_comment(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool.clone()));
 
@@ -111,14 +105,11 @@ async fn test_staff_can_edit_any_comment(pool: PgPool) {
     assert_eq!(edited.content, "Staff edited");
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_title_group_comments"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_title_group_comments"
+))]
 async fn test_search_title_group_comments_returns_results(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -143,14 +134,11 @@ async fn test_search_title_group_comments_returns_results(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_title_group_comments"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_title_group_comments"
+))]
 async fn test_search_title_group_comments_with_content_filter(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -169,14 +157,11 @@ async fn test_search_title_group_comments_with_content_filter(pool: PgPool) {
     assert!(response.results[0].content.contains("Beatles"));
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_title_group_comments"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_title_group_comments"
+))]
 async fn test_search_title_group_comments_case_insensitive(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -195,14 +180,11 @@ async fn test_search_title_group_comments_case_insensitive(pool: PgPool) {
     assert_eq!(response.results.len(), 2);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_title_group_comments"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_title_group_comments"
+))]
 async fn test_search_title_group_comments_pagination(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -222,14 +204,11 @@ async fn test_search_title_group_comments_pagination(pool: PgPool) {
     assert_eq!(response.page_size, 2);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_title_group_comments"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_title_group_comments"
+))]
 async fn test_search_title_group_comments_no_results(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -247,14 +226,11 @@ async fn test_search_title_group_comments_no_results(pool: PgPool) {
     assert_eq!(response.results.len(), 0);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_title_group_comments"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_title_group_comments"
+))]
 async fn test_staff_can_delete_title_group_comment(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -282,14 +258,11 @@ async fn test_staff_can_delete_title_group_comment(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_title_group_comments"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_title_group_comments"
+))]
 async fn test_user_without_permission_cannot_delete_title_group_comment(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

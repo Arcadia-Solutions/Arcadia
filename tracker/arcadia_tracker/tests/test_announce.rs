@@ -108,10 +108,7 @@ fn test_peer_id() -> [u8; 20] {
     peer_id
 }
 
-#[sqlx::test(
-    fixtures("with_test_user"),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_user"))]
 async fn test_announce_invalid_passkey(pool: PgPool) {
     let service = create_test_app(pool).await;
 
@@ -146,10 +143,7 @@ async fn test_announce_invalid_passkey(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_user"),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_user"))]
 async fn test_announce_passkey_not_found(pool: PgPool) {
     let service = create_test_app(pool).await;
 
@@ -185,15 +179,12 @@ async fn test_announce_passkey_not_found(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_announce_info_hash_not_found(pool: PgPool) {
     let service = create_test_app(pool).await;
 
@@ -223,15 +214,12 @@ async fn test_announce_info_hash_not_found(pool: PgPool) {
     assert_eq!(error.failure_reason, "InfoHash not found.");
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_announce_successful_started(pool: PgPool) {
     let service = create_test_app(pool).await;
 
@@ -286,16 +274,13 @@ async fn test_announce_successful_started(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_peers"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_peers"
+))]
 async fn test_announce_with_existing_peers(pool: PgPool) {
     let service = create_test_app(pool).await;
 
@@ -350,15 +335,12 @@ async fn test_announce_with_existing_peers(pool: PgPool) {
     // or counted until they're part of an announce cycle.
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_announce_completed_event(pool: PgPool) {
     let service = create_test_app(pool).await;
 
@@ -417,15 +399,12 @@ async fn test_announce_completed_event(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_announce_stopped_event(pool: PgPool) {
     let service = create_test_app(pool).await;
 
@@ -484,15 +463,12 @@ async fn test_announce_stopped_event(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_announce_missing_user_agent(pool: PgPool) {
     let service = create_test_app(pool).await;
 
@@ -523,15 +499,12 @@ async fn test_announce_missing_user_agent(pool: PgPool) {
     assert_eq!(error.failure_reason, "user-agent is missing");
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user_snatch_limit",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user_snatch_limit",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_announce_snatch_limit_under(pool: PgPool) {
     let service = create_test_app(pool).await;
 
@@ -578,17 +551,14 @@ async fn test_announce_snatch_limit_under(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user_snatch_limit",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_torrent_2",
-        "with_test_torrent_3"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user_snatch_limit",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_torrent_2",
+    "with_test_torrent_3"
+))]
 async fn test_announce_snatch_limit_exceeded(pool: PgPool) {
     let service = create_test_app(pool).await;
 
@@ -654,16 +624,13 @@ async fn test_announce_snatch_limit_exceeded(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_user_bonus_points",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent_snatch_cost"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_user_bonus_points",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent_snatch_cost"
+))]
 async fn test_announce_bonus_points_deducted(pool: PgPool) {
     let service = create_test_app(pool.clone()).await;
 
@@ -711,16 +678,13 @@ async fn test_announce_bonus_points_deducted(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_user_low_bonus_points",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent_snatch_cost"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_user_low_bonus_points",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent_snatch_cost"
+))]
 async fn test_announce_insufficient_bonus_points(pool: PgPool) {
     let service = create_test_app(pool.clone()).await;
 
@@ -763,15 +727,12 @@ async fn test_announce_insufficient_bonus_points(pool: PgPool) {
     assert_eq!(row.0, 30, "User should still have 30 BP");
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent_snatch_cost"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent_snatch_cost"
+))]
 async fn test_announce_uploader_free_snatch(pool: PgPool) {
     // Get the actual user ID (may not be 1 depending on DB sequence)
     let user_row: (i32,) =
@@ -840,16 +801,13 @@ async fn test_announce_uploader_free_snatch(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_user_bonus_points",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent_snatch_cost"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_user_bonus_points",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent_snatch_cost"
+))]
 async fn test_announce_no_double_bonus_points_deduction(pool: PgPool) {
     let service = create_test_app(pool.clone()).await;
 
@@ -917,16 +875,13 @@ async fn test_announce_no_double_bonus_points_deduction(pool: PgPool) {
     assert_eq!(row.0, 50, "User should have 50 BP (only one deduction)");
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_user_bonus_points",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent_snatch_cost"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_user_bonus_points",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent_snatch_cost"
+))]
 async fn test_announce_no_deduction_when_no_download_between_announces(pool: PgPool) {
     let service = create_test_app(pool.clone()).await;
 
@@ -975,16 +930,13 @@ async fn test_announce_no_deduction_when_no_download_between_announces(pool: PgP
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_user_bonus_points",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent_snatch_cost"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_user_bonus_points",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent_snatch_cost"
+))]
 async fn test_announce_no_deduction_when_peer_already_flushed_as_leecher(pool: PgPool) {
     // Simulates: user leeched earlier (0 bytes transferred), was flushed to peers
     // table, then disconnected. In-memory peer is gone; on re-announce we must
@@ -1046,17 +998,14 @@ async fn test_announce_no_deduction_when_peer_already_flushed_as_leecher(pool: P
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_user_bonus_points",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent_snatch_cost",
-        "with_bonus_transfer_to_uploader"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_user_bonus_points",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent_snatch_cost",
+    "with_bonus_transfer_to_uploader"
+))]
 async fn test_bonus_points_transfer_to_uploader(pool: PgPool) {
     // Get uploader's initial BP
     let uploader_row: (i64,) = sqlx::query_as("SELECT bonus_points FROM users WHERE id = 1")
@@ -1097,17 +1046,14 @@ async fn test_bonus_points_transfer_to_uploader(pool: PgPool) {
     assert_eq!(uploader_row.0, uploader_initial_bp + 50);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_user_bonus_points",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent_snatch_cost",
-        "with_bonus_transfer_to_seeders"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_user_bonus_points",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent_snatch_cost",
+    "with_bonus_transfer_to_seeders"
+))]
 async fn test_bonus_points_transfer_to_seeders(pool: PgPool) {
     // Get seeders' initial BP (users 1 and 20 are seeders from fixture)
     let seeder1_row: (i64,) = sqlx::query_as("SELECT bonus_points FROM users WHERE id = 1")
@@ -1159,17 +1105,14 @@ async fn test_bonus_points_transfer_to_seeders(pool: PgPool) {
     assert_eq!(seeder2_row.0, seeder2_initial_bp + 25);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_user_bonus_points",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent_snatch_cost",
-        "with_bonus_transfer_to_none"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_user_bonus_points",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent_snatch_cost",
+    "with_bonus_transfer_to_none"
+))]
 async fn test_bonus_points_transfer_to_none(pool: PgPool) {
     // Get uploader's initial BP
     let uploader_row: (i64,) = sqlx::query_as("SELECT bonus_points FROM users WHERE id = 1")
@@ -1210,15 +1153,12 @@ async fn test_bonus_points_transfer_to_none(pool: PgPool) {
     assert_eq!(uploader_row.0, uploader_initial_bp);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_delete_torrent_rejects_announce(pool: PgPool) {
     let service = create_test_app(pool).await;
 
@@ -1286,16 +1226,13 @@ async fn insert_grabbed_only_activity(pool: &PgPool, torrent_id: i32, user_id: i
     .expect("Failed to insert grabbed-only torrent activity");
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_user_bonus_points",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent_snatch_cost"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_user_bonus_points",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent_snatch_cost"
+))]
 async fn test_announce_bonus_points_deducted_after_grab_only_activity(pool: PgPool) {
     // The user downloaded the .torrent file (grab-only activity) and announces
     // for the first time: the snatch cost must be charged even when
@@ -1334,17 +1271,14 @@ async fn test_announce_bonus_points_deducted_after_grab_only_activity(pool: PgPo
     assert_eq!(row.0, 50, "User should be charged for the first snatch");
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_user_bonus_points",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent_snatch_cost",
-        "with_charge_bonus_points_on_resnatch"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_user_bonus_points",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent_snatch_cost",
+    "with_charge_bonus_points_on_resnatch"
+))]
 async fn test_announce_bonus_points_deducted_on_resnatch_when_enabled(pool: PgPool) {
     insert_completed_activity(&pool, 100, 10).await;
 
@@ -1380,16 +1314,13 @@ async fn test_announce_bonus_points_deducted_on_resnatch_when_enabled(pool: PgPo
     assert_eq!(row.0, 50, "User should be charged again for the re-snatch");
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_user_bonus_points",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent_snatch_cost"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_user_bonus_points",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent_snatch_cost"
+))]
 async fn test_announce_no_bonus_points_deducted_on_resnatch_when_disabled(pool: PgPool) {
     insert_completed_activity(&pool, 100, 10).await;
 
@@ -1425,17 +1356,14 @@ async fn test_announce_no_bonus_points_deducted_on_resnatch_when_disabled(pool: 
     assert_eq!(row.0, 100, "User should not be charged for the re-snatch");
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_user_bonus_points",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent_snatch_cost",
-        "with_charge_bonus_points_on_resnatch"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_user_bonus_points",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent_snatch_cost",
+    "with_charge_bonus_points_on_resnatch"
+))]
 async fn test_announce_no_deduction_when_seeding_resumes(pool: PgPool) {
     // User completed the torrent and restarts their client to seed it again:
     // the announce carries left=0, so no snatch cost may be charged, even with
@@ -1474,16 +1402,13 @@ async fn test_announce_no_deduction_when_seeding_resumes(pool: PgPool) {
     assert_eq!(row.0, 100, "Resuming seeding must not deduct bonus points");
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_user_low_bonus_points",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent_snatch_cost"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_user_low_bonus_points",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent_snatch_cost"
+))]
 async fn test_announce_error_is_recorded_for_the_user(pool: PgPool) {
     let tracker = common::create_test_tracker(pool.clone(), common::test_config()).await;
     let service = test::init_service(
@@ -1524,17 +1449,14 @@ async fn test_announce_error_is_recorded_for_the_user(pool: PgPool) {
     assert_eq!(row, (11, "insufficient_bonus_points".to_string(), 2));
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_user_bonus_points",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent_snatch_cost",
-        "with_snatch_bonus_points_factors"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_user_bonus_points",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent_snatch_cost",
+    "with_snatch_bonus_points_factors"
+))]
 async fn test_snatch_bonus_points_factors_applied(pool: PgPool) {
     // Torrent snatch cost is 50. Site-wide factors: cost_factor = 200% (snatcher charged 100),
     // reward_factor = 50% (uploader receives 25). The two factors are independent.
@@ -1590,15 +1512,12 @@ async fn test_snatch_bonus_points_factors_applied(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_user",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../../backend/storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_user",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_announce_legacy_fallback_route(pool: PgPool) {
     let service = create_test_app(pool).await;
 

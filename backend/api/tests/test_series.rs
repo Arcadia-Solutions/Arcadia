@@ -20,10 +20,7 @@ use crate::common::{
     TestUser, auth_header, call_and_read_body_json_with_status, create_test_app_and_login,
 };
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_series"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_series"))]
 async fn test_edit_series(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -53,10 +50,7 @@ async fn test_edit_series(pool: PgPool) {
     assert_eq!(series.tags, payload.tags);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_series", "with_test_title_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_series", "with_test_title_group"))]
 async fn test_add_title_group_to_series(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (standard_service, standard_user) =
@@ -92,10 +86,7 @@ async fn test_add_title_group_to_series(pool: PgPool) {
     assert_eq!(title_group.title_group.series_id, Some(1));
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_series", "with_test_title_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_series", "with_test_title_group"))]
 async fn test_remove_title_group_from_series_without_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (editor_service, editor) = create_test_app_and_login(
@@ -142,10 +133,7 @@ async fn test_remove_title_group_from_series_without_permission(pool: PgPool) {
     assert_eq!(title_group.title_group.series_id, Some(1));
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_series", "with_test_title_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_series", "with_test_title_group"))]
 async fn test_remove_title_group_from_series_with_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(

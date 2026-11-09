@@ -18,7 +18,7 @@ use std::sync::Arc;
 // REORDER CATEGORY TESTS
 // ============================================================================
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_reorder_categories(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) =
@@ -90,10 +90,7 @@ async fn test_reorder_categories(pool: PgPool) {
     assert_eq!(returned_names, vec!["Gamma", "Alpha", "Beta"]);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_forum_category"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_forum_category"))]
 async fn test_non_staff_cannot_reorder_categories(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -120,10 +117,7 @@ async fn test_non_staff_cannot_reorder_categories(pool: PgPool) {
 // REORDER SUB-CATEGORY TESTS
 // ============================================================================
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_forum_category"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_forum_category"))]
 async fn test_reorder_sub_categories(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -209,14 +203,11 @@ async fn test_reorder_sub_categories(pool: PgPool) {
     assert_eq!(returned_names, vec!["Zeta", "Epsilon", "Delta"]);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category"
+))]
 async fn test_non_staff_cannot_reorder_sub_categories(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -250,7 +241,7 @@ async fn test_non_staff_cannot_reorder_sub_categories(pool: PgPool) {
 // SORT ORDER AUTO-ASSIGNMENT TESTS
 // ============================================================================
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_created_categories_get_incremental_sort_order(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) =
@@ -286,10 +277,7 @@ async fn test_created_categories_get_incremental_sort_order(pool: PgPool) {
     assert_eq!(first_category.sort_order + 1, second_category.sort_order);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_forum_category"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_forum_category"))]
 async fn test_created_sub_categories_get_incremental_sort_order(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -335,10 +323,7 @@ async fn test_created_sub_categories_get_incremental_sort_order(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_forum_category"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_forum_category"))]
 async fn test_reordering_a_mix_of_known_and_unknown_categories_changes_nothing(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -379,14 +364,11 @@ async fn test_reordering_a_mix_of_known_and_unknown_categories_changes_nothing(p
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category"
+))]
 async fn test_reordering_a_mix_of_known_and_unknown_sub_categories_changes_nothing(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(

@@ -17,10 +17,7 @@ use std::sync::Arc;
 
 // Title Group Comment Notifications
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group"))]
 async fn test_subscriber_receives_notification_on_new_title_group_comment(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -84,10 +81,7 @@ async fn test_subscriber_receives_notification_on_new_title_group_comment(pool: 
     assert_eq!(counts.title_group_comments, 1);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group"))]
 async fn test_comment_creator_does_not_receive_own_notification(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -135,10 +129,7 @@ async fn test_comment_creator_does_not_receive_own_notification(pool: PgPool) {
     assert_eq!(counts.title_group_comments, 0);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group"))]
 async fn test_no_duplicate_unread_title_group_notifications(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -204,15 +195,12 @@ async fn test_no_duplicate_unread_title_group_notifications(pool: PgPool) {
 
 // Forum Thread Post Notifications
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread"
+))]
 async fn test_subscriber_receives_notification_on_new_forum_post(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -275,15 +263,12 @@ async fn test_subscriber_receives_notification_on_new_forum_post(pool: PgPool) {
     assert_eq!(counts.forum_thread_posts, 1);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread"
+))]
 async fn test_post_creator_does_not_receive_own_notification(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -329,15 +314,12 @@ async fn test_post_creator_does_not_receive_own_notification(pool: PgPool) {
     assert_eq!(counts.forum_thread_posts, 0);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread"
+))]
 async fn test_no_duplicate_unread_forum_notifications(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -399,10 +381,7 @@ async fn test_no_duplicate_unread_forum_notifications(pool: PgPool) {
     assert_eq!(counts.forum_thread_posts, 1);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group"))]
 async fn test_include_read_filter_title_group_notifications(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -473,7 +452,7 @@ async fn test_include_read_filter_title_group_notifications(pool: PgPool) {
 
 // Conversation Notifications
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_conversation_counter_increments_for_receiver(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -530,7 +509,7 @@ async fn test_conversation_counter_increments_for_receiver(pool: PgPool) {
 
 // Staff PM Notifications
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_staff_receives_notification_on_new_staff_pm(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -591,7 +570,7 @@ async fn test_staff_receives_notification_on_new_staff_pm(pool: PgPool) {
     assert_eq!(counts.staff_pm_messages, 1);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_creator_receives_notification_on_staff_reply(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -669,7 +648,7 @@ async fn test_creator_receives_notification_on_staff_reply(pool: PgPool) {
     assert_eq!(counts.staff_pm_messages, 1);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_message_creator_does_not_receive_own_staff_pm_notification(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -711,7 +690,7 @@ async fn test_message_creator_does_not_receive_own_staff_pm_notification(pool: P
     assert_eq!(counts.staff_pm_messages, 0);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_notifications_marked_as_read_when_staff_pm_resolved(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -801,14 +780,11 @@ async fn test_notifications_marked_as_read_when_staff_pm_resolved(pool: PgPool) 
 
 // Torrent Request Comment Notifications
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_torrent_request"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_torrent_request"
+))]
 async fn test_subscriber_receives_notification_on_new_torrent_request_comment(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -865,14 +841,11 @@ async fn test_subscriber_receives_notification_on_new_torrent_request_comment(po
     assert!(!notifications.torrent_request_comments[0].read_status);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_torrent_request"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_torrent_request"
+))]
 async fn test_comment_creator_does_not_receive_own_torrent_request_notification(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -909,14 +882,11 @@ async fn test_comment_creator_does_not_receive_own_torrent_request_notification(
     assert_eq!(notifications.torrent_request_comments.len(), 0);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_torrent_request"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_torrent_request"
+))]
 async fn test_no_duplicate_unread_torrent_request_notifications(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -971,7 +941,7 @@ async fn test_no_duplicate_unread_torrent_request_notifications(pool: PgPool) {
 
 // Unread Announcements
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_unread_announcements_counts_unseen_threads_in_subcategory_1(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -987,7 +957,7 @@ async fn test_unread_announcements_counts_unseen_threads_in_subcategory_1(pool: 
     assert_eq!(counts.announcements, 1);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_unread_announcements_decreases_after_viewing_thread(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -1010,7 +980,7 @@ async fn test_unread_announcements_decreases_after_viewing_thread(pool: PgPool) 
     assert_eq!(counts.announcements, 0);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_unread_announcements_stays_read_after_new_post_in_thread(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -1053,14 +1023,11 @@ async fn test_unread_announcements_stays_read_after_new_post_in_thread(pool: PgP
 
 // Forum Sub-Category Thread Notifications
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category"
+))]
 async fn test_subscriber_receives_notification_on_new_thread_in_sub_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -1130,14 +1097,11 @@ async fn test_subscriber_receives_notification_on_new_thread_in_sub_category(poo
     assert_eq!(counts.forum_sub_category_threads, 1);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category"
+))]
 async fn test_thread_creator_does_not_receive_own_sub_category_notification(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -1186,14 +1150,11 @@ async fn test_thread_creator_does_not_receive_own_sub_category_notification(pool
     assert_eq!(counts.forum_sub_category_threads, 0);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category"
+))]
 async fn test_viewing_thread_clears_sub_category_new_thread_notifications(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -1323,10 +1284,7 @@ async fn login_second_user(
     common::call_and_read_body_json(service, login_req).await
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_artist"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_artist"))]
 async fn test_subscriber_receives_notification_on_new_title_group_of_artist(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -1379,10 +1337,7 @@ async fn test_subscriber_receives_notification_on_new_title_group_of_artist(pool
     assert_eq!(counts.artist_title_groups, 1);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_artist", "with_test_title_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_artist", "with_test_title_group"))]
 async fn test_subscriber_receives_notification_on_artist_affiliated_to_existing_title_group(
     pool: PgPool,
 ) {
@@ -1428,10 +1383,7 @@ async fn test_subscriber_receives_notification_on_artist_affiliated_to_existing_
     assert_eq!(notifications.artist_title_groups[0].title_group_id, 1);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_artists_for_search"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_artists_for_search"))]
 async fn test_only_one_notification_when_several_subscribed_artists_share_a_title_group(
     pool: PgPool,
 ) {
@@ -1470,10 +1422,7 @@ async fn test_only_one_notification_when_several_subscribed_artists_share_a_titl
     assert_eq!(notifications.artist_title_groups.len(), 1);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_artist"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_artist"))]
 async fn test_affiliation_creator_does_not_receive_own_artist_notification(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -1504,16 +1453,13 @@ async fn test_affiliation_creator_does_not_receive_own_artist_notification(pool:
     assert!(notifications.artist_title_groups.is_empty());
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_title_group_torrent_notification",
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_title_group_torrent_notification",
+))]
 async fn test_title_group_torrent_notifications_are_listed(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -1537,16 +1483,13 @@ async fn test_title_group_torrent_notifications_are_listed(pool: PgPool) {
     assert_eq!(counts.title_group_torrents, 1);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_title_group_torrent_notification",
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_title_group_torrent_notification",
+))]
 async fn test_visiting_title_group_marks_torrent_notifications_as_read(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -1567,10 +1510,7 @@ async fn test_visiting_title_group_marks_torrent_notifications_as_read(pool: PgP
     assert_eq!(counts.title_group_torrents, 0);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_artist", "with_test_title_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_artist", "with_test_title_group"))]
 async fn test_visiting_title_group_marks_artist_notifications_as_read(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -1626,7 +1566,7 @@ async fn test_visiting_title_group_marks_artist_notifications_as_read(pool: PgPo
     assert_eq!(counts.artist_title_groups, 0);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_notification_streams_are_limited_per_user(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

@@ -10,16 +10,13 @@ use sqlx::PgPool;
 use std::borrow::Borrow;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_bonus_points"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_bonus_points"
+))]
 async fn test_bonus_points_calculation(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -145,17 +142,14 @@ async fn test_bonus_points_calculation(pool: PgPool) {
     assert_eq!(seed_times[3], (2, 101, 560));
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_bonus_points",
-        "with_bonus_points_per_seeding_client"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_bonus_points",
+    "with_bonus_points_per_seeding_client"
+))]
 async fn test_bonus_points_rewarded_per_seeding_client(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -190,17 +184,14 @@ async fn test_bonus_points_rewarded_per_seeding_client(pool: PgPool) {
     assert_eq!(user_100_bonus.0, 7); // 3 + 4 = 7
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_bonus_points",
-        "with_test_torrent_not_staff_checked"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_bonus_points",
+    "with_test_torrent_not_staff_checked"
+))]
 async fn test_bonus_points_only_rewarded_for_staff_checked_torrents(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -220,10 +211,7 @@ async fn test_bonus_points_only_rewarded_for_staff_checked_torrents(pool: PgPool
     assert_eq!(user_100_bonus.0, 1);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_bonus_points_per_endpoint"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_bonus_points_per_endpoint"))]
 async fn test_side_effects_award_bonus_points_of_the_matching_endpoint(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(

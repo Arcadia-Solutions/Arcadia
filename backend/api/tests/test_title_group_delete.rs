@@ -9,10 +9,7 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_deletable_title_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_deletable_title_group"))]
 async fn test_user_with_permission_can_delete_title_group_without_torrents(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -35,10 +32,7 @@ async fn test_user_with_permission_can_delete_title_group_without_torrents(pool:
     assert!(result.is_err());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_deletable_title_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_deletable_title_group"))]
 async fn test_user_with_permission_can_delete_title_group_with_only_deleted_torrents(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -61,15 +55,12 @@ async fn test_user_with_permission_can_delete_title_group_with_only_deleted_torr
     assert!(result.is_err());
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn test_cannot_delete_title_group_with_undeleted_torrents(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -92,10 +83,7 @@ async fn test_cannot_delete_title_group_with_undeleted_torrents(pool: PgPool) {
     assert!(result.is_ok());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_deletable_title_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_deletable_title_group"))]
 async fn test_user_without_permission_cannot_delete_title_group(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -114,10 +102,7 @@ async fn test_user_without_permission_cannot_delete_title_group(pool: PgPool) {
     assert!(result.is_ok());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_deletable_title_group"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_deletable_title_group"))]
 async fn test_deleting_title_group_decrements_artist_counters(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(

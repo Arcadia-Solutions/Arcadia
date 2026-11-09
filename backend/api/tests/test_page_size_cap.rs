@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 const MAX_PAGE_SIZE: u32 = 100;
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_page_size_bigger_than_the_maximum_is_capped(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -30,7 +30,7 @@ async fn test_page_size_bigger_than_the_maximum_is_capped(pool: PgPool) {
     assert_eq!(results.page_size, MAX_PAGE_SIZE);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_page_size_smaller_than_the_maximum_is_kept(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

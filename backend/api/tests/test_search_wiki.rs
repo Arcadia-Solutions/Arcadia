@@ -11,10 +11,7 @@ use common::{
 use mocks::mock_redis::MockRedisPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_wiki_articles"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_wiki_articles"))]
 async fn test_search_wiki_by_title(pool: sqlx::PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -32,10 +29,7 @@ async fn test_search_wiki_by_title(pool: sqlx::PgPool) {
     assert_eq!(response.results[0].title, "Upload Guidelines");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_wiki_articles"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_wiki_articles"))]
 async fn test_search_wiki_title_only_does_not_match_body(pool: sqlx::PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -54,10 +48,7 @@ async fn test_search_wiki_title_only_does_not_match_body(pool: sqlx::PgPool) {
     assert!(response.results.is_empty());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_wiki_articles"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_wiki_articles"))]
 async fn test_search_wiki_includes_body(pool: sqlx::PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

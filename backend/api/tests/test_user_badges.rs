@@ -14,7 +14,7 @@ use serde_json::Value;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_create_category_requires_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -34,7 +34,7 @@ async fn test_create_category_requires_permission(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_staff_can_create_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) =
@@ -56,10 +56,7 @@ async fn test_staff_can_create_category(pool: PgPool) {
     assert_eq!(category.name, "achievements");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_badges"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_badges"))]
 async fn test_list_badges_redacts_secret_for_non_privileged_viewer(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -81,10 +78,7 @@ async fn test_list_badges_redacts_secret_for_non_privileged_viewer(pool: PgPool)
     assert_eq!(secret["is_secret"], true);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_badges"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_badges"))]
 async fn test_list_badges_full_for_privileged_viewer(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, viewer) = create_test_app_and_login(
@@ -107,10 +101,7 @@ async fn test_list_badges_full_for_privileged_viewer(pool: PgPool) {
     assert_eq!(secret["is_secret"], true);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_badges"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_badges"))]
 async fn test_user_profile_includes_secret_earned_badges(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -130,10 +121,7 @@ async fn test_user_profile_includes_secret_earned_badges(pool: PgPool) {
     assert_eq!(secret["badge_is_secret"], true);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_badges"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_badges"))]
 async fn test_award_badge_requires_award_user_badge_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) =
@@ -153,10 +141,7 @@ async fn test_award_badge_requires_award_user_badge_permission(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_badges"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_badges"))]
 async fn test_award_badge_conflict_on_duplicate(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) =
@@ -186,10 +171,7 @@ async fn test_award_badge_conflict_on_duplicate(pool: PgPool) {
     assert_eq!(resp2.status(), StatusCode::CONFLICT);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_badges"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_badges"))]
 async fn test_revoke_requires_revoke_user_badge_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) =
@@ -203,10 +185,7 @@ async fn test_revoke_requires_revoke_user_badge_permission(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_badges"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_badges"))]
 async fn test_revoke_with_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) =
@@ -233,7 +212,7 @@ fn user_badge(category_id: i32) -> Value {
     })
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_user_badge_management_requires_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -258,10 +237,7 @@ async fn test_user_badge_management_requires_permission(pool: PgPool) {
     }
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_badges"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_badges"))]
 async fn test_user_badges_can_be_created_and_deleted_with_permission(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(pool, MockRedisPool::default()).await;

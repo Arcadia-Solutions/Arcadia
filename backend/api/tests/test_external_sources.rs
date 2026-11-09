@@ -85,7 +85,7 @@ async fn create_test_app_with_plugin(
     .await
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_upload_information_lists_the_built_in_external_sources(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -108,7 +108,7 @@ async fn test_upload_information_lists_the_built_in_external_sources(pool: PgPoo
     assert!(ids.starts_with(&["isbn", "tmdb", "comic-vine", "musicbrainz"]));
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_getting_data_from_an_unknown_external_source_returns_not_found(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -123,10 +123,7 @@ async fn test_getting_data_from_an_unknown_external_source_returns_not_found(poo
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group_tag_synonyms"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group_tag_synonyms"))]
 async fn test_getting_data_from_a_plugin(pool: PgPool) {
     let scraped_data = serde_json::json!({
         "title_group": {
@@ -203,7 +200,7 @@ async fn test_getting_data_from_a_plugin(pool: PgPool) {
     );
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_the_error_a_plugin_answers_with_is_given_to_the_uploader(pool: PgPool) {
     let (plugin_url, _) = spawn_http_server(
         "502 Bad Gateway",
@@ -239,7 +236,7 @@ async fn test_the_error_a_plugin_answers_with_is_given_to_the_uploader(pool: PgP
     assert_eq!(error_response.error, "example.com is unreachable");
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_upload_information_lists_the_websites_declared_by_a_plugin(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app_with_plugin(

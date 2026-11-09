@@ -14,17 +14,14 @@ use serde_json::json;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_emojis"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_emojis"
+))]
 async fn test_react_twice_is_idempotent_and_unreact_removes(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -76,17 +73,14 @@ async fn test_react_twice_is_idempotent_and_unreact_removes(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_emojis"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_emojis"
+))]
 async fn test_several_emojis_and_unknown_emoji(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -122,17 +116,14 @@ async fn test_several_emojis_and_unknown_emoji(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_emojis"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_emojis"
+))]
 async fn test_user_without_permission_cannot_react(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -154,17 +145,14 @@ async fn test_user_without_permission_cannot_react(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_emojis"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_emojis"
+))]
 async fn test_deleting_a_post_deletes_its_reactions(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -209,17 +197,14 @@ where
     profile.user.id
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_emojis"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_emojis"
+))]
 async fn test_thread_posts_carry_their_reactions(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -260,17 +245,14 @@ async fn test_thread_posts_carry_their_reactions(pool: PgPool) {
     }
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_emojis"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_emojis"
+))]
 async fn test_reaction_users_are_grouped_by_emoji(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, reactor) = create_test_app_and_login(
@@ -316,18 +298,15 @@ async fn test_reaction_users_are_grouped_by_emoji(pool: PgPool) {
 /// Two emojis that share the same `sort_order` must still keep each emoji's reactors
 /// contiguous in the response: the ordering must fall back to `emoji_id` so that grouping
 /// by "the last group" (which relies on contiguous rows per emoji) stays correct.
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_emojis_tied_sort_order",
-        "with_test_forum_post_reactions_tied_sort_order"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_emojis_tied_sort_order",
+    "with_test_forum_post_reactions_tied_sort_order"
+))]
 async fn test_reaction_users_stay_grouped_when_emojis_share_a_sort_order(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, reactor) =
@@ -377,17 +356,14 @@ async fn test_reaction_users_stay_grouped_when_emojis_share_a_sort_order(pool: P
 /// The positive case (a user who reacted seeing `reacted_by_current_user: true`) is already
 /// covered elsewhere; this pins the other side, which the highlighted chip on the frontend
 /// depends on just as much.
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_emojis"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_emojis"
+))]
 async fn test_reacted_by_current_user_is_false_for_a_user_who_did_not_react(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, reactor) = create_test_app_and_login(
@@ -423,17 +399,14 @@ struct ErrorResponse {
     error: String,
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_emojis"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_emojis"
+))]
 async fn test_reacting_with_a_disabled_emoji_is_rejected(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
@@ -462,17 +435,14 @@ async fn test_reacting_with_a_disabled_emoji_is_rejected(pool: PgPool) {
     assert_eq!(error.error, "this emoji is disabled");
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_test_forum_post",
-        "with_test_emojis"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post",
+    "with_test_emojis"
+))]
 async fn test_existing_reaction_on_a_disabled_emoji_is_still_returned(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, reactor) = create_test_app_and_login(

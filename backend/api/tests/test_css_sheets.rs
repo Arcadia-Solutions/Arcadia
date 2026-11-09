@@ -13,7 +13,7 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_staff_can_create_css_sheet(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -40,7 +40,7 @@ async fn test_staff_can_create_css_sheet(pool: PgPool) {
     assert_eq!(created.preview_image_url, "https://example.com/preview.png");
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_regular_user_cannot_create_css_sheet(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -62,10 +62,7 @@ async fn test_regular_user_cannot_create_css_sheet(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_css_sheets"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_css_sheets"))]
 async fn test_get_css_sheets(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -84,10 +81,7 @@ async fn test_get_css_sheets(pool: PgPool) {
     assert!(sheets.css_sheets.iter().any(|s| s.name == "test_sheet_1"));
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_css_sheets"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_css_sheets"))]
 async fn test_get_css_sheet_by_name(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -104,7 +98,7 @@ async fn test_get_css_sheet_by_name(pool: PgPool) {
     assert_eq!(sheet.css, "body { color: red; }");
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_get_nonexistent_css_sheet(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -119,10 +113,7 @@ async fn test_get_nonexistent_css_sheet(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_css_sheets"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_css_sheets"))]
 async fn test_staff_can_edit_css_sheet(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -151,10 +142,7 @@ async fn test_staff_can_edit_css_sheet(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_css_sheets"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_css_sheets"))]
 async fn test_regular_user_cannot_edit_css_sheet(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -177,10 +165,7 @@ async fn test_regular_user_cannot_edit_css_sheet(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_css_sheets"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_css_sheets"))]
 async fn test_get_css_sheet_content_public(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(pool, MockRedisPool::default()).await;
@@ -198,7 +183,7 @@ async fn test_get_css_sheet_content_public(pool: PgPool) {
     assert_eq!(css_content, "body { color: red; }");
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_get_nonexistent_css_sheet_content(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(pool, MockRedisPool::default()).await;
@@ -211,7 +196,7 @@ async fn test_get_nonexistent_css_sheet_content(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_css_sheet_endpoints_require_auth(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = create_test_app(pool, MockRedisPool::default()).await;
@@ -231,10 +216,7 @@ async fn test_css_sheet_endpoints_require_auth(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_css_sheets"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_css_sheets"))]
 async fn test_edit_default_css_sheet_name_updates_default(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

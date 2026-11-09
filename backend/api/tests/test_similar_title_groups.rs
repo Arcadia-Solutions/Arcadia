@@ -10,10 +10,7 @@ use serde_json::{Value, json};
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_similar_title_groups"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_similar_title_groups"))]
 async fn test_link_similar_title_groups_appears_in_get_title_group(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -47,10 +44,7 @@ async fn test_link_similar_title_groups_appears_in_get_title_group(pool: PgPool)
     assert_eq!(similar[0]["note"], "same director");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_similar_title_groups"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_similar_title_groups"))]
 async fn test_user_without_permission_cannot_unlink_similar_title_groups(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -81,10 +75,7 @@ async fn test_user_without_permission_cannot_unlink_similar_title_groups(pool: P
     assert_eq!(pool.find_similar_title_groups(20).await.unwrap().len(), 1);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_similar_title_groups"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_similar_title_groups"))]
 async fn test_user_with_permission_can_unlink_similar_title_groups(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, linker) = create_test_app_and_login(
@@ -116,10 +107,7 @@ async fn test_user_with_permission_can_unlink_similar_title_groups(pool: PgPool)
     assert!(pool.find_similar_title_groups(20).await.unwrap().is_empty());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_similar_title_groups"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_similar_title_groups"))]
 async fn test_user_without_permission_cannot_link_similar_title_groups(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

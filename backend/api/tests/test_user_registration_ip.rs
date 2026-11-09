@@ -13,10 +13,7 @@ use std::sync::Arc;
 
 const BASIC_USER_ID: i32 = 100;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_registration_ip_check"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_registration_ip_check"))]
 async fn test_get_user_registration_ip_with_its_check(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -43,7 +40,7 @@ async fn test_get_user_registration_ip_with_its_check(pool: PgPool) {
     assert_eq!(registration_ip.is_hosting, None);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_set_user_registration_ip_check(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -75,7 +72,7 @@ async fn test_set_user_registration_ip_check(pool: PgPool) {
     assert_eq!(registration_ip.is_tor, Some(true));
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_check_private_user_registration_ip(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(

@@ -50,15 +50,12 @@ async fn total_rows(pool: &PgPool) -> i64 {
         .unwrap()
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn reseed_request_notifies_past_seeders_and_snatchers(pool: PgPool) {
     set_up_dead_torrent(&pool).await;
     let (service, mut notification_receiver) = common::create_test_app_with_notifications(
@@ -104,15 +101,12 @@ async fn reseed_request_notifies_past_seeders_and_snatchers(pool: PgPool) {
     assert_eq!(counts.reseed_requests, 1);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn reseed_requests_from_several_users_aggregate_into_one_notification(pool: PgPool) {
     set_up_dead_torrent(&pool).await;
     let db = ConnectionPool::with_pg_pool(pool.clone());
@@ -138,15 +132,12 @@ async fn reseed_requests_from_several_users_aggregate_into_one_notification(pool
     assert_eq!(counts.reseed_requests, 1);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn reseed_request_rejected_when_requester_was_only_contributor(pool: PgPool) {
     // torrent 1 is dead and the requester (197) is the only past seeder/snatcher
     sqlx::query("UPDATE torrents SET seeders = 0, leechers = 0 WHERE id = 1")
@@ -177,15 +168,12 @@ async fn reseed_request_rejected_when_requester_was_only_contributor(pool: PgPoo
     assert_eq!(total_rows(&pool).await, 0);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn reseed_request_rejected_when_same_user_already_requested(pool: PgPool) {
     set_up_dead_torrent(&pool).await;
     let service = common::create_test_app(
@@ -212,15 +200,12 @@ async fn reseed_request_rejected_when_same_user_already_requested(pool: PgPool) 
     assert_eq!(total_rows(&pool).await, 2);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn title_group_hierarchy_exposes_last_seeded_at_only_for_dead_torrents(pool: PgPool) {
     set_up_dead_torrent(&pool).await;
     let db = ConnectionPool::with_pg_pool(pool.clone());
@@ -242,15 +227,12 @@ async fn title_group_hierarchy_exposes_last_seeded_at_only_for_dead_torrents(poo
     assert!(alive.edition_groups[0].torrents[0].last_seeded_at.is_none());
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn reseed_request_rejected_when_torrent_has_seeders(pool: PgPool) {
     set_up_dead_torrent(&pool).await;
     sqlx::query("UPDATE torrents SET seeders = 2 WHERE id = 1")
@@ -273,15 +255,12 @@ async fn reseed_request_rejected_when_torrent_has_seeders(pool: PgPool) {
     assert_eq!(total_rows(&pool).await, 0);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn reseed_request_rejected_when_not_dead_long_enough(pool: PgPool) {
     set_up_dead_torrent(&pool).await;
     sqlx::query(
@@ -307,15 +286,12 @@ async fn reseed_request_rejected_when_not_dead_long_enough(pool: PgPool) {
     assert_eq!(total_rows(&pool).await, 0);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn reseed_request_rejected_when_never_seeded(pool: PgPool) {
     // no torrent_activities rows at all, the torrent has no seeders
     let (service, user) = common::create_test_app_and_login(
@@ -334,15 +310,12 @@ async fn reseed_request_rejected_when_never_seeded(pool: PgPool) {
     assert_eq!(total_rows(&pool).await, 0);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn reseed_request_forbidden_without_permission(pool: PgPool) {
     set_up_dead_torrent(&pool).await;
     let (service, user) = common::create_test_app_and_login(
@@ -361,15 +334,12 @@ async fn reseed_request_forbidden_without_permission(pool: PgPool) {
     assert_eq!(total_rows(&pool).await, 0);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn auto_clear_deletes_only_healthy_torrents(pool: PgPool) {
     // torrent 1 is healthy (seeders >= 1, no leechers), torrent 11 has leechers,
     // torrent 12 has no seeders
@@ -424,15 +394,12 @@ async fn auto_clear_deletes_only_healthy_torrents(pool: PgPool) {
     assert_eq!(remaining, vec![11, 12]);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn marking_a_reseed_request_as_read_hides_it_without_deleting(pool: PgPool) {
     set_up_dead_torrent(&pool).await;
     let db = ConnectionPool::with_pg_pool(pool.clone());
@@ -470,15 +437,12 @@ async fn marking_a_reseed_request_as_read_hides_it_without_deleting(pool: PgPool
     assert_eq!(other_counts.reseed_requests, 1);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent"
+))]
 async fn auto_clear_removes_reseed_requests_of_soft_deleted_torrents(pool: PgPool) {
     set_up_dead_torrent(&pool).await;
     let db = ConnectionPool::with_pg_pool(pool.clone());

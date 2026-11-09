@@ -13,19 +13,16 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_artist",
-        "with_test_affiliated_artist",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-        "with_refreshed_title_group_hierarchy_lite",
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_artist",
+    "with_test_affiliated_artist",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_refreshed_title_group_hierarchy_lite",
+))]
 async fn test_subscribe_and_unsubscribe_title_group_torrents(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -73,16 +70,13 @@ async fn test_subscribe_and_unsubscribe_title_group_torrents(pool: PgPool) {
     assert_eq!(response.total_items, 0);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-        "with_test_forum_thread",
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+))]
 async fn test_subscribe_and_unsubscribe_forum_thread_posts(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -126,10 +120,7 @@ async fn test_subscribe_and_unsubscribe_forum_thread_posts(pool: PgPool) {
     assert_eq!(response.total_items, 0);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_artist",),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_artist",))]
 async fn test_subscriptions_affiliated_artists_with_dummy_for_many_artists(pool: PgPool) {
     let pool_arc = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -206,14 +197,11 @@ async fn test_subscriptions_affiliated_artists_with_dummy_for_many_artists(pool:
     assert!(artists[0].name.is_empty());
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+))]
 async fn test_subscribe_and_unsubscribe_forum_sub_category_threads(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -258,14 +246,11 @@ async fn test_subscribe_and_unsubscribe_forum_sub_category_threads(pool: PgPool)
     assert_eq!(response.total_items, 0);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_forum_category",
-        "with_test_forum_sub_category",
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+))]
 async fn test_duplicate_forum_sub_category_subscription_fails(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -288,10 +273,7 @@ async fn test_duplicate_forum_sub_category_subscription_fails(pool: PgPool) {
     assert!(resp.status().is_client_error() || resp.status().is_server_error());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_artist"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_artist"))]
 async fn test_subscribe_and_unsubscribe_artist_title_groups(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

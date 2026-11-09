@@ -14,10 +14,7 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_artist"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_artist"))]
 async fn test_staff_can_edit_artist(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -55,10 +52,7 @@ async fn test_staff_can_edit_artist(pool: PgPool) {
     assert_eq!(response.external_links, req_body.external_links);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_artists_for_search"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_artists_for_search"))]
 async fn test_search_artists_returns_paginated_results(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -78,10 +72,7 @@ async fn test_search_artists_returns_paginated_results(pool: PgPool) {
     assert_eq!(response.page_size, 10);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_artists_for_search"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_artists_for_search"))]
 async fn test_search_artists_filters_by_name(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -100,10 +91,7 @@ async fn test_search_artists_filters_by_name(pool: PgPool) {
     assert_eq!(response.results[0].name, "The Beatles");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_artists_for_search"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_artists_for_search"))]
 async fn test_search_artists_matches_by_alias(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -126,10 +114,7 @@ async fn test_search_artists_matches_by_alias(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_artists_for_search"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_artists_for_search"))]
 async fn test_search_artists_accent_insensitive(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -148,10 +133,7 @@ async fn test_search_artists_accent_insensitive(pool: PgPool) {
     assert_eq!(response.results[0].name, "Gérard Depardieu");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_artists_for_search"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_artists_for_search"))]
 async fn test_search_artists_pagination(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -171,10 +153,7 @@ async fn test_search_artists_pagination(pool: PgPool) {
     assert_eq!(response.page_size, 2);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_artist"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_artist"))]
 async fn test_user_with_permission_can_delete_artist(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -197,10 +176,7 @@ async fn test_user_with_permission_can_delete_artist(pool: PgPool) {
     assert!(artist_result.is_err());
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_artist"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_artist"))]
 async fn test_user_without_permission_cannot_delete_artist(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -219,15 +195,12 @@ async fn test_user_without_permission_cannot_delete_artist(pool: PgPool) {
     assert!(artist.is_ok());
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_artist",
-        "with_test_title_group",
-        "with_test_affiliated_artist"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_artist",
+    "with_test_title_group",
+    "with_test_affiliated_artist"
+))]
 async fn test_duplicate_artist_affiliation_returns_conflict(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -251,15 +224,12 @@ async fn test_duplicate_artist_affiliation_returns_conflict(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::CONFLICT);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_artist",
-        "with_test_title_group",
-        "with_test_affiliated_artist"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_artist",
+    "with_test_title_group",
+    "with_test_affiliated_artist"
+))]
 async fn test_user_cannot_change_artist_affiliations_of_title_group_created_by_another_user(
     pool: PgPool,
 ) {

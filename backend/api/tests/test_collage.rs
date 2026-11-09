@@ -10,10 +10,7 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_collage"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_collage"))]
 async fn test_owner_can_edit_own_collage(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -37,10 +34,7 @@ async fn test_owner_can_edit_own_collage(pool: PgPool) {
     assert_eq!(resp.name, "Updated Name");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_collage"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_collage"))]
 async fn test_user_cannot_edit_others_collage(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -63,10 +57,7 @@ async fn test_user_cannot_edit_others_collage(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_collage"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_collage"))]
 async fn test_staff_can_edit_any_collage(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -90,10 +81,7 @@ async fn test_staff_can_edit_any_collage(pool: PgPool) {
     assert_eq!(resp.name, "Staff Edit");
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_collage"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_collage"))]
 async fn test_user_cannot_delete_collage(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -108,10 +96,7 @@ async fn test_user_cannot_delete_collage(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_collage"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_collage"))]
 async fn test_staff_can_delete_collage(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -133,15 +118,12 @@ async fn test_staff_can_delete_collage(pool: PgPool) {
     assert!(pool.find_collage(1).await.is_err());
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_collage",
-        "with_test_collage_entry"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_collage",
+    "with_test_collage_entry"
+))]
 async fn test_user_cannot_delete_collage_entry(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -156,15 +138,12 @@ async fn test_user_cannot_delete_collage_entry(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_collage",
-        "with_test_collage_entry"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_collage",
+    "with_test_collage_entry"
+))]
 async fn test_staff_can_delete_collage_entry(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -187,10 +166,7 @@ async fn test_staff_can_delete_collage_entry(pool: PgPool) {
     // Verify the entry was actually deleted
     assert!(pool.find_collage_entry(1, 1).await.is_err());
 }
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_collage"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_collage"))]
 async fn test_subscriber_receives_notification_on_new_collage_entry(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -237,10 +213,7 @@ async fn test_subscriber_receives_notification_on_new_collage_entry(pool: PgPool
         common::call_and_read_body_json(&subscriber_service, counts_req).await;
     assert_eq!(counts.collages, 1);
 }
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_collage"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_collage"))]
 async fn test_subscriber_receives_multiple_notifications_for_same_collage(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -306,10 +279,7 @@ async fn test_subscriber_receives_multiple_notifications_for_same_collage(pool: 
         common::call_and_read_body_json(&subscriber_service, counts_req).await;
     assert_eq!(counts.collages, 2);
 }
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_collage"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_collage"))]
 async fn test_collage_entry_creator_does_not_receive_own_notification(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -345,10 +315,7 @@ async fn test_collage_entry_creator_does_not_receive_own_notification(pool: PgPo
     let counts: NotificationCounts = common::call_and_read_body_json(&service, counts_req).await;
     assert_eq!(counts.collages, 0);
 }
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_title_group", "with_test_collage"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group", "with_test_collage"))]
 async fn test_only_owner_or_collage_editor_can_add_entries_to_personal_and_staff_picks_collages(
     pool: PgPool,
 ) {

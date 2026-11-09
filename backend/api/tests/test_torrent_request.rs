@@ -12,14 +12,11 @@ use sqlx::PgPool;
 
 use crate::common::{TestUser, auth_header, read_body_json_data};
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_torrent_request"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_torrent_request"
+))]
 async fn test_search_torrent_requests(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -50,17 +47,14 @@ async fn test_search_torrent_requests(pool: PgPool) {
     );
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_torrent_request",
-        "with_test_torrent_request_vote"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_torrent_request",
+    "with_test_torrent_request_vote"
+))]
 async fn test_fill_torrent_request_success(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -79,17 +73,14 @@ async fn test_fill_torrent_request_success(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::OK);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_torrent_request",
-        "with_test_torrent_request_vote"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_torrent_request",
+    "with_test_torrent_request_vote"
+))]
 async fn test_fill_torrent_request_already_filled(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -108,17 +99,14 @@ async fn test_fill_torrent_request_already_filled(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::OK);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_torrent_request",
-        "with_test_torrent_request_vote"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_torrent_request",
+    "with_test_torrent_request_vote"
+))]
 async fn test_fill_torrent_request_wrong_title_group(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -138,16 +126,13 @@ async fn test_fill_torrent_request_wrong_title_group(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::CONFLICT);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_cd_torrent_request"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_cd_torrent_request"
+))]
 async fn test_fill_torrent_request_not_matching_criteria(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -167,14 +152,11 @@ async fn test_fill_torrent_request_not_matching_criteria(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::CONFLICT);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_torrent_request"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_torrent_request"
+))]
 async fn test_staff_can_delete_torrent_request_comment(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = common::create_test_app_and_login(
@@ -218,14 +200,11 @@ async fn test_staff_can_delete_torrent_request_comment(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_torrent_request"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_torrent_request"
+))]
 async fn test_author_without_permission_cannot_delete_torrent_request_comment(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = common::create_test_app_and_login(
@@ -258,14 +237,11 @@ async fn test_author_without_permission_cannot_delete_torrent_request_comment(po
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_torrent_requests_of_standard_user"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_torrent_requests_of_standard_user"
+))]
 async fn test_author_can_delete_torrent_request_without_other_voters(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -299,14 +275,11 @@ async fn test_author_can_delete_torrent_request_without_other_voters(pool: PgPoo
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_torrent_requests_of_standard_user"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_torrent_requests_of_standard_user"
+))]
 async fn test_author_cannot_delete_torrent_request_with_other_voters(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -326,14 +299,11 @@ async fn test_author_cannot_delete_torrent_request_with_other_voters(pool: PgPoo
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_torrent_requests_of_standard_user"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_torrent_requests_of_standard_user"
+))]
 async fn test_staff_can_delete_torrent_request_and_refund_the_bounty(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = common::create_test_app_and_login(
@@ -363,14 +333,11 @@ async fn test_staff_can_delete_torrent_request_and_refund_the_bounty(pool: PgPoo
     assert_eq!(other_voter.request_comments, 0);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_torrent_requests_of_standard_user"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_torrent_requests_of_standard_user"
+))]
 async fn test_staff_can_delete_torrent_request_without_refunding_the_bounty(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = common::create_test_app_and_login(
@@ -398,14 +365,11 @@ async fn test_staff_can_delete_torrent_request_without_refunding_the_bounty(pool
     assert_eq!(other_voter.bonus_points, 0);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_torrent_requests_of_standard_user"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_torrent_requests_of_standard_user"
+))]
 async fn test_filled_torrent_request_cannot_be_deleted(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = common::create_test_app_and_login(
@@ -429,15 +393,12 @@ async fn test_filled_torrent_request_cannot_be_deleted(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::CONFLICT);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_deletable_title_group",
-        "with_test_torrent_requests_of_standard_user"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_deletable_title_group",
+    "with_test_torrent_requests_of_standard_user"
+))]
 async fn test_torrent_request_title_group_is_locked_once_voted_on_or_filled(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -485,14 +446,11 @@ async fn test_torrent_request_title_group_is_locked_once_voted_on_or_filled(pool
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_torrent_request"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_torrent_request"
+))]
 async fn test_torrent_request_vote_with_negative_bounty_is_refused(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =

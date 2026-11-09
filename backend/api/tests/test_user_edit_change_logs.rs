@@ -10,7 +10,7 @@ use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_user_without_permission_cannot_search_user_edit_change_logs(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -25,7 +25,7 @@ async fn test_user_without_permission_cannot_search_user_edit_change_logs(pool: 
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_user_with_permission_can_search_user_edit_change_logs(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -48,7 +48,7 @@ async fn test_user_with_permission_can_search_user_edit_change_logs(pool: PgPool
     assert_eq!(result.page_size, 50);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_search_filters_by_user_id(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -67,7 +67,7 @@ async fn test_search_filters_by_user_id(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::OK);
 }
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_search_filters_by_item_type(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -88,7 +88,7 @@ async fn test_search_filters_by_item_type(pool: PgPool) {
 
 // --- Delete single user edit change log ---
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_user_without_permission_cannot_delete_user_edit_change_log(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -103,10 +103,7 @@ async fn test_user_without_permission_cannot_delete_user_edit_change_log(pool: P
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_edit_change_logs"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_edit_change_logs"))]
 async fn test_user_with_permission_can_delete_user_edit_change_log(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
@@ -141,7 +138,7 @@ async fn test_user_with_permission_can_delete_user_edit_change_log(pool: PgPool)
 
 // --- Delete all user edit change logs ---
 
-#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+#[sqlx::test(fixtures("with_test_users"))]
 async fn test_user_without_permission_cannot_delete_all_user_edit_change_logs(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
@@ -156,10 +153,7 @@ async fn test_user_without_permission_cannot_delete_all_user_edit_change_logs(po
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test(
-    fixtures("with_test_users", "with_test_user_edit_change_logs"),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures("with_test_users", "with_test_user_edit_change_logs"))]
 async fn test_user_with_permission_can_delete_all_user_edit_change_logs(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(

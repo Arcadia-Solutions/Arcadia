@@ -4,16 +4,13 @@ use sqlx::PgPool;
 use std::borrow::Borrow;
 use std::sync::Arc;
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_seeding_size"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_seeding_size"
+))]
 async fn test_user_torrent_stats(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
 
@@ -60,16 +57,13 @@ async fn test_user_torrent_stats(pool: PgPool) {
     assert_eq!(user_102.3, 0);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_seeding_size"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_seeding_size"
+))]
 async fn test_user_torrent_stats_reset_when_stopped(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let pg_pool: &PgPool = (*pool).borrow();
@@ -119,16 +113,13 @@ async fn test_user_torrent_stats_reset_when_stopped(pool: PgPool) {
     assert_eq!(user_101.1, 1);
 }
 
-#[sqlx::test(
-    fixtures(
-        "with_test_users",
-        "with_test_title_group",
-        "with_test_edition_group",
-        "with_test_torrent",
-        "with_test_seeding_size"
-    ),
-    migrations = "../storage/migrations"
-)]
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_seeding_size"
+))]
 async fn test_user_torrent_stats_ignore_inactive_peers(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let pg_pool: &PgPool = (*pool).borrow();

@@ -15,7 +15,6 @@ use arcadia_storage::{
 };
 use futures_util::future::{Ready, err, ok};
 use jsonwebtoken::{DecodingKey, Validation, decode, errors::ErrorKind};
-use subtle::ConstantTimeEq;
 
 #[derive(Debug, Clone)]
 pub struct Authdata {
@@ -57,12 +56,7 @@ pub async fn authenticate_user<R: RedisPoolInterface + 'static>(
         validate_bearer_auth::<R>(req, bearer).await
     } else if let Some(api_key) = req.headers().get("api-key") {
         let api_key = api_key.to_str().expect("api_key malformed").to_owned();
-        if routed_path(&req).starts_with("/api/tracker") {
-            // it is a request from the tracker
-            validate_tracker_api_key::<R>(req, &api_key)
-        } else {
-            validate_user_api_key::<R>(req, &api_key).await
-        }
+        validate_user_api_key::<R>(req, &api_key).await
     } else {
         Err((
             ErrorUnauthorized("authentication error, missing jwt token or API key"),
@@ -141,19 +135,6 @@ async fn validate_user_api_key<R: RedisPoolInterface + 'static>(
     }
 
     req.extensions_mut().insert(Authdata { sub: user_id });
-
-    Ok(req)
-}
-
-fn validate_tracker_api_key<R: RedisPoolInterface + 'static>(
-    req: ServiceRequest,
-    api_key: &str,
-) -> std::result::Result<ServiceRequest, (actix_web::Error, ServiceRequest)> {
-    let arc = req.app_data::<Data<Arcadia<R>>>().expect("app data set");
-
-    if !bool::from(arc.tracker.api_key.as_bytes().ct_eq(api_key.as_bytes())) {
-        return Err((actix_web::error::ErrorUnauthorized("invalid api key"), req));
-    };
 
     Ok(req)
 }

@@ -7,22 +7,22 @@ edition = "2024"
 workspace = true
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
-yaml_serde = "0.10"
-indexmap = { version = "2.14.0", default-features = false, features = ["std", "serde"] }
-anyhow = { version = "1.0.102", default-features = true, features = ["std"] }
-sqlx = { version = "0.9", features = [ "runtime-tokio", "postgres", "chrono", "ipnetwork" ] }
-thiserror = { version = "2.0.18", default-features = false }
-chrono = { version = "0.4.44", default-features = false, features = ["serde"] }
-ringmap = { version = "0.2.5", features = ["serde"] }
+serde = { workspace = true, features = ["derive"] }
+yaml_serde.workspace = true
+indexmap = { workspace = true, features = ["std", "serde"] }
+anyhow = { workspace = true, features = ["std"] }
+sqlx = { workspace = true, features = ["runtime-tokio", "postgres", "chrono", "ipnetwork"] }
+thiserror.workspace = true
+chrono = { workspace = true, features = ["serde"] }
+ringmap = { workspace = true, features = ["serde"] }
 actix-web.workspace = true
-log = "0.4"
-tracing = "0.1"
-opentelemetry = "0.32"
-opentelemetry_sdk = { version = "0.32", features = ["rt-tokio"] }
-opentelemetry-otlp = { version = "0.32", features = ["grpc-tonic", "trace", "logs", "metrics"] }
-opentelemetry-appender-tracing = "0.32"
-tracing-opentelemetry = { version = "0.33", features = ["metrics"] }
-tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
-parking_lot = "0.12.5"
-utoipa = { version = "6", features = ["actix_extras"] }
+log.workspace = true
+tracing.workspace = true
+opentelemetry.workspace = true
+opentelemetry_sdk = { workspace = true, features = ["rt-tokio"] }
+opentelemetry-otlp = { workspace = true, features = ["grpc-tonic", "trace", "logs", "metrics"] }
+opentelemetry-appender-tracing.workspace = true
+tracing-opentelemetry = { workspace = true, features = ["metrics"] }
+tracing-subscriber = { workspace = true, features = ["env-filter", "fmt"] }
+parking_lot.workspace = true
+utoipa = { workspace = true, features = ["actix_extras"] }

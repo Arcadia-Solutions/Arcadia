@@ -7,12 +7,12 @@ edition = "2024"
 workspace = true
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
-tokio-cron-scheduler = "0.15"
-arcadia-storage = { path = "../storage"}
-arcadia-common = { path = "../common"}
-arcadia-shared = { path = "../../shared"}
-log = "0.4"
-chrono = { version = "0.4", features = ["serde"] }
-sqlx = { version = "0.9", features = [ "runtime-tokio", "postgres", "chrono", "macros" ] }
-serde_json = "1"
+serde = { workspace = true, features = ["derive"] }
+tokio-cron-scheduler.workspace = true
+arcadia-storage.workspace = true
+arcadia-common.workspace = true
+arcadia-shared.workspace = true
+log.workspace = true
+chrono = { workspace = true, default-features = true, features = ["serde"] }
+sqlx = { workspace = true, features = ["runtime-tokio", "postgres", "chrono", "macros"] }
+serde_json.workspace = true

@@ -8,26 +8,26 @@ workspace = true
 
 [dependencies]
 actix-web.workspace = true
-utoipa = { version = "6", features = ["actix_extras"] }
-utoipa-swagger-ui = { version = "10", features = ["actix-web"] }
-tokio = { version = "1.52.3", default-features = false, features = ["rt-multi-thread", "macros", "signal", "sync"] }
-tracing-actix-web = "0.7"
-tracing = "0.1"
-thiserror = "2.0.18"
-actix-web-httpauth = "0.8.2"
-serde = { version = "1.0", features = ["derive"] }
-strum = { version = "0.28", features = ["derive", "std"] }
-log = "0.4"
-serde_bencode = "0.2.4"
-arcadia-shared = { path = "../../shared" }
-opentelemetry = { version = "0.32", features = ["metrics"] }
-parking_lot = "0.12.5"
-percent-encoding = "2.3.2"
-subtle = "2"
-rand = { version = "0.10.1", default-features = false, features = ["alloc", "thread_rng"] }
-chrono = { version = "0.4.44", default-features = false, features = ["serde"] }
-sqlx = { version = "0.9", features = [ "runtime-tokio", "postgres", "chrono", "ipnetwork" ] }
+utoipa = { workspace = true, features = ["actix_extras"] }
+utoipa-swagger-ui = { workspace = true, features = ["actix-web"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "signal", "sync"] }
+tracing-actix-web.workspace = true
+tracing.workspace = true
+thiserror = { workspace = true, default-features = true }
+actix-web-httpauth.workspace = true
+serde = { workspace = true, features = ["derive"] }
+strum = { workspace = true, features = ["derive", "std"] }
+log.workspace = true
+serde_bencode.workspace = true
+arcadia-shared.workspace = true
+opentelemetry = { workspace = true, features = ["metrics"] }
+parking_lot.workspace = true
+percent-encoding.workspace = true
+subtle.workspace = true
+rand = { workspace = true, features = ["alloc", "thread_rng"] }
+chrono = { workspace = true, features = ["serde"] }
+sqlx = { workspace = true, features = ["runtime-tokio", "postgres", "chrono", "ipnetwork"] }
 
 [dev-dependencies]
-actix-http = "3.12.1"
-yaml_serde = "0.10"
+actix-http.workspace = true
+yaml_serde.workspace = true

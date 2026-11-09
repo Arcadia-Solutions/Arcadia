@@ -25020,6 +25020,15 @@ INSERT INTO public.torrent_request_votes (id, torrent_request_id, created_at, cr
     (3, 1, '2025-09-01 18:04:08.214191+00', 2, 0, 590);
 
 --
+-- Data for Name: torrent_request_unfills; Type: TABLE DATA; Schema: public; Owner: arcadia
+--
+
+INSERT INTO public.torrent_request_unfills (id, torrent_request_id, unfilled_by_id, unfilled_at, reason, filled_by_user_id, filled_by_torrent_id, filled_at) VALUES
+    (1, 1, 4, '2025-09-03 09:12:44.512331+00', 'This is the standard edition, not the deluxe one.', 2, 3, '2025-09-02 20:41:05.118274+00'),
+    (2, 1, 2, '2025-09-06 14:30:21.904817+00', 'Transcode, the spectrals show a lossy source.', 4, 38, '2025-09-05 11:02:56.731942+00'),
+    (3, 2, 2, '2025-09-04 16:48:09.377205+00', 'Filled with the web version, the request asks for a DVD or Blu-Ray source.', 5, 26, '2025-09-04 08:15:33.640918+00');
+
+--
 -- Data for Name: torrent_request_comments; Type: TABLE DATA; Schema: public; Owner: arcadia
 --
 
@@ -25355,6 +25364,12 @@ SELECT pg_catalog.setval('public.torrent_activities_id_seq', (SELECT MAX(id) FRO
 --
 
 SELECT pg_catalog.setval('public.torrent_reports_id_seq', 1, true);
+
+--
+-- Name: torrent_request_unfills_id_seq; Type: SEQUENCE SET; Schema: public; Owner: arcadia
+--
+
+SELECT pg_catalog.setval('public.torrent_request_unfills_id_seq', 3, true);
 
 --
 -- Name: torrent_request_comments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: arcadia

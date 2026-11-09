@@ -257,6 +257,7 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         crate::handlers::torrent_requests::create_torrent_request_comment::exec,
         crate::handlers::torrent_requests::delete_torrent_request_comment::exec,
         crate::handlers::torrent_requests::delete_torrent_request::exec,
+        crate::handlers::torrent_requests::unfill_torrent_request::exec,
         crate::handlers::gifts::create_gift::exec,
         crate::handlers::donations::search_donations::exec,
         crate::handlers::donations::create_donation::exec,

@@ -108,7 +108,8 @@ CREATE TYPE user_permissions_enum AS ENUM (
     'edit_user_staff_notes',
     'view_foreign_user_staff_notes',
     'view_registration_ips',
-    'manage_advent_calendars'
+    'manage_advent_calendars',
+    'manage_unfilled_requests'
 );
 CREATE TABLE user_classes (
     name VARCHAR(30) UNIQUE NOT NULL,
@@ -1043,6 +1044,17 @@ CREATE TABLE torrent_request_votes(
     FOREIGN KEY (torrent_request_id) REFERENCES torrent_requests(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by_id) REFERENCES users(id) ON DELETE CASCADE
 );
+-- history of the fills that were undone, the request itself goes back to being unfilled
+CREATE TABLE torrent_request_unfills (
+    id BIGSERIAL PRIMARY KEY,
+    torrent_request_id BIGINT NOT NULL REFERENCES torrent_requests(id) ON DELETE CASCADE,
+    unfilled_by_id INT NOT NULL REFERENCES users(id),
+    unfilled_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    reason TEXT NOT NULL,
+    filled_by_user_id INT NOT NULL REFERENCES users(id),
+    filled_by_torrent_id INT NOT NULL REFERENCES torrents(id),
+    filled_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
 CREATE TABLE torrent_request_comments (
     id BIGSERIAL PRIMARY KEY,
     torrent_request_id BIGINT NOT NULL REFERENCES torrent_requests(id) ON DELETE CASCADE,
@@ -1614,6 +1626,7 @@ CREATE TYPE bonus_points_log_action_enum AS ENUM (
     'torrent_request_vote_spent',
     'torrent_request_fill_reward',
     'torrent_request_vote_refund',
+    'torrent_request_unfill_clawback',
     'gift_sent',
     'gift_received',
     'seedtime_reward',

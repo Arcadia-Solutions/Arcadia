@@ -5,7 +5,8 @@ use actix_web::{
 };
 use arcadia_common::error::Result;
 use arcadia_storage::{
-    models::torrent_request::TorrentRequestAndAssociatedData, redis::RedisPoolInterface,
+    models::{torrent_request::TorrentRequestAndAssociatedData, user::UserPermission},
+    redis::RedisPoolInterface,
 };
 use serde::Deserialize;
 use utoipa::IntoParams;
@@ -33,9 +34,13 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     query: Query<GetTorrentRequestQuery>,
     user: Authdata,
 ) -> Result<HttpResponse> {
+    let can_see_unfills = arc
+        .pool
+        .user_has_permission(user.sub, &UserPermission::ManageUnfilledRequests)
+        .await?;
     let torrent_request = arc
         .pool
-        .find_torrent_request_hierarchy(query.id, user.sub)
+        .find_torrent_request_hierarchy(query.id, user.sub, can_see_unfills)
         .await?;
 
     // Mark any torrent request comment notifications as read for this user

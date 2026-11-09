@@ -451,6 +451,7 @@ export const BonusPointsLogAction = {
     TorrentRequestVoteSpent: 'torrent_request_vote_spent',
     TorrentRequestFillReward: 'torrent_request_fill_reward',
     TorrentRequestVoteRefund: 'torrent_request_vote_refund',
+    TorrentRequestUnfillClawback: 'torrent_request_unfill_clawback',
     GiftSent: 'gift_sent',
     GiftReceived: 'gift_received',
     SeedtimeReward: 'seedtime_reward',
@@ -4261,6 +4262,10 @@ export interface TorrentRequestAndAssociatedData {
     'series': SeriesLite;
     'title_group': TitleGroup;
     'torrent_request': TorrentRequest;
+    /**
+     * Only returned to users with the manage_unfilled_requests permission
+     */
+    'unfills': Array<TorrentRequestUnfillHierarchy>;
     'votes': Array<TorrentRequestVoteHierarchy>;
 }
 export interface TorrentRequestBounty {
@@ -4333,6 +4338,19 @@ export interface TorrentRequestToDelete {
      * Only taken into account when the deletion is done with the delete_torrent_request permission
      */
     'refund_bounty': boolean;
+}
+export interface TorrentRequestUnfill {
+    'reason': string;
+    'torrent_request_id': number;
+}
+export interface TorrentRequestUnfillHierarchy {
+    'filled_at': string;
+    'filled_by_torrent_id': number;
+    'filled_by_user': UserLite;
+    'id': number;
+    'reason': string;
+    'unfilled_at': string;
+    'unfilled_by': UserLite;
 }
 export interface TorrentRequestVote {
     'bounty_bonus_points': number;
@@ -5255,7 +5273,8 @@ export const UserPermission = {
     EditUserStaffNotes: 'edit_user_staff_notes',
     ViewForeignUserStaffNotes: 'view_foreign_user_staff_notes',
     ViewRegistrationIps: 'view_registration_ips',
-    ManageAdventCalendars: 'manage_advent_calendars'
+    ManageAdventCalendars: 'manage_advent_calendars',
+    ManageUnfilledRequests: 'manage_unfilled_requests'
 } as const;
 
 export type UserPermission = typeof UserPermission[keyof typeof UserPermission];
@@ -8492,6 +8511,19 @@ export const getTorrentRequest = async (id: number, options?: RawAxiosRequestCon
         ...options
     });
     return response.data.data;
+};
+
+
+
+
+export const unfillTorrentRequest = async (torrentRequestUnfill: TorrentRequestUnfill, options?: RawAxiosRequestConfig): Promise<void> => {
+    const response = await globalAxios.request<void>({
+        url: '/api/torrent-requests/unfill',
+        method: 'POST',
+        data: torrentRequestUnfill,
+        ...options
+    });
+    return response.data;
 };
 
 

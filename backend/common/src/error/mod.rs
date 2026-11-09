@@ -156,6 +156,12 @@ pub enum Error {
     #[error("this torrent request is already filled")]
     TorrentRequestAlreadyFilled,
 
+    #[error("this torrent request is not filled")]
+    TorrentRequestNotFilled,
+
+    #[error("the reason of a torrent request unfill cannot be empty")]
+    TorrentRequestUnfillReasonEmpty,
+
     #[error(
         "during the first hour after upload, only the torrent uploader can fill requests with this torrent"
     )]
@@ -907,6 +913,7 @@ impl actix_web::ResponseError for Error {
             | Error::ForumPollQuestionEmpty
             | Error::ForumPollOptionsInsufficient
             | Error::ForumPostEmpty
+            | Error::TorrentRequestUnfillReasonEmpty
             | Error::ForumCategoryNameEmpty
             | Error::ForumSubCategoryNameEmpty
             | Error::ForumCategoryHasSubCategories
@@ -1021,6 +1028,7 @@ impl actix_web::ResponseError for Error {
             | Error::NotEnoughBonusPointsAvailable
             | Error::NotEnoughFreeleechTokensAvailable
             | Error::TorrentRequestAlreadyFilled
+            | Error::TorrentRequestNotFilled
             | Error::TorrentNotMatchingRequest
             | Error::TorrentRequestFillUploaderOnlyWithinFirstHour
             | Error::InsufficientBonusPointsForBounty

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE torrent_requests\n            SET filled_by_user_id = NULL, filled_by_torrent_id = NULL, filled_at = NULL\n            WHERE id = $1\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "01b3944baecff32e4014d70b764e65f3f4ba8056d84b22747d41d7aae0b6f3bb"
+}

@@ -16,6 +16,7 @@ pub enum BonusPointsLogAction {
     TorrentRequestVoteSpent,
     TorrentRequestFillReward,
     TorrentRequestVoteRefund,
+    TorrentRequestUnfillClawback,
     GiftSent,
     GiftReceived,
     SeedtimeReward,

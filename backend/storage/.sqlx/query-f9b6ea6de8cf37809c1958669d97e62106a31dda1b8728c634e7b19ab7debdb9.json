@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                SUM(bounty_upload)::BIGINT AS \"total_upload!\",\n                SUM(bounty_bonus_points)::BIGINT AS \"total_bonus!\"\n            FROM torrent_request_votes\n            WHERE torrent_request_id = $1\n            ",
+  "query": "\n            SELECT\n                COALESCE(SUM(bounty_upload), 0)::BIGINT AS \"total_upload!\",\n                COALESCE(SUM(bounty_bonus_points), 0)::BIGINT AS \"total_bonus_points!\"\n            FROM torrent_request_votes\n            WHERE torrent_request_id = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -11,7 +11,7 @@
       },
       {
         "ordinal": 1,
-        "name": "total_bonus!",
+        "name": "total_bonus_points!",
         "type_info": "Int8",
         "origin": "Expression"
       }
@@ -26,5 +26,5 @@
       null
     ]
   },
-  "hash": "c000bc0eea50acf9fe43add2b8ea448a899656ad23702c68aae51288431af5ee"
+  "hash": "f9b6ea6de8cf37809c1958669d97e62106a31dda1b8728c634e7b19ab7debdb9"
 }

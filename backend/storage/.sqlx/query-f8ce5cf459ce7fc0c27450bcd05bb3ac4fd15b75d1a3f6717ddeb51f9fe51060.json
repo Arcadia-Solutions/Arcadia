@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE users\n            SET\n                uploaded = uploaded + $3,\n                bonus_points = bonus_points + $4,\n                requests_filled = requests_filled + CASE WHEN id = $2 THEN $5::BIGINT ELSE 0 END\n            WHERE id IN ($1, $2)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4",
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f8ce5cf459ce7fc0c27450bcd05bb3ac4fd15b75d1a3f6717ddeb51f9fe51060"
+}

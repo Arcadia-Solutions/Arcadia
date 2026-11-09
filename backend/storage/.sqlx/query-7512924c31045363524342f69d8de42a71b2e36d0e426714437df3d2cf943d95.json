@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                tr.filled_by_user_id,\n                tr.filled_by_torrent_id,\n                tr.filled_at,\n                t.created_by_id AS \"torrent_uploader_id?\"\n            FROM torrent_requests tr\n            LEFT JOIN torrents t ON t.id = tr.filled_by_torrent_id\n            WHERE tr.id = $1\n            FOR UPDATE OF tr\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "filled_by_user_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "torrent_requests",
+            "name": "filled_by_user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "filled_by_torrent_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "torrent_requests",
+            "name": "filled_by_torrent_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "filled_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "torrent_requests",
+            "name": "filled_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "torrent_uploader_id?",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "torrents",
+            "name": "created_by_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "7512924c31045363524342f69d8de42a71b2e36d0e426714437df3d2cf943d95"
+}

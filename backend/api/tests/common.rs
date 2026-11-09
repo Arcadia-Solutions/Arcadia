@@ -158,6 +158,7 @@ pub enum TestUser {
     ViewRegistrationIps,
     ManageAdventCalendars,
     EditTitleGroup,
+    ManageUnfilledRequests,
 }
 
 impl TestUser {
@@ -247,6 +248,7 @@ impl TestUser {
             TestUser::ViewRegistrationIps => "user_reg_ips",
             TestUser::ManageAdventCalendars => "user_advent_cal",
             TestUser::EditTitleGroup => "user_tg_edit",
+            TestUser::ManageUnfilledRequests => "user_unfill",
         };
 
         Login {

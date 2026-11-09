@@ -31,6 +31,7 @@
                       "torrent_request_vote_spent",
                       "torrent_request_fill_reward",
                       "torrent_request_vote_refund",
+                      "torrent_request_unfill_clawback",
                       "gift_sent",
                       "gift_received",
                       "seedtime_reward",

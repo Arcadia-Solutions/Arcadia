@@ -30,6 +30,23 @@ impl ConnectionPool {
 
         let mut tx = self.pool.begin().await?;
 
+        // the request is locked first, in the same order as a fill or unfill does, so that the
+        // bounty they pay or take back is exactly the one of the votes cast before the fill
+        let locked_torrent_request = sqlx::query!(
+            r#"
+                SELECT filled_at FROM torrent_requests
+                WHERE id = $1
+                FOR SHARE
+            "#,
+            torrent_request_vote.torrent_request_id
+        )
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or(Error::TorrentRequestNotFound)?;
+        if locked_torrent_request.filled_at.is_some() {
+            return Err(Error::TorrentRequestAlreadyFilled);
+        }
+
         // the balance is locked until the debit commits, so that concurrent votes
         // can not all be checked against the same balance
         let current_user = sqlx::query!(

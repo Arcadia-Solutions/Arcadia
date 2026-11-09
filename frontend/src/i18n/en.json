@@ -681,7 +681,14 @@
     "deletion_warning_staff": "The voters will be notified of the deletion by private message.",
     "refund_bounty": "Give the bounty back to the voters",
     "deletion_message": "Message to the voters (optional)",
-    "deletion_successful": "Request deleted"
+    "deletion_successful": "Request deleted",
+    "unfill_request": "Unfill request",
+    "unfill_warning": "The bounty is taken back from the uploader and the filler, who are notified by private message. The request can then be filled again.",
+    "unfill_successful": "Request unfilled",
+    "unfill": "Unfill | Unfills",
+    "unfilled_by": "Unfilled by",
+    "unfilled_at": "Unfilled at",
+    "filled_at": "Filled at"
   },
   "entity": {
     "entity": "Entity | Entities",
@@ -1098,7 +1105,8 @@
     "edit_user_staff_notes": "Edit and remove any user staff note",
     "view_foreign_user_staff_notes": "See the staff notes written by other users",
     "view_registration_ips": "See, check and update where the registration IP of users comes from",
-    "manage_advent_calendars": "Create, edit and delete advent calendars"
+    "manage_advent_calendars": "Create, edit and delete advent calendars",
+    "manage_unfilled_requests": "Unfill any torrent request, and see the history of unfilled requests"
   },
   "user_registration_ip": {
     "registration_ip": "Registration IP",
@@ -1351,6 +1359,7 @@
     "action_torrent_request_vote_spent": "Torrent request vote",
     "action_torrent_request_fill_reward": "Torrent request fill reward",
     "action_torrent_request_vote_refund": "Torrent request vote refunded",
+    "action_torrent_request_unfill_clawback": "Torrent request fill reward taken back",
     "action_gift_sent": "Gift sent",
     "action_gift_received": "Gift received",
     "action_seedtime_reward": "Seedtime reward",

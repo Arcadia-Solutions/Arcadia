@@ -155,6 +155,27 @@ pub struct TorrentRequestAndAssociatedData {
     pub comments: Vec<TorrentRequestCommentHierarchy>,
     pub filled_by_user: Option<UserLite>,
     pub is_subscribed_to_comments: bool,
+    /// Only returned to users with the manage_unfilled_requests permission
+    pub unfills: Vec<TorrentRequestUnfillHierarchy>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct TorrentRequestUnfill {
+    pub torrent_request_id: i64,
+    pub reason: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct TorrentRequestUnfillHierarchy {
+    pub id: i64,
+    pub unfilled_by: UserLite,
+    #[schema(value_type = String, format = DateTime)]
+    pub unfilled_at: DateTime<Utc>,
+    pub reason: String,
+    pub filled_by_user: UserLite,
+    pub filled_by_torrent_id: i32,
+    #[schema(value_type = String, format = DateTime)]
+    pub filled_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, strum::Display, Default)]

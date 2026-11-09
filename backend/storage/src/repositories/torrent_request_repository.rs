@@ -185,106 +185,14 @@ impl ConnectionPool {
             return Err(Error::TorrentRequestFillUploaderOnlyWithinFirstHour);
         }
 
-        #[derive(Debug)]
-        struct BountySummary {
-            total_upload: i64,
-            total_bonus: i64,
-        }
-
-        let bounty_summary = query_as!(
-            BountySummary,
-            r#"
-            SELECT
-                SUM(bounty_upload)::BIGINT AS "total_upload!",
-                SUM(bounty_bonus_points)::BIGINT AS "total_bonus!"
-            FROM torrent_request_votes
-            WHERE torrent_request_id = $1
-            "#,
-            torrent_request_id
-        )
-        .fetch_one(&mut *tx)
-        .await?;
-
-        // Calculate the share for each user (50% each).
-        let (upload_share, bonus_share) = if torrent_upload_info.created_by_id == current_user_id {
-            (bounty_summary.total_upload, bounty_summary.total_bonus)
-        } else {
-            (
-                bounty_summary.total_upload / 2,
-                bounty_summary.total_bonus / 2,
-            )
-        };
-
-        let torrent_uploader_id = torrent_upload_info.created_by_id;
-
-        sqlx::query!(
-            r#"
-            UPDATE users
-            SET
-                uploaded = users.uploaded +
-                    CASE
-                        WHEN users.id = $1 THEN $3::BIGINT
-                        WHEN users.id = $2 THEN $3::BIGINT
-                        ELSE 0
-                    END,
-                bonus_points = users.bonus_points +
-                    CASE
-                        WHEN users.id = $1 THEN $4::BIGINT
-                        WHEN users.id = $2 THEN $4::BIGINT
-                        ELSE 0
-                    END,
-                requests_filled = requests_filled +
-                    CASE
-                        WHEN users.id = $2 THEN 1
-                        ELSE 0
-                    END
-            WHERE
-                users.id IN ($1, $2)
-                "#,
-            torrent_uploader_id,
+        Self::transfer_fill_bounty_tx(
+            &mut tx,
+            torrent_request_id,
+            torrent_upload_info.created_by_id,
             current_user_id,
-            upload_share,
-            bonus_share
+            false,
         )
-        .execute(&mut *tx)
         .await?;
-
-        if bonus_share > 0 {
-            let title_group_name =
-                Self::fetch_title_group_name_for_torrent_request(&mut tx, torrent_request_id)
-                    .await?;
-
-            if torrent_uploader_id == current_user_id {
-                Self::log_bonus_points_change_tx(
-                    &mut tx,
-                    current_user_id,
-                    BonusPointsLogAction::TorrentRequestFillReward,
-                    bonus_share,
-                    Some(&title_group_name),
-                    Some(torrent_request_id),
-                )
-                .await?;
-            } else {
-                Self::log_bonus_points_change_tx(
-                    &mut tx,
-                    torrent_uploader_id,
-                    BonusPointsLogAction::TorrentRequestFillReward,
-                    bonus_share,
-                    Some(&title_group_name),
-                    Some(torrent_request_id),
-                )
-                .await?;
-                Self::log_bonus_points_change_tx(
-                    &mut tx,
-                    current_user_id,
-                    BonusPointsLogAction::TorrentRequestFillReward,
-                    bonus_share,
-                    Some(&title_group_name),
-                    Some(torrent_request_id),
-                )
-                .await?;
-            }
-        }
 
         sqlx::query!(
             r#"
@@ -339,6 +247,179 @@ impl ConnectionPool {
         tx.commit().await?;
 
         Ok(torrent_upload_info.created_by_id == current_user_id)
+    }
+
+    /// Pays the request's bounty to the uploader of the filling torrent and to the filler (the full
+    /// bounty when they are the same user, half of it each otherwise) and counts the fill for the
+    /// filler. With `take_back`, undoes all of that instead, letting the balances go negative.
+    /// Returns the ids of the users whose balance changed.
+    async fn transfer_fill_bounty_tx(
+        tx: &mut Transaction<'_, Postgres>,
+        torrent_request_id: i64,
+        torrent_uploader_id: i32,
+        filler_id: i32,
+        take_back: bool,
+    ) -> Result<Vec<i32>> {
+        let bounty_summary = sqlx::query!(
+            r#"
+            SELECT
+                COALESCE(SUM(bounty_upload), 0)::BIGINT AS "total_upload!",
+                COALESCE(SUM(bounty_bonus_points), 0)::BIGINT AS "total_bonus_points!"
+            FROM torrent_request_votes
+            WHERE torrent_request_id = $1
+            "#,
+            torrent_request_id
+        )
+        .fetch_one(&mut **tx)
+        .await?;
+
+        let receiver_ids = if torrent_uploader_id == filler_id {
+            vec![filler_id]
+        } else {
+            vec![torrent_uploader_id, filler_id]
+        };
+        let receiver_count = receiver_ids.len() as i64;
+        let direction = if take_back { -1 } else { 1 };
+        let upload_share = direction * bounty_summary.total_upload / receiver_count;
+        let bonus_points_share = direction * bounty_summary.total_bonus_points / receiver_count;
+
+        sqlx::query!(
+            r#"
+            UPDATE users
+            SET
+                uploaded = uploaded + $3,
+                bonus_points = bonus_points + $4,
+                requests_filled = requests_filled + CASE WHEN id = $2 THEN $5::BIGINT ELSE 0 END
+            WHERE id IN ($1, $2)
+            "#,
+            torrent_uploader_id,
+            filler_id,
+            upload_share,
+            bonus_points_share,
+            direction
+        )
+        .execute(&mut **tx)
+        .await?;
+
+        if bonus_points_share != 0 {
+            let title_group_name =
+                Self::fetch_title_group_name_for_torrent_request(tx, torrent_request_id).await?;
+            let log_action = if take_back {
+                BonusPointsLogAction::TorrentRequestUnfillClawback
+            } else {
+                BonusPointsLogAction::TorrentRequestFillReward
+            };
+            for &receiver_id in &receiver_ids {
+                Self::log_bonus_points_change_tx(
+                    tx,
+                    receiver_id,
+                    log_action,
+                    bonus_points_share,
+                    Some(&title_group_name),
+                    Some(torrent_request_id),
+                )
+                .await?;
+            }
+        }
+
+        Ok(receiver_ids)
+    }
+
+    /// Undoes the fill of a torrent request: takes the bounty back, records the unfill and
+    /// notifies the uploader of the filling torrent and the filler. The request can then be
+    /// filled again.
+    pub async fn unfill_torrent_request(
+        &self,
+        torrent_request_id: i64,
+        current_user_id: i32,
+        reason: &str,
+    ) -> Result<()> {
+        let mut tx = self.pool.begin().await?;
+
+        // Locking the request makes concurrent fills, unfills and votes wait for this one
+        let locked_torrent_request = sqlx::query!(
+            r#"
+            SELECT
+                tr.filled_by_user_id,
+                tr.filled_by_torrent_id,
+                tr.filled_at,
+                t.created_by_id AS "torrent_uploader_id?"
+            FROM torrent_requests tr
+            LEFT JOIN torrents t ON t.id = tr.filled_by_torrent_id
+            WHERE tr.id = $1
+            FOR UPDATE OF tr
+            "#,
+            torrent_request_id
+        )
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or(Error::TorrentRequestNotFound)?;
+
+        let (Some(filler_id), Some(torrent_id), Some(filled_at), Some(torrent_uploader_id)) = (
+            locked_torrent_request.filled_by_user_id,
+            locked_torrent_request.filled_by_torrent_id,
+            locked_torrent_request.filled_at,
+            locked_torrent_request.torrent_uploader_id,
+        ) else {
+            return Err(Error::TorrentRequestNotFilled);
+        };
+
+        let mut recipient_ids = Self::transfer_fill_bounty_tx(
+            &mut tx,
+            torrent_request_id,
+            torrent_uploader_id,
+            filler_id,
+            true,
+        )
+        .await?;
+        recipient_ids.retain(|&recipient_id| recipient_id != current_user_id);
+
+        sqlx::query!(
+            r#"
+            INSERT INTO torrent_request_unfills
+                (torrent_request_id, unfilled_by_id, reason, filled_by_user_id, filled_by_torrent_id, filled_at)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            "#,
+            torrent_request_id,
+            current_user_id,
+            reason,
+            filler_id,
+            torrent_id,
+            filled_at
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        sqlx::query!(
+            r#"
+            UPDATE torrent_requests
+            SET filled_by_user_id = NULL, filled_by_torrent_id = NULL, filled_at = NULL
+            WHERE id = $1
+            "#,
+            torrent_request_id
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        let message_content = format!(
+            "The fill of [url=/torrent-request/{torrent_request_id}]this torrent request[/url] with [url=/torrent/{torrent_id}]this torrent[/url] has been undone, and the bounty you received from it has been taken back.
+
+            Reason: {reason}"
+        );
+
+        Self::send_batch_messages_tx(
+            &mut tx,
+            1,
+            &recipient_ids,
+            "A torrent request you filled has been unfilled",
+            &message_content,
+            true,
+        )
+        .await?;
+
+        tx.commit().await?;
+
+        Ok(())
     }
 
     /// Deletes the torrent request (as well as its votes and comments), optionally refunding
@@ -864,10 +945,12 @@ impl ConnectionPool {
         })
     }
 
+    /// The unfills of the request are only included when `include_unfills` is set
     pub async fn find_torrent_request_hierarchy(
         &self,
         torrent_request_id: i64,
         current_user_id: i32,
+        include_unfills: bool,
     ) -> Result<Value> {
         let result = sqlx::query!(
             r#"
@@ -971,14 +1054,44 @@ impl ConnectionPool {
                         FROM subscriptions_torrent_request_comments strc
                         WHERE strc.torrent_request_id = tr.id
                         AND strc.user_id = $2
-                    )
+                    ),
+                    'unfills', COALESCE((
+                        SELECT json_agg(
+                            json_build_object(
+                                'id', tru.id,
+                                'unfilled_by', json_build_object(
+                                    'id', unfiller.id,
+                                    'username', unfiller.username,
+                                    'warned', unfiller.warned,
+                                    'banned', unfiller.banned
+                                ),
+                                'unfilled_at', tru.unfilled_at,
+                                'reason', tru.reason,
+                                'filled_by_user', json_build_object(
+                                    'id', filler.id,
+                                    'username', filler.username,
+                                    'warned', filler.warned,
+                                    'banned', filler.banned
+                                ),
+                                'filled_by_torrent_id', tru.filled_by_torrent_id,
+                                'filled_at', tru.filled_at
+                            )
+                            ORDER BY tru.unfilled_at DESC
+                        )
+                        FROM torrent_request_unfills tru
+                        JOIN users unfiller ON unfiller.id = tru.unfilled_by_id
+                        JOIN users filler ON filler.id = tru.filled_by_user_id
+                        WHERE tru.torrent_request_id = tr.id
+                        AND $3
+                    ), '[]'::json)
                 ) as data
                 FROM torrent_requests tr
                 JOIN title_groups tg ON tr.title_group_id = tg.id
                 WHERE tr.id = $1
         "#,
             torrent_request_id,
-            current_user_id
+            current_user_id,
+            include_unfills
         )
         .fetch_one(&self.pool)
         .await

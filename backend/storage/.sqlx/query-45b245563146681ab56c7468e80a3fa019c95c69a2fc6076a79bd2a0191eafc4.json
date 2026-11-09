@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT filled_at FROM torrent_requests\n                WHERE id = $1\n                FOR SHARE\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "filled_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "torrent_requests",
+            "name": "filled_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "45b245563146681ab56c7468e80a3fa019c95c69a2fc6076a79bd2a0191eafc4"
+}

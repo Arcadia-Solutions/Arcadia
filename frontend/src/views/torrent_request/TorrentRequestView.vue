@@ -30,6 +30,12 @@
           /> -->
           <i @click="uploadTorrent" v-tooltip.top="t('torrent.upload_torrent')" class="pi pi-upload" />
           <i
+            v-if="canUnfillTorrentRequest"
+            @click="unfillTorrentRequestDialogVisible = true"
+            v-tooltip.top="t('torrent_request.unfill_request')"
+            class="pi pi-undo"
+          />
+          <i
             v-if="canDeleteTorrentRequest"
             @click="deleteTorrentRequestDialogVisible = true"
             v-tooltip.top="t('torrent_request.delete_request')"
@@ -45,6 +51,9 @@
           @deleted="torrentRequestDeleted"
         />
       </Dialog>
+      <Dialog closeOnEscape modal :header="t('torrent_request.unfill_request')" v-model:visible="unfillTorrentRequestDialogVisible">
+        <UnfillTorrentRequestDialog :torrentRequestId="torrentRequestAndAssociatedData.torrent_request.id" @unfilled="torrentRequestUnfilled" />
+      </Dialog>
       <TorrentRequestDetails
         :torrentRequest="torrentRequestAndAssociatedData.torrent_request"
         :votes="torrentRequestAndAssociatedData.votes"
@@ -54,6 +63,11 @@
         @filled="filled"
       />
       <TorrentRequestVotesTable class="votes-table" :votes="torrentRequestAndAssociatedData.votes" />
+      <TorrentRequestUnfillsTable
+        v-if="torrentRequestAndAssociatedData.unfills.length > 0"
+        class="unfills-table"
+        :unfills="torrentRequestAndAssociatedData.unfills"
+      />
       <!-- <ContentContainer :container-title="t('general.screenshots')" class="screenshots" v-if="titleGroupAndAssociatedData.title_group.screenshots.length !== 0">
         <CustomGalleria :images="titleGroupAndAssociatedData.title_group.screenshots" />
       </ContentContainer> -->
@@ -96,6 +110,8 @@ import { computed, ref, watch } from 'vue'
 import { Dialog } from 'primevue'
 import BBCodeRenderer from '@/components/community/BBCodeRenderer.vue'
 import DeleteTorrentRequestDialog from '@/components/torrent_request/DeleteTorrentRequestDialog.vue'
+import UnfillTorrentRequestDialog from '@/components/torrent_request/UnfillTorrentRequestDialog.vue'
+import TorrentRequestUnfillsTable from '@/components/torrent_request/TorrentRequestUnfillsTable.vue'
 import TitleGroupSidebar from '@/components/title_group/TitleGroupSidebar.vue'
 import ContentContainer from '@/components/ContentContainer.vue'
 import TorrentRequestVotesTable from '@/components/torrent_request/TorrentRequestVotesTable.vue'
@@ -126,6 +142,7 @@ const { t } = useI18n()
 const torrentRequestAndAssociatedData = ref<TorrentRequestAndAssociatedData>()
 const togglingSubscription = ref(false)
 const deleteTorrentRequestDialogVisible = ref(false)
+const unfillTorrentRequestDialogVisible = ref(false)
 
 const hasDeleteTorrentRequestPermission = computed(() => userStore.permissions.includes('delete_torrent_request'))
 const hasVotesFromOtherUsers = computed(() => torrentRequestAndAssociatedData.value?.votes.some((vote) => vote.created_by_id !== userStore.id) ?? false)
@@ -137,9 +154,14 @@ const canDeleteTorrentRequest = computed(
       (torrentRequestAndAssociatedData.value?.torrent_request.created_by_id === userStore.id && !hasVotesFromOtherUsers.value)),
 )
 
+const canUnfillTorrentRequest = computed(
+  () =>
+    !!torrentRequestAndAssociatedData.value?.torrent_request.filled_at &&
+    (torrentRequestAndAssociatedData.value.torrent_request.created_by_id === userStore.id || userStore.permissions.includes('manage_unfilled_requests')),
+)
+
 const fetchTorrentRequest = async () => {
   torrentRequestAndAssociatedData.value = await getTorrentRequest(parseInt(route.params.id.toString()))
-  console.log(torrentRequestAndAssociatedData.value)
 
   /*
     For series, the title group name just holds the season name (i.e. 'Season 1')
@@ -196,6 +218,12 @@ const torrentRequestDeleted = () => {
   deleteTorrentRequestDialogVisible.value = false
   showToast('', t('torrent_request.deletion_successful'), 'success', 3000, true, 'tr')
   router.push({ path: `/title-group/${torrentRequestAndAssociatedData.value!.title_group.id}` })
+}
+
+const torrentRequestUnfilled = () => {
+  unfillTorrentRequestDialogVisible.value = false
+  showToast('', t('torrent_request.unfill_successful'), 'success', 3000, true, 'tr')
+  fetchTorrentRequest()
 }
 
 const voted = (vote: TorrentRequestVoteHierarchy) => {
@@ -262,6 +290,9 @@ watch(() => route.params.id, fetchTorrentRequest, { immediate: true })
   font-size: 0.8em;
 }
 .votes-table {
+  margin-top: 20px;
+}
+.unfills-table {
   margin-top: 20px;
 }
 .embedded-links {

@@ -200,3 +200,151 @@ async fn test_buy_freeleech_tokens_success(pool: PgPool) {
     assert_eq!(user_after.freeleech_tokens, 3);
     assert_eq!(user_after.bonus_points, 8500);
 }
+
+async fn buy_promotion(pool: Arc<ConnectionPool>) -> StatusCode {
+    let (service, user) =
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+    let req = test::TestRequest::post()
+        .uri("/api/shop/buy-promotion")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+    test::call_service(&service, req).await.status()
+}
+
+// The promotion must be refused without touching the balance or the class.
+async fn assert_promotion_refused(pool: PgPool, expected_status: StatusCode) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    assert_eq!(buy_promotion(Arc::clone(&pool)).await, expected_status);
+    let user = pool.find_user_with_id(100).await.unwrap();
+    assert_eq!(user.bonus_points, 10000);
+    assert_eq!(user.class_name, "newbie");
+}
+
+#[sqlx::test(
+    fixtures("with_test_users", "with_test_shop_balance", "with_buyable_promotion"),
+    migrations = "../storage/migrations"
+)]
+async fn test_buy_promotion_success(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    assert_eq!(buy_promotion(Arc::clone(&pool)).await, StatusCode::OK);
+
+    let user = pool.find_user_with_id(100).await.unwrap();
+    assert_eq!(user.bonus_points, 5000);
+    assert_eq!(user.class_name, "member");
+
+    // there is no class above member
+    assert_eq!(
+        buy_promotion(Arc::clone(&pool)).await,
+        StatusCode::BAD_REQUEST
+    );
+    assert_eq!(
+        pool.find_user_with_id(100).await.unwrap().bonus_points,
+        5000
+    );
+}
+
+#[sqlx::test(
+    fixtures("with_test_users", "with_test_shop_balance"),
+    migrations = "../storage/migrations"
+)]
+async fn test_buy_promotion_without_next_class(pool: PgPool) {
+    assert_promotion_refused(pool, StatusCode::BAD_REQUEST).await;
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_shop_balance",
+        "with_buyable_promotion",
+        "with_promotion_shop_item_disabled"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_buy_promotion_when_shop_item_disabled(pool: PgPool) {
+    assert_promotion_refused(pool, StatusCode::FORBIDDEN).await;
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_shop_balance",
+        "with_buyable_promotion",
+        "with_class_locked_test_user"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_buy_promotion_with_locked_class(pool: PgPool) {
+    assert_promotion_refused(pool, StatusCode::FORBIDDEN).await;
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_shop_balance",
+        "with_buyable_promotion",
+        "with_unbuyable_promotion"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_buy_promotion_with_zero_cost_class(pool: PgPool) {
+    // a cost of 0 means the class cannot be bought, not that it is free
+    assert_promotion_refused(pool, StatusCode::BAD_REQUEST).await;
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_shop_balance",
+        "with_buyable_promotion",
+        "with_warned_test_user"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_buy_promotion_while_warned(pool: PgPool) {
+    assert_promotion_refused(pool, StatusCode::BAD_REQUEST).await;
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_shop_balance",
+        "with_buyable_promotion",
+        "with_warned_test_user",
+        "with_promotion_allowed_while_warned"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_buy_promotion_while_warned_when_class_allows_it(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    assert_eq!(buy_promotion(Arc::clone(&pool)).await, StatusCode::OK);
+    assert_eq!(
+        pool.find_user_with_id(100).await.unwrap().class_name,
+        "member"
+    );
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_shop_balance",
+        "with_buyable_promotion",
+        "with_promotion_requiring_upload"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_buy_promotion_without_meeting_requirements(pool: PgPool) {
+    assert_promotion_refused(pool, StatusCode::BAD_REQUEST).await;
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_shop_balance",
+        "with_buyable_promotion",
+        "with_unaffordable_promotion"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_buy_promotion_without_enough_bonus_points(pool: PgPool) {
+    assert_promotion_refused(pool, StatusCode::CONFLICT).await;
+}

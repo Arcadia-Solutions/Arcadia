@@ -74,6 +74,7 @@ mod test_unauthorized_access;
 mod test_user;
 mod test_user_badges;
 mod test_user_badges_evaluation;
+mod test_user_class_changes;
 mod test_user_classes;
 mod test_user_edit_change_logs;
 mod test_user_permissions;

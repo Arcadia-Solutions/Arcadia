@@ -979,6 +979,8 @@
     "advent_calendar": "Advent calendar",
     "minimum_opened_door_amount": "Minimum doors opened",
     "door_names": "Only count these doors (optional)",
+    "type_account_age": "Account age",
+    "minimum_account_age_in_days": "Minimum account age (days)",
     "award_badge": "Award badge",
     "award_badge_to": "Award badge to {0}",
     "select_badge": "Select badge",

@@ -14,6 +14,7 @@ pub enum UserBadgeType {
     ForumPosts,
     ForumThreads,
     AdventCalendarDoors,
+    AccountAge,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
@@ -160,5 +161,8 @@ pub enum UserBadgeCriteria {
         /// only the doors with these names are counted, every door is counted when empty
         #[serde(default)]
         door_names: Vec<String>,
+    },
+    AccountAge {
+        minimum_account_age_in_days: i32,
     },
 }

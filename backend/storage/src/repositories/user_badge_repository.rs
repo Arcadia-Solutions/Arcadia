@@ -626,4 +626,24 @@ impl ConnectionPool {
 
         Ok(ids)
     }
+
+    pub async fn find_qualifying_account_age_user_ids(
+        &self,
+        minimum_account_age_in_days: i32,
+    ) -> Result<Vec<i32>> {
+        let ids = sqlx::query_scalar!(
+            r#"
+                SELECT id AS "user_id!"
+                FROM users
+                WHERE banned = FALSE
+                  AND created_at <= NOW() - make_interval(days => $1)
+            "#,
+            minimum_account_age_in_days,
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(Error::CouldNotFindUserBadges)?;
+
+        Ok(ids)
+    }
 }

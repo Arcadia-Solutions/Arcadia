@@ -30,6 +30,7 @@
           { value: UserBadgeType.ForumPosts, label: t('user_badge.type_forum_posts') },
           { value: UserBadgeType.ForumThreads, label: t('user_badge.type_forum_threads') },
           { value: UserBadgeType.AdventCalendarDoors, label: t('user_badge.type_advent_calendar_doors') },
+          { value: UserBadgeType.AccountAge, label: t('user_badge.type_account_age') },
         ]"
         optionLabel="label"
         optionValue="value"
@@ -122,6 +123,14 @@
       </FloatLabel>
     </template>
 
+    <template v-else-if="badge.badge_type === UserBadgeType.AccountAge && accountAgeCriteria">
+      <h3>{{ t('user_badge.criteria') }}</h3>
+      <FloatLabel>
+        <InputNumber v-model="accountAgeCriteria.minimum_account_age_in_days" :min="1" size="small" />
+        <label>{{ t('user_badge.minimum_account_age_in_days') }}</label>
+      </FloatLabel>
+    </template>
+
     <div class="wrapper-center" style="margin-top: 20px">
       <Button :label="t('general.confirm')" size="small" :loading="loading" :disabled="adventCalendarDoorsCriteria?.calendar_id === 0" @click="save()" />
     </div>
@@ -142,6 +151,7 @@ import {
   UserBadgeCriteriaOneOf1TypeEnum,
   UserBadgeCriteriaOneOf2TypeEnum,
   UserBadgeCriteriaOneOf3TypeEnum,
+  UserBadgeCriteriaOneOf4TypeEnum,
   type AdventCalendarLite,
   type UserBadge,
   type UserBadgeCategory,
@@ -149,6 +159,7 @@ import {
   type UserBadgeCriteriaOneOf1,
   type UserBadgeCriteriaOneOf2,
   type UserBadgeCriteriaOneOf3,
+  type UserBadgeCriteriaOneOf4,
   type UserCreatedUserBadge,
   type TorrentSearch,
 } from '@/services/api-schema'
@@ -211,6 +222,9 @@ const forumThreadsCriteria = computed<UserBadgeCriteriaOneOf2 | null>(() =>
 )
 const adventCalendarDoorsCriteria = computed<UserBadgeCriteriaOneOf3 | null>(() =>
   badge.value.badge_type === UserBadgeType.AdventCalendarDoors ? (badge.value.criteria as UserBadgeCriteriaOneOf3) : null,
+)
+const accountAgeCriteria = computed<UserBadgeCriteriaOneOf4 | null>(() =>
+  badge.value.badge_type === UserBadgeType.AccountAge ? (badge.value.criteria as UserBadgeCriteriaOneOf4) : null,
 )
 
 // only fetched when needed, listing the calendars requires the permission to manage them
@@ -282,6 +296,12 @@ const onTypeChanged = (newType: typeof badge.value.badge_type) => {
       calendar_id: adventCalendars.value[0]?.id ?? 0,
       minimum_opened_door_amount: 1,
       door_names: [],
+    }
+    badge.value.criteria = c
+  } else if (newType === UserBadgeType.AccountAge) {
+    const c: UserBadgeCriteriaOneOf4 = {
+      type: UserBadgeCriteriaOneOf4TypeEnum.AccountAge,
+      minimum_account_age_in_days: 365,
     }
     badge.value.criteria = c
   }

@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT id AS \"user_id!\"\n                FROM users\n                WHERE banned = FALSE\n                  AND created_at <= NOW() - make_interval(days => $1)\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id!",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "ccb74d33ac6443318e5b05120e4cc9037d72211acdf09395d32dd1f5f04c7f7e"
+}

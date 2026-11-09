@@ -27,6 +27,9 @@ pub fn validate_badge_criteria_shape(
                 ) | (
                     UserBadgeType::AdventCalendarDoors,
                     UserBadgeCriteria::AdventCalendarDoors { .. }
+                ) | (
+                    UserBadgeType::AccountAge,
+                    UserBadgeCriteria::AccountAge { .. }
                 )
             );
             if shapes_match {
@@ -84,6 +87,13 @@ mod tests {
         })
     }
 
+    fn account_age_criteria() -> serde_json::Value {
+        json!({
+            "type": "account_age",
+            "minimum_account_age_in_days": 365
+        })
+    }
+
     #[test]
     fn manual_without_criteria_is_ok() {
         assert!(validate_badge_criteria_shape(&UserBadgeType::Manual, None).is_ok());
@@ -112,6 +122,7 @@ mod tests {
         let posts = forum_posts_criteria();
         let threads = forum_threads_criteria();
         let advent_calendar_doors = advent_calendar_doors_criteria();
+        let account_age = account_age_criteria();
         assert!(
             validate_badge_criteria_shape(&UserBadgeType::TorrentsUploaded, Some(&torrents))
                 .is_ok()
@@ -126,6 +137,9 @@ mod tests {
                 Some(&advent_calendar_doors)
             )
             .is_ok()
+        );
+        assert!(
+            validate_badge_criteria_shape(&UserBadgeType::AccountAge, Some(&account_age)).is_ok()
         );
     }
 

@@ -125,7 +125,8 @@
                 "torrents_uploaded",
                 "forum_posts",
                 "forum_threads",
-                "advent_calendar_doors"
+                "advent_calendar_doors",
+                "account_age"
               ]
             }
           }

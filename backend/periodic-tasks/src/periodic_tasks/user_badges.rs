@@ -149,5 +149,11 @@ async fn qualifying_user_ids(
             )
             .await
         }
+        UserBadgeCriteria::AccountAge {
+            minimum_account_age_in_days,
+        } => {
+            pool.find_qualifying_account_age_user_ids(*minimum_account_age_in_days)
+                .await
+        }
     }
 }

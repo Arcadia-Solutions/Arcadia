@@ -1645,7 +1645,8 @@ CREATE TYPE user_badge_type_enum AS ENUM (
     'torrents_uploaded',
     'forum_posts',
     'forum_threads',
-    'advent_calendar_doors'
+    'advent_calendar_doors',
+    'account_age'
 );
 CREATE TABLE user_badge_categories (
     id SERIAL PRIMARY KEY,

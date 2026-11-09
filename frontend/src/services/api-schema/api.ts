@@ -4666,7 +4666,7 @@ export interface UserBadgeCategory {
 /**
  * @type UserBadgeCriteria
  */
-export type UserBadgeCriteria = UserBadgeCriteriaOneOf | UserBadgeCriteriaOneOf1 | UserBadgeCriteriaOneOf2 | UserBadgeCriteriaOneOf3;
+export type UserBadgeCriteria = UserBadgeCriteriaOneOf | UserBadgeCriteriaOneOf1 | UserBadgeCriteriaOneOf2 | UserBadgeCriteriaOneOf3 | UserBadgeCriteriaOneOf4;
 
 export interface UserBadgeCriteriaOneOf {
     'minimum_title_group_amount': number;
@@ -4722,6 +4722,17 @@ export const UserBadgeCriteriaOneOf3TypeEnum = {
 
 export type UserBadgeCriteriaOneOf3TypeEnum = typeof UserBadgeCriteriaOneOf3TypeEnum[keyof typeof UserBadgeCriteriaOneOf3TypeEnum];
 
+export interface UserBadgeCriteriaOneOf4 {
+    'minimum_account_age_in_days': number;
+    'type': UserBadgeCriteriaOneOf4TypeEnum;
+}
+
+export const UserBadgeCriteriaOneOf4TypeEnum = {
+    AccountAge: 'account_age'
+} as const;
+
+export type UserBadgeCriteriaOneOf4TypeEnum = typeof UserBadgeCriteriaOneOf4TypeEnum[keyof typeof UserBadgeCriteriaOneOf4TypeEnum];
+
 /**
  * @type UserBadgeListItem
  */
@@ -4742,7 +4753,8 @@ export const UserBadgeType = {
     TorrentsUploaded: 'torrents_uploaded',
     ForumPosts: 'forum_posts',
     ForumThreads: 'forum_threads',
-    AdventCalendarDoors: 'advent_calendar_doors'
+    AdventCalendarDoors: 'advent_calendar_doors',
+    AccountAge: 'account_age'
 } as const;
 
 export type UserBadgeType = typeof UserBadgeType[keyof typeof UserBadgeType];

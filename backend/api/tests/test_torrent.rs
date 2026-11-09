@@ -1,4 +1,7 @@
+use crate::common::{authenticated_request, create_test_app_and_login};
 use crate::{common, mocks};
+use actix_web::http::Method;
+use serde_json::{Value, json};
 
 use std::sync::Arc;
 
@@ -2201,4 +2204,79 @@ async fn test_uploader_can_not_change_the_snatch_cost_when_the_settings_forbid_i
 
     let torrent = pool.find_torrent(TORRENT_OF_BASIC_USER_ID).await.unwrap();
     assert_eq!(torrent.bonus_points_snatch_cost, 0);
+}
+
+fn torrent_to_delete(id: i32) -> Option<Value> {
+    Some(json!({ "id": id, "deletion_reason": "duplicate" }))
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_title_group",
+        "with_test_edition_group",
+        "with_test_torrent",
+        "with_test_torrents_of_basic_user"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_uploader_can_delete_their_recent_torrent_only(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) = create_test_app_and_login(
+        Arc::clone(&pool),
+        MockRedisPool::default(),
+        TestUser::Standard,
+    )
+    .await;
+
+    // torrent 1 was uploaded by another user
+    let request = authenticated_request(
+        Method::DELETE,
+        "/api/torrents",
+        &user.token,
+        torrent_to_delete(1),
+    );
+    let response = test::call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    assert!(pool.find_torrent(1).await.is_ok());
+
+    let request = authenticated_request(
+        Method::DELETE,
+        "/api/torrents",
+        &user.token,
+        torrent_to_delete(900),
+    );
+    let response = test::call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    assert!(pool.find_torrent(900).await.is_err());
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_title_group",
+        "with_test_edition_group",
+        "with_test_torrents_of_basic_user",
+        "with_test_torrent_of_basic_user_uploaded_two_days_ago"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_uploader_cannot_delete_their_torrent_after_a_day(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) = create_test_app_and_login(
+        Arc::clone(&pool),
+        MockRedisPool::default(),
+        TestUser::Standard,
+    )
+    .await;
+
+    let request = authenticated_request(
+        Method::DELETE,
+        "/api/torrents",
+        &user.token,
+        torrent_to_delete(900),
+    );
+    let response = test::call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    assert!(pool.find_torrent(900).await.is_ok());
 }

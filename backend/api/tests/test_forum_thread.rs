@@ -1,4 +1,7 @@
 use crate::{common, mocks};
+use actix_web::http::Method;
+use common::{authenticated_request, create_test_app, login_as};
+use serde_json::{Value, json};
 
 use actix_web::http::StatusCode;
 use actix_web::test;
@@ -1482,4 +1485,67 @@ async fn test_pinned_threads_always_first_regardless_of_sort_by(pool: PgPool) {
     let ids = get_sub_category_thread_ids(&service, &staff.token).await;
 
     assert_eq!(ids[0], 102);
+}
+
+fn edited_forum_post(content: &str) -> Option<Value> {
+    Some(json!({ "id": 100, "content": content, "sticky": false, "locked": false }))
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_forum_category",
+        "with_test_forum_sub_category",
+        "with_test_forum_thread",
+        "with_test_forum_post"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_forum_post_can_be_edited_by_its_author_or_with_permission(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let service = create_test_app(pool, MockRedisPool::default()).await;
+    let author = login_as(&service, TestUser::Standard).await;
+    let other_user = login_as(&service, TestUser::EditArtist).await;
+    let moderator = login_as(&service, TestUser::EditForumPost).await;
+
+    for (token, expected_status) in [
+        (&other_user.token, StatusCode::FORBIDDEN),
+        (&author.token, StatusCode::CREATED),
+        (&moderator.token, StatusCode::CREATED),
+    ] {
+        let request = authenticated_request(
+            Method::PUT,
+            "/api/forum/post",
+            token,
+            edited_forum_post("edited"),
+        );
+        let response = test::call_service(&service, request).await;
+        assert_eq!(response.status(), expected_status);
+    }
+}
+
+#[sqlx::test(
+    fixtures(
+        "with_test_users",
+        "with_test_forum_category",
+        "with_test_forum_sub_category",
+        "with_test_forum_thread",
+        "with_test_forum_post",
+        "with_locked_test_forum_post"
+    ),
+    migrations = "../storage/migrations"
+)]
+async fn test_locked_forum_post_cannot_be_edited_by_its_author(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, author) =
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+
+    let request = authenticated_request(
+        Method::PUT,
+        "/api/forum/post",
+        &author.token,
+        edited_forum_post("unlocked"),
+    );
+    let response = test::call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
 }

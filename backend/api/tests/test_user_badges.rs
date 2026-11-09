@@ -1,4 +1,6 @@
 use crate::{common, mocks};
+use actix_web::http::Method;
+use common::{authenticated_request, create_test_app, login_as};
 
 use actix_web::http::StatusCode;
 use actix_web::test;
@@ -217,4 +219,72 @@ async fn test_revoke_with_permission(pool: PgPool) {
         .to_request();
     let resp = test::call_service(&service, req).await;
     assert_eq!(resp.status(), StatusCode::OK);
+}
+
+fn user_badge(category_id: i32) -> Value {
+    serde_json::json!({
+        "name": "new_badge",
+        "description": "new badge",
+        "image_url": "https://example.com/new.png",
+        "category_id": category_id,
+        "badge_type": "manual",
+        "is_secret": false,
+        "revoke_when_criteria_unmet": false,
+    })
+}
+
+#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+async fn test_user_badge_management_requires_permission(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+
+    let mut edited_badge = user_badge(1);
+    edited_badge["id"] = serde_json::json!(1);
+    for (method, uri, body) in [
+        (Method::POST, "/api/user-badges", Some(user_badge(1))),
+        (Method::PUT, "/api/user-badges", Some(edited_badge)),
+        (Method::DELETE, "/api/user-badges/1", None),
+        (
+            Method::PUT,
+            "/api/user-badge-categories",
+            Some(serde_json::json!({ "id": 1, "name": "category" })),
+        ),
+        (Method::DELETE, "/api/user-badge-categories/1", None),
+    ] {
+        let request = authenticated_request(method.clone(), uri, &user.token, body);
+        let response = test::call_service(&service, request).await;
+        assert_eq!(response.status(), StatusCode::FORBIDDEN, "{method} {uri}");
+    }
+}
+
+#[sqlx::test(
+    fixtures("with_test_users", "with_test_user_badges"),
+    migrations = "../storage/migrations"
+)]
+async fn test_user_badges_can_be_created_and_deleted_with_permission(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let service = create_test_app(pool, MockRedisPool::default()).await;
+    let creator = login_as(&service, TestUser::CreateUserBadge).await;
+    let deleter = login_as(&service, TestUser::DeleteUserBadge).await;
+
+    let request = authenticated_request(
+        Method::POST,
+        "/api/user-badges",
+        &creator.token,
+        Some(user_badge(500)),
+    );
+    let response = test::call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::CREATED);
+    let created: Value = test::read_body_json(response).await;
+    let badge_uri = format!("/api/user-badges/{}", created["data"]["id"]);
+
+    // creating a badge does not allow deleting one
+    let request = authenticated_request(Method::DELETE, &badge_uri, &creator.token, None);
+    let response = test::call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+
+    let request = authenticated_request(Method::DELETE, &badge_uri, &deleter.token, None);
+    let response = test::call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
 }

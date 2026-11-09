@@ -4,7 +4,7 @@ use actix_web::{
     body::MessageBody,
     dev::{Service, ServiceResponse},
     http::{
-        StatusCode,
+        Method, StatusCode,
         header::{AUTHORIZATION, CONTENT_TYPE, HeaderValue, TryIntoHeaderPair},
     },
     test, web,
@@ -285,6 +285,22 @@ where
     assert!(!user.refresh_token.is_empty());
 
     user
+}
+
+pub fn authenticated_request(
+    method: Method,
+    uri: &str,
+    token: &str,
+    body: Option<serde_json::Value>,
+) -> Request {
+    let request = test::TestRequest::default()
+        .method(method)
+        .uri(uri)
+        .insert_header(auth_header(token));
+    match body {
+        Some(body) => request.set_json(body).to_request(),
+        None => request.to_request(),
+    }
 }
 
 pub fn auth_header(token: &str) -> impl TryIntoHeaderPair {

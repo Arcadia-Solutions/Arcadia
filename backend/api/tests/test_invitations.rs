@@ -1,4 +1,7 @@
 use crate::{common, mocks};
+use actix_web::http::Method;
+use common::authenticated_request;
+use serde_json::{Value, json};
 
 use actix_web::http::StatusCode;
 use actix_web::test;
@@ -129,4 +132,72 @@ async fn test_search_sent_invitations_with_permission_but_flag_unset_only_sees_o
         results.results[0].receiver_email,
         "foreign_invite@testdomain.com"
     );
+}
+
+fn invitation() -> Option<Value> {
+    Some(json!({ "message": "hello", "receiver_email": "friend@testdomain.com" }))
+}
+
+#[sqlx::test(
+    fixtures("with_test_users", "with_test_user_invitation_available"),
+    migrations = "../storage/migrations"
+)]
+async fn test_inviting_an_applicant_requires_permission(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) = create_test_app_and_login(
+        Arc::clone(&pool),
+        MockRedisPool::default(),
+        TestUser::Standard,
+    )
+    .await;
+
+    // inviting an applicant accepts their application, which is a staff decision
+    let mut invitation = invitation().unwrap();
+    invitation["user_application_id"] = json!(1);
+    let request = authenticated_request(
+        Method::POST,
+        "/api/invitations",
+        &user.token,
+        Some(invitation),
+    );
+    let response = test::call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    assert_eq!(pool.find_user_with_id(100).await.unwrap().invitations, 1);
+}
+
+#[sqlx::test(fixtures("with_test_users"), migrations = "../storage/migrations")]
+async fn test_invitation_requires_an_available_invitation(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+
+    let request =
+        authenticated_request(Method::POST, "/api/invitations", &user.token, invitation());
+    let response = test::call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::CONFLICT);
+}
+
+#[sqlx::test(
+    fixtures("with_test_users", "with_test_user_invitation_available"),
+    migrations = "../storage/migrations"
+)]
+async fn test_invitation_consumes_an_available_invitation(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) = create_test_app_and_login(
+        Arc::clone(&pool),
+        MockRedisPool::default(),
+        TestUser::Standard,
+    )
+    .await;
+
+    let request =
+        authenticated_request(Method::POST, "/api/invitations", &user.token, invitation());
+    let response = test::call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::CREATED);
+    assert_eq!(pool.find_user_with_id(100).await.unwrap().invitations, 0);
+
+    let request =
+        authenticated_request(Method::POST, "/api/invitations", &user.token, invitation());
+    let response = test::call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::CONFLICT);
 }

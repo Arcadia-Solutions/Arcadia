@@ -1148,6 +1148,17 @@ impl ConnectionPool {
         Ok(found_users)
     }
 
+    pub async fn find_user_lite(&self, user_id: i32) -> Result<UserLite> {
+        sqlx::query_as!(
+            UserLite,
+            r#"SELECT id, username, warned, banned FROM users WHERE id = $1"#,
+            user_id
+        )
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::UserWithIdNotFound(user_id))
+    }
+
     pub async fn get_user_torrent_clients(
         &self,
         user_id: i32,

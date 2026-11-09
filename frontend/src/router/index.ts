@@ -360,6 +360,14 @@ const router = createRouter({
       component: () => import('../views/StatsView.vue'),
     },
     {
+      path: '/user/:id/badges',
+      name: 'UserBadges',
+      meta: {
+        documentTitle: 'Badges',
+      },
+      component: () => import('../views/UserBadgesView.vue'),
+    },
+    {
       path: '/staff-dashboard',
       name: 'StaffDashboard',
       component: () => import('../views/StaffDashboardView.vue'),

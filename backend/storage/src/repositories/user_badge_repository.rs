@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     connection_pool::ConnectionPool,
     models::{
@@ -5,9 +7,10 @@ use crate::{
         title_group::{ContentType, TitleGroupCategory},
         torrent::{Language, TorrentSearch, VideoResolution},
         user_badge::{
-            EditedUserBadge, EditedUserBadgeCategory, UserBadge, UserBadgeCategory,
-            UserBadgeCriteria, UserBadgeListItem, UserBadgeType, UserCreatedUserBadge,
-            UserCreatedUserBadgeCategory, UserEarnedBadge, UserEarnedBadgeWithDetails,
+            EditedUserBadge, EditedUserBadgeCategory, ReorderUserBadges, UserBadge,
+            UserBadgeCategory, UserBadgeCriteria, UserBadgeListItem, UserBadgeType,
+            UserCreatedUserBadge, UserCreatedUserBadgeCategory, UserEarnedBadge,
+            UserEarnedBadgeWithDetails,
         },
     },
     utils::{tag_expression::parse_tag_expression, validate_badge_criteria_shape},
@@ -137,14 +140,18 @@ impl ConnectionPool {
             r#"
                 INSERT INTO user_badges (
                     name, description, image_url, category_id, badge_type,
-                    is_secret, revoke_when_criteria_unmet, criteria, created_by_id
+                    is_secret, revoke_when_criteria_unmet, criteria, created_by_id, sort_order
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                -- a new badge is placed last in its category
+                VALUES (
+                    $1, $2, $3, $4, $5, $6, $7, $8, $9,
+                    (SELECT COALESCE(MAX(sort_order) + 1, 0) FROM user_badges WHERE category_id = $4)
+                )
                 RETURNING
                     id, name, description, image_url, category_id,
                     badge_type AS "badge_type: UserBadgeType",
                     is_secret, revoke_when_criteria_unmet, criteria,
-                    created_at, created_by_id
+                    sort_order, created_at, created_by_id
             "#,
             badge.name,
             badge.description,
@@ -185,7 +192,7 @@ impl ConnectionPool {
                     id, name, description, image_url, category_id,
                     badge_type AS "badge_type: UserBadgeType",
                     is_secret, revoke_when_criteria_unmet, criteria,
-                    created_at, created_by_id
+                    sort_order, created_at, created_by_id
             "#,
             edited.name,
             edited.description,
@@ -205,6 +212,44 @@ impl ConnectionPool {
         })?;
 
         Ok(updated)
+    }
+
+    pub async fn reorder_user_badges(&self, reorder: &ReorderUserBadges) -> Result<()> {
+        let ids: Vec<i32> = reorder.badges.iter().map(|entry| entry.id).collect();
+        let sort_orders: Vec<i16> = reorder
+            .badges
+            .iter()
+            .map(|entry| entry.sort_order)
+            .collect();
+
+        if ids.iter().collect::<HashSet<_>>().len() != ids.len() {
+            return Err(Error::DuplicateUserBadgeInReorder);
+        }
+
+        let mut tx = self.pool.begin().await?;
+
+        let result = sqlx::query!(
+            r#"
+                UPDATE user_badges
+                SET sort_order = new_values.sort_order
+                FROM UNNEST($1::int[], $2::smallint[]) AS new_values(id, sort_order)
+                WHERE user_badges.id = new_values.id
+            "#,
+            &ids,
+            &sort_orders
+        )
+        .execute(&mut *tx)
+        .await
+        .map_err(Error::CouldNotUpdateUserBadge)?;
+
+        if result.rows_affected() != ids.len() as u64 {
+            // Dropping the transaction without committing rolls back the partial update.
+            return Err(Error::UserBadgeNotFound);
+        }
+
+        tx.commit().await?;
+
+        Ok(())
     }
 
     pub async fn delete_user_badge(&self, badge_id: i32) -> Result<()> {
@@ -231,9 +276,9 @@ impl ConnectionPool {
                     id, name, description, image_url, category_id,
                     badge_type AS "badge_type: UserBadgeType",
                     is_secret, revoke_when_criteria_unmet, criteria,
-                    created_at, created_by_id
+                    sort_order, created_at, created_by_id
                 FROM user_badges
-                ORDER BY name ASC
+                ORDER BY sort_order, id
             "#
         )
         .fetch_all(&self.pool)
@@ -265,7 +310,7 @@ impl ConnectionPool {
                     id, name, description, image_url, category_id,
                     badge_type AS "badge_type: UserBadgeType",
                     is_secret, revoke_when_criteria_unmet, criteria,
-                    created_at, created_by_id
+                    sort_order, created_at, created_by_id
                 FROM user_badges
                 ORDER BY id ASC
             "#
@@ -277,9 +322,11 @@ impl ConnectionPool {
         Ok(badges)
     }
 
+    /// Most recently earned first, every earned badge is returned when `limit` is None
     pub async fn find_user_earned_badges(
         &self,
         user_id: i32,
+        limit: Option<i64>,
     ) -> Result<Vec<UserEarnedBadgeWithDetails>> {
         let rows = sqlx::query_as!(
             UserEarnedBadgeWithDetails,
@@ -297,8 +344,10 @@ impl ConnectionPool {
                 JOIN user_badges ub ON ub.id = ueb.badge_id
                 WHERE ueb.user_id = $1
                 ORDER BY ueb.awarded_at DESC
+                LIMIT $2
             "#,
-            user_id
+            user_id,
+            limit
         )
         .fetch_all(&self.pool)
         .await

@@ -121,7 +121,10 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         vec![]
     };
 
-    let earned_badges = arc.pool.find_user_earned_badges(query.id).await?;
+    let earned_badges = arc
+        .pool
+        .find_user_earned_badges(query.id, Some(super::PROFILE_EARNED_BADGES_AMOUNT))
+        .await?;
 
     Ok(HttpResponse::Ok().json(PublicProfile {
         user,

@@ -1663,6 +1663,7 @@ CREATE TABLE user_badges (
     is_secret BOOLEAN NOT NULL DEFAULT FALSE,
     revoke_when_criteria_unmet BOOLEAN NOT NULL DEFAULT FALSE,
     criteria JSONB,
+    sort_order SMALLINT NOT NULL DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     created_by_id INT NOT NULL REFERENCES users(id)
 );

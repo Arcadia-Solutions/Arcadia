@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                SELECT\n                    ueb.id, ueb.user_id, ueb.badge_id, ueb.awarded_at,\n                    ueb.awarded_by_id, ueb.note,\n                    ub.name AS badge_name,\n                    ub.description AS badge_description,\n                    ub.image_url AS badge_image_url,\n                    ub.category_id AS badge_category_id,\n                    ub.badge_type AS \"badge_type: UserBadgeType\",\n                    ub.is_secret AS badge_is_secret\n                FROM user_earned_badges ueb\n                JOIN user_badges ub ON ub.id = ueb.badge_id\n                WHERE ueb.user_id = $1\n                ORDER BY ueb.awarded_at DESC\n            ",
+  "query": "\n                SELECT\n                    ueb.id, ueb.user_id, ueb.badge_id, ueb.awarded_at,\n                    ueb.awarded_by_id, ueb.note,\n                    ub.name AS badge_name,\n                    ub.description AS badge_description,\n                    ub.image_url AS badge_image_url,\n                    ub.category_id AS badge_category_id,\n                    ub.badge_type AS \"badge_type: UserBadgeType\",\n                    ub.is_secret AS badge_is_secret\n                FROM user_earned_badges ueb\n                JOIN user_badges ub ON ub.id = ueb.badge_id\n                WHERE ueb.user_id = $1\n                ORDER BY ueb.awarded_at DESC\n                LIMIT $2\n            ",
   "describe": {
     "columns": [
       {
@@ -151,7 +151,8 @@
     ],
     "parameters": {
       "Left": [
-        "Int4"
+        "Int4",
+        "Int8"
       ]
     },
     "nullable": [
@@ -169,5 +170,5 @@
       false
     ]
   },
-  "hash": "15c2f946b45b3597969b83616621ac3cef6dde4bdab4f31bdade2247d9221fb7"
+  "hash": "d1b868305a75052261b8664cc76914df37f677b5245b4b15150d8d9348be08be"
 }

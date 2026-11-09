@@ -329,3 +329,7 @@ VALUES (199, 'user_advent_cal', 'test_user_manage_advent_calendars@testdomain.co
 -- User with edit_title_group permission
 INSERT INTO users (id, username, email, password_hash, registered_from_ip, passkey, class_name, css_sheet_name, permissions)
 VALUES (106, 'user_tg_edit', 'test_user_edit_title_group@testdomain.com', '$argon2id$v=19$m=19456,t=2,p=1$WM6V9pJ2ya7+N+NNIUtolg$n128u9idizCHLwZ9xhKaxOttLaAVZZgvfRZlRAnfyKk', '10.10.4.88', 'd2037c66dd3e13044e0d2f9b891c38fa', 'newbie', 'arcadia', '{edit_title_group}');
+
+-- User with edit_user_badge permission
+INSERT INTO users (id, username, email, password_hash, registered_from_ip, passkey, class_name, css_sheet_name, permissions)
+VALUES (173, 'user_badge_edt', 'test_user_edit_user_badge@testdomain.com', '$argon2id$v=19$m=19456,t=2,p=1$WM6V9pJ2ya7+N+NNIUtolg$n128u9idizCHLwZ9xhKaxOttLaAVZZgvfRZlRAnfyKk', '10.10.4.88', 'd2037c66dd3e13044e0d2f9b891c38fb', 'newbie', 'arcadia', '{edit_user_badge}');

@@ -33,6 +33,9 @@ pub mod warn_user;
 use actix_web::web::{ServiceConfig, delete, get, post, put, resource};
 use arcadia_storage::redis::RedisPoolInterface;
 
+/// a profile only shows the most recently earned badges, the full list has its own endpoint
+pub const PROFILE_EARNED_BADGES_AMOUNT: i64 = 8;
+
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {
     cfg.service(
         resource("")

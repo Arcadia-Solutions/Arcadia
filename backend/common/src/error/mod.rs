@@ -765,6 +765,9 @@ pub enum Error {
     #[error("user badge name cannot be empty")]
     UserBadgeNameEmpty,
 
+    #[error("a user badge cannot appear more than once in a reorder")]
+    DuplicateUserBadgeInReorder,
+
     #[error("user badge criteria mismatch with badge type")]
     UserBadgeCriteriaMismatch,
 
@@ -938,6 +941,7 @@ impl actix_web::ResponseError for Error {
             | Error::UserBadgeCategoryNameEmpty
             | Error::UserBadgeCategoryHasBadges
             | Error::UserBadgeNameEmpty
+            | Error::DuplicateUserBadgeInReorder
             | Error::UserBadgeCriteriaMismatch
             | Error::WikiArticleCannotBeLinkedToItself
             | Error::TitleGroupCannotBeLinkedToItself

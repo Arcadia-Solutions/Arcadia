@@ -25041,6 +25041,86 @@ INSERT INTO public.wiki_articles (id, title, created_at, created_by_id, updated_
     (3, 'IRC guide', '2025-05-31 13:27:09.230045+00', 1, '2025-05-31 13:27:09.230045+00', 1, 'replace with irc instructions');
 
 --
+-- Data for Name: user_badge_categories; Type: TABLE DATA; Schema: public; Owner: arcadia
+--
+
+INSERT INTO public.user_badge_categories (id, name, created_by_id) VALUES
+    (1, 'Uploads', 1),
+    (2, 'Forum', 1),
+    (3, 'Community', 1),
+    (4, 'Collectors', 1),
+    (5, 'Events', 1);
+
+SELECT pg_catalog.setval('public.user_badge_categories_id_seq', 5, true);
+
+--
+-- Data for Name: user_badges; Type: TABLE DATA; Schema: public; Owner: arcadia
+--
+
+INSERT INTO public.user_badges (id, name, description, image_url, category_id, badge_type, is_secret, revoke_when_criteria_unmet, criteria, created_by_id) VALUES
+    (1, 'First Upload', 'Uploaded a torrent in at least 1 title group', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f331.png', 1, 'torrents_uploaded', false, false, '{"type":"torrents_uploaded","search":{"title_group_include_empty_groups":false,"page":1,"page_size":1,"order_by_column":"torrent_created_at","order_by_direction":"desc"},"minimum_title_group_amount":1}', 1),
+    (2, 'Prolific Uploader', 'Uploaded torrents in at least 50 title groups', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f333.png', 1, 'torrents_uploaded', false, false, '{"type":"torrents_uploaded","search":{"title_group_include_empty_groups":false,"page":1,"page_size":1,"order_by_column":"torrent_created_at","order_by_direction":"desc"},"minimum_title_group_amount":50}', 1),
+    (3, 'Chatterbox', 'Wrote at least 10 forum posts of 20+ characters', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f4ac.png', 2, 'forum_posts', false, false, '{"type":"forum_posts","minimum_post_character_count":20,"required_substring":null,"minimum_post_amount":10}', 1),
+    (4, 'Thread Starter', 'Started at least 5 forum threads', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f9f5.png', 2, 'forum_threads', false, false, '{"type":"forum_threads","minimum_thread_name_character_count":1,"required_substring":null,"minimum_thread_amount":5}', 1),
+    (5, 'Helping Hand', 'Awarded by staff for helping other members', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f91d.png', 3, 'manual', false, false, NULL, 1),
+    (6, 'Hidden Gem', 'A secret badge', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f48e.png', 3, 'manual', true, false, NULL, 1),
+    (7, 'Seasoned Uploader', 'Uploaded torrents in at least 10 title groups', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f33f.png', 1, 'torrents_uploaded', false, false, '{"type":"torrents_uploaded","search":{"title_group_include_empty_groups":false,"page":1,"page_size":1,"order_by_column":"torrent_created_at","order_by_direction":"desc"},"minimum_title_group_amount":10}', 1),
+    (8, 'Veteran Uploader', 'Uploaded torrents in at least 25 title groups', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f332.png', 1, 'torrents_uploaded', false, false, '{"type":"torrents_uploaded","search":{"title_group_include_empty_groups":false,"page":1,"page_size":1,"order_by_column":"torrent_created_at","order_by_direction":"desc"},"minimum_title_group_amount":25}', 1),
+    (9, 'Legendary Uploader', 'Uploaded torrents in at least 100 title groups', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f3d4.png', 1, 'torrents_uploaded', false, false, '{"type":"torrents_uploaded","search":{"title_group_include_empty_groups":false,"page":1,"page_size":1,"order_by_column":"torrent_created_at","order_by_direction":"desc"},"minimum_title_group_amount":100}', 1),
+    (10, 'Archivist', 'Uploaded torrents in at least 250 title groups', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f3db.png', 1, 'torrents_uploaded', false, false, '{"type":"torrents_uploaded","search":{"title_group_include_empty_groups":false,"page":1,"page_size":1,"order_by_column":"torrent_created_at","order_by_direction":"desc"},"minimum_title_group_amount":250}', 1),
+    (11, 'Talkative', 'Wrote at least 50 forum posts', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f5e3.png', 2, 'forum_posts', false, false, '{"type":"forum_posts","minimum_post_character_count":1,"required_substring":null,"minimum_post_amount":50}', 1),
+    (12, 'Orator', 'Wrote at least 200 forum posts', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f4e2.png', 2, 'forum_posts', false, false, '{"type":"forum_posts","minimum_post_character_count":1,"required_substring":null,"minimum_post_amount":200}', 1),
+    (13, 'Novelist', 'Wrote at least 25 forum posts of 500+ characters', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f4dc.png', 2, 'forum_posts', false, false, '{"type":"forum_posts","minimum_post_character_count":500,"required_substring":null,"minimum_post_amount":25}', 1),
+    (14, 'Grateful', 'Wrote at least 10 forum posts containing "thank"', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f64f.png', 2, 'forum_posts', false, false, '{"type":"forum_posts","minimum_post_character_count":1,"required_substring":"thank","minimum_post_amount":10}', 1),
+    (15, 'Forum Regular', 'Started at least 20 forum threads', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f9f6.png', 2, 'forum_threads', false, false, '{"type":"forum_threads","minimum_thread_name_character_count":1,"required_substring":null,"minimum_thread_amount":20}', 1),
+    (16, 'Discussion Leader', 'Started at least 50 forum threads', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f3a4.png', 2, 'forum_threads', false, false, '{"type":"forum_threads","minimum_thread_name_character_count":1,"required_substring":null,"minimum_thread_amount":50}', 1),
+    (17, 'Bug Hunter', 'Awarded by staff for reporting a bug', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f41b.png', 3, 'manual', false, false, NULL, 1),
+    (18, 'Translator', 'Awarded by staff for translating the site', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f310.png', 3, 'manual', false, false, NULL, 1),
+    (19, 'Event Organizer', 'Awarded by staff for organizing a community event', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f389.png', 3, 'manual', false, false, NULL, 1),
+    (20, 'Veteran Member', 'Awarded by staff to long standing members', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f396.png', 3, 'manual', false, false, NULL, 1),
+    (21, 'Lucky Clover', 'A secret badge', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f340.png', 3, 'manual', true, false, NULL, 1),
+    (22, 'Night Owl', 'A secret badge', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f989.png', 3, 'manual', true, false, NULL, 1),
+    (23, 'Cinephile', 'Uploaded torrents in at least 10 movie title groups', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f3ac.png', 4, 'torrents_uploaded', false, false, '{"type":"torrents_uploaded","search":{"title_group_content_type":["movie"],"title_group_include_empty_groups":false,"page":1,"page_size":1,"order_by_column":"torrent_created_at","order_by_direction":"desc"},"minimum_title_group_amount":10}', 1),
+    (24, 'Melomaniac', 'Uploaded torrents in at least 10 music title groups', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f3b5.png', 4, 'torrents_uploaded', false, false, '{"type":"torrents_uploaded","search":{"title_group_content_type":["music"],"title_group_include_empty_groups":false,"page":1,"page_size":1,"order_by_column":"torrent_created_at","order_by_direction":"desc"},"minimum_title_group_amount":10}', 1),
+    (25, 'Bookworm', 'Uploaded torrents in at least 10 book title groups', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f4da.png', 4, 'torrents_uploaded', false, false, '{"type":"torrents_uploaded","search":{"title_group_content_type":["book"],"title_group_include_empty_groups":false,"page":1,"page_size":1,"order_by_column":"torrent_created_at","order_by_direction":"desc"},"minimum_title_group_amount":10}', 1),
+    (26, 'Software Curator', 'Uploaded torrents in at least 10 software title groups', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f4bb.png', 4, 'torrents_uploaded', false, false, '{"type":"torrents_uploaded","search":{"title_group_content_type":["software"],"title_group_include_empty_groups":false,"page":1,"page_size":1,"order_by_column":"torrent_created_at","order_by_direction":"desc"},"minimum_title_group_amount":10}', 1),
+    (27, 'Binge Watcher', 'Uploaded torrents in at least 10 tv show title groups', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f4fa.png', 4, 'torrents_uploaded', false, false, '{"type":"torrents_uploaded","search":{"title_group_content_type":["tv_show"],"title_group_include_empty_groups":false,"page":1,"page_size":1,"order_by_column":"torrent_created_at","order_by_direction":"desc"},"minimum_title_group_amount":10}', 1),
+    (28, 'Podcaster', 'Uploaded torrents in at least 5 podcast title groups', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f399.png', 4, 'torrents_uploaded', false, false, '{"type":"torrents_uploaded","search":{"title_group_content_type":["podcast"],"title_group_include_empty_groups":false,"page":1,"page_size":1,"order_by_column":"torrent_created_at","order_by_direction":"desc"},"minimum_title_group_amount":5}', 1),
+    (29, 'Advent Opener', 'Opened a door of the advent calendar', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f381.png', 5, 'advent_calendar_doors', false, false, '{"type":"advent_calendar_doors","calendar_id":1,"minimum_opened_door_amount":1,"door_names":[]}', 1),
+    (30, 'Advent Completionist', 'Opened 24 doors of the advent calendar', 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f384.png', 5, 'advent_calendar_doors', false, false, '{"type":"advent_calendar_doors","calendar_id":1,"minimum_opened_door_amount":24,"door_names":[]}', 1);
+
+SELECT pg_catalog.setval('public.user_badges_id_seq', 30, true);
+
+--
+-- Data for Name: user_earned_badges; Type: TABLE DATA; Schema: public; Owner: arcadia
+--
+
+INSERT INTO public.user_earned_badges (user_id, badge_id, awarded_at, awarded_by_id, note) VALUES
+    (1, 5, NOW(), 1, 'Fixture award'),
+    (2, 1, NOW() - INTERVAL '3 days', NULL, NULL),
+    (2, 2, NOW() - INTERVAL '14 days', NULL, NULL),
+    (2, 7, NOW() - INTERVAL '25 days', NULL, NULL),
+    (2, 8, NOW() - INTERVAL '36 days', NULL, NULL),
+    (2, 3, NOW() - INTERVAL '47 days', NULL, NULL),
+    (2, 4, NOW() - INTERVAL '58 days', NULL, NULL),
+    (2, 11, NOW() - INTERVAL '69 days', NULL, NULL),
+    (2, 13, NOW() - INTERVAL '80 days', NULL, NULL),
+    (2, 14, NOW() - INTERVAL '91 days', NULL, NULL),
+    (2, 15, NOW() - INTERVAL '102 days', NULL, NULL),
+    (2, 5, NOW() - INTERVAL '113 days', 1, 'For the fixtures'),
+    (2, 6, NOW() - INTERVAL '124 days', 1, 'For the fixtures'),
+    (2, 17, NOW() - INTERVAL '135 days', 1, 'For the fixtures'),
+    (2, 19, NOW() - INTERVAL '146 days', 1, 'For the fixtures'),
+    (2, 20, NOW() - INTERVAL '157 days', 1, 'For the fixtures'),
+    (2, 21, NOW() - INTERVAL '168 days', 1, 'For the fixtures'),
+    (2, 23, NOW() - INTERVAL '179 days', NULL, NULL),
+    (2, 24, NOW() - INTERVAL '190 days', NULL, NULL),
+    (2, 25, NOW() - INTERVAL '201 days', NULL, NULL),
+    (2, 28, NOW() - INTERVAL '212 days', NULL, NULL),
+    (2, 29, NOW() - INTERVAL '223 days', NULL, NULL),
+    (2, 30, NOW() - INTERVAL '234 days', NULL, NULL);
+
+--
 -- Data for Name: advent_calendars; Type: TABLE DATA; Schema: public; Owner: arcadia
 --
 

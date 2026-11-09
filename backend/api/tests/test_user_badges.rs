@@ -119,6 +119,32 @@ async fn test_user_profile_includes_secret_earned_badges(pool: PgPool) {
     let secret = earned.iter().find(|e| e["badge_id"] == 601).unwrap();
     assert_eq!(secret["badge_name"], "secret_manual");
     assert_eq!(secret["badge_is_secret"], true);
+
+    let req = authenticated_request(
+        Method::GET,
+        "/api/user-badges/earned?user_id=100",
+        &user.token,
+        None,
+    );
+    let earned: Value =
+        common::call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
+    assert_eq!(earned["user"]["username"], "user_basic");
+    let secret = earned["earned_badges"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|e| e["badge_id"] == 601)
+        .unwrap();
+    assert_eq!(secret["badge_name"], "secret_manual");
+
+    let req = authenticated_request(
+        Method::GET,
+        "/api/user-badges/earned?user_id=999999",
+        &user.token,
+        None,
+    );
+    let response = test::call_service(&service, req).await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
 #[sqlx::test(fixtures("with_test_users", "with_test_user_badges"))]
@@ -226,6 +252,11 @@ async fn test_user_badge_management_requires_permission(pool: PgPool) {
         (Method::DELETE, "/api/user-badges/1", None),
         (
             Method::PUT,
+            "/api/user-badges/reorder",
+            Some(serde_json::json!({ "badges": [] })),
+        ),
+        (
+            Method::PUT,
             "/api/user-badge-categories",
             Some(serde_json::json!({ "id": 1, "name": "category" })),
         ),
@@ -263,4 +294,82 @@ async fn test_user_badges_can_be_created_and_deleted_with_permission(pool: PgPoo
     let request = authenticated_request(Method::DELETE, &badge_uri, &deleter.token, None);
     let response = test::call_service(&service, request).await;
     assert_eq!(response.status(), StatusCode::OK);
+}
+
+#[sqlx::test(fixtures("with_test_users", "with_test_user_badges"))]
+async fn test_reorder_user_badges(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let service = create_test_app(pool, MockRedisPool::default()).await;
+    let editor = login_as(&service, TestUser::EditUserBadge).await;
+
+    let request = authenticated_request(
+        Method::PUT,
+        "/api/user-badges/reorder",
+        &editor.token,
+        Some(
+            serde_json::json!({ "badges": [{ "id": 600, "sort_order": 1 }, { "id": 601, "sort_order": 0 }] }),
+        ),
+    );
+    let response = test::call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let request = authenticated_request(Method::GET, "/api/user-badges", &editor.token, None);
+    let badges: Vec<Value> =
+        common::call_and_read_body_json_with_status(&service, request, StatusCode::OK).await;
+    let ids: Vec<&Value> = badges.iter().map(|badge| &badge["id"]).collect();
+    assert_eq!(ids, [601, 600]);
+
+    // an unknown badge rolls back the whole reorder
+    let request = authenticated_request(
+        Method::PUT,
+        "/api/user-badges/reorder",
+        &editor.token,
+        Some(
+            serde_json::json!({ "badges": [{ "id": 600, "sort_order": 0 }, { "id": 999, "sort_order": 1 }] }),
+        ),
+    );
+    let response = test::call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+    let request = authenticated_request(
+        Method::PUT,
+        "/api/user-badges/reorder",
+        &editor.token,
+        Some(
+            serde_json::json!({ "badges": [{ "id": 600, "sort_order": 0 }, { "id": 600, "sort_order": 1 }] }),
+        ),
+    );
+    let response = test::call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    // neither rejected reorder changed anything
+    let request = authenticated_request(Method::GET, "/api/user-badges", &editor.token, None);
+    let badges: Vec<Value> =
+        common::call_and_read_body_json_with_status(&service, request, StatusCode::OK).await;
+    let ids: Vec<&Value> = badges.iter().map(|badge| &badge["id"]).collect();
+    assert_eq!(ids, [601, 600]);
+}
+
+#[sqlx::test(fixtures("with_test_users", "with_test_many_earned_user_badges"))]
+async fn test_profile_only_includes_the_most_recent_earned_badges(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+
+    let request = authenticated_request(Method::GET, "/api/users?id=100", &user.token, None);
+    let profile: Value =
+        common::call_and_read_body_json_with_status(&service, request, StatusCode::OK).await;
+    let earned = profile["earned_badges"].as_array().unwrap();
+    assert_eq!(earned.len(), 8);
+    assert_eq!(earned[0]["badge_id"], 709);
+
+    let request = authenticated_request(
+        Method::GET,
+        "/api/user-badges/earned?user_id=100",
+        &user.token,
+        None,
+    );
+    let earned: Value =
+        common::call_and_read_body_json_with_status(&service, request, StatusCode::OK).await;
+    assert_eq!(earned["earned_badges"].as_array().unwrap().len(), 10);
 }

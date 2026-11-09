@@ -2163,6 +2163,10 @@ export interface ListUserBadges200Response {
     'data': Array<UserBadgeListItem>;
     'side_effects': Array<SideEffect>;
 }
+export interface ListUserEarnedBadges200Response {
+    'data': UserEarnedBadges;
+    'side_effects': Array<SideEffect>;
+}
 export interface Login {
     'password': string;
     'remember_me': boolean;
@@ -3165,6 +3169,13 @@ export interface ReorderForumSubCategories {
 export interface ReorderForumSubCategoryEntry {
     'id': number;
     'sort_order': number;
+}
+export interface ReorderUserBadgeEntry {
+    'id': number;
+    'sort_order': number;
+}
+export interface ReorderUserBadges {
+    'badges': Array<ReorderUserBadgeEntry>;
 }
 export interface ResetIRCPassword200Response {
     'data': IrcAccountResponse;
@@ -4642,6 +4653,7 @@ export interface UserBadge {
     'is_secret': boolean;
     'name': string;
     'revoke_when_criteria_unmet': boolean;
+    'sort_order': number;
 }
 
 
@@ -5087,6 +5099,10 @@ export interface UserEarnedBadgeWithDetails {
 }
 
 
+export interface UserEarnedBadges {
+    'earned_badges': Array<UserEarnedBadgeWithDetails>;
+    'user': UserLite;
+}
 export interface UserEditChangeLogResult {
     'edited_at': string;
     'edited_by': UserLiteAvatar;
@@ -9054,6 +9070,32 @@ export const listUserBadges = async (options?: RawAxiosRequestConfig): Promise<L
     });
     return response.data.data;
 };
+
+
+export const listUserEarnedBadges = async (userId: number, options?: RawAxiosRequestConfig): Promise<ListUserEarnedBadges200Response['data']> => {
+    const response = await globalAxios.request<ListUserEarnedBadges200Response>({
+        url: '/api/user-badges/earned',
+        method: 'GET',
+        params: { 'user_id': userId },
+        ...options
+    });
+    return response.data.data;
+};
+
+
+
+
+export const reorderUserBadges = async (reorderUserBadges: ReorderUserBadges, options?: RawAxiosRequestConfig): Promise<void> => {
+    const response = await globalAxios.request<void>({
+        url: '/api/user-badges/reorder',
+        method: 'PUT',
+        data: reorderUserBadges,
+        ...options
+    });
+    return response.data;
+};
+
+
 
 
 export const revokeUserEarnedBadge = async (id: number, options?: RawAxiosRequestConfig): Promise<void> => {

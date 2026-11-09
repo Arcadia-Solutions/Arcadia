@@ -1,12 +1,12 @@
 <template>
   <div>
-    <ContentContainer :containerTitle="t('user_badge.earned_badges')">
+    <ContentContainer :containerTitle="t('user_badge.recent_badges')" :containerTitleLink="`/user/${userId}/badges`">
       <template #top-right>
         <i v-if="canAward" v-tooltip.top="t('user_badge.award_badge')" class="cursor-pointer pi pi-plus" @click="awardDialogVisible = true" />
       </template>
       <div v-if="badges.length" class="badges-row">
         <div v-for="badge in badges" :key="badge.id" class="badge">
-          <div class="badge-image-wrapper" v-tooltip.top="tooltip(badge)">
+          <div class="badge-image-wrapper" v-tooltip.top="{ value: tooltip(badge), escape: false }">
             <img :src="badge.badge_image_url" :alt="badge.badge_name" />
             <i v-if="canRevoke" v-tooltip.top="t('user_badge.revoke_badge')" class="revoke-button pi pi-times-circle" @click="confirmRevoke(badge)" />
           </div>
@@ -61,12 +61,19 @@ const revokeDialogVisible = ref(false)
 const badgeBeingRevoked = ref<UserEarnedBadgeWithDetails | null>(null)
 const revoking = ref(false)
 
+// the tooltip is rendered as HTML, so the badge's texts are escaped
+const escapeHtml = (text: string) => {
+  const element = document.createElement('div')
+  element.textContent = text
+  return element.innerHTML
+}
+
 const tooltip = (badge: UserEarnedBadgeWithDetails) => {
-  const parts = [badge.badge_name]
-  if (badge.badge_description) parts.push(badge.badge_description)
-  parts.push(`${t('user_badge.awarded_at')} ${timeAgo(badge.awarded_at)}`)
-  if (badge.note) parts.push(`${t('user_badge.note')}: ${badge.note}`)
-  return parts.join('\n')
+  const parts = [`<span class="bold">${escapeHtml(badge.badge_name)}</span>`]
+  if (badge.badge_description) parts.push(escapeHtml(badge.badge_description))
+  parts.push(`<span style="opacity: 0.7">${escapeHtml(`${t('user_badge.awarded_at')} ${timeAgo(badge.awarded_at)}`)}</span>`)
+  if (badge.note) parts.push(escapeHtml(`${t('user_badge.note')}: ${badge.note}`))
+  return parts.join('<br>')
 }
 
 const onAwarded = () => {
@@ -99,6 +106,7 @@ const revoke = () => {
 .badges-row {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
 }
 .badge {

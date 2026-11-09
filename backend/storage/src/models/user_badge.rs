@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 use utoipa::ToSchema;
 
-use super::torrent::TorrentSearch;
+use super::{torrent::TorrentSearch, user::UserLite};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, ToSchema, PartialEq, Eq)]
 #[sqlx(type_name = "user_badge_type_enum", rename_all = "snake_case")]
@@ -47,6 +47,7 @@ pub struct UserBadge {
     pub is_secret: bool,
     pub revoke_when_criteria_unmet: bool,
     pub criteria: Option<serde_json::Value>,
+    pub sort_order: i16,
     #[schema(value_type = String, format = DateTime)]
     pub created_at: DateTime<Local>,
     pub created_by_id: i32,
@@ -110,6 +111,23 @@ pub struct UserEarnedBadgeWithDetails {
     pub badge_category_id: i32,
     pub badge_type: UserBadgeType,
     pub badge_is_secret: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct UserEarnedBadges {
+    pub user: UserLite,
+    pub earned_badges: Vec<UserEarnedBadgeWithDetails>,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct ReorderUserBadgeEntry {
+    pub id: i32,
+    pub sort_order: i16,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct ReorderUserBadges {
+    pub badges: Vec<ReorderUserBadgeEntry>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

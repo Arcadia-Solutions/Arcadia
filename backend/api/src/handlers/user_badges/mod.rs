@@ -7,6 +7,8 @@ pub mod edit_user_badge;
 pub mod edit_user_badge_category;
 pub mod list_user_badge_categories;
 pub mod list_user_badges;
+pub mod list_user_earned_badges;
+pub mod reorder_user_badges;
 pub mod revoke_user_earned_badge;
 
 use actix_web::web::{ServiceConfig, delete, get, post, put, resource};
@@ -20,6 +22,8 @@ pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {
             .route(put().to(self::edit_user_badge::exec::<R>)),
     );
     cfg.service(resource("/award").route(post().to(self::award_user_badge::exec::<R>)));
+    cfg.service(resource("/earned").route(get().to(self::list_user_earned_badges::exec::<R>)));
+    cfg.service(resource("/reorder").route(put().to(self::reorder_user_badges::exec::<R>)));
     cfg.service(
         resource("/award/{id}").route(delete().to(self::revoke_user_earned_badge::exec::<R>)),
     );

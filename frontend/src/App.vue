@@ -31,7 +31,7 @@ import PageProgressBar from './components/PageProgressBar.vue'
 import { hasLoggedInCookie, isRouteProtected, loginLocation, setLoggedInCookie } from './services/helpers'
 import { getMe, getPublicArcadiaSettings } from './services/api-schema'
 import { usePublicArcadiaSettingsStore } from './stores/publicArcadiaSettings'
-import { connectNotificationStream, disconnectNotificationStream } from './services/notificationStream'
+import { startNotificationPolling } from './services/notificationPolling'
 import { startToastTimer, stopToastTimer } from './main'
 
 // enable dark mode by default
@@ -137,10 +137,9 @@ const getAppReady = async (forceGetUser: boolean = false) => {
 
         await setLoggedInCookie(true)
         isAppReady.value = true
-        connectNotificationStream()
+        startNotificationPolling()
       } catch {
         // token is invalid, redirect to login
-        disconnectNotificationStream()
         await setLoggedInCookie(false)
         localStorage.removeItem('arcadia_token')
         localStorage.removeItem('arcadia_user')

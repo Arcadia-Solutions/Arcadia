@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                WITH user_ids AS (\n                    SELECT user_id\n                    FROM subscriptions_torrent_request_comments\n                    WHERE torrent_request_id = $1\n                    AND user_id != $3\n                )\n                INSERT INTO notifications_torrent_request_comments (user_id, torrent_request_comment_id, torrent_request_id)\n                SELECT\n                    user_id,\n                    $2,\n                    $1\n                FROM user_ids u\n                WHERE NOT EXISTS (\n                    SELECT 1\n                    FROM notifications_torrent_request_comments n\n                    WHERE n.user_id = u.user_id\n                      AND n.torrent_request_id = $1\n                      AND n.read_status = FALSE\n                )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0f3e81d30ad74ff20542a4e2cd5a14a4ad26b2e71a2e1b7118926cd916d1038a"
+}

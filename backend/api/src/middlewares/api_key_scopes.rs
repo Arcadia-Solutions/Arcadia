@@ -12,8 +12,6 @@ const PATHS_WITHOUT_AUTHENTICATION: &[&str] = &[
     "/api/auth/apply",
     "/api/auth/irc",
     "/api/auth/reset-password",
-    // SSE streams cannot send custom headers, so the token is passed as a query parameter
-    "/api/notifications/stream",
 ];
 
 /// Endpoints below these prefixes are reachable without any authentication. Like the prefixes

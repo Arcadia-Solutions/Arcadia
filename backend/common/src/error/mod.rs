@@ -224,9 +224,6 @@ pub enum Error {
     #[error("IRC integration is not enabled")]
     IrcNotEnabled,
 
-    #[error("too many notification streams are open")]
-    TooManyNotificationStreams,
-
     #[error("IRC account already exists")]
     IrcAccountAlreadyExists,
 
@@ -1048,9 +1045,6 @@ impl actix_web::ResponseError for Error {
             Error::ExternalSourcePluginError(_) | Error::ExternalSourcePluginMessage(_) => {
                 StatusCode::BAD_GATEWAY
             }
-
-            // 429 Too Many Requests
-            Error::TooManyNotificationStreams => StatusCode::TOO_MANY_REQUESTS,
 
             // 503 Service Unavailable
             Error::IrcNotEnabled | Error::IpCheckFailed => StatusCode::SERVICE_UNAVAILABLE,

@@ -307,6 +307,7 @@
     "title_group_torrents": "You have new torrent(s) in {0} subscribed title group | You have new torrent(s) in {0} subscribed title groups",
     "reseed_requests": "A reseed was requested for {0} torrent you seeded or snatched | A reseed was requested for {0} torrents you seeded or snatched",
     "artist_title_groups": "You have {0} new title group of a subscribed artist | You have {0} new title groups of subscribed artists",
+    "collages": "You have {0} new title group in subscribed collages | You have {0} new title groups in subscribed collages",
     "torrent_request_comments": "You have unread comment(s) in {0} subscribed torrent request | You have unread comment(s) in {0} subscribed torrent requests",
     "staff_pm_messages": "You have unread message(s) in {0} staff PM | You have unread message(s) in {0} staff PMs",
     "torrent_deletions": "You have {0} torrent that was deleted | You have {0} torrents that were deleted",

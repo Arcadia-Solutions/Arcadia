@@ -33,7 +33,6 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
             torrent_request_comment.torrent_request_id,
             user.sub,
             &torrent_request_comment.content,
-            &arc.notification_sender,
         )
         .await?;
 

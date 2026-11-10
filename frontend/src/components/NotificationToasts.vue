@@ -35,6 +35,7 @@ const viewRoutes = computed<Record<string, string>>(() => ({
   title_group_torrent: '/notifications?tab=title_group_torrents',
   reseed_request: '/notifications?tab=reseed_requests',
   artist_title_group: '/notifications?tab=artist_title_groups',
+  collage: '/notifications?tab=collages',
   torrent_request_comment: '/notifications?tab=torrent_request_comments',
   staff_pm: userStore.permissions.includes('read_staff_pm') ? '/staff-dashboard?tab=staffPms' : '/staff-pms',
   torrent_deletion: '/notifications?tab=torrent_deletions',
@@ -51,6 +52,7 @@ watch(
     () => notificationsStore.title_group_torrents,
     () => notificationsStore.reseed_requests,
     () => notificationsStore.artist_title_groups,
+    () => notificationsStore.collages,
     () => notificationsStore.torrent_request_comments,
     () => notificationsStore.staff_pm_messages,
     () => notificationsStore.torrent_deletions,
@@ -65,6 +67,7 @@ watch(
     newTitleGroupTorrents,
     newReseedRequests,
     newArtistTitleGroups,
+    newCollages,
     newTorrentRequestComments,
     newStaffPms,
     newTorrentDeletions,
@@ -103,6 +106,10 @@ watch(
 
     if (newArtistTitleGroups > 0) {
       showToast('artist_title_group', t('user.artist_title_groups', [newArtistTitleGroups]), 'info', undefined, false, 'bottom-right')
+    }
+
+    if (newCollages > 0) {
+      showToast('collage', t('user.collages', [newCollages]), 'info', undefined, false, 'bottom-right')
     }
 
     if (newTorrentRequestComments > 0) {

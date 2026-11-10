@@ -36,7 +36,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 
     let forum_thread = arc
         .pool
-        .create_forum_thread(&mut forum_thread, user.sub, &arc.notification_sender)
+        .create_forum_thread(&mut forum_thread, user.sub)
         .await?;
 
     Ok(HttpResponse::Created().json(forum_thread))

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                WITH user_ids AS (\n                    SELECT user_id\n                    FROM subscriptions_title_group_comments\n                    WHERE title_group_id = $1\n                    AND user_id != $3\n                )\n                INSERT INTO notifications_title_group_comments (user_id, title_group_comment_id, title_group_id)\n                SELECT\n                    user_id,\n                    $2,\n                    $1\n                FROM user_ids u\n                WHERE NOT EXISTS (\n                    SELECT 1\n                    FROM notifications_title_group_comments n\n                    WHERE n.user_id = u.user_id\n                      AND n.title_group_id = $1\n                      AND n.read_status = FALSE\n                )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int8",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "39abf848d2d7a885245756b07ede6a2adf8ea2620f5870f5cc02bad915cae387"
+}

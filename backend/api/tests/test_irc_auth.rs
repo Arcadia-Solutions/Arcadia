@@ -25,7 +25,7 @@ async fn irc_login(
     let mut config = arcadia_shared::config::load::<Config>();
     config.ergo.auth_callback_token = Some(CALLBACK_TOKEN.to_string());
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
-    let (service, _) = create_test_app_with_config(pool, MockRedisPool::default(), config).await;
+    let service = create_test_app_with_config(pool, MockRedisPool::default(), config).await;
 
     let mut request = TestRequest::post()
         .uri("/api/auth/irc")
@@ -121,7 +121,7 @@ async fn test_irc_auth_fails_when_irc_is_disabled(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let mut config = arcadia_shared::config::load::<Config>();
     config.ergo.auth_callback_token = None;
-    let (service, _) = create_test_app_with_config(pool, MockRedisPool::default(), config).await;
+    let service = create_test_app_with_config(pool, MockRedisPool::default(), config).await;
 
     let request = TestRequest::post()
         .uri("/api/auth/irc")

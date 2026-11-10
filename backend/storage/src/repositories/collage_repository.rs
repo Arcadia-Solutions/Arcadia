@@ -7,13 +7,11 @@ use crate::{
             UserCreatedCollage, UserCreatedCollageEntry,
         },
         common::PaginatedResults,
-        notification::NotificationEvent,
         title_group_stats::CatalogKind,
     },
 };
 use arcadia_common::error::{Error, Result};
 use sqlx::{Postgres, Transaction, query_as_unchecked, query_scalar};
-use tokio::sync::broadcast;
 
 impl ConnectionPool {
     pub async fn create_collage(
@@ -57,11 +55,9 @@ impl ConnectionPool {
         &self,
         collage_entries: &[UserCreatedCollageEntry],
         user_id: i32,
-        notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<Vec<CollageEntry>> {
         let mut tx: Transaction<'_, Postgres> = self.pool.begin().await?;
         let mut created_entries = Vec::with_capacity(collage_entries.len());
-        let mut notified_user_ids: Vec<i32> = Vec::new();
 
         for entry in collage_entries {
             let created = sqlx::query_as!(
@@ -85,23 +81,17 @@ impl ConnectionPool {
             .await
             .map_err(|e| Error::CouldNotCreateCollageEntry(e.to_string()))?;
 
-            let user_ids = Self::notify_users_collages(
+            Self::notify_users_collages(
                 &mut tx,
                 created.collage_id,
                 created.title_group_id,
                 user_id,
             )
             .await?;
-            notified_user_ids.extend(user_ids);
             created_entries.push(created);
         }
 
         tx.commit().await?;
-        if !notified_user_ids.is_empty() {
-            let _ = notification_sender.send(NotificationEvent::Collage {
-                user_ids: notified_user_ids,
-            });
-        }
         Ok(created_entries)
     }
 

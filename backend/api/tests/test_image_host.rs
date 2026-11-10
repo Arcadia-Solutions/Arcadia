@@ -35,7 +35,7 @@ async fn test_uploading_an_image_to_elysia_keeps_the_uploader(pool: PgPool) {
         redirect_uri: String::from("http://localhost:3000/auth/sso/callback"),
     });
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
-    let (service, _) = create_test_app_with_config(pool, MockRedisPool::default(), config).await;
+    let service = create_test_app_with_config(pool, MockRedisPool::default(), config).await;
     let user = login_as(&service, TestUser::Standard).await;
 
     let boundary = "testboundary";

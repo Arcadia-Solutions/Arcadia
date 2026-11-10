@@ -59,7 +59,7 @@ async fn test_irc_account_creation_and_password_reset(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (ergo_url, ergo_requests) =
         spawn_http_server("200 OK", json!({ "success": true }).to_string());
-    let (service, _) = create_test_app_with_config(
+    let service = create_test_app_with_config(
         Arc::clone(&pool),
         MockRedisPool::default(),
         config_with_irc_enabled(&ergo_url),
@@ -115,7 +115,7 @@ async fn test_irc_account_creation_fails_when_ergo_refuses_it(pool: PgPool) {
         "200 OK",
         json!({ "success": false, "error": "taken", "errorCode": "ACCOUNT_EXISTS" }).to_string(),
     );
-    let (service, _) = create_test_app_with_config(
+    let service = create_test_app_with_config(
         Arc::clone(&pool),
         MockRedisPool::default(),
         config_with_irc_enabled(&ergo_url),

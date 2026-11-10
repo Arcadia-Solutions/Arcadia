@@ -61,7 +61,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     // without having to refetch everything
     let collage_entries = arc
         .pool
-        .create_collage_entries(&collage_entries, user.sub, &arc.notification_sender)
+        .create_collage_entries(&collage_entries, user.sub)
         .await?;
 
     Ok(HttpResponse::Created().json(collage_entries))

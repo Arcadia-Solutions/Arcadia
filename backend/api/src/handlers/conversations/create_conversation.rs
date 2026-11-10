@@ -29,7 +29,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     // creates a conversation and the first message, empty conversations should not be allowed
     let conversation = arc
         .pool
-        .create_conversation(&mut conversation, user.sub, &arc.notification_sender)
+        .create_conversation(&mut conversation, user.sub)
         .await?;
 
     Ok(HttpResponse::Created().json(conversation))

@@ -9,14 +9,12 @@ use crate::{
         },
         common::PaginatedResults,
         forum::RelatedForumThread,
-        notification::NotificationEvent,
         title_group_stats::CatalogKind,
     },
 };
 use arcadia_common::error::{Error, Result};
 use sqlx::{Postgres, Transaction};
 use std::collections::HashMap;
-use tokio::sync::broadcast;
 
 impl ConnectionPool {
     pub async fn create_artists(
@@ -62,7 +60,6 @@ impl ConnectionPool {
         &self,
         artists: &Vec<UserCreatedAffiliatedArtist>,
         current_user_id: i32,
-        notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<Vec<AffiliatedArtistHierarchy>> {
         let mut tx: Transaction<'_, Postgres> = self.pool.begin().await?;
 
@@ -130,17 +127,14 @@ impl ConnectionPool {
                 .or_default()
                 .push(affiliation.artist_id);
         }
-
-        let mut notified_user_ids: Vec<i32> = Vec::new();
         for (title_group_id, notified_artist_ids) in &artist_ids_per_title_group {
-            let user_ids = Self::notify_users_artist_title_groups(
+            Self::notify_users_artist_title_groups(
                 &mut tx,
                 notified_artist_ids,
                 *title_group_id,
                 current_user_id,
             )
             .await?;
-            notified_user_ids.extend(user_ids);
         }
 
         let artist_ids: Vec<i64> = created_affiliations
@@ -160,12 +154,6 @@ impl ConnectionPool {
         .map_err(Error::CouldNotCreateArtistAffiliation)?;
 
         tx.commit().await?;
-
-        if !notified_user_ids.is_empty() {
-            let _ = notification_sender.send(NotificationEvent::ArtistTitleGroup {
-                user_ids: notified_user_ids,
-            });
-        }
 
         let mut affiliated_artist_hierarchies: Vec<AffiliatedArtistHierarchy> = Vec::new();
 

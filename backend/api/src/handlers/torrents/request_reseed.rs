@@ -5,10 +5,7 @@ use actix_web::{
 
 use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use arcadia_common::error::Result;
-use arcadia_storage::{
-    models::{notification::NotificationEvent, user::UserPermission},
-    redis::RedisPoolInterface,
-};
+use arcadia_storage::{models::user::UserPermission, redis::RedisPoolInterface};
 
 #[utoipa::path(
     post,
@@ -36,16 +33,9 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 
     let threshold_hours = arc.settings.lock().unwrap().reseed_requestable_after_hours;
 
-    let user_ids = arc
-        .pool
+    arc.pool
         .request_reseed(path.into_inner(), user.sub, threshold_hours)
         .await?;
-
-    if !user_ids.is_empty() {
-        let _ = arc
-            .notification_sender
-            .send(NotificationEvent::ReseedRequest { user_ids });
-    }
 
     Ok(HttpResponse::Ok().finish())
 }

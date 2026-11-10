@@ -4,7 +4,6 @@ use crate::{
         bonus_points_log::BonusPointsLogAction,
         common::{OrderByDirection, PaginatedResults},
         edition_group::{EditionGroupHierarchyLite, Source},
-        notification::NotificationEvent,
         peer::PublicPeer,
         title_group::{ContentType, TitleGroupCategory, TitleGroupHierarchyLite},
         torrent::{
@@ -29,7 +28,6 @@ use bip_metainfo::{Info, Metainfo, MetainfoBuilder};
 use serde_json::{Value, json};
 use sqlx::types::Json;
 use std::{collections::HashMap, str::FromStr};
-use tokio::sync::broadcast;
 
 use chrono::NaiveDate;
 
@@ -66,7 +64,6 @@ impl ConnectionPool {
         torrent_max_release_date_allowed: Option<NaiveDate>,
         max_torrent_size_bytes: u64,
         torrent_source_tag: Option<&str>,
-        notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<Torrent> {
         let mut tx = self.pool.begin().await?;
 
@@ -259,7 +256,7 @@ impl ConnectionPool {
         .fetch_one(&mut *tx)
         .await?;
 
-        let user_ids = Self::notify_users_title_group_torrents(
+        Self::notify_users_title_group_torrents(
             &mut tx,
             title_group_info.id,
             uploaded_torrent.id,
@@ -315,10 +312,6 @@ impl ConnectionPool {
         }
 
         tx.commit().await?;
-
-        if !user_ids.is_empty() {
-            let _ = notification_sender.send(NotificationEvent::TitleGroupTorrent { user_ids });
-        }
 
         Ok(uploaded_torrent)
     }
@@ -1245,7 +1238,6 @@ impl ConnectionPool {
         &self,
         torrent_to_delete: &TorrentToDelete,
         current_user_id: i32,
-        notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<()> {
         let mut tx = self.pool.begin().await?;
 
@@ -1265,7 +1257,7 @@ impl ConnectionPool {
 
         // Notifies every peer currently tied to the torrent (seeders and leechers)
         // as well as the original uploader, excluding the user performing the deletion.
-        let notified_user_ids = ConnectionPool::record_torrent_deletion(
+        ConnectionPool::record_torrent_deletion(
             &mut tx,
             torrent_to_delete.id,
             &title_group.name,
@@ -1304,12 +1296,6 @@ impl ConnectionPool {
         .await?;
 
         tx.commit().await?;
-
-        if !notified_user_ids.is_empty() {
-            let _ = notification_sender.send(NotificationEvent::TorrentDeletion {
-                user_ids: notified_user_ids,
-            });
-        }
 
         Ok(())
     }

@@ -65,7 +65,7 @@ pub async fn authenticate_user<R: RedisPoolInterface + 'static>(
     }
 }
 
-pub async fn validate_token<R: RedisPoolInterface + 'static>(
+async fn validate_token<R: RedisPoolInterface + 'static>(
     token: &str,
     arc: &Data<Arcadia<R>>,
 ) -> Result<i32, Error> {

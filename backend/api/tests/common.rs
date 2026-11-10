@@ -10,7 +10,7 @@ use actix_web::{
     test, web,
 };
 use arcadia_api::{Arcadia, config::Config};
-use arcadia_storage::models::{notification::NotificationEvent, user::Login};
+use arcadia_storage::models::user::Login;
 use arcadia_storage::{
     connection_pool::ConnectionPool,
     models::user::{LoginResponse, User},
@@ -18,7 +18,6 @@ use arcadia_storage::{
 };
 use serde::{Deserialize, de::DeserializeOwned};
 use std::sync::Arc;
-use tokio::sync::broadcast;
 
 #[derive(Deserialize)]
 pub struct Profile {
@@ -29,17 +28,6 @@ pub async fn create_test_app<R: RedisPoolInterface + 'static>(
     pool: Arc<ConnectionPool>,
     redis_pool: R,
 ) -> impl Service<Request, Response = ServiceResponse, Error = Error> {
-    create_test_app_with_notifications(pool, redis_pool).await.0
-}
-
-// Also returns a receiver subscribed to the app's notification broadcast before any request is made.
-pub async fn create_test_app_with_notifications<R: RedisPoolInterface + 'static>(
-    pool: Arc<ConnectionPool>,
-    redis_pool: R,
-) -> (
-    impl Service<Request, Response = ServiceResponse, Error = Error>,
-    broadcast::Receiver<NotificationEvent>,
-) {
     create_test_app_with_config(pool, redis_pool, arcadia_shared::config::load::<Config>()).await
 }
 
@@ -48,10 +36,7 @@ pub async fn create_test_app_with_config<R: RedisPoolInterface + 'static>(
     pool: Arc<ConnectionPool>,
     redis_pool: R,
     config: Config,
-) -> (
-    impl Service<Request, Response = ServiceResponse, Error = Error>,
-    broadcast::Receiver<NotificationEvent>,
-) {
+) -> impl Service<Request, Response = ServiceResponse, Error = Error> {
     // Load settings from database for tests
     let settings = pool
         .get_arcadia_settings()
@@ -60,16 +45,13 @@ pub async fn create_test_app_with_config<R: RedisPoolInterface + 'static>(
 
     let arc = Arcadia::<R>::new(pool, Arc::new(redis_pool), config, settings);
 
-    let notification_receiver = arc.notification_sender.subscribe();
-
     // TODO: CORS?
-    let service = test::init_service(
+    test::init_service(
         App::new()
             .app_data(web::Data::new(arc))
             .configure(arcadia_api::routes::init::<R>),
     )
-    .await;
-    (service, notification_receiver)
+    .await
 }
 
 pub enum TestUser {

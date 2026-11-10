@@ -28,7 +28,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 ) -> Result<HttpResponse> {
     let message = arc
         .pool
-        .create_conversation_message(&message, user.sub, &arc.notification_sender)
+        .create_conversation_message(&message, user.sub)
         .await?;
 
     Ok(HttpResponse::Created().json(message))

@@ -1,14 +1,11 @@
 use arcadia_storage::{
-    connection_pool::ConnectionPool,
-    models::{arcadia_settings::ArcadiaSettings, notification::NotificationEvent},
+    connection_pool::ConnectionPool, models::arcadia_settings::ArcadiaSettings,
     redis::RedisPoolInterface,
 };
 use std::{
-    collections::HashMap,
     ops::Deref,
     sync::{Arc, Mutex},
 };
-use tokio::sync::broadcast;
 
 use crate::{
     config::Config,
@@ -30,9 +27,6 @@ pub struct Arcadia<R: RedisPoolInterface> {
     pub redis_pool: Arc<R>,
     pub auth: Auth<R>,
     pub settings: Arc<Mutex<ArcadiaSettings>>,
-    pub notification_sender: broadcast::Sender<NotificationEvent>,
-    /// Open notification streams per user id, to bound the sockets they hold.
-    pub notification_streams: Arc<Mutex<HashMap<i32, usize>>>,
     /// HTTP client for external requests (scrapers, external APIs), optionally proxied.
     pub http_client: reqwest::Client,
     /// HTTP client for internal services (tracker, IRC, etc.), always bypasses proxy.
@@ -80,7 +74,6 @@ impl<R: RedisPoolInterface> Arcadia<R> {
         config: Config,
         settings: ArcadiaSettings,
     ) -> Self {
-        let (notification_sender, _) = broadcast::channel(256);
         let http_client = build_http_client(config.api.http_proxy.as_deref());
 
         for plugin in &config.scrapers {
@@ -94,8 +87,6 @@ impl<R: RedisPoolInterface> Arcadia<R> {
             auth: Auth::new(Arc::clone(&redis_pool)),
             redis_pool,
             settings: Arc::new(Mutex::new(settings)),
-            notification_sender,
-            notification_streams: Arc::new(Mutex::new(HashMap::new())),
             http_client,
             internal_http_client,
             image_host: configured_image_host(&config),

@@ -377,8 +377,9 @@ CREATE TABLE arcadia_settings (
     title_group_review_requires_snatch_or_seeding BOOLEAN NOT NULL DEFAULT FALSE,
     -- [{"minimum_rating": 0, "icon_url": "..."}], a rating shows the icon of the highest minimum_rating it reaches
     rating_icons JSONB NOT NULL DEFAULT '[]',
-    -- shown before the user rating of a title group in the torrent search, e.g. "Rating: 47%"
-    user_rating_label TEXT NOT NULL DEFAULT 'Rating'
+    -- shown before the user rating of a title group in the torrent search, e.g. "ACV: 47%"
+    -- here ACV stands for Arcadia Vault as an example
+    user_rating_label TEXT NOT NULL DEFAULT 'ACV'
 );
 INSERT INTO arcadia_settings (user_class_name_on_signup, default_css_sheet_name, open_signups, global_upload_factor, global_download_factor, bonus_points_given_on_upload, allow_uploader_set_torrent_bonus_points_cost, default_torrent_bonus_points_cost, automated_message_on_signup, automated_message_on_signup_sender_id, automated_message_on_signup_locked, automated_message_on_signup_conversation_name, automated_message_on_torrent_marked_trumpable)
 VALUES ('newbie', 'arcadia', TRUE, 100, 100, 100, FALSE, 0, 'Welcome to the site, {username}!', 1, FALSE, 'Welcome', 'You can fix your upload if you want to, but you are not obliged to.');

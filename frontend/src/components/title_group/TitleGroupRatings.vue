@@ -184,6 +184,10 @@ onMounted(() => {
 .vote-link {
   font-style: italic;
 }
+a.vote-count,
+.vote-link {
+  transition: color 0.2s;
+}
 a.vote-count:hover,
 .vote-link:hover {
   color: var(--color-primary);

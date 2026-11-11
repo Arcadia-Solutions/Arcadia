@@ -21,7 +21,7 @@
             v-tooltip.top="`${formatNumber(title_group.user_rating_count)} ${t('title_group.vote', title_group.user_rating_count)}`"
             class="user-rating"
           >
-            <template v-if="publicArcadiaSettings.user_rating_label">{{ publicArcadiaSettings.user_rating_label }}: </template>
+            <span v-if="publicArcadiaSettings.user_rating_label">{{ publicArcadiaSettings.user_rating_label }}:</span>
             <UserRatingDisplay :rating="title_group.user_rating_average" />
           </span>
           <span>
@@ -80,6 +80,9 @@ const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
   font-size: 1.4em;
 }
 .user-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-weight: bold;
   font-style: normal;
 }

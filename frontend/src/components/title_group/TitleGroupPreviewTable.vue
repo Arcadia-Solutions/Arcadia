@@ -81,6 +81,7 @@ const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 .user-rating {
   font-weight: bold;
+  font-style: normal;
 }
 .tags {
   display: flex;

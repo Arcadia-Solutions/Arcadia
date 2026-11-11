@@ -1,7 +1,7 @@
 <template>
   <div class="rating-input">
     <Slider v-model="rating" :min="0" :max="100" class="slider" />
-    <UserRatingDisplay :rating />
+    <UserRatingDisplay :rating class="rating-preview" />
   </div>
   <BBCodeEditor :initialValue="ownReview?.content ?? ''" :label="t('title_group.review_optional')" @valueChange="review = $event">
     <template #buttons>
@@ -63,5 +63,9 @@ const save = () => {
 }
 .slider {
   width: 300px;
+}
+.rating-preview {
+  font-size: 1.5em;
+  font-weight: bold;
 }
 </style>

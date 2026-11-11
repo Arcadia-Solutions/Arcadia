@@ -24949,6 +24949,9 @@ UPDATE public.users SET title_group_reviews = (
     SELECT COUNT(*) FROM public.title_group_reviews WHERE user_id = users.id
 ) WHERE id IN (SELECT user_id FROM public.title_group_reviews);
 
+-- red, yellow and green faces
+UPDATE public.arcadia_settings SET rating_icons = '[{"minimum_rating": 0, "icon_url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTUiIGZpbGw9IiNlMDUyNTIiLz48Y2lyY2xlIGN4PSIxMSIgY3k9IjEyIiByPSIyIiBmaWxsPSIjMjIyIi8+PGNpcmNsZSBjeD0iMjEiIGN5PSIxMiIgcj0iMiIgZmlsbD0iIzIyMiIvPjxwYXRoIGQ9Ik0xMCAyMyBRMTYgMTcgMjIgMjMiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIyLjUiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg=="}, {"minimum_rating": 40, "icon_url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTUiIGZpbGw9IiNlMGMyNTIiLz48Y2lyY2xlIGN4PSIxMSIgY3k9IjEyIiByPSIyIiBmaWxsPSIjMjIyIi8+PGNpcmNsZSBjeD0iMjEiIGN5PSIxMiIgcj0iMiIgZmlsbD0iIzIyMiIvPjxwYXRoIGQ9Ik0xMCAyMSBMMjIgMjEiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIyLjUiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg=="}, {"minimum_rating": 75, "icon_url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTUiIGZpbGw9IiM1MmIwNTIiLz48Y2lyY2xlIGN4PSIxMSIgY3k9IjEyIiByPSIyIiBmaWxsPSIjMjIyIi8+PGNpcmNsZSBjeD0iMjEiIGN5PSIxMiIgcj0iMiIgZmlsbD0iIzIyMiIvPjxwYXRoIGQ9Ik0xMCAxOSBRMTYgMjUgMjIgMTkiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIyLjUiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg=="}]';
+
 --
 -- Data for Name: torrent_activities; Type: TABLE DATA; Schema: public; Owner: arcadia
 --

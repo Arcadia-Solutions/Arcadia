@@ -10,7 +10,6 @@
         />
         <i class="pi pi-trash" v-if="hasDeletePermission" @click="deleteCommentDialogVisible = true" />
         <RouterLink
-          v-if="!isReview"
           :to="{
             query: { post_id: comment.id },
             hash: `#post-${comment.id}`,
@@ -70,7 +69,6 @@ import type {
   EditedTitleGroupComment,
   ForumPostHierarchy,
   TitleGroupCommentHierarchy,
-  TitleGroupReviewHierarchy,
   TorrentRequestCommentHierarchy,
 } from '@/services/api-schema'
 import { useUserStore } from '@/stores/user'
@@ -82,7 +80,7 @@ import { useI18n } from 'vue-i18n'
 import { showToast } from '@/main'
 
 const props = defineProps<{
-  comment: TitleGroupCommentHierarchy | ForumPostHierarchy | ConversationMessageHierarchy | TorrentRequestCommentHierarchy | TitleGroupReviewHierarchy
+  comment: TitleGroupCommentHierarchy | ForumPostHierarchy | ConversationMessageHierarchy | TorrentRequestCommentHierarchy
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   editCommentMethod?: Function
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
@@ -106,16 +104,9 @@ const loadingUpdatingComment = ref(false)
 const deletingComment = ref(false)
 
 const isForumPost = computed(() => 'forum_thread_id' in props.comment)
-const isReview = computed(() => 'rating' in props.comment)
-const deleteMessage = (forumKey: string, reviewKey: string, commentKey: string) =>
-  t(isForumPost.value ? forumKey : isReview.value ? reviewKey : commentKey)
-const deleteDialogHeader = computed(() => deleteMessage('forum.delete_post', 'title_group.delete_review', 'community.delete_comment'))
-const deleteConfirmationMessage = computed(() =>
-  deleteMessage('forum.confirm_delete_post', 'title_group.confirm_delete_review', 'community.confirm_delete_comment'),
-)
-const deleteSuccessMessage = computed(() =>
-  deleteMessage('forum.post_deleted_success', 'title_group.review_deleted_success', 'community.comment_deleted_success'),
-)
+const deleteDialogHeader = computed(() => (isForumPost.value ? t('forum.delete_post') : t('community.delete_comment')))
+const deleteConfirmationMessage = computed(() => (isForumPost.value ? t('forum.confirm_delete_post') : t('community.confirm_delete_comment')))
+const deleteSuccessMessage = computed(() => (isForumPost.value ? t('forum.post_deleted_success') : t('community.comment_deleted_success')))
 
 const updateComment = async (comment: EditedForumPost | EditedTitleGroupComment) => {
   if (!props.editCommentMethod) return

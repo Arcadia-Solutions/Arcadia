@@ -1,25 +1,23 @@
 <template>
   <div v-if="reviews.length === 0" class="no-rating">{{ t('title_group.no_ratings') }}</div>
-  <div v-for="review in reviews" :key="review.id" :id="`review-${review.id}`">
-    <GeneralComment
-      :comment="review"
-      :hasEditPermission="false"
-      :hasDeletePermission="userStore.permissions.includes('delete_title_group_review')"
-      :deleteCommentMethod="deleteTitleGroupReview"
-      @commentDeleted="emit('deleted', $event)"
-    >
-      <template #top-right>
-        <UserRatingDisplay :rating="review.rating" />
-      </template>
-    </GeneralComment>
-  </div>
+  <TitleGroupReview v-for="review in reviews" :key="review.id" :review @delete="reviewToDelete = review.id" />
+  <Dialog closeOnEscape modal :header="t('title_group.delete_review')" :visible="reviewToDelete !== null" @update:visible="reviewToDelete = null">
+    <DeleteDialog
+      v-if="reviewToDelete !== null"
+      :message="t('title_group.confirm_delete_review')"
+      :action="() => deleteTitleGroupReview(reviewToDelete!)"
+      :successMessage="t('title_group.review_deleted_success')"
+      @deleted="reviewDeleted"
+    />
+  </Dialog>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import GeneralComment from '../community/GeneralComment.vue'
-import UserRatingDisplay from './UserRatingDisplay.vue'
-import { useUserStore } from '@/stores/user'
+import { Dialog } from 'primevue'
+import DeleteDialog from '../DeleteDialog.vue'
+import TitleGroupReview from './TitleGroupReview.vue'
 import { deleteTitleGroupReview, type TitleGroupReviewHierarchy } from '@/services/api-schema'
 
 defineProps<{
@@ -31,7 +29,13 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const userStore = useUserStore()
+
+const reviewToDelete = ref<number | null>(null)
+
+const reviewDeleted = () => {
+  if (reviewToDelete.value !== null) emit('deleted', reviewToDelete.value)
+  reviewToDelete.value = null
+}
 </script>
 
 <style scoped>

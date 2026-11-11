@@ -131,6 +131,7 @@
           titleGroupAndAssociatedData.title_group.user_rating_count > 0 ||
           userStore.permissions.includes('rate_title_groups')
         "
+        :key="titleGroupAndAssociatedData.title_group.id"
         :titleGroupId="titleGroupAndAssociatedData.title_group.id"
         :publicRatings="titleGroupAndAssociatedData.title_group.public_ratings"
         :userRatingAverage="titleGroupAndAssociatedData.title_group.user_rating_average ?? null"

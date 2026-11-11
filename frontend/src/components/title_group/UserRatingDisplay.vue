@@ -1,7 +1,7 @@
 <template>
   <span class="user-rating">
     <template v-if="rating !== null">
-      <img v-if="icon" :src="icon.icon_url" alt="rating icon" class="icon" />
+      <img v-if="icon && !hideIcon" :src="icon.icon_url" alt="rating icon" class="icon" />
       <span>{{ Math.round(rating) }}%</span>
     </template>
     <span v-else class="no-rating">{{ t('title_group.no_ratings') }}</span>
@@ -11,19 +11,17 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
+import { getRatingIcon } from '@/services/helpers'
 
 const props = defineProps<{
   rating: number | null
+  hideIcon?: boolean
 }>()
 
 const { t } = useI18n()
 const settings = usePublicArcadiaSettingsStore()
 
-const icon = computed(() => {
-  const rating = props.rating
-  if (rating === null) return undefined
-  return settings.rating_icons.filter((i) => i.minimum_rating <= rating).sort((a, b) => b.minimum_rating - a.minimum_rating)[0]
-})
+const icon = computed(() => getRatingIcon(settings.rating_icons, props.rating))
 </script>
 <style scoped>
 .user-rating {

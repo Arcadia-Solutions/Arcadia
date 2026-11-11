@@ -3,8 +3,9 @@
     <div class="ratings-component">
       <div class="rating">
         <div class="logo-and-note" :class="{ 'cursor-pointer': userRatingCount > 0 }" @click="userRatingCount > 0 && openReviews()">
-          <img src="/favicon.ico" alt="site logo" class="logo" />
-          <UserRatingDisplay :rating="userRatingAverage" />
+          <img v-if="publicArcadiaSettings.rating_icons.length === 0" src="/favicon.ico" alt="site logo" class="logo" />
+          <img v-else-if="averageIcon" :src="averageIcon.icon_url" alt="rating icon" class="logo" />
+          <UserRatingDisplay :rating="userRatingAverage" hideIcon />
         </div>
         <div class="votes">
           <a v-if="userRatingCount > 0" class="vote-count cursor-pointer" @click="openReviews">
@@ -59,7 +60,8 @@ import { searchTitleGroupReviews, type PublicRating, type TitleGroupReview, type
 import ContentContainer from '../ContentContainer.vue'
 import PaginatedResults from '../PaginatedResults.vue'
 import { useI18n } from 'vue-i18n'
-import { formatNumber } from '@/services/helpers'
+import { formatNumber, getRatingIcon } from '@/services/helpers'
+import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 import { useUserStore } from '@/stores/user'
 import UserRatingDisplay from './UserRatingDisplay.vue'
 import TitleGroupReviews from './TitleGroupReviews.vue'
@@ -68,6 +70,7 @@ import TitleGroupVoteForm from './TitleGroupVoteForm.vue'
 const { t } = useI18n()
 const route = useRoute()
 const userStore = useUserStore()
+const publicArcadiaSettings = usePublicArcadiaSettingsStore()
 
 const props = defineProps<{
   titleGroupId: number
@@ -76,6 +79,8 @@ const props = defineProps<{
   userRatingCount: number
   ownReview: TitleGroupReview | null
 }>()
+
+const averageIcon = computed(() => getRatingIcon(publicArcadiaSettings.rating_icons, props.userRatingAverage))
 
 const emit = defineEmits<{
   ownReviewSaved: [TitleGroupReview]

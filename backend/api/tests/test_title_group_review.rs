@@ -6,9 +6,10 @@ use arcadia_storage::connection_pool::ConnectionPool;
 use arcadia_storage::models::{
     common::PaginatedResults,
     title_group::{TitleGroupAndAssociatedData, TitleGroupHierarchyLite},
+    title_group_comment::UserCreatedTitleGroupComment,
     title_group_review::{
-        EditedTitleGroupReview, TitleGroupReview, TitleGroupReviewWithTitleGroup,
-        UserCreatedTitleGroupReview,
+        EditedTitleGroupReview, TitleGroupReview, TitleGroupReviewHierarchy,
+        TitleGroupReviewWithTitleGroup, UserCreatedTitleGroupReview,
     },
 };
 use common::{TestUser, auth_header, create_test_app_and_login, login_as};
@@ -31,6 +32,15 @@ fn create_review_request(token: &str, title_group_id: i32, rating: i16) -> actix
 fn get_title_group_request(token: &str, title_group_id: i32) -> actix_http::Request {
     test::TestRequest::get()
         .uri(&format!("/api/title-groups?id={title_group_id}"))
+        .insert_header(auth_header(token))
+        .to_request()
+}
+
+fn get_title_group_reviews_request(token: &str, title_group_id: i32) -> actix_http::Request {
+    test::TestRequest::get()
+        .uri(&format!(
+            "/api/title-groups/reviews?title_group_id={title_group_id}"
+        ))
         .insert_header(auth_header(token))
         .to_request()
 }
@@ -67,6 +77,19 @@ async fn test_create_and_edit_review_updates_aggregates(pool: PgPool) {
         common::call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
     assert_eq!(edited.rating, 60);
 
+    let req = test::TestRequest::post()
+        .uri("/api/title-groups/comments")
+        .insert_header(auth_header(&user.token))
+        .set_json(UserCreatedTitleGroupComment {
+            content: "nice".into(),
+            title_group_id: 1,
+            refers_to_torrent_id: None,
+            answers_to_comment_id: None,
+        })
+        .to_request();
+    let response = test::call_service(&service, req).await;
+    assert_eq!(response.status(), StatusCode::CREATED);
+
     let title_group: TitleGroupAndAssociatedData = common::call_and_read_body_json_with_status(
         &service,
         get_title_group_request(&user.token, 1),
@@ -75,8 +98,16 @@ async fn test_create_and_edit_review_updates_aggregates(pool: PgPool) {
     .await;
     assert_eq!(title_group.title_group.user_rating_average, Some(60.0));
     assert_eq!(title_group.title_group.user_rating_count, 1);
-    assert_eq!(title_group.title_group_reviews.len(), 1);
-    assert_eq!(title_group.title_group_reviews[0].id, review.id);
+    assert_eq!(title_group.title_group_comments[0].author_rating, Some(60));
+
+    let reviews: Vec<TitleGroupReviewHierarchy> = common::call_and_read_body_json_with_status(
+        &service,
+        get_title_group_reviews_request(&user.token, 1),
+        StatusCode::OK,
+    )
+    .await;
+    assert_eq!(reviews.len(), 1);
+    assert_eq!(reviews[0].id, review.id);
 
     let req = test::TestRequest::get()
         .uri("/api/search/title-group-reviews/user?user_id=100&page=1&page_size=10")
@@ -122,7 +153,14 @@ async fn test_only_moderators_can_delete_reviews(pool: PgPool) {
     .await;
     assert_eq!(title_group.title_group.user_rating_average, None);
     assert_eq!(title_group.title_group.user_rating_count, 0);
-    assert!(title_group.title_group_reviews.is_empty());
+
+    let reviews: Vec<TitleGroupReviewHierarchy> = common::call_and_read_body_json_with_status(
+        &service,
+        get_title_group_reviews_request(&user.token, 1),
+        StatusCode::OK,
+    )
+    .await;
+    assert!(reviews.is_empty());
 }
 
 #[sqlx::test(fixtures(
@@ -150,7 +188,7 @@ async fn test_review_requires_snatch_or_seeding_when_enabled(pool: PgPool) {
     "with_test_title_group_reviews",
     "with_refreshed_title_group_hierarchy_lite"
 ))]
-async fn test_search_torrents_sorts_and_filters_by_rating(pool: PgPool) {
+async fn test_search_torrents_sorts_by_rating(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
         create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
@@ -175,15 +213,4 @@ async fn test_search_torrents_sorts_and_filters_by_rating(pool: PgPool) {
     assert_eq!(ids, vec![2, 1]);
     assert_eq!(results.results[1].user_rating_average, Some(80.0));
     assert_eq!(results.results[1].user_rating_count, 1);
-
-    let results: PaginatedResults<TitleGroupHierarchyLite> =
-        common::call_and_read_body_json_with_status(
-            &service,
-            search("order_by_direction=desc&title_group_minimum_user_rating=50&title_group_maximum_user_rating=90"),
-            StatusCode::OK,
-        )
-        .await;
-    let ids: Vec<i32> = results.results.iter().map(|group| group.id).collect();
-    assert_eq!(ids, vec![1]);
-    assert_eq!(results.total_items, 1);
 }

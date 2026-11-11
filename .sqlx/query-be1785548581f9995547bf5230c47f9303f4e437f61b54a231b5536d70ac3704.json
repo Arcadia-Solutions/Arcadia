@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                SELECT\n                    c.id, c.content, c.created_at, c.updated_at, c.created_by_id,\n                    c.title_group_id, c.locked, c.refers_to_torrent_id, c.answers_to_comment_id,\n                    u.id AS \"u_id!\", u.username AS \"u_username!\", u.class_name AS \"u_class_name!\",\n                    u.banned AS \"u_banned!\", u.avatar AS \"u_avatar?\", u.warned AS \"u_warned!\",\n                    u.custom_title AS \"u_custom_title?\"\n                FROM title_group_comments c\n                JOIN users u ON u.id = c.created_by_id\n                WHERE c.title_group_id = $1\n                ORDER BY c.created_at\n                ",
+  "query": "\n                SELECT\n                    c.id, c.content, c.created_at, c.updated_at, c.created_by_id,\n                    c.title_group_id, c.locked, c.refers_to_torrent_id, c.answers_to_comment_id,\n                    u.id AS \"u_id!\", u.username AS \"u_username!\", u.class_name AS \"u_class_name!\",\n                    u.banned AS \"u_banned!\", u.avatar AS \"u_avatar?\", u.warned AS \"u_warned!\",\n                    u.custom_title AS \"u_custom_title?\",\n                    r.rating AS \"author_rating?\"\n                FROM title_group_comments c\n                JOIN users u ON u.id = c.created_by_id\n                LEFT JOIN title_group_reviews r ON r.title_group_id = c.title_group_id AND r.user_id = c.created_by_id\n                WHERE c.title_group_id = $1\n                ORDER BY c.created_at\n                ",
   "describe": {
     "columns": [
       {
@@ -178,6 +178,17 @@
             "name": "custom_title"
           }
         }
+      },
+      {
+        "ordinal": 16,
+        "name": "author_rating?",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "title_group_reviews",
+            "name": "rating"
+          }
+        }
       }
     ],
     "parameters": {
@@ -201,8 +212,9 @@
       false,
       true,
       false,
-      true
+      true,
+      false
     ]
   },
-  "hash": "4e7d4a554df49b3c24129c7c537c4418f4fba1090a0ceacc8ee3d9d5cf4bebd2"
+  "hash": "be1785548581f9995547bf5230c47f9303f4e437f61b54a231b5536d70ac3704"
 }

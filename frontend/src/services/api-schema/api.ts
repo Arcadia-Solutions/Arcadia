@@ -1883,6 +1883,10 @@ export interface GetTitleGroupBookmark200Response {
     'data': TitleGroupBookmark;
     'side_effects': Array<SideEffect>;
 }
+export interface GetTitleGroupReviews200Response {
+    'data': Array<TitleGroupReviewHierarchy>;
+    'side_effects': Array<SideEffect>;
+}
 export interface GetTopTorrent200Response {
     'data': PaginatedResultsTorrentHierarchyLite;
     'side_effects': Array<SideEffect>;
@@ -2709,6 +2713,10 @@ export interface PaginatedResultsTitleGroupCommentWithLocation {
  */
 export interface PaginatedResultsTitleGroupCommentWithLocationResultsInner {
     'answers_to_comment_id'?: number;
+    /**
+     * the rating the author gave to the title group, if they rated it
+     */
+    'author_rating'?: number;
     'content': string;
     'created_at': string;
     'created_by': UserLiteAvatar;
@@ -3853,7 +3861,6 @@ export interface TitleGroupAndAssociatedData {
     'similar_title_groups': Array<SimilarTitleGroupLite>;
     'title_group': TitleGroup;
     'title_group_comments': Array<TitleGroupCommentHierarchy>;
-    'title_group_reviews': Array<TitleGroupReviewHierarchy>;
     'torrent_requests': Array<TorrentRequestHierarchyLite>;
 }
 export interface TitleGroupAppliedTag {
@@ -3939,6 +3946,10 @@ export interface TitleGroupComment {
 }
 export interface TitleGroupCommentHierarchy {
     'answers_to_comment_id'?: number | null;
+    /**
+     * the rating the author gave to the title group, if they rated it
+     */
+    'author_rating'?: number | null;
     'content': string;
     'created_at': string;
     'created_by': UserLiteAvatar;
@@ -3967,6 +3978,10 @@ export interface TitleGroupCommentSearchResult {
  */
 export interface TitleGroupCommentWithLocation {
     'answers_to_comment_id'?: number;
+    /**
+     * the rating the author gave to the title group, if they rated it
+     */
+    'author_rating'?: number;
     'content': string;
     'created_at': string;
     'created_by': UserLiteAvatar;
@@ -4522,11 +4537,6 @@ export interface TorrentSearch {
     'title_group_category'?: Array<TitleGroupCategory>;
     'title_group_content_type'?: Array<ContentType>;
     'title_group_include_empty_groups': boolean;
-    'title_group_maximum_user_rating'?: number;
-    /**
-     * only matches the title groups whose average user rating is within this range, the unrated ones are only matched by the default range of 0 to 100
-     */
-    'title_group_minimum_user_rating'?: number;
     'title_group_name'?: string | null;
     'title_group_tags'?: string | null;
     'torrent_created_by_id'?: number | null;
@@ -7355,8 +7365,6 @@ export interface SearchTorrentsRequest {
     'title_group_content_type'?: Array<ContentType> | null;
     'title_group_category'?: Array<TitleGroupCategory> | null;
     'title_group_tags'?: string | null;
-    'title_group_minimum_user_rating'?: number | null;
-    'title_group_maximum_user_rating'?: number | null;
     'edition_group_source'?: Array<Source> | null;
     'torrent_video_resolution'?: Array<VideoResolution> | null;
     'torrent_language'?: Array<Language> | null;
@@ -7377,7 +7385,7 @@ export const searchTorrents = async (request: SearchTorrentsRequest, options?: R
     const response = await globalAxios.request<SearchTorrents200Response>({
         url: `/api/search/torrents/lite`,
         method: 'GET',
-        params: { 'title_group_name': request['title_group_name'], 'title_group_content_type': request['title_group_content_type'], 'title_group_category': request['title_group_category'], 'title_group_tags': request['title_group_tags'], 'title_group_include_empty_groups': request['title_group_include_empty_groups'], 'title_group_minimum_user_rating': request['title_group_minimum_user_rating'], 'title_group_maximum_user_rating': request['title_group_maximum_user_rating'], 'edition_group_source': request['edition_group_source'], 'torrent_video_resolution': request['torrent_video_resolution'], 'torrent_language': request['torrent_language'], 'torrent_reported': request['torrent_reported'], 'torrent_staff_checked': request['torrent_staff_checked'], 'torrent_trumpable': request['torrent_trumpable'], 'torrent_created_by_id': request['torrent_created_by_id'], 'torrent_snatched_by_id': request['torrent_snatched_by_id'], 'artist_id': request['artist_id'], 'collage_id': request['collage_id'], 'series_id': request['series_id'], 'user_id_bookmarks': request['user_id_bookmarks'], 'page': request['page'], 'page_size': request['page_size'], 'order_by_column': request['order_by_column'], 'order_by_direction': request['order_by_direction'] },
+        params: { 'title_group_name': request['title_group_name'], 'title_group_content_type': request['title_group_content_type'], 'title_group_category': request['title_group_category'], 'title_group_tags': request['title_group_tags'], 'title_group_include_empty_groups': request['title_group_include_empty_groups'], 'edition_group_source': request['edition_group_source'], 'torrent_video_resolution': request['torrent_video_resolution'], 'torrent_language': request['torrent_language'], 'torrent_reported': request['torrent_reported'], 'torrent_staff_checked': request['torrent_staff_checked'], 'torrent_trumpable': request['torrent_trumpable'], 'torrent_created_by_id': request['torrent_created_by_id'], 'torrent_snatched_by_id': request['torrent_snatched_by_id'], 'artist_id': request['artist_id'], 'collage_id': request['collage_id'], 'series_id': request['series_id'], 'user_id_bookmarks': request['user_id_bookmarks'], 'page': request['page'], 'page_size': request['page_size'], 'order_by_column': request['order_by_column'], 'order_by_direction': request['order_by_direction'] },
         ...options
     });
     return response.data.data;
@@ -8266,6 +8274,19 @@ export const getTitleGroupInfoLite = async (id: number, options?: RawAxiosReques
         url: '/api/title-groups/lite',
         method: 'GET',
         params: { 'id': id },
+        ...options
+    });
+    return response.data.data;
+};
+
+
+
+
+export const getTitleGroupReviews = async (titleGroupId: number, options?: RawAxiosRequestConfig): Promise<GetTitleGroupReviews200Response['data']> => {
+    const response = await globalAxios.request<GetTitleGroupReviews200Response>({
+        url: '/api/title-groups/reviews',
+        method: 'GET',
+        params: { 'title_group_id': titleGroupId },
         ...options
     });
     return response.data.data;

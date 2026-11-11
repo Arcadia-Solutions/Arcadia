@@ -742,8 +742,6 @@ impl ConnectionPool {
              JOIN title_groups tg ON tg.id = tgh.title_group_id
 
              WHERE ($4::BOOLEAN IS NULL OR tgh.torrent_staff_checked = $4)
-             -- unrated title groups only match when the rating range is not narrowed
-             AND (($25::SMALLINT = 0 AND $26::SMALLINT = 100) OR ROUND(tg.user_rating_average) BETWEEN $25 AND $26)
              AND ($5::BOOLEAN IS NULL OR tgh.torrent_reported = $5)
              AND ($24::BOOLEAN IS NULL OR (NULLIF(tgh.torrent_trumpable, '') IS NOT NULL) = $24)
              AND (
@@ -871,9 +869,7 @@ impl ConnectionPool {
             tag_filter_jsonb.clone() as Option<serde_json::Value>,
             form.user_id_bookmarks,
             can_see_anonymous_uploads,
-            form.torrent_trumpable,
-            form.title_group_minimum_user_rating,
-            form.title_group_maximum_user_rating
+            form.torrent_trumpable
         )
         .fetch_all(&self.pool)
         .await
@@ -884,9 +880,7 @@ impl ConnectionPool {
             r#"
             SELECT COUNT(DISTINCT title_group_id)
             FROM title_group_hierarchy_lite tgh
-            JOIN title_groups tg ON tg.id = tgh.title_group_id
             WHERE ($1::BOOLEAN IS NULL OR tgh.torrent_staff_checked = $1)
-              AND (($21::SMALLINT = 0 AND $22::SMALLINT = 100) OR ROUND(tg.user_rating_average) BETWEEN $21 AND $22)
               AND ($2::BOOLEAN IS NULL OR tgh.torrent_reported = $2)
               AND ($20::BOOLEAN IS NULL OR (NULLIF(tgh.torrent_trumpable, '') IS NOT NULL) = $20)
               AND (
@@ -973,9 +967,7 @@ impl ConnectionPool {
             form.user_id_bookmarks,
             form.artist_id,
             can_see_anonymous_uploads,
-            form.torrent_trumpable,
-            form.title_group_minimum_user_rating,
-            form.title_group_maximum_user_rating
+            form.torrent_trumpable
         )
         .fetch_optional(&self.pool)
         .await

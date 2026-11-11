@@ -9,6 +9,7 @@ pub mod edit_title_group_comment;
 pub mod edit_title_group_review;
 pub mod get_title_group;
 pub mod get_title_group_info_lite;
+pub mod get_title_group_reviews;
 pub mod link_similar_title_groups;
 pub mod merge_title_groups;
 pub mod unlink_similar_title_groups;
@@ -39,7 +40,11 @@ pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {
             .route(put().to(self::edit_title_group_comment::exec::<R>))
             .route(delete().to(self::delete_title_group_comment::exec::<R>)),
     );
-    cfg.service(resource("/reviews").route(post().to(self::create_title_group_review::exec::<R>)));
+    cfg.service(
+        resource("/reviews")
+            .route(get().to(self::get_title_group_reviews::exec::<R>))
+            .route(post().to(self::create_title_group_review::exec::<R>)),
+    );
     cfg.service(
         resource("/reviews/{id}")
             .route(put().to(self::edit_title_group_review::exec::<R>))

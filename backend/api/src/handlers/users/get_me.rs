@@ -35,8 +35,6 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         title_group_name: None,
         title_group_tags: None,
         title_group_include_empty_groups: false,
-        title_group_minimum_user_rating: 0,
-        title_group_maximum_user_rating: 100,
         title_group_content_type: Vec::new(),
         title_group_category: Vec::new(),
         edition_group_source: Vec::new(),

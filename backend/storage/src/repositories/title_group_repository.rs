@@ -271,9 +271,11 @@ impl ConnectionPool {
                     c.title_group_id, c.locked, c.refers_to_torrent_id, c.answers_to_comment_id,
                     u.id AS "u_id!", u.username AS "u_username!", u.class_name AS "u_class_name!",
                     u.banned AS "u_banned!", u.avatar AS "u_avatar?", u.warned AS "u_warned!",
-                    u.custom_title AS "u_custom_title?"
+                    u.custom_title AS "u_custom_title?",
+                    r.rating AS "author_rating?"
                 FROM title_group_comments c
                 JOIN users u ON u.id = c.created_by_id
+                LEFT JOIN title_group_reviews r ON r.title_group_id = c.title_group_id AND r.user_id = c.created_by_id
                 WHERE c.title_group_id = $1
                 ORDER BY c.created_at
                 "#,
@@ -650,6 +652,7 @@ impl ConnectionPool {
                     warned: row.u_warned,
                     custom_title: row.u_custom_title,
                 },
+                author_rating: row.author_rating,
             })
             .collect();
 
@@ -725,10 +728,9 @@ impl ConnectionPool {
             })
             .collect();
 
-        let (related_threads, similar_title_groups, title_group_reviews) = tokio::try_join!(
+        let (related_threads, similar_title_groups) = tokio::try_join!(
             self.find_related_forum_threads_for_title_group(title_group_id),
             self.find_similar_title_groups(title_group_id),
-            self.find_title_group_reviews(title_group_id),
         )?;
 
         Ok(TitleGroupAndAssociatedData {
@@ -738,7 +740,6 @@ impl ConnectionPool {
             affiliated_artists,
             affiliated_entities,
             title_group_comments,
-            title_group_reviews,
             torrent_requests,
             is_subscribed_to_torrents: subscriptions.is_subscribed_to_torrents,
             is_subscribed_to_comments: subscriptions.is_subscribed_to_comments,

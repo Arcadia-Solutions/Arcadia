@@ -220,6 +220,7 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         crate::handlers::title_groups::create_title_group_review::exec,
         crate::handlers::title_groups::edit_title_group_review::exec,
         crate::handlers::title_groups::delete_title_group_review::exec,
+        crate::handlers::title_groups::get_title_group_reviews::exec,
         crate::handlers::title_groups::create_title_group::exec,
         crate::handlers::title_groups::edit_title_group::exec,
         crate::handlers::title_groups::get_title_group::exec,

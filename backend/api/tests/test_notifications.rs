@@ -1565,3 +1565,34 @@ async fn test_visiting_title_group_marks_artist_notifications_as_read(pool: PgPo
     let counts: NotificationCounts = common::call_and_read_body_json(&service_b, counts_req).await;
     assert_eq!(counts.artist_title_groups, 0);
 }
+
+#[sqlx::test(fixtures("with_test_users"))]
+async fn test_polling_notification_counts_does_not_update_last_seen(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        create_test_app_and_login(pool.clone(), MockRedisPool::default(), TestUser::Standard).await;
+    let last_seen_before = pool.find_user_with_id(100).await.unwrap().last_seen;
+
+    let req = test::TestRequest::get()
+        .uri("/api/notifications/counts")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+    assert_eq!(
+        test::call_service(&service, req).await.status(),
+        StatusCode::OK
+    );
+    assert_eq!(
+        pool.find_user_with_id(100).await.unwrap().last_seen,
+        last_seen_before
+    );
+
+    let req = test::TestRequest::get()
+        .uri("/api/notifications?include_read=false")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+    assert_eq!(
+        test::call_service(&service, req).await.status(),
+        StatusCode::OK
+    );
+    assert!(pool.find_user_with_id(100).await.unwrap().last_seen > last_seen_before);
+}

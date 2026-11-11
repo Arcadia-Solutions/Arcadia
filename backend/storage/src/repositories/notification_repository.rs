@@ -1084,7 +1084,10 @@ impl ConnectionPool {
                      ORDER BY cm.created_at DESC
                      LIMIT 1
                  ) AS lm ON TRUE
-                 WHERE lm.created_by_id != $1
+                 -- narrows the conversations to the user's before the latest message lookup,
+                 -- which the planner otherwise runs on every conversation
+                 WHERE (c.sender_id = $1 OR c.receiver_id = $1)
+                   AND lm.created_by_id != $1
                    AND (
                        (c.sender_id = $1 AND c.sender_last_seen_at < lm.created_at)
                        OR

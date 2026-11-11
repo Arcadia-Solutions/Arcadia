@@ -41,7 +41,8 @@ impl ConnectionPool {
                  SELECT COUNT(DISTINCT t.id)
                  FROM torrents t
                  JOIN edition_groups eg ON t.edition_group_id = eg.id
-                 WHERE eg.title_group_id IN (
+                 WHERE t.deleted_at IS NULL
+                   AND eg.title_group_id IN (
                      SELECT DISTINCT title_group_id
                      FROM affiliated_artists
                      WHERE affiliated_artists.artist_id = artists.id

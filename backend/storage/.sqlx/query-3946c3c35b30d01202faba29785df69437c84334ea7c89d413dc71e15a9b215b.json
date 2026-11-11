@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE users\n            SET\n                title_groups = title_groups - (\n                    SELECT COUNT(*) FROM title_groups tg\n                    WHERE tg.created_by_id = users.id AND tg.id = ANY($1)\n                ),\n                edition_groups = edition_groups - (\n                    SELECT COUNT(*) FROM edition_groups eg\n                    WHERE eg.created_by_id = users.id AND eg.title_group_id = ANY($1)\n                )\n            WHERE id IN (\n                SELECT created_by_id FROM title_groups WHERE id = ANY($1)\n                UNION\n                SELECT created_by_id FROM edition_groups WHERE title_group_id = ANY($1)\n            )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3946c3c35b30d01202faba29785df69437c84334ea7c89d413dc71e15a9b215b"
+}

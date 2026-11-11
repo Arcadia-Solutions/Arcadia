@@ -14,9 +14,9 @@ VALUES (4, 4, 100, '\x1122334455667788990011223344556677889900', '{}', '{}', 'De
        (6, 5, 100, '\x3344556677889900112233445566778899001122', '{}', '{}', 'Deleted Torrent 3', '', '', '{}', FALSE, '{}', '{}', FALSE, FALSE, 'mp3', 1000000, NOW(), 100);
 
 -- Artist 2 affiliated with title_group 3 (to test counter decrement)
--- Starts with: title_groups_amount=1, edition_groups_amount=2, torrents_amount=3
+-- Starts with: title_groups_amount=1, edition_groups_amount=2, torrents_amount=0 (its torrents are soft-deleted)
 INSERT INTO artists (id, name, description, pictures, created_by_id, title_groups_amount, edition_groups_amount, torrents_amount, seeders_amount, leechers_amount, snatches_amount)
-VALUES (2, 'Test Artist', 'An artist for testing deletion', '{}', 100, 1, 2, 3, 0, 0, 0);
+VALUES (2, 'Test Artist', 'An artist for testing deletion', '{}', 100, 1, 2, 0, 0, 0, 0);
 
 INSERT INTO affiliated_artists (id, title_group_id, artist_id, roles, nickname, created_by_id)
 VALUES (2, 3, 2, '{main}', NULL, 100);

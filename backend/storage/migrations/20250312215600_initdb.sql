@@ -1032,7 +1032,7 @@ CREATE TABLE torrent_requests (
     FOREIGN KEY (title_group_id) REFERENCES title_groups(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by_id) REFERENCES users(id),
     FOREIGN KEY (filled_by_user_id) REFERENCES users(id),
-    FOREIGN KEY (filled_by_torrent_id) REFERENCES torrents(id)
+    FOREIGN KEY (filled_by_torrent_id) REFERENCES torrents(id) ON DELETE CASCADE
 );
 CREATE TABLE torrent_request_votes(
     id BIGSERIAL PRIMARY KEY,
@@ -1052,7 +1052,7 @@ CREATE TABLE torrent_request_unfills (
     unfilled_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     reason TEXT NOT NULL,
     filled_by_user_id INT NOT NULL REFERENCES users(id),
-    filled_by_torrent_id INT NOT NULL REFERENCES torrents(id),
+    filled_by_torrent_id INT NOT NULL REFERENCES torrents(id) ON DELETE CASCADE,
     filled_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 CREATE TABLE torrent_request_comments (

@@ -9,7 +9,7 @@ use crate::{
         title_group::{
             ContentType, EditedTitleGroup, MasterGroupEntry, Platform, PublicRating,
             SimilarTitleGroupLite, SimilarTitleGroupsLink, TitleGroup, TitleGroupAndAssociatedData,
-            TitleGroupCategory, UserCreatedTitleGroup,
+            TitleGroupCategory, TitleGroupHierarchyLite, UserCreatedTitleGroup,
         },
         title_group_comment::TitleGroupCommentHierarchy,
         title_group_tag::UserCreatedTitleGroupTag,
@@ -23,9 +23,9 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use chrono::Local;
+use chrono::{DateTime, Local, Utc};
 use serde_json::{Value, json};
-use sqlx::types::Json;
+use sqlx::{PgExecutor, Postgres, Transaction, types::Json};
 use std::collections::HashMap;
 
 impl ConnectionPool {
@@ -1394,38 +1394,214 @@ impl ConnectionPool {
             return Err(Error::TitleGroupHasUndeletedTorrents);
         }
 
-        // Decrement counters for all affiliated artists before cascade delete
+        let mut tx = self.pool.begin().await?;
+        Self::delete_title_groups(&mut tx, &[title_group_id]).await?;
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    /// Title groups without any undeleted torrent nor torrent request, created in
+    /// `[created_after, created_before)` when given. Their edition groups are left out.
+    pub async fn find_empty_title_groups(
+        &self,
+        created_after: Option<DateTime<Utc>>,
+        created_before: Option<DateTime<Utc>>,
+    ) -> Result<Vec<TitleGroupHierarchyLite>> {
+        let mut title_groups = sqlx::query_as!(
+            TitleGroupHierarchyLite,
+            r#"
+            SELECT
+                tg.id,
+                tg.name,
+                tg.covers,
+                tg.category AS "category: _",
+                tg.content_type AS "content_type: _",
+                ARRAY(
+                    SELECT t.name
+                    FROM title_group_applied_tags tat
+                    JOIN title_group_tags t ON t.id = tat.tag_id
+                    WHERE tat.title_group_id = tg.id AND t.deleted_at IS NULL
+                ) AS "tags!",
+                tg.original_release_date,
+                tg.original_release_date_only_year_known,
+                tg.platform AS "platform: _",
+                '[]'::jsonb AS "edition_groups!: _",
+                '[]'::jsonb AS "affiliated_artists!: _",
+                CASE
+                    WHEN s.id IS NOT NULL THEN jsonb_build_object('id', s.id, 'name', s.name)
+                END AS "series: _"
+            FROM title_groups tg
+            LEFT JOIN series s ON s.id = tg.series_id
+            WHERE ($1::TIMESTAMPTZ IS NULL OR tg.created_at >= $1)
+              AND ($2::TIMESTAMPTZ IS NULL OR tg.created_at < $2)
+              AND NOT EXISTS (
+                  SELECT 1 FROM torrents t
+                  JOIN edition_groups eg ON eg.id = t.edition_group_id
+                  WHERE eg.title_group_id = tg.id AND t.deleted_at IS NULL
+              )
+              AND NOT EXISTS (
+                  SELECT 1 FROM torrent_requests tr WHERE tr.title_group_id = tg.id
+              )
+            ORDER BY tg.created_at
+            "#,
+            created_after,
+            created_before
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        self.enrich_title_groups_with_affiliated_artists(&mut title_groups)
+            .await?;
+
+        Ok(title_groups)
+    }
+
+    /// Deletes the title groups without any undeleted torrent nor torrent request, and
+    /// returns how many were deleted. The filters are combined:
+    /// - `created_after`: only title groups created at or after this date, no lower bound if `None`
+    /// - `created_before`: only title groups created strictly before this date, no upper bound if `None`
+    /// - `title_group_ids`: only these title groups, all of them if `None`. Ids of title groups
+    ///   that are not empty or outside of the date range are ignored, an empty slice deletes nothing
+    pub async fn delete_empty_title_groups(
+        &self,
+        created_after: Option<DateTime<Utc>>,
+        created_before: Option<DateTime<Utc>>,
+        title_group_ids: Option<&[i32]>,
+    ) -> Result<u64> {
+        let mut tx = self.pool.begin().await?;
+
+        let candidates =
+            Self::empty_title_group_ids(&mut *tx, created_after, created_before, title_group_ids)
+                .await?;
+
+        // Locking the title groups blocks new edition groups and requests, locking their
+        // edition groups blocks new torrents. Emptiness is then re-checked, as something may
+        // have been added before the locks were acquired
+        sqlx::query!(
+            "SELECT id FROM title_groups WHERE id = ANY($1) FOR UPDATE",
+            &candidates
+        )
+        .fetch_all(&mut *tx)
+        .await?;
+        sqlx::query!(
+            "SELECT id FROM edition_groups WHERE title_group_id = ANY($1) FOR UPDATE",
+            &candidates
+        )
+        .fetch_all(&mut *tx)
+        .await?;
+        let ids = Self::empty_title_group_ids(&mut *tx, None, None, Some(&candidates)).await?;
+
+        Self::delete_title_groups(&mut tx, &ids).await?;
+        tx.commit().await?;
+
+        Ok(ids.len() as u64)
+    }
+
+    pub async fn count_empty_title_groups(
+        &self,
+        created_after: Option<DateTime<Utc>>,
+        created_before: Option<DateTime<Utc>>,
+    ) -> Result<u64> {
+        let ids =
+            Self::empty_title_group_ids(&self.pool, created_after, created_before, None).await?;
+        Ok(ids.len() as u64)
+    }
+
+    /// Same conditions as `find_empty_title_groups`, restricted to `title_group_ids` when given
+    async fn empty_title_group_ids(
+        executor: impl PgExecutor<'_>,
+        created_after: Option<DateTime<Utc>>,
+        created_before: Option<DateTime<Utc>>,
+        title_group_ids: Option<&[i32]>,
+    ) -> Result<Vec<i32>> {
+        Ok(sqlx::query_scalar!(
+            r#"
+            SELECT tg.id
+            FROM title_groups tg
+            WHERE ($1::TIMESTAMPTZ IS NULL OR tg.created_at >= $1)
+              AND ($2::TIMESTAMPTZ IS NULL OR tg.created_at < $2)
+              AND ($3::INT[] IS NULL OR tg.id = ANY($3))
+              AND NOT EXISTS (
+                  SELECT 1 FROM torrents t
+                  JOIN edition_groups eg ON eg.id = t.edition_group_id
+                  WHERE eg.title_group_id = tg.id AND t.deleted_at IS NULL
+              )
+              AND NOT EXISTS (
+                  SELECT 1 FROM torrent_requests tr WHERE tr.title_group_id = tg.id
+              )
+            "#,
+            created_after,
+            created_before,
+            title_group_ids as Option<&[i32]>
+        )
+        .fetch_all(executor)
+        .await?)
+    }
+
+    /// Deletes the title groups and everything cascading from them, keeping the cached
+    /// amounts of their artists and creators in sync. Their torrents must all be soft-deleted
+    /// already, soft deletion having decremented the artists' torrents_amount
+    async fn delete_title_groups(tx: &mut Transaction<'_, Postgres>, ids: &[i32]) -> Result<()> {
+        if ids.is_empty() {
+            return Ok(());
+        }
         sqlx::query!(
             r#"
             UPDATE artists
             SET
-                title_groups_amount = title_groups_amount - 1,
-                edition_groups_amount = edition_groups_amount - (
-                    SELECT COUNT(*) FROM edition_groups WHERE title_group_id = $1
+                title_groups_amount = title_groups_amount - (
+                    SELECT COUNT(*) FROM affiliated_artists aa
+                    WHERE aa.artist_id = artists.id AND aa.title_group_id = ANY($1)
                 ),
-                torrents_amount = torrents_amount - (
-                    SELECT COUNT(*) FROM torrents t
-                    JOIN edition_groups eg ON eg.id = t.edition_group_id
-                    WHERE eg.title_group_id = $1
+                edition_groups_amount = edition_groups_amount - (
+                    SELECT COUNT(*) FROM edition_groups eg
+                    JOIN affiliated_artists aa ON aa.title_group_id = eg.title_group_id
+                    WHERE aa.artist_id = artists.id AND eg.title_group_id = ANY($1)
                 )
             WHERE id IN (
-                SELECT artist_id FROM affiliated_artists WHERE title_group_id = $1
+                SELECT artist_id FROM affiliated_artists WHERE title_group_id = ANY($1)
             )
             "#,
-            title_group_id
+            ids
         )
-        .execute(&self.pool)
+        .execute(&mut **tx)
         .await?;
 
-        // Delete the title group (cascades to edition_groups, affiliated_artists, etc.)
         sqlx::query!(
             r#"
-            DELETE FROM title_groups WHERE id = $1
+            UPDATE users
+            SET
+                title_groups = title_groups - (
+                    SELECT COUNT(*) FROM title_groups tg
+                    WHERE tg.created_by_id = users.id AND tg.id = ANY($1)
+                ),
+                edition_groups = edition_groups - (
+                    SELECT COUNT(*) FROM edition_groups eg
+                    WHERE eg.created_by_id = users.id AND eg.title_group_id = ANY($1)
+                )
+            WHERE id IN (
+                SELECT created_by_id FROM title_groups WHERE id = ANY($1)
+                UNION
+                SELECT created_by_id FROM edition_groups WHERE title_group_id = ANY($1)
+            )
             "#,
-            title_group_id
+            ids
         )
-        .execute(&self.pool)
+        .execute(&mut **tx)
         .await?;
+
+        // collage_entry has no ON DELETE CASCADE
+        sqlx::query!(
+            "DELETE FROM collage_entry WHERE title_group_id = ANY($1)",
+            ids
+        )
+        .execute(&mut **tx)
+        .await?;
+
+        sqlx::query!("DELETE FROM title_groups WHERE id = ANY($1)", ids)
+            .execute(&mut **tx)
+            .await?;
 
         Ok(())
     }

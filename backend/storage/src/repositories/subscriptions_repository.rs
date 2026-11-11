@@ -272,7 +272,7 @@ impl ConnectionPool {
         })
     }
 
-    async fn enrich_title_groups_with_affiliated_artists(
+    pub(crate) async fn enrich_title_groups_with_affiliated_artists(
         &self,
         title_groups: &mut [TitleGroupHierarchyLite],
     ) -> Result<()> {

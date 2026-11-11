@@ -811,6 +811,27 @@ export interface DeleteCollageQuery {
 export interface DeleteEditionGroupQuery {
     'edition_group_id': number;
 }
+export interface DeleteEmptyTitleGroups200Response {
+    'data': DeleteEmptyTitleGroupsResponse;
+    'side_effects': Array<SideEffect>;
+}
+export interface DeleteEmptyTitleGroupsRequest {
+    /**
+     * Only delete title groups created at or after this date
+     */
+    'created_after'?: string | null;
+    /**
+     * Only delete title groups created strictly before this date
+     */
+    'created_before'?: string | null;
+    /**
+     * Only delete these title groups among the empty ones, all of them if not given
+     */
+    'title_group_ids'?: Array<number> | null;
+}
+export interface DeleteEmptyTitleGroupsResponse {
+    'deleted_title_groups_amount': number;
+}
 export interface DeleteForumCategoryQuery {
     'id': number;
 }
@@ -1297,6 +1318,10 @@ export interface EmojiUsage {
     'emoji_id': number;
     'reactions_amount': number;
 }
+export interface EmptyTitleGroupsResponse {
+    'amount': number;
+    'title_groups': Array<TitleGroupHierarchyLite>;
+}
 export interface Entity {
     'created_at': string;
     'created_by_id': number;
@@ -1745,6 +1770,10 @@ export interface GetEmojis200Response {
 }
 export interface GetEmojisUsage200Response {
     'data': Array<EmojiUsage>;
+    'side_effects': Array<SideEffect>;
+}
+export interface GetEmptyTitleGroups200Response {
+    'data': EmptyTitleGroupsResponse;
     'side_effects': Array<SideEffect>;
 }
 export interface GetExternalSourceData200Response {
@@ -6760,6 +6789,38 @@ export const checkMissingRegistrationIps = async (options?: RawAxiosRequestConfi
     });
     return response.data.data;
 };
+
+
+export const deleteEmptyTitleGroups = async (deleteEmptyTitleGroupsRequest: DeleteEmptyTitleGroupsRequest, options?: RawAxiosRequestConfig): Promise<DeleteEmptyTitleGroups200Response['data']> => {
+    const response = await globalAxios.request<DeleteEmptyTitleGroups200Response>({
+        url: '/api/maintenance-tools/delete-empty-title-groups',
+        method: 'POST',
+        data: deleteEmptyTitleGroupsRequest,
+        ...options
+    });
+    return response.data.data;
+};
+
+
+
+export interface GetEmptyTitleGroupsRequest {
+    'created_after'?: string | null;
+    'created_before'?: string | null;
+    'count_only'?: boolean | null;
+}
+
+
+
+export const getEmptyTitleGroups = async (request: GetEmptyTitleGroupsRequest, options?: RawAxiosRequestConfig): Promise<GetEmptyTitleGroups200Response['data']> => {
+    const response = await globalAxios.request<GetEmptyTitleGroups200Response>({
+        url: `/api/maintenance-tools/empty-title-groups`,
+        method: 'GET',
+        params: { 'created_after': request['created_after'], 'created_before': request['created_before'], 'count_only': request['count_only'] },
+        ...options
+    });
+    return response.data.data;
+};
+
 
 
 

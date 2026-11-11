@@ -21,7 +21,7 @@
             <template v-if="index < title_group.tags.length - 1">, </template>
           </template>
         </span>
-        <TitleGroupTable :title_group="title_group" :editionGroups="title_group.edition_groups" :preview="true" />
+        <TitleGroupTable v-if="title_group.edition_groups.length" :title_group="title_group" :editionGroups="title_group.edition_groups" :preview="true" />
       </div>
       <div class="left">
         <i class="pi pi-trash cursor-pointer" v-if="showDeleteBtn" v-tooltip.top="deleteBtnTooltip" @click="emit('delete', title_group.id)" />

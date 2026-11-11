@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM collage_entry WHERE title_group_id = ANY($1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "cf26e52ba9645969daaa73b061db54c03641678dbb4e40aa10a6dbd7f8b9b389"
+}

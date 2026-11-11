@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE artists\n             SET torrents_amount = (\n                 SELECT COUNT(DISTINCT t.id)\n                 FROM torrents t\n                 JOIN edition_groups eg ON t.edition_group_id = eg.id\n                 WHERE t.deleted_at IS NULL\n                   AND eg.title_group_id IN (\n                     SELECT DISTINCT title_group_id\n                     FROM affiliated_artists\n                     WHERE affiliated_artists.artist_id = artists.id\n                 )\n             )",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "ad626c23c98a086792f9df0642e96c7057f2041838c06f8f51bb771c237e0b28"
+}

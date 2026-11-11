@@ -18,6 +18,7 @@ mod test_change_user_password;
 mod test_collage;
 mod test_conversation;
 mod test_css_sheets;
+mod test_delete_empty_title_groups;
 mod test_donations;
 mod test_download_user_torrents_archive;
 mod test_edition_group;

@@ -112,11 +112,11 @@ async fn test_deleting_title_group_decrements_artist_counters(pool: PgPool) {
     )
     .await;
 
-    // Artist 2 starts with title_groups_amount=1, edition_groups_amount=2, torrents_amount=3
+    // Artist 2 starts with title_groups_amount=1, edition_groups_amount=2, torrents_amount=0
     let artist_before = pool.find_artist_by_id(2).await.unwrap();
     assert_eq!(artist_before.title_groups_amount, 1);
     assert_eq!(artist_before.edition_groups_amount, 2);
-    assert_eq!(artist_before.torrents_amount, 3);
+    assert_eq!(artist_before.torrents_amount, 0);
 
     let req = test::TestRequest::delete()
         .uri("/api/title-groups?title_group_id=3")

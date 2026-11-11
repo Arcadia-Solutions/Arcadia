@@ -104,6 +104,7 @@
             <TorrentRequestsTable
               :torrentRequests="titleGroupAndAssociatedData.torrent_requests"
               :contentType="titleGroupAndAssociatedData.title_group.content_type"
+              displayFilled
             />
           </AccordionContent>
         </AccordionPanel>

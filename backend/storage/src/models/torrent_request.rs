@@ -31,7 +31,7 @@ pub struct TorrentRequest {
     pub created_by_id: i32,
     pub filled_by_user_id: Option<i32>,
     pub filled_by_torrent_id: Option<i32>,
-    #[schema(value_type = String, format = DateTime)]
+    #[schema(value_type = Option<String>, format = DateTime)]
     pub filled_at: Option<DateTime<Utc>>,
     pub edition_name: Option<String>,
     pub source: Vec<Source>,

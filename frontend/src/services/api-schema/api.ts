@@ -4239,7 +4239,7 @@ export interface TorrentRequest {
     'description'?: string | null;
     'edition_name'?: string | null;
     'features': Array<Features>;
-    'filled_at': string;
+    'filled_at'?: string | null;
     'filled_by_torrent_id'?: number | null;
     'filled_by_user_id'?: number | null;
     'id': number;

@@ -17,7 +17,15 @@
       :pageSize
       @changePage="searchInputsRef.changePage($event.page)"
     >
-      <TorrentRequestsTable :torrentRequests="searchResults" displayTitleGroup sortable :sortField="initialForm.order_by" :sortOrder @sort="onSort" />
+      <TorrentRequestsTable
+        :torrentRequests="searchResults"
+        displayTitleGroup
+        :displayFilled="initialForm.include_filled"
+        sortable
+        :sortField="initialForm.order_by"
+        :sortOrder
+        @sort="onSort"
+      />
     </PaginatedResults>
   </div>
 </template>

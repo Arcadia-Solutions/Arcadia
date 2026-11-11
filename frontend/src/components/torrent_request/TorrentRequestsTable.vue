@@ -55,7 +55,12 @@
         <UsernameEnriched :user="getTorrentRequest(slotProps.data).created_by" />
       </template>
     </Column>
-    <Column :header="t('torrent_request.filled_by')">
+    <Column v-if="displayFilled" :header="t('torrent_request.filled_at')">
+      <template #body="slotProps">
+        <TimeAgo v-if="getTorrentRequest(slotProps.data).torrent_request.filled_at" :date="getTorrentRequest(slotProps.data).torrent_request.filled_at!" />
+      </template>
+    </Column>
+    <Column v-if="displayFilled" :header="t('torrent_request.filled_by')">
       <template #body="slotProps">
         <UsernameEnriched v-if="getTorrentRequest(slotProps.data).filled_by" :user="getTorrentRequest(slotProps.data).filled_by" />
       </template>
@@ -81,6 +86,7 @@ defineProps<{
   torrentRequests: TorrentRequestHierarchyLite[] | TorrentRequestWithTitleGroupLite[]
   contentType?: ContentType
   displayTitleGroup?: boolean
+  displayFilled?: boolean
   sortable?: boolean
   sortField?: TorrentRequestSearchOrderBy
   sortOrder?: number

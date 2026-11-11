@@ -36,7 +36,7 @@
             {{ t('title_group.maximum_rating') }}
             <InputNumber v-model="maximumRating" :min="0" :max="100" showButtons :inputStyle="{ width: '4em' }" size="small" />
           </label>
-          <InputText v-model="content" :placeholder="t('title_group.search_rating_text')" size="small" @keyup.enter="fetchReviews(1)" />
+          <InputText v-model="content" :placeholder="t('title_group.search_rating_text')" size="small" class="content-search" @keyup.enter="fetchReviews(1)" />
           <Button :label="t('general.search')" size="small" :loading @click="fetchReviews(1)" />
         </div>
       </ContentContainer>
@@ -136,6 +136,10 @@ onMounted(() => {
 })
 </script>
 <style scoped>
+.content-search {
+  flex: 1;
+  min-width: 15em;
+}
 .review-filters-container {
   margin-bottom: 10px;
 }

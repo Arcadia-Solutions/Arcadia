@@ -278,6 +278,10 @@ export interface ArcadiaSettings {
      */
     'uploads_disabled_message'?: string | null;
     'user_class_name_on_signup': string;
+    /**
+     * Shown before the user rating of a title group in the torrent search, e.g. \"Rating: 47%\".
+     */
+    'user_rating_label': string;
 }
 
 
@@ -3118,6 +3122,7 @@ export interface PublicArcadiaSettings {
     'torrent_request_vote_currencies': Array<TorrentRequestVoteCurrency>;
     'uploads_disabled': boolean;
     'uploads_disabled_message'?: string | null;
+    'user_rating_label': string;
 }
 export interface PublicPeer {
     'agent': string;

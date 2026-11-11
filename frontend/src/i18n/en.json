@@ -1188,6 +1188,7 @@
     "add_tier": "Add tier",
     "title_group_review_settings": "Title group review settings",
     "title_group_review_requires_snatch_or_seeding": "Require having snatched or seeding a torrent of the title group to review it",
+    "user_rating_label": "Text shown before the user rating in the torrent search",
     "rating_icons": "Rating icons (the icon with the highest minimum rating below the average is displayed)",
     "minimum_rating": "Minimum rating",
     "icon_url": "Icon URL",

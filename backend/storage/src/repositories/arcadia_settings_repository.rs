@@ -66,7 +66,8 @@ impl ConnectionPool {
                     uploads_disabled,
                     uploads_disabled_message,
                     title_group_review_requires_snatch_or_seeding,
-                    rating_icons as "rating_icons: Json<Vec<RatingIcon>>"
+                    rating_icons as "rating_icons: Json<Vec<RatingIcon>>",
+                    user_rating_label
                 FROM arcadia_settings
                 LIMIT 1
             "#,
@@ -137,7 +138,8 @@ impl ConnectionPool {
                     uploads_disabled = $49,
                     uploads_disabled_message = $50,
                     title_group_review_requires_snatch_or_seeding = $51,
-                    rating_icons = $52
+                    rating_icons = $52,
+                    user_rating_label = $53
                 RETURNING
                     user_class_name_on_signup,
                     default_css_sheet_name,
@@ -190,7 +192,8 @@ impl ConnectionPool {
                     uploads_disabled,
                     uploads_disabled_message,
                     title_group_review_requires_snatch_or_seeding,
-                    rating_icons as "rating_icons: Json<Vec<RatingIcon>>"
+                    rating_icons as "rating_icons: Json<Vec<RatingIcon>>",
+                    user_rating_label
             "#,
             settings.user_class_name_on_signup,
             settings.default_css_sheet_name,
@@ -246,6 +249,7 @@ impl ConnectionPool {
             settings.uploads_disabled_message,
             settings.title_group_review_requires_snatch_or_seeding,
             &settings.rating_icons as &Json<Vec<RatingIcon>>,
+            settings.user_rating_label,
         )
         .fetch_one(&self.pool)
         .await

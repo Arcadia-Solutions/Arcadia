@@ -3,7 +3,6 @@
     <template v-if="rating !== null">
       <img v-if="icon" :src="icon.icon_url" alt="rating icon" class="icon" />
       <span>{{ Math.round(rating) }}%</span>
-      <span v-if="count !== undefined" class="votes">({{ formatNumber(count) }} {{ t('title_group.vote', count) }})</span>
     </template>
     <span v-else class="no-rating">{{ t('title_group.no_ratings') }}</span>
   </span>
@@ -11,12 +10,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { formatNumber } from '@/services/helpers'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 
 const props = defineProps<{
   rating: number | null
-  count?: number
 }>()
 
 const { t } = useI18n()
@@ -39,8 +36,5 @@ const icon = computed(() => {
 }
 .no-rating {
   opacity: 0.7;
-}
-.votes {
-  font-size: 0.9em;
 }
 </style>

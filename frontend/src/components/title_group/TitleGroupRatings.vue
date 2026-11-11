@@ -7,10 +7,10 @@
           <UserRatingDisplay :rating="userRatingAverage" />
         </div>
         <div class="votes">
-          <a v-if="userRatingCount > 0" class="cursor-pointer" @click="openReviews">
+          <a v-if="userRatingCount > 0" class="vote-count cursor-pointer" @click="openReviews">
             ({{ formatNumber(userRatingCount) }} {{ t('title_group.vote', userRatingCount) }})
           </a>
-          <a v-if="userStore.permissions.includes('rate_title_groups')" class="cursor-pointer" @click="openVoteForm">
+          <a v-if="userStore.permissions.includes('rate_title_groups')" class="vote-link cursor-pointer" @click="openVoteForm">
             {{ t(ownRating === null ? 'title_group.add_your_vote' : 'title_group.edit_your_rating') }}
           </a>
         </div>
@@ -21,7 +21,7 @@
             <img src="/logos/external_links/tmdb.svg" alt="tmdb logo" class="logo" />
             <span>{{ rating.rating * 10 }}%</span>
           </div>
-          <span class="votes">({{ formatNumber(rating.votes) }} {{ t('title_group.vote', 2) }})</span>
+          <span class="votes vote-count">({{ formatNumber(rating.votes) }} {{ t('title_group.vote', 2) }})</span>
         </div>
       </template>
     </div>
@@ -124,7 +124,14 @@ onMounted(() => {
 .votes {
   display: flex;
   flex-direction: column;
+  align-items: center;
   font-size: 0.9em;
+}
+.vote-count {
+  font-weight: bold;
+}
+.vote-link {
+  font-style: italic;
 }
 </style>
 <style>

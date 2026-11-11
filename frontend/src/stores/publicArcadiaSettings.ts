@@ -19,6 +19,7 @@ const initialState: PublicArcadiaSettings = {
   irc_webchat_default_channels: [],
   min_amount_tags_title_group: 1,
   rating_icons: [],
+  user_rating_label: '',
   title_group_review_requires_snatch_or_seeding: false,
   reseed_requestable_after_hours: 72,
   custom_js_code: null,

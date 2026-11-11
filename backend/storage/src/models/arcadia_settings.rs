@@ -152,6 +152,8 @@ pub struct ArcadiaSettings {
     pub title_group_review_requires_snatch_or_seeding: bool,
     #[schema(value_type = Vec<RatingIcon>)]
     pub rating_icons: Json<Vec<RatingIcon>>,
+    /// Shown before the user rating of a title group in the torrent search, e.g. "Rating: 47%".
+    pub user_rating_label: String,
 }
 
 /// The icon displayed next to the ratings greater than or equal to `minimum_rating`, up to the
@@ -207,6 +209,7 @@ pub struct PublicArcadiaSettings {
     pub title_group_review_requires_snatch_or_seeding: bool,
     #[schema(value_type = Vec<RatingIcon>)]
     pub rating_icons: Json<Vec<RatingIcon>>,
+    pub user_rating_label: String,
     /// set when an advent calendar is published and currently running
     pub running_advent_calendar_button_text: Option<String>,
 }

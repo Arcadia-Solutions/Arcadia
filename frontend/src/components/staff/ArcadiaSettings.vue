@@ -295,6 +295,11 @@
           <label for="title_group_review_requires_snatch_or_seeding">{{ t('arcadia_settings.title_group_review_requires_snatch_or_seeding') }}</label>
         </div>
 
+        <div style="margin-bottom: 10px">
+          <label for="user_rating_label" style="margin-right: 5px">{{ t('arcadia_settings.user_rating_label') }}</label>
+          <InputText v-model="settings.user_rating_label" id="user_rating_label" size="small" />
+        </div>
+
         <label>{{ t('arcadia_settings.rating_icons') }}</label>
         <DataTable :value="settings.rating_icons" size="small">
           <Column :header="t('arcadia_settings.minimum_rating')">

@@ -16,7 +16,14 @@
           />
         </div>
         <div class="tags">
-          <UserRatingDisplay :rating="title_group.user_rating_average ?? null" :count="title_group.user_rating_count" />
+          <span
+            v-if="title_group.user_rating_average != null"
+            v-tooltip.top="`${formatNumber(title_group.user_rating_count)} ${t('title_group.vote', title_group.user_rating_count)}`"
+            class="user-rating"
+          >
+            <template v-if="publicArcadiaSettings.user_rating_label">{{ publicArcadiaSettings.user_rating_label }}: </template>
+            <UserRatingDisplay :rating="title_group.user_rating_average" />
+          </span>
           <span>
             <template v-for="(tag, index) in title_group.tags" :key="tag">
               <RouterLink :to="{ path: '/torrents', query: { title_group_tags: tag } }" @click="scrollToTop">{{ tag }}</RouterLink>
@@ -39,6 +46,9 @@ import ImagePreview from '../ImagePreview.vue'
 import type { TitleGroupHierarchyLite } from '@/services/api-schema'
 import TitleGroupSlimHeader from './TitleGroupSlimHeader.vue'
 import UserRatingDisplay from './UserRatingDisplay.vue'
+import { useI18n } from 'vue-i18n'
+import { formatNumber } from '@/services/helpers'
+import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 
 defineProps<{
   title_group: TitleGroupHierarchyLite
@@ -50,6 +60,9 @@ defineProps<{
 const emit = defineEmits<{
   delete: [titleGroupId: number]
 }>()
+
+const { t } = useI18n()
+const publicArcadiaSettings = usePublicArcadiaSettingsStore()
 
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 </script>
@@ -65,6 +78,9 @@ const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 .title {
   margin-top: -5px;
   font-size: 1.4em;
+}
+.user-rating {
+  font-weight: bold;
 }
 .tags {
   display: flex;

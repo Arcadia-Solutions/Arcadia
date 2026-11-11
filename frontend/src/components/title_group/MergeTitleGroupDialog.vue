@@ -64,6 +64,8 @@ const toHierarchyLite = (data: TitleGroupAndAssociatedData): TitleGroupHierarchy
   tags: data.title_group.tags,
   category: data.title_group.category,
   platform: data.title_group.platform,
+  user_rating_average: data.title_group.user_rating_average,
+  user_rating_count: data.title_group.user_rating_count,
   series: data.series,
   affiliated_artists: data.affiliated_artists.map((a) => ({ artist_id: a.artist.id, name: a.artist.name })),
   edition_groups: data.edition_groups.map((eg) => ({

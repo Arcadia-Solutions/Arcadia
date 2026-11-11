@@ -70,6 +70,8 @@ const loadFormFromUrl = () => {
     // @ts-expect-error what is placed in this query always comes from the form, so there shouldn't be a wrong value
     order_by_direction: route.query.order_by_direction ? (route.query.order_by_direction as string) : 'desc',
     title_group_include_empty_groups: route.query.title_group_include_empty_groups === 'true' ? true : false,
+    title_group_minimum_user_rating: route.query.title_group_minimum_user_rating ? parseInt(route.query.title_group_minimum_user_rating as string) : 0,
+    title_group_maximum_user_rating: route.query.title_group_maximum_user_rating ? parseInt(route.query.title_group_maximum_user_rating as string) : 100,
     // @ts-expect-error what is placed in this query always comes from the form, so there shouldn't be a wrong value
     title_group_content_type: parseArrayParam(route.query.title_group_content_type as string | string[]),
     // @ts-expect-error what is placed in this query always comes from the form, so there shouldn't be a wrong value

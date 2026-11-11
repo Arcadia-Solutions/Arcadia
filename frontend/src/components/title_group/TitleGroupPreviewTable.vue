@@ -14,6 +14,7 @@
             :affiliatedArtists="title_group.affiliated_artists"
             nameLink
           />
+          <UserRatingDisplay class="rating" :rating="title_group.user_rating_average ?? null" :count="title_group.user_rating_count" />
         </div>
         <span class="tags">
           <template v-for="(tag, index) in title_group.tags" :key="tag">
@@ -35,6 +36,7 @@ import ContentContainer from '../ContentContainer.vue'
 import ImagePreview from '../ImagePreview.vue'
 import type { TitleGroupHierarchyLite } from '@/services/api-schema'
 import TitleGroupSlimHeader from './TitleGroupSlimHeader.vue'
+import UserRatingDisplay from './UserRatingDisplay.vue'
 
 defineProps<{
   title_group: TitleGroupHierarchyLite
@@ -59,8 +61,15 @@ const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
   width: 100%;
 }
 .title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-top: -5px;
   font-size: 1.4em;
+}
+.rating {
+  font-size: 0.7em;
+  white-space: nowrap;
 }
 .tags {
   font-size: 0.9em;

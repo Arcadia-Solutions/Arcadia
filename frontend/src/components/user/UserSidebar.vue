@@ -120,6 +120,7 @@ const communityStatistics = computed(() => {
     listRow(DisplayableUserStats.ForumPosts, user.forum_posts, HideableUserList.ForumPosts, '/forum/posts'),
     amountRow(DisplayableUserStats.CollagesStarted, user.collages_started),
     listRow(DisplayableUserStats.TitleGroupComments, user.title_group_comments, HideableUserList.TitleGroupComments, '/title-group-comments'),
+    listRow(DisplayableUserStats.TitleGroupReviews, user.title_group_reviews, HideableUserList.TitleGroupReviews, '/title-group-reviews'),
     listRow(DisplayableUserStats.RequestComments, user.request_comments, HideableUserList.RequestComments, '/request-comments'),
     amountRow(DisplayableUserStats.RequestsVoted, user.requests_voted),
     amountRow(DisplayableUserStats.RequestsFilled, user.requests_filled),

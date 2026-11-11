@@ -54,6 +54,7 @@ const listsByStat: Partial<Record<DisplayableUserStats, HideableUserList>> = {
   [DisplayableUserStats.Snatched]: HideableUserList.Snatched,
   [DisplayableUserStats.ForumPosts]: HideableUserList.ForumPosts,
   [DisplayableUserStats.TitleGroupComments]: HideableUserList.TitleGroupComments,
+  [DisplayableUserStats.TitleGroupReviews]: HideableUserList.TitleGroupReviews,
   [DisplayableUserStats.RequestComments]: HideableUserList.RequestComments,
 }
 

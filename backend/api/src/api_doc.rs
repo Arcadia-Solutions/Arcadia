@@ -33,7 +33,8 @@ use arcadia_storage::models::title_group_comment::{
     TitleGroupCommentSearchQuery, UserTitleGroupCommentSearchQuery,
 };
 use arcadia_storage::models::title_group_review::{
-    TitleGroupReviewSearchQuery, UserTitleGroupReviewSearchQuery,
+    TitleGroupReviewSearchOrderByColumn, TitleGroupReviewSearchQuery,
+    UserTitleGroupReviewSearchQuery,
 };
 use arcadia_storage::models::title_group_tag::{
     SearchTitleGroupAppliedTagsQuery, SearchTitleGroupTagsQuery,
@@ -437,6 +438,7 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         InvitationSearchOrderByColumn,
         SearchSeriesQuery,
         SeriesSearchOrderByColumn,
+        TitleGroupReviewSearchOrderByColumn,
         DeleteTorrentReportQuery,
         TorrentActivity,
         TorrentActivityAndTitleGroup,

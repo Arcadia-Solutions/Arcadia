@@ -18,7 +18,7 @@ use arcadia_storage::{
     tag = "Search",
     path = "/api/search/title-group-reviews",
     params (TitleGroupReviewSearchQuery),
-    description = "The reviews of a title group, oldest first. The content search is case insensitive",
+    description = "The reviews of a title group. The content search is case insensitive",
     responses(
         (status = 200, description = "Successfully searched the title group reviews", body=PaginatedResults<TitleGroupReviewHierarchy>),
     )

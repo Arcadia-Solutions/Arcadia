@@ -152,7 +152,7 @@ pub struct ArcadiaSettings {
     pub title_group_review_requires_snatch_or_seeding: bool,
     #[schema(value_type = Vec<RatingIcon>)]
     pub rating_icons: Json<Vec<RatingIcon>>,
-    /// Shown before the user rating of a title group in the torrent search, e.g. "Rating: 47%".
+    /// Shown before the user rating of a title group in the torrent search, e.g. "ACV: 47%".
     pub user_rating_label: String,
 }
 

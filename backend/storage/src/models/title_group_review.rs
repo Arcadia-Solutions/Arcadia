@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 use utoipa::{IntoParams, ToSchema};
 
-use super::user::UserLiteAvatar;
+use super::{common::OrderByDirection, user::UserLiteAvatar};
 
 /// A user's rating (percentage from 0 to 100) of a title group, optionally explained by a
 /// BBCode review. A user has at most one per title group.
@@ -38,7 +38,7 @@ pub struct EditedTitleGroupReview {
 pub struct TitleGroupReviewHierarchy {
     pub id: i64,
     pub rating: i16,
-    /// the review text, empty when the user only rated, named like comments so it renders as one
+    /// the review text, empty when the user only rated
     pub content: String,
     #[schema(value_type = String, format = DateTime)]
     pub created_at: DateTime<Utc>,
@@ -70,6 +70,19 @@ pub struct UserTitleGroupReviewSearchQuery {
     pub page_size: u32,
 }
 
+#[derive(Debug, Deserialize, Serialize, ToSchema, strum::Display)]
+pub enum TitleGroupReviewSearchOrderByColumn {
+    #[serde(rename = "created_at")]
+    #[strum(serialize = "created_at")]
+    CreatedAt,
+    #[serde(rename = "updated_at")]
+    #[strum(serialize = "updated_at")]
+    UpdatedAt,
+    #[serde(rename = "rating")]
+    #[strum(serialize = "rating")]
+    Rating,
+}
+
 /// Query of the paginated reviews of a title group whose rating is within
 /// `minimum_rating..=maximum_rating` and whose text contains `content` (case insensitive, empty
 /// matches every review).
@@ -82,6 +95,8 @@ pub struct TitleGroupReviewSearchQuery {
     pub maximum_rating: i16,
     #[serde(default)]
     pub content: String,
+    pub order_by_column: TitleGroupReviewSearchOrderByColumn,
+    pub order_by_direction: OrderByDirection,
     pub page: u32,
     pub page_size: u32,
 }

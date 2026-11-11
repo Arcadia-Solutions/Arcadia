@@ -39,7 +39,7 @@ fn get_title_group_request(token: &str, title_group_id: i32) -> actix_http::Requ
 fn search_reviews_request(token: &str, parameters: &str) -> actix_http::Request {
     test::TestRequest::get()
         .uri(&format!(
-            "/api/search/title-group-reviews?page=1&page_size=10&{parameters}"
+            "/api/search/title-group-reviews?page=1&page_size=10&order_by_column=created_at&order_by_direction=desc&{parameters}"
         ))
         .insert_header(auth_header(token))
         .to_request()

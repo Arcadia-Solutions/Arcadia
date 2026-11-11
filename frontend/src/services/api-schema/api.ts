@@ -279,7 +279,7 @@ export interface ArcadiaSettings {
     'uploads_disabled_message'?: string | null;
     'user_class_name_on_signup': string;
     /**
-     * Shown before the user rating of a title group in the torrent search, e.g. \"Rating: 47%\".
+     * Shown before the user rating of a title group in the torrent search, e.g. \"ACV: 47%\".
      */
     'user_rating_label': string;
 }
@@ -2760,7 +2760,7 @@ export interface PaginatedResultsTitleGroupReviewHierarchy {
 }
 export interface PaginatedResultsTitleGroupReviewHierarchyResultsInner {
     /**
-     * the review text, empty when the user only rated, named like comments so it renders as one
+     * the review text, empty when the user only rated
      */
     'content': string;
     'created_at': string;
@@ -4066,7 +4066,7 @@ export interface TitleGroupReview {
 }
 export interface TitleGroupReviewHierarchy {
     /**
-     * the review text, empty when the user only rated, named like comments so it renders as one
+     * the review text, empty when the user only rated
      */
     'content': string;
     'created_at': string;
@@ -4075,6 +4075,16 @@ export interface TitleGroupReviewHierarchy {
     'rating': number;
     'updated_at': string;
 }
+
+export const TitleGroupReviewSearchOrderByColumn = {
+    CreatedAt: 'created_at',
+    UpdatedAt: 'updated_at',
+    Rating: 'rating'
+} as const;
+
+export type TitleGroupReviewSearchOrderByColumn = typeof TitleGroupReviewSearchOrderByColumn[keyof typeof TitleGroupReviewSearchOrderByColumn];
+
+
 /**
  * Query of the paginated reviews of a title group whose rating is within `minimum_rating..=maximum_rating` and whose text contains `content` (case insensitive, empty matches every review).
  */
@@ -4082,10 +4092,14 @@ export interface TitleGroupReviewSearchQuery {
     'content'?: string;
     'maximum_rating'?: number;
     'minimum_rating'?: number;
+    'order_by_column': TitleGroupReviewSearchOrderByColumn;
+    'order_by_direction': OrderByDirection;
     'page': number;
     'page_size': number;
     'title_group_id': number;
 }
+
+
 /**
  * A review displayed outside of its title group, on the profile of its author.
  */
@@ -7331,6 +7345,8 @@ export const searchTitleGroupInfo = async (request: SearchTitleGroupInfoRequest,
 
 export interface SearchTitleGroupReviewsRequest {
     'title_group_id': number;
+    'order_by_column': TitleGroupReviewSearchOrderByColumn;
+    'order_by_direction': OrderByDirection;
     'page': number;
     'page_size': number;
     'minimum_rating'?: number | null;
@@ -7344,7 +7360,7 @@ export const searchTitleGroupReviews = async (request: SearchTitleGroupReviewsRe
     const response = await globalAxios.request<SearchTitleGroupReviews200Response>({
         url: `/api/search/title-group-reviews`,
         method: 'GET',
-        params: { 'title_group_id': request['title_group_id'], 'minimum_rating': request['minimum_rating'], 'maximum_rating': request['maximum_rating'], 'content': request['content'], 'page': request['page'], 'page_size': request['page_size'] },
+        params: { 'title_group_id': request['title_group_id'], 'minimum_rating': request['minimum_rating'], 'maximum_rating': request['maximum_rating'], 'content': request['content'], 'order_by_column': request['order_by_column'], 'order_by_direction': request['order_by_direction'], 'page': request['page'], 'page_size': request['page_size'] },
         ...options
     });
     return response.data.data;

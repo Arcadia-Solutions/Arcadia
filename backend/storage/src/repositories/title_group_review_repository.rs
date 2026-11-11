@@ -210,7 +210,7 @@ impl ConnectionPool {
         .await?)
     }
 
-    /// The reviews of a title group matching the query, oldest first.
+    /// The reviews of a title group matching the query, ties broken by the most recent first.
     pub async fn search_title_group_reviews(
         &self,
         form: &TitleGroupReviewSearchQuery,
@@ -229,7 +229,14 @@ impl ConnectionPool {
                 WHERE r.title_group_id = $1
                   AND r.rating BETWEEN $2 AND $3
                   AND COALESCE(r.review, '') ILIKE '%' || $4 || '%'
-                ORDER BY r.created_at
+                ORDER BY
+                    CASE WHEN $7 = 'created_at' AND $8 = 'asc' THEN r.created_at END ASC,
+                    CASE WHEN $7 = 'created_at' AND $8 = 'desc' THEN r.created_at END DESC,
+                    CASE WHEN $7 = 'updated_at' AND $8 = 'asc' THEN r.updated_at END ASC,
+                    CASE WHEN $7 = 'updated_at' AND $8 = 'desc' THEN r.updated_at END DESC,
+                    CASE WHEN $7 = 'rating' AND $8 = 'asc' THEN r.rating END ASC,
+                    CASE WHEN $7 = 'rating' AND $8 = 'desc' THEN r.rating END DESC,
+                    r.id DESC
                 LIMIT $5 OFFSET $6
             "#,
             form.title_group_id,
@@ -237,7 +244,9 @@ impl ConnectionPool {
             form.maximum_rating,
             form.content,
             limit,
-            offset
+            offset,
+            form.order_by_column.to_string(),
+            form.order_by_direction.to_string()
         )
         .fetch_all(&self.pool)
         .await?;

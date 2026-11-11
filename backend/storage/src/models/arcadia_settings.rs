@@ -206,7 +206,6 @@ pub struct PublicArcadiaSettings {
     pub custom_footer: Option<String>,
     pub uploads_disabled: bool,
     pub uploads_disabled_message: Option<String>,
-    pub title_group_review_requires_snatch_or_seeding: bool,
     #[schema(value_type = Vec<RatingIcon>)]
     pub rating_icons: Json<Vec<RatingIcon>>,
     pub user_rating_label: String,

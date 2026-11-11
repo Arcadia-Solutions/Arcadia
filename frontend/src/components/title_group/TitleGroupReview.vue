@@ -9,7 +9,7 @@
       </div>
       <i v-if="userStore.permissions.includes('delete_title_group_review')" v-tooltip.top="t('general.delete')" class="pi pi-trash" @click="emit('delete')" />
     </div>
-    <BBCodeRenderer v-if="review.content" :content="review.content" class="content" />
+    <BBCodeRenderer v-if="review.review" :content="review.review" class="content" />
   </div>
 </template>
 

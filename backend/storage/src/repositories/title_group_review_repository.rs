@@ -47,14 +47,21 @@ impl ConnectionPool {
 
         Self::update_title_group_user_rating(&mut transaction, review.title_group_id).await?;
 
-        Self::notify_users_title_group_comments(
-            &mut transaction,
-            review.title_group_id,
-            None,
-            Some(created_review.id),
-            user_id,
-        )
-        .await?;
+        // a bare rating isn't worth notifying the subscribers of the title group's comments
+        if review
+            .review
+            .as_deref()
+            .is_some_and(|text| !text.trim().is_empty())
+        {
+            Self::notify_users_title_group_comments(
+                &mut transaction,
+                review.title_group_id,
+                None,
+                Some(created_review.id),
+                user_id,
+            )
+            .await?;
+        }
 
         transaction.commit().await?;
 
@@ -222,7 +229,7 @@ impl ConnectionPool {
             TitleGroupReviewHierarchy,
             r#"
                 SELECT
-                    r.id, r.rating, COALESCE(r.review, '') AS "content!", r.created_at, r.updated_at,
+                    r.id, r.rating, r.review, r.created_at, r.updated_at,
                     ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS "created_by!: UserLiteAvatar"
                 FROM title_group_reviews r
                 JOIN users u ON u.id = r.user_id

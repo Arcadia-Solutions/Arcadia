@@ -8,7 +8,10 @@ use actix_web::{
 use arcadia_common::error::Result;
 use arcadia_shared::tracker::models::env::ArcadiaSettingsForTracker;
 use arcadia_storage::{
-    models::{arcadia_settings::ArcadiaSettings, user::UserPermission},
+    models::{
+        arcadia_settings::ArcadiaSettings, title_group_review::validate_rating,
+        user::UserPermission,
+    },
     redis::RedisPoolInterface,
 };
 use reqwest::Method;
@@ -103,15 +106,12 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     }
 
     // every rating must get an icon, so the lowest threshold has to be 0
-    if !settings.rating_icons.is_empty()
-        && (settings
-            .rating_icons
-            .iter()
-            .all(|icon| icon.minimum_rating != 0)
-            || settings
-                .rating_icons
+    let rating_icons = &settings.rating_icons;
+    if !rating_icons.is_empty()
+        && (!rating_icons.iter().any(|icon| icon.minimum_rating == 0)
+            || rating_icons
                 .iter()
-                .any(|icon| !(0..=100).contains(&icon.minimum_rating)))
+                .any(|icon| validate_rating(icon.minimum_rating).is_err()))
     {
         return Err(arcadia_common::error::Error::InvalidArcadiaSettings(
             "rating_icons must have one icon with a minimum_rating of 0 and every minimum_rating must be between 0 and 100".to_string(),

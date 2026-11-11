@@ -2759,14 +2759,11 @@ export interface PaginatedResultsTitleGroupReviewHierarchy {
     'total_items': number;
 }
 export interface PaginatedResultsTitleGroupReviewHierarchyResultsInner {
-    /**
-     * the review text, empty when the user only rated
-     */
-    'content': string;
     'created_at': string;
     'created_by': UserLiteAvatar;
     'id': number;
     'rating': number;
+    'review'?: string | null;
     'updated_at': string;
 }
 export interface PaginatedResultsTitleGroupReviewWithTitleGroup {
@@ -3131,7 +3128,6 @@ export interface PublicArcadiaSettings {
      * set when an advent calendar is published and currently running
      */
     'running_advent_calendar_button_text'?: string | null;
-    'title_group_review_requires_snatch_or_seeding': boolean;
     'torrent_request_vote_currencies': Array<TorrentRequestVoteCurrency>;
     'uploads_disabled': boolean;
     'uploads_disabled_message'?: string | null;
@@ -4065,14 +4061,11 @@ export interface TitleGroupReview {
     'user_id': number;
 }
 export interface TitleGroupReviewHierarchy {
-    /**
-     * the review text, empty when the user only rated
-     */
-    'content': string;
     'created_at': string;
     'created_by': UserLiteAvatar;
     'id': number;
     'rating': number;
+    'review'?: string | null;
     'updated_at': string;
 }
 

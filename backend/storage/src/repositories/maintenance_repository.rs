@@ -141,13 +141,19 @@ impl ConnectionPool {
         .execute(&mut *tx)
         .await?;
 
+        // only rewrites the title groups whose cached rating drifted
         sqlx::query!(
             "UPDATE title_groups
-             SET (user_rating_average, user_rating_count) = (
-                 SELECT AVG(rating)::REAL, COUNT(*)::INT
-                 FROM title_group_reviews
-                 WHERE title_group_reviews.title_group_id = title_groups.id
-             )"
+             SET user_rating_average = computed.average, user_rating_count = computed.count
+             FROM (
+                 SELECT tg.id, AVG(r.rating)::REAL AS average, COUNT(r.id)::INT AS count
+                 FROM title_groups tg
+                 LEFT JOIN title_group_reviews r ON r.title_group_id = tg.id
+                 GROUP BY tg.id
+             ) computed
+             WHERE title_groups.id = computed.id
+               AND (title_groups.user_rating_average, title_groups.user_rating_count)
+                   IS DISTINCT FROM (computed.average, computed.count)"
         )
         .execute(&mut *tx)
         .await?;

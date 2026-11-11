@@ -11,7 +11,7 @@
             ({{ formatNumber(userRatingCount) }} {{ t('title_group.vote', userRatingCount) }})
           </a>
           <a v-if="userStore.permissions.includes('rate_title_groups')" class="vote-link cursor-pointer" @click="openVoteForm">
-            {{ t(ownReview === null ? 'title_group.add_your_vote' : 'title_group.edit_your_rating') }}
+            {{ t(ownReview === null ? 'title_group.add_your_rating' : 'title_group.edit_your_rating') }}
           </a>
         </div>
       </div>

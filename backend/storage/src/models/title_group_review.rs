@@ -8,7 +8,7 @@ use super::{common::OrderByDirection, user::UserLiteAvatar};
 
 /// A user's rating (percentage from 0 to 100) of a title group, optionally explained by a
 /// BBCode review. A user has at most one per title group.
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct TitleGroupReview {
     pub id: i64,
     pub title_group_id: i32,
@@ -38,8 +38,7 @@ pub struct EditedTitleGroupReview {
 pub struct TitleGroupReviewHierarchy {
     pub id: i64,
     pub rating: i16,
-    /// the review text, empty when the user only rated
-    pub content: String,
+    pub review: Option<String>,
     #[schema(value_type = String, format = DateTime)]
     pub created_at: DateTime<Utc>,
     #[schema(value_type = String, format = DateTime)]

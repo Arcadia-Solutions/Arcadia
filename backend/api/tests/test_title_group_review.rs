@@ -99,6 +99,7 @@ async fn test_create_and_edit_review_updates_aggregates(pool: PgPool) {
     assert_eq!(title_group.title_group.user_rating_average, Some(60.0));
     assert_eq!(title_group.title_group.user_rating_count, 1);
     assert_eq!(title_group.title_group_comments[0].author_rating, Some(60));
+    assert_eq!(title_group.own_rating, Some(60));
 
     let reviews: Vec<TitleGroupReviewHierarchy> = common::call_and_read_body_json_with_status(
         &service,

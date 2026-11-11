@@ -2,32 +2,38 @@
   <ContentContainer :containerTitle="t('title_group.rating', 2)">
     <div class="ratings-component">
       <div class="rating">
-        <img src="/favicon.ico" alt="site logo" class="logo" />
-        <UserRatingDisplay :rating="userRatingAverage" />
-        <a v-if="userRatingCount > 0" class="votes cursor-pointer" @click="openReviews">
-          ({{ formatNumber(userRatingCount) }} {{ t('title_group.vote', userRatingCount) }})
-        </a>
-        <a v-if="userStore.permissions.includes('rate_title_groups')" class="votes cursor-pointer" @click="openVoteForm">
-          {{ t('title_group.add_your_vote') }}
-        </a>
+        <div class="logo-and-note">
+          <img src="/favicon.ico" alt="site logo" class="logo" />
+          <UserRatingDisplay :rating="userRatingAverage" />
+        </div>
+        <div class="votes">
+          <a v-if="userRatingCount > 0" class="cursor-pointer" @click="openReviews">
+            ({{ formatNumber(userRatingCount) }} {{ t('title_group.vote', userRatingCount) }})
+          </a>
+          <a v-if="userStore.permissions.includes('rate_title_groups')" class="cursor-pointer" @click="openVoteForm">
+            {{ t(ownRating === null ? 'title_group.add_your_vote' : 'title_group.edit_your_rating') }}
+          </a>
+        </div>
       </div>
       <template v-for="rating in publicRatings" :key="rating.service">
         <div class="rating" v-if="rating.service === 'tmdb'">
-          <img src="/logos/external_links/tmdb.svg" alt="tmdb logo" class="logo" />
-          <span>{{ rating.rating * 10 }}%</span>
+          <div class="logo-and-note">
+            <img src="/logos/external_links/tmdb.svg" alt="tmdb logo" class="logo" />
+            <span>{{ rating.rating * 10 }}%</span>
+          </div>
           <span class="votes">({{ formatNumber(rating.votes) }} {{ t('title_group.vote', 2) }})</span>
         </div>
       </template>
     </div>
+    <Dialog closeOnEscape modal :header="t('title_group.rating', 2)" v-model:visible="reviewsVisible" class="reviews-dialog">
+      <TitleGroupReviews v-if="reviews" :reviews @deleted="reviewDeleted" />
+      <ProgressSpinner v-else />
+    </Dialog>
+    <Dialog closeOnEscape modal :header="t('title_group.your_rating')" v-model:visible="voteFormVisible">
+      <TitleGroupVoteForm v-if="reviews" :titleGroupId :ownReview="reviews.find((r) => r.user_id === userStore.id)" @saved="reviewSaved" />
+      <ProgressSpinner v-else />
+    </Dialog>
   </ContentContainer>
-  <Dialog closeOnEscape modal :header="t('title_group.rating', 2)" v-model:visible="reviewsVisible" class="reviews-dialog">
-    <TitleGroupReviews v-if="reviews" :reviews @deleted="reviewDeleted" />
-    <ProgressSpinner v-else />
-  </Dialog>
-  <Dialog closeOnEscape modal :header="t('title_group.your_rating')" v-model:visible="voteFormVisible">
-    <TitleGroupVoteForm v-if="reviews" :titleGroupId :ownReview="reviews.find((r) => r.user_id === userStore.id)" @saved="reviewSaved" />
-    <ProgressSpinner v-else />
-  </Dialog>
 </template>
 <script setup lang="ts">
 import { nextTick, onMounted, ref } from 'vue'
@@ -52,6 +58,7 @@ const props = defineProps<{
   publicRatings: PublicRating[]
   userRatingAverage: number | null
   userRatingCount: number
+  ownRating: number | null
 }>()
 
 const emit = defineEmits<{
@@ -102,15 +109,22 @@ onMounted(() => {
 }
 .rating {
   display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-and-note {
+  display: flex;
   flex-direction: column;
   align-items: center;
   .logo {
     width: 3em;
     margin-bottom: 5px;
   }
-  .votes {
-    font-size: 0.9em;
-  }
+}
+.votes {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9em;
 }
 </style>
 <style>

@@ -3,7 +3,7 @@
     <Slider v-model="rating" :min="0" :max="100" class="slider" />
     <UserRatingDisplay :rating />
   </div>
-  <BBCodeEditor :initialValue="ownReview?.review ?? ''" :label="t('title_group.review_optional')" @valueChange="review = $event">
+  <BBCodeEditor :initialValue="ownReview?.content ?? ''" :label="t('title_group.review_optional')" @valueChange="review = $event">
     <template #buttons>
       <Button :label="t(ownReview ? 'general.edit' : 'general.submit')" size="small" :loading="saving" @click="save" />
     </template>
@@ -34,7 +34,7 @@ const userStore = useUserStore()
 
 // only read once: the parent mounts this form after the user's own review is fetched
 const rating = ref(props.ownReview?.rating ?? 50)
-const review = ref(props.ownReview?.review ?? '')
+const review = ref(props.ownReview?.content ?? '')
 const saving = ref(false)
 
 const save = () => {
@@ -46,7 +46,7 @@ const save = () => {
   )
     .then((saved) => {
       const { id, username, class_name, banned, avatar, warned, custom_title } = userStore
-      emit('saved', { ...saved, user: { id, username, class_name, banned, avatar, warned, custom_title } })
+      emit('saved', { ...saved, content: saved.review ?? '', created_by: { id, username, class_name, banned, avatar, warned, custom_title } })
       showToast('', t('title_group.review_saved_success'), 'success', 2000)
     })
     .finally(() => (saving.value = false))
@@ -56,6 +56,7 @@ const save = () => {
 <style scoped>
 .rating-input {
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 15px;
   margin-bottom: 15px;

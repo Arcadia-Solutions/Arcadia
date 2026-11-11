@@ -291,6 +291,8 @@ pub struct TitleGroupAndAssociatedData {
     pub is_subscribed_to_torrents: bool,
     pub is_subscribed_to_comments: bool,
     pub bookmark_id: Option<i64>,
+    /// the requesting user's rating of this title group
+    pub own_rating: Option<i16>,
     pub in_same_master_group: Vec<MasterGroupEntry>,
     pub collages: Vec<CollageSearchResult>,
     pub related_threads: Vec<crate::models::forum::RelatedForumThread>,

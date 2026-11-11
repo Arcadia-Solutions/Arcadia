@@ -349,7 +349,11 @@ impl ConnectionPool {
                         SELECT id FROM title_group_bookmarks
                         WHERE title_group_id = $1 AND user_id = $2
                         LIMIT 1
-                    ) AS bookmark_id
+                    ) AS bookmark_id,
+                    (
+                        SELECT rating FROM title_group_reviews
+                        WHERE title_group_id = $1 AND user_id = $2
+                    ) AS own_rating
                 "#,
                 title_group_id,
                 user_id
@@ -744,6 +748,7 @@ impl ConnectionPool {
             is_subscribed_to_torrents: subscriptions.is_subscribed_to_torrents,
             is_subscribed_to_comments: subscriptions.is_subscribed_to_comments,
             bookmark_id: subscriptions.bookmark_id,
+            own_rating: subscriptions.own_rating,
             in_same_master_group: master_group_entries,
             collages,
             related_threads,

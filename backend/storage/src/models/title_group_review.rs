@@ -40,12 +40,13 @@ pub struct TitleGroupReviewHierarchy {
     pub title_group_id: i32,
     pub user_id: i32,
     pub rating: i16,
-    pub review: Option<String>,
+    /// the review text, empty when the user only rated, named like comments so it renders as one
+    pub content: String,
     #[schema(value_type = String, format = DateTime)]
     pub created_at: DateTime<Utc>,
     #[schema(value_type = String, format = DateTime)]
     pub updated_at: DateTime<Utc>,
-    pub user: UserLiteAvatar,
+    pub created_by: UserLiteAvatar,
 }
 
 /// A review displayed outside of its title group, on the profile of its author.

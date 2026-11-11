@@ -3856,6 +3856,10 @@ export interface TitleGroupAndAssociatedData {
     'in_same_master_group': Array<MasterGroupEntry>;
     'is_subscribed_to_comments': boolean;
     'is_subscribed_to_torrents': boolean;
+    /**
+     * the requesting user\'s rating of this title group
+     */
+    'own_rating'?: number | null;
     'related_threads': Array<RelatedForumThread>;
     'series'?: SeriesLite | null;
     'similar_title_groups': Array<SimilarTitleGroupLite>;
@@ -4039,13 +4043,16 @@ export interface TitleGroupReview {
     'user_id': number;
 }
 export interface TitleGroupReviewHierarchy {
+    /**
+     * the review text, empty when the user only rated, named like comments so it renders as one
+     */
+    'content': string;
     'created_at': string;
+    'created_by': UserLiteAvatar;
     'id': number;
     'rating': number;
-    'review'?: string | null;
     'title_group_id': number;
     'updated_at': string;
-    'user': UserLiteAvatar;
     'user_id': number;
 }
 /**

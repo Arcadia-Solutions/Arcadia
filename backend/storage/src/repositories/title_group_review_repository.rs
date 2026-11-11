@@ -199,8 +199,8 @@ impl ConnectionPool {
             TitleGroupReviewHierarchy,
             r#"
                 SELECT
-                    r.id, r.title_group_id, r.user_id, r.rating, r.review, r.created_at, r.updated_at,
-                    ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS "user!: UserLiteAvatar"
+                    r.id, r.title_group_id, r.user_id, r.rating, COALESCE(r.review, '') AS "content!", r.created_at, r.updated_at,
+                    ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS "created_by!: UserLiteAvatar"
                 FROM title_group_reviews r
                 JOIN users u ON u.id = r.user_id
                 WHERE r.title_group_id = $1

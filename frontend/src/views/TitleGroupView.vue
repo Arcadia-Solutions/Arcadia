@@ -135,6 +135,7 @@
         :publicRatings="titleGroupAndAssociatedData.title_group.public_ratings"
         :userRatingAverage="titleGroupAndAssociatedData.title_group.user_rating_average ?? null"
         :userRatingCount="titleGroupAndAssociatedData.title_group.user_rating_count"
+        :ownRating="titleGroupAndAssociatedData.own_rating ?? null"
         class="ratings"
         @reviewsChanged="reviewsChanged"
       />
@@ -429,6 +430,7 @@ const commentDeleted = (commentId: number) => {
 const reviewsChanged = (reviews: TitleGroupReviewHierarchy[]) => {
   if (!titleGroupAndAssociatedData.value) return
   const ratingsByUser = new Map(reviews.map((r) => [r.user_id, r.rating]))
+  titleGroupAndAssociatedData.value.own_rating = ratingsByUser.get(userStore.id) ?? null
   titleGroupAndAssociatedData.value.title_group.user_rating_count = reviews.length
   titleGroupAndAssociatedData.value.title_group.user_rating_average =
     reviews.length === 0 ? null : reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length

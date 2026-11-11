@@ -24921,6 +24921,35 @@ INSERT INTO public.title_group_comments (id, content, created_at, updated_at, cr
     (1, 'Great single, nice to see that it''s now in the public domain', '2025-03-30 18:03:49.188365+00', '2025-03-30 18:03:49.188365+00', 1, 1, FALSE, NULL, NULL);
 
 --
+-- Data for Name: title_group_reviews; Type: TABLE DATA; Schema: public; Owner: arcadia
+--
+
+INSERT INTO public.title_group_reviews (title_group_id, user_id, rating, review, created_at, updated_at) VALUES
+    (420, 2, 85, 'Really enjoyed this one, well worth the download.', '2026-04-06 10:00:00+00', '2026-04-06 10:00:00+00'),
+    (420, 3, 70, NULL, '2026-04-06 12:00:00+00', '2026-04-06 12:00:00+00'),
+    (420, 5, 92, 'One of the best releases I grabbed this month.', '2026-04-06 15:00:00+00', '2026-04-06 15:00:00+00'),
+    (419, 2, 60, 'Decent, but not as good as I expected.', '2026-04-05 20:00:00+00', '2026-04-05 20:00:00+00'),
+    (419, 3, 45, NULL, '2026-04-05 21:00:00+00', '2026-04-05 21:00:00+00'),
+    (419, 5, 75, 'Solid overall, a few slow parts.', '2026-04-05 23:00:00+00', '2026-04-05 23:00:00+00'),
+    (418, 2, 100, 'A classic, everyone should check it out.', '2026-04-05 12:00:00+00', '2026-04-05 12:00:00+00'),
+    (418, 3, 88, NULL, '2026-04-05 13:00:00+00', '2026-04-05 13:00:00+00'),
+    (418, 5, 95, 'Great quality and great content.', '2026-04-05 14:00:00+00', '2026-04-05 14:00:00+00'),
+    (417, 2, 30, 'Not my thing, gave up halfway.', '2026-04-05 05:00:00+00', '2026-04-05 05:00:00+00'),
+    (417, 3, 55, NULL, '2026-04-05 06:00:00+00', '2026-04-05 06:00:00+00'),
+    (417, 5, 65, 'Average, but fine for a rainy day.', '2026-04-05 07:00:00+00', '2026-04-05 07:00:00+00'),
+    (416, 2, 78, NULL, '2026-04-04 21:00:00+00', '2026-04-04 21:00:00+00'),
+    (416, 3, 82, 'Pleasant surprise, would recommend.', '2026-04-04 22:00:00+00', '2026-04-04 22:00:00+00'),
+    (416, 5, 70, 'Good, nothing exceptional.', '2026-04-04 23:00:00+00', '2026-04-04 23:00:00+00');
+
+UPDATE public.title_groups SET (user_rating_average, user_rating_count) = (
+    SELECT AVG(rating), COUNT(*) FROM public.title_group_reviews WHERE title_group_id = title_groups.id
+) WHERE id IN (SELECT title_group_id FROM public.title_group_reviews);
+
+UPDATE public.users SET title_group_reviews = (
+    SELECT COUNT(*) FROM public.title_group_reviews WHERE user_id = users.id
+) WHERE id IN (SELECT user_id FROM public.title_group_reviews);
+
+--
 -- Data for Name: torrent_activities; Type: TABLE DATA; Schema: public; Owner: arcadia
 --
 

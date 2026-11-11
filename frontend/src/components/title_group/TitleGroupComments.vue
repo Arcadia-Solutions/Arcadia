@@ -12,7 +12,7 @@
       :hasDeletePermission="userStore.permissions.includes('delete_title_group_comment')"
     >
       <template #top-right>
-        <UserRatingDisplay v-if="ratingsByUser.has(comment.created_by.id)" :rating="ratingsByUser.get(comment.created_by.id) ?? null" />
+        <UserRatingDisplay v-if="comment.author_rating != null" :rating="comment.author_rating" />
       </template>
     </GeneralComment>
   </div>
@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import UserRatingDisplay from './UserRatingDisplay.vue'
 import GeneralComment from '../community/GeneralComment.vue'
 import { Button, Checkbox } from 'primevue'
@@ -60,14 +60,12 @@ import {
   editTitleGroupComment,
   type EditedTitleGroupComment,
   type TitleGroupCommentHierarchy,
-  type TitleGroupReviewHierarchy,
   type UserCreatedTitleGroupComment,
 } from '@/services/api-schema'
 
 const props = defineProps<{
   comments: TitleGroupCommentHierarchy[]
   isSubscribedToComments: boolean
-  reviews: TitleGroupReviewHierarchy[]
 }>()
 
 const emit = defineEmits<{
@@ -80,7 +78,6 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const route = useRoute()
-const ratingsByUser = computed(() => new Map(props.reviews.map((r) => [r.user_id, r.rating])))
 const userStore = useUserStore()
 
 const new_comment = ref<UserCreatedTitleGroupComment>({

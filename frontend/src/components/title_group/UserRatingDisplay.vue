@@ -3,9 +3,9 @@
     <template v-if="rating !== null">
       <img v-if="icon" :src="icon.icon_url" alt="rating icon" class="icon" />
       <span>{{ Math.round(rating) }}%</span>
+      <span v-if="count !== undefined" class="votes">({{ formatNumber(count) }} {{ t('title_group.vote', count) }})</span>
     </template>
     <span v-else class="no-rating">{{ t('title_group.no_ratings') }}</span>
-    <span v-if="count !== undefined" class="votes">({{ formatNumber(count) }} {{ t('title_group.vote', count) }})</span>
   </span>
 </template>
 <script setup lang="ts">

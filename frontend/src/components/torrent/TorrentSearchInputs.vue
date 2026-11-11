@@ -131,14 +131,6 @@
           />
           <label for="orderDropdown">{{ t('general.order_by') }}</label>
         </FloatLabel>
-        <FloatLabel>
-          <InputNumber size="small" v-model="searchForm.title_group_minimum_user_rating" inputId="minimumUserRating" :min="0" :max="100" suffix="%" />
-          <label for="minimumUserRating">{{ t('title_group.minimum_user_rating') }}</label>
-        </FloatLabel>
-        <FloatLabel>
-          <InputNumber size="small" v-model="searchForm.title_group_maximum_user_rating" inputId="maximumUserRating" :min="0" :max="100" suffix="%" />
-          <label for="maximumUserRating">{{ t('title_group.maximum_user_rating') }}</label>
-        </FloatLabel>
       </div>
       <div class="line">
         <FloatLabel>
@@ -239,8 +231,6 @@ const searchForm = ref<TorrentSearch>({
   title_group_include_empty_groups: false,
   title_group_content_type: [],
   title_group_category: [],
-  title_group_minimum_user_rating: 0,
-  title_group_maximum_user_rating: 100,
   edition_group_source: [],
   torrent_created_by_id: null,
   torrent_snatched_by_id: null,

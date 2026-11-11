@@ -126,11 +126,17 @@
         </div>
       </ContentContainer>
       <TitleGroupRatings
-        v-if="titleGroupAndAssociatedData.title_group.public_ratings.length > 0 || titleGroupAndAssociatedData.title_group.user_rating_count > 0"
+        v-if="
+          titleGroupAndAssociatedData.title_group.public_ratings.length > 0 ||
+          titleGroupAndAssociatedData.title_group.user_rating_count > 0 ||
+          userStore.permissions.includes('rate_title_groups')
+        "
+        :titleGroupId="titleGroupAndAssociatedData.title_group.id"
         :publicRatings="titleGroupAndAssociatedData.title_group.public_ratings"
         :userRatingAverage="titleGroupAndAssociatedData.title_group.user_rating_average ?? null"
         :userRatingCount="titleGroupAndAssociatedData.title_group.user_rating_count"
         class="ratings"
+        @reviewsChanged="reviewsChanged"
       />
       <ContentContainer
         v-if="userStore.permissions.includes('link_similar_title_group') || titleGroupAndAssociatedData.similar_title_groups.length != 0"
@@ -160,16 +166,8 @@
           </div>
         </div>
       </ContentContainer>
-      <TitleGroupReviews
-        :key="titleGroupAndAssociatedData.title_group.id"
-        :titleGroupId="titleGroupAndAssociatedData.title_group.id"
-        :reviews="titleGroupAndAssociatedData.title_group_reviews"
-        @saved="reviewSaved"
-        @deleted="reviewDeleted"
-      />
       <TitleGroupComments
         :comments="titleGroupAndAssociatedData.title_group_comments"
-        :reviews="titleGroupAndAssociatedData.title_group_reviews"
         :isSubscribedToComments="titleGroupAndAssociatedData.is_subscribed_to_comments"
         @newComment="newComment"
         @commentEdited="commentEdited"
@@ -246,7 +244,6 @@ import { defineAsyncComponent, ref, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
 import BBCodeRenderer from '@/components/community/BBCodeRenderer.vue'
 import TitleGroupComments from '@/components/title_group/TitleGroupComments.vue'
-import TitleGroupReviews from '@/components/title_group/TitleGroupReviews.vue'
 import TitleGroupSidebar from '@/components/title_group/TitleGroupSidebar.vue'
 import ContentContainer from '@/components/ContentContainer.vue'
 import TitleGroupTable from '@/components/title_group/TitleGroupTable.vue'
@@ -428,23 +425,14 @@ const commentDeleted = (commentId: number) => {
   titleGroupAndAssociatedData.value.title_group_comments = titleGroupAndAssociatedData.value.title_group_comments.filter((comment) => comment.id !== commentId)
 }
 
-const setReviews = (reviews: TitleGroupReviewHierarchy[]) => {
+// the reviews dialog holds the full review list, so the average and the comment authors' ratings are derived from it
+const reviewsChanged = (reviews: TitleGroupReviewHierarchy[]) => {
   if (!titleGroupAndAssociatedData.value) return
-  titleGroupAndAssociatedData.value.title_group_reviews = reviews
+  const ratingsByUser = new Map(reviews.map((r) => [r.user_id, r.rating]))
   titleGroupAndAssociatedData.value.title_group.user_rating_count = reviews.length
   titleGroupAndAssociatedData.value.title_group.user_rating_average =
     reviews.length === 0 ? null : reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-}
-
-const reviewSaved = (review: TitleGroupReviewHierarchy) => {
-  if (!titleGroupAndAssociatedData.value) return
-  const reviews = titleGroupAndAssociatedData.value.title_group_reviews
-  setReviews(reviews.some((r) => r.id === review.id) ? reviews.map((r) => (r.id === review.id ? review : r)) : [...reviews, review])
-}
-
-const reviewDeleted = (reviewId: number) => {
-  if (!titleGroupAndAssociatedData.value) return
-  setReviews(titleGroupAndAssociatedData.value.title_group_reviews.filter((r) => r.id !== reviewId))
+  titleGroupAndAssociatedData.value.title_group_comments.forEach((c) => (c.author_rating = ratingsByUser.get(c.created_by.id) ?? null))
 }
 
 const affiliatedArtistsEdited = (newAffiliatedArtists: AffiliatedArtistHierarchy[], removedAffiliatedArtistsIds: number[]) => {

@@ -14,14 +14,16 @@
             :affiliatedArtists="title_group.affiliated_artists"
             nameLink
           />
-          <UserRatingDisplay class="rating" :rating="title_group.user_rating_average ?? null" :count="title_group.user_rating_count" />
         </div>
-        <span class="tags">
-          <template v-for="(tag, index) in title_group.tags" :key="tag">
-            <RouterLink :to="{ path: '/torrents', query: { title_group_tags: tag } }" @click="scrollToTop">{{ tag }}</RouterLink>
-            <template v-if="index < title_group.tags.length - 1">, </template>
-          </template>
-        </span>
+        <div class="tags">
+          <UserRatingDisplay :rating="title_group.user_rating_average ?? null" :count="title_group.user_rating_count" />
+          <span>
+            <template v-for="(tag, index) in title_group.tags" :key="tag">
+              <RouterLink :to="{ path: '/torrents', query: { title_group_tags: tag } }" @click="scrollToTop">{{ tag }}</RouterLink>
+              <template v-if="index < title_group.tags.length - 1">, </template>
+            </template>
+          </span>
+        </div>
         <TitleGroupTable v-if="title_group.edition_groups.length" :title_group="title_group" :editionGroups="title_group.edition_groups" :preview="true" />
       </div>
       <div class="left">
@@ -61,17 +63,13 @@ const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
   width: 100%;
 }
 .title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-top: -5px;
   font-size: 1.4em;
 }
-.rating {
-  font-size: 0.7em;
-  white-space: nowrap;
-}
 .tags {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 0.9em;
   font-weight: 350;
   font-style: italic;

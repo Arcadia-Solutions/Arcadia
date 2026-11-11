@@ -1,0 +1,107 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                (SELECT COUNT(*)\n                 FROM forum_threads ft\n                 WHERE ft.forum_sub_category_id = 1\n                   AND NOT EXISTS (\n                       SELECT 1 FROM forum_thread_reads ftr\n                       WHERE ftr.forum_thread_id = ft.id AND ftr.user_id = $1\n                   )\n                )::int4 AS \"announcements!\",\n                (SELECT COUNT(*)\n                 FROM conversations c\n                 JOIN LATERAL (\n                     SELECT cm.created_at, cm.created_by_id\n                     FROM conversation_messages cm\n                     WHERE cm.conversation_id = c.id\n                     ORDER BY cm.created_at DESC\n                     LIMIT 1\n                 ) AS lm ON TRUE\n                 -- narrows the conversations to the user's before the latest message lookup,\n                 -- which the planner otherwise runs on every conversation\n                 WHERE (c.sender_id = $1 OR c.receiver_id = $1)\n                   AND lm.created_by_id != $1\n                   AND (\n                       (c.sender_id = $1 AND c.sender_last_seen_at < lm.created_at)\n                       OR\n                       (c.receiver_id = $1 AND (c.receiver_last_seen_at IS NULL OR c.receiver_last_seen_at < lm.created_at))\n                   )\n                )::int4 AS \"conversations!\",\n                (SELECT COUNT(*)\n                 FROM notifications_forum_sub_category_threads\n                 WHERE user_id = $1 AND read_status = FALSE\n                )::int4 AS \"forum_sub_category_threads!\",\n                (SELECT COUNT(*)\n                 FROM notifications_forum_thread_posts\n                 WHERE user_id = $1 AND read_status = FALSE\n                )::int4 AS \"forum_thread_posts!\",\n                (SELECT COUNT(*)\n                 FROM notifications_title_group_comments\n                 WHERE user_id = $1 AND read_status = FALSE\n                )::int4 AS \"title_group_comments!\",\n                (SELECT COUNT(*)\n                 FROM notifications_title_group_torrents n\n                 JOIN torrents t ON t.id = n.torrent_id\n                 WHERE n.user_id = $1 AND n.read_status = FALSE\n                   AND t.deleted_at IS NULL\n                )::int4 AS \"title_group_torrents!\",\n                (SELECT COUNT(*)\n                 FROM notifications_artist_title_groups\n                 WHERE user_id = $1 AND read_status = FALSE\n                )::int4 AS \"artist_title_groups!\",\n                (SELECT COUNT(*)\n                 FROM notifications_collages\n                 WHERE user_id = $1 AND read_status = FALSE\n                )::int4 AS \"collages!\",\n                (SELECT COUNT(*)\n                 FROM notifications_staff_pm_messages\n                 WHERE user_id = $1 AND read_status = FALSE\n                )::int4 AS \"staff_pm_messages!\",\n                (SELECT COUNT(*)\n                 FROM notifications_torrent_request_comments\n                 WHERE user_id = $1 AND read_status = FALSE\n                )::int4 AS \"torrent_request_comments!\",\n                (SELECT COUNT(*)\n                 FROM torrent_deletion_notifications\n                 WHERE user_id = $1 AND read_status = FALSE\n                )::int4 AS \"torrent_deletions!\",\n                (SELECT COUNT(*)\n                 FROM announce_errors\n                 WHERE user_id = $1\n                )::int4 AS \"announce_errors!\",\n                (SELECT COUNT(DISTINCT n.torrent_id)\n                 FROM notifications_reseed_requests n\n                 JOIN torrents t ON t.id = n.torrent_id\n                 WHERE n.user_id = $1 AND n.read_status = FALSE\n                   AND t.deleted_at IS NULL\n                )::int4 AS \"reseed_requests!\"\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "announcements!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "conversations!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "forum_sub_category_threads!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "forum_thread_posts!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "title_group_comments!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "title_group_torrents!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 6,
+        "name": "artist_title_groups!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 7,
+        "name": "collages!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 8,
+        "name": "staff_pm_messages!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 9,
+        "name": "torrent_request_comments!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 10,
+        "name": "torrent_deletions!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 11,
+        "name": "announce_errors!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 12,
+        "name": "reseed_requests!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "2a0fb7d1ce40f3d4269ca7adb197d2d0620d4532189e68beaff92273eba076c8"
+}

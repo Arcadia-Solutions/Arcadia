@@ -1567,29 +1567,32 @@ async fn test_visiting_title_group_marks_artist_notifications_as_read(pool: PgPo
 }
 
 #[sqlx::test(fixtures("with_test_users"))]
-async fn test_notification_streams_are_limited_per_user(pool: PgPool) {
+async fn test_polling_notification_counts_does_not_update_last_seen(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
-        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
-    let stream_request = || {
-        test::TestRequest::get()
-            .uri(&format!("/api/notifications/stream?token={}", user.token))
-            .to_request()
-    };
+        create_test_app_and_login(pool.clone(), MockRedisPool::default(), TestUser::Standard).await;
+    let last_seen_before = pool.find_user_with_id(100).await.unwrap().last_seen;
 
-    // the responses are kept alive so that their streams stay open
-    let mut open_streams = Vec::new();
-    for _ in 0..5 {
-        let resp = test::call_service(&service, stream_request()).await;
-        assert_eq!(resp.status(), StatusCode::OK);
-        open_streams.push(resp);
-    }
+    let req = test::TestRequest::get()
+        .uri("/api/notifications/counts")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+    assert_eq!(
+        test::call_service(&service, req).await.status(),
+        StatusCode::OK
+    );
+    assert_eq!(
+        pool.find_user_with_id(100).await.unwrap().last_seen,
+        last_seen_before
+    );
 
-    let resp = test::call_service(&service, stream_request()).await;
-    assert_eq!(resp.status(), StatusCode::TOO_MANY_REQUESTS);
-
-    // closing a stream frees its slot
-    open_streams.pop();
-    let resp = test::call_service(&service, stream_request()).await;
-    assert_eq!(resp.status(), StatusCode::OK);
+    let req = test::TestRequest::get()
+        .uri("/api/notifications?include_read=false")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+    assert_eq!(
+        test::call_service(&service, req).await.status(),
+        StatusCode::OK
+    );
+    assert!(pool.find_user_with_id(100).await.unwrap().last_seen > last_seen_before);
 }

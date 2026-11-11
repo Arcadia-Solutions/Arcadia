@@ -374,7 +374,7 @@ impl ConnectionPool {
         extra_information: Option<&str>,
         replacement_torrent_id: Option<i32>,
         deleted_by_id: i32,
-    ) -> Result<Vec<i32>> {
+    ) -> Result<()> {
         sqlx::query!(
             r#"
             INSERT INTO torrent_deletions
@@ -392,7 +392,7 @@ impl ConnectionPool {
         .await
         .map_err(Error::CouldNotCreateNotification)?;
 
-        let user_ids = sqlx::query_scalar!(
+        sqlx::query!(
             r#"
             WITH recipients AS (
                 SELECT DISTINCT user_id
@@ -406,16 +406,15 @@ impl ConnectionPool {
             INSERT INTO torrent_deletion_notifications (user_id, torrent_id)
             SELECT user_id, $1 FROM recipients
             ON CONFLICT (user_id, torrent_id) DO NOTHING
-            RETURNING user_id
             "#,
             torrent_id,
             deleted_by_id
         )
-        .fetch_all(&mut **tx)
+        .execute(&mut **tx)
         .await
         .map_err(Error::CouldNotCreateNotification)?;
 
-        Ok(user_ids)
+        Ok(())
     }
 
     pub async fn mark_notifications_torrent_deletions_as_read(
@@ -468,8 +467,8 @@ impl ConnectionPool {
         title_group_id: i32,
         torrent_id: i32,
         current_user_id: i32,
-    ) -> Result<Vec<i32>> {
-        let user_ids = sqlx::query_scalar!(
+    ) -> Result<()> {
+        sqlx::query!(
             r#"
                 WITH user_ids AS (
                     SELECT user_id
@@ -482,28 +481,27 @@ impl ConnectionPool {
                     user_id,
                     $2
                 FROM user_ids
-                RETURNING user_id
             "#,
             title_group_id,
             torrent_id,
             current_user_id
         )
-        .fetch_all(&mut **tx)
+        .execute(&mut **tx)
         .await
         .map_err(Error::CouldNotCreateNotification)?;
 
-        Ok(user_ids)
+        Ok(())
     }
 
     /// Checks that the torrent is eligible for a reseed request (no seeders, and the last
     /// seeding activity is older than `threshold_hours`), then notifies the past seeders and
-    /// snatchers. Returns the ids of the notified users.
+    /// snatchers.
     pub async fn request_reseed(
         &self,
         torrent_id: i32,
         requested_by_id: i32,
         threshold_hours: i32,
-    ) -> Result<Vec<i32>> {
+    ) -> Result<()> {
         let mut tx: Transaction<'_, Postgres> = self.pool.begin().await?;
 
         let row = sqlx::query!(
@@ -561,45 +559,21 @@ impl ConnectionPool {
             ));
         }
 
-        let user_ids =
-            Self::notify_users_reseed_request(&mut tx, torrent_id, requested_by_id).await?;
+        Self::notify_users_reseed_request(&mut tx, torrent_id, requested_by_id).await?;
         tx.commit().await?;
 
-        Ok(user_ids)
+        Ok(())
     }
 
     /// Records the requester against everyone who has seeded or completed the torrent (except the
     /// requester). A recipient sees a single notification per torrent that aggregates every
     /// requester, so re-requests by the same requester are ignored and additional requesters are
-    /// merged into the existing line. Returns only the recipients for whom this created a
-    /// brand-new notification line (so only they are notified over SSE).
+    /// merged into the existing line.
     pub async fn notify_users_reseed_request(
         tx: &mut Transaction<'_, Postgres>,
         torrent_id: i32,
         requested_by_id: i32,
-    ) -> Result<Vec<i32>> {
-        // Recipients who do not yet have any reseed notification for this torrent: they get a
-        // brand-new line, so they are the ones to notify over SSE.
-        let new_recipients = sqlx::query_scalar!(
-            r#"
-                SELECT ta.user_id AS "user_id!"
-                FROM torrent_activities ta
-                WHERE ta.torrent_id = $1
-                  AND ta.user_id <> $2
-                  AND (ta.first_seen_seeding_at IS NOT NULL OR ta.completed_at IS NOT NULL)
-                  AND NOT EXISTS (
-                      SELECT 1 FROM notifications_reseed_requests n
-                      WHERE n.torrent_id = ta.torrent_id
-                        AND n.user_id = ta.user_id
-                  )
-            "#,
-            torrent_id,
-            requested_by_id
-        )
-        .fetch_all(&mut **tx)
-        .await
-        .map_err(Error::CouldNotCreateNotification)?;
-
+    ) -> Result<()> {
         sqlx::query!(
             r#"
                 INSERT INTO notifications_reseed_requests (torrent_id, user_id, requested_by_id)
@@ -617,7 +591,7 @@ impl ConnectionPool {
         .await
         .map_err(Error::CouldNotCreateNotification)?;
 
-        Ok(new_recipients)
+        Ok(())
     }
 
     pub async fn notify_users_artist_title_groups(
@@ -625,8 +599,8 @@ impl ConnectionPool {
         artist_ids: &[i64],
         title_group_id: i32,
         current_user_id: i32,
-    ) -> Result<Vec<i32>> {
-        let user_ids = sqlx::query_scalar!(
+    ) -> Result<()> {
+        sqlx::query!(
             r#"
                 WITH subscribers AS (
                     SELECT user_id, MIN(artist_id) AS artist_id
@@ -649,17 +623,16 @@ impl ConnectionPool {
                       AND n.title_group_id = $2
                       AND n.read_status = FALSE
                 )
-                RETURNING user_id
             "#,
             artist_ids,
             title_group_id,
             current_user_id
         )
-        .fetch_all(&mut **tx)
+        .execute(&mut **tx)
         .await
         .map_err(Error::CouldNotCreateNotification)?;
 
-        Ok(user_ids)
+        Ok(())
     }
 
     pub async fn notify_users_collages(
@@ -667,8 +640,8 @@ impl ConnectionPool {
         collage_id: i64,
         title_group_id: i32,
         current_user_id: i32,
-    ) -> Result<Vec<i32>> {
-        let user_ids = sqlx::query_scalar!(
+    ) -> Result<()> {
+        sqlx::query!(
             r#"
                 INSERT INTO notifications_collages (
                     user_id,
@@ -682,24 +655,23 @@ impl ConnectionPool {
                 FROM subscriptions_collages
                 WHERE collage_id = $1
                   AND user_id != $3
-                RETURNING user_id
             "#,
             collage_id,
             title_group_id,
             current_user_id
         )
-        .fetch_all(&mut **tx)
+        .execute(&mut **tx)
         .await
         .map_err(Error::CouldNotCreateNotification)?;
-        Ok(user_ids)
+        Ok(())
     }
     pub async fn notify_users_forum_sub_category_threads(
         tx: &mut Transaction<'_, Postgres>,
         forum_sub_category_id: i32,
         thread_id: i64,
         current_user_id: i32,
-    ) -> Result<Vec<i32>> {
-        let user_ids = sqlx::query_scalar!(
+    ) -> Result<()> {
+        sqlx::query!(
             r#"
                 WITH user_ids AS (
                     SELECT user_id
@@ -720,17 +692,16 @@ impl ConnectionPool {
                       AND n.forum_sub_category_id = $1
                       AND n.read_status = FALSE
                 )
-                RETURNING user_id
             "#,
             forum_sub_category_id,
             thread_id,
             current_user_id
         )
-        .fetch_all(&mut **tx)
+        .execute(&mut **tx)
         .await
         .map_err(Error::CouldNotCreateNotification)?;
 
-        Ok(user_ids)
+        Ok(())
     }
 
     pub async fn mark_notification_forum_sub_category_thread_as_read_by_thread_id(
@@ -765,8 +736,8 @@ impl ConnectionPool {
         thread_id: i64,
         post_id: i64,
         current_user_id: i32,
-    ) -> Result<Vec<i32>> {
-        let user_ids = sqlx::query_scalar!(
+    ) -> Result<()> {
+        sqlx::query!(
             r#"
                 WITH user_ids AS (
                     SELECT user_id
@@ -788,17 +759,16 @@ impl ConnectionPool {
                       AND n.forum_thread_id = $1
                       AND n.read_status = FALSE
                 )
-                RETURNING user_id
             "#,
             thread_id,
             post_id,
             current_user_id
         )
-        .fetch_all(&mut **tx)
+        .execute(&mut **tx)
         .await
         .map_err(Error::CouldNotCreateNotification)?;
 
-        Ok(user_ids)
+        Ok(())
     }
 
     pub async fn mark_notification_title_group_torrent_as_read(
@@ -892,8 +862,8 @@ impl ConnectionPool {
         title_group_id: i32,
         comment_id: i64,
         current_user_id: i32,
-    ) -> Result<Vec<i32>> {
-        let user_ids = sqlx::query_scalar!(
+    ) -> Result<()> {
+        sqlx::query!(
             r#"
                 WITH user_ids AS (
                     SELECT user_id
@@ -914,17 +884,16 @@ impl ConnectionPool {
                       AND n.title_group_id = $1
                       AND n.read_status = FALSE
                 )
-                RETURNING user_id
             "#,
             title_group_id,
             comment_id,
             current_user_id
         )
-        .fetch_all(&mut **tx)
+        .execute(&mut **tx)
         .await
         .map_err(Error::CouldNotCreateNotification)?;
 
-        Ok(user_ids)
+        Ok(())
     }
 
     pub async fn mark_notification_title_group_comment_as_read(
@@ -953,8 +922,8 @@ impl ConnectionPool {
         torrent_request_id: i64,
         comment_id: i64,
         current_user_id: i32,
-    ) -> Result<Vec<i32>> {
-        let user_ids = sqlx::query_scalar!(
+    ) -> Result<()> {
+        sqlx::query!(
             r#"
                 WITH user_ids AS (
                     SELECT user_id
@@ -975,17 +944,16 @@ impl ConnectionPool {
                       AND n.torrent_request_id = $1
                       AND n.read_status = FALSE
                 )
-                RETURNING user_id
             "#,
             torrent_request_id,
             comment_id,
             current_user_id
         )
-        .fetch_all(&mut **tx)
+        .execute(&mut **tx)
         .await
         .map_err(Error::CouldNotCreateNotification)?;
 
-        Ok(user_ids)
+        Ok(())
     }
 
     pub async fn mark_notification_torrent_request_comment_as_read(
@@ -1014,8 +982,8 @@ impl ConnectionPool {
         staff_pm_id: i64,
         staff_pm_message_id: i64,
         current_user_id: i32,
-    ) -> Result<Vec<i32>> {
-        let user_ids = sqlx::query_scalar!(
+    ) -> Result<()> {
+        sqlx::query!(
             r#"
                 WITH eligible_users AS (
                     -- Staff PM creator
@@ -1042,17 +1010,16 @@ impl ConnectionPool {
                       AND n.staff_pm_id = $1
                       AND n.read_status = FALSE
                 )
-                RETURNING user_id
             "#,
             staff_pm_id,
             staff_pm_message_id,
             current_user_id
         )
-        .fetch_all(&mut **tx)
+        .execute(&mut **tx)
         .await
         .map_err(Error::CouldNotCreateNotification)?;
 
-        Ok(user_ids)
+        Ok(())
     }
 
     pub async fn mark_notifications_staff_pm_messages_as_read(
@@ -1117,7 +1084,10 @@ impl ConnectionPool {
                      ORDER BY cm.created_at DESC
                      LIMIT 1
                  ) AS lm ON TRUE
-                 WHERE lm.created_by_id != $1
+                 -- narrows the conversations to the user's before the latest message lookup,
+                 -- which the planner otherwise runs on every conversation
+                 WHERE (c.sender_id = $1 OR c.receiver_id = $1)
+                   AND lm.created_by_id != $1
                    AND (
                        (c.sender_id = $1 AND c.sender_last_seen_at < lm.created_at)
                        OR

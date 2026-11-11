@@ -34,6 +34,10 @@ impl FromRequest for Authdata {
     }
 }
 
+/// Routes requested in the background by the frontend, which do not mean the user is active
+/// and therefore do not update their last seen date and streak.
+const ROUTES_NOT_UPDATING_LAST_SEEN: &[&str] = &["/api/notifications/counts"];
+
 /// Returns the path the router will match the request against, which is percent decoded.
 /// [`ServiceRequest::path`] returns the raw path instead, so matching on it would let
 /// `/api/users/api%2Dkeys` dodge the checks below while still reaching the
@@ -65,7 +69,7 @@ pub async fn authenticate_user<R: RedisPoolInterface + 'static>(
     }
 }
 
-pub async fn validate_token<R: RedisPoolInterface + 'static>(
+async fn validate_token<R: RedisPoolInterface + 'static>(
     token: &str,
     arc: &Data<Arcadia<R>>,
 ) -> Result<i32, Error> {
@@ -108,7 +112,9 @@ async fn validate_bearer_auth<R: RedisPoolInterface + 'static>(
         Err(e) => return Err((e, req)),
     };
 
-    let _ = arc.pool.update_last_seen_and_streak(user_id).await;
+    if !ROUTES_NOT_UPDATING_LAST_SEEN.contains(&routed_path(&req)) {
+        let _ = arc.pool.update_last_seen_and_streak(user_id).await;
+    }
     req.extensions_mut().insert(Authdata { sub: user_id });
 
     Ok(req)

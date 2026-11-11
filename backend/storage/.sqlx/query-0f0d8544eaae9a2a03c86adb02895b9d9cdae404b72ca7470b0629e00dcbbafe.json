@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO notifications_collages (\n                    user_id,\n                    collage_id,\n                    title_group_id\n                )\n                SELECT\n                    user_id,\n                    $1,\n                    $2\n                FROM subscriptions_collages\n                WHERE collage_id = $1\n                  AND user_id != $3\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0f0d8544eaae9a2a03c86adb02895b9d9cdae404b72ca7470b0629e00dcbbafe"
+}

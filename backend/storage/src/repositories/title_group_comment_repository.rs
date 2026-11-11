@@ -2,7 +2,6 @@ use crate::{
     connection_pool::ConnectionPool,
     models::{
         common::PaginatedResults,
-        notification::NotificationEvent,
         title_group_comment::{
             EditedTitleGroupComment, TitleGroupComment, TitleGroupCommentHierarchy,
             TitleGroupCommentSearchQuery, TitleGroupCommentSearchResult,
@@ -15,14 +14,12 @@ use crate::{
 use arcadia_common::error::{Error, Result};
 use chrono::Local;
 use sqlx::{Postgres, Transaction};
-use tokio::sync::broadcast;
 
 impl ConnectionPool {
     pub async fn create_title_group_comment(
         &self,
         title_group_comment: &UserCreatedTitleGroupComment,
         user_id: i32,
-        notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<TitleGroupComment> {
         let mut tx: Transaction<'_, Postgres> = self.pool.begin().await?;
 
@@ -53,7 +50,7 @@ impl ConnectionPool {
         .await
         .map_err(Error::CouldNotCreateTitleGroupComment)?;
 
-        let user_ids = Self::notify_users_title_group_comments(
+        Self::notify_users_title_group_comments(
             &mut tx,
             title_group_comment.title_group_id,
             created_title_group_comment.id,
@@ -62,10 +59,6 @@ impl ConnectionPool {
         .await?;
 
         tx.commit().await?;
-
-        if !user_ids.is_empty() {
-            let _ = notification_sender.send(NotificationEvent::TitleGroupComment { user_ids });
-        }
 
         Ok(created_title_group_comment)
     }

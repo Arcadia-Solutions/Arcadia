@@ -1241,6 +1241,7 @@ CREATE TABLE forum_threads (
     FOREIGN KEY (created_by_id) REFERENCES users(id),
     FOREIGN KEY (forum_sub_category_id) REFERENCES forum_sub_categories(id)
 );
+CREATE INDEX forum_threads_forum_sub_category_id_index ON forum_threads (forum_sub_category_id);
 INSERT INTO forum_threads (created_by_id, forum_sub_category_id, name, posts_amount) VALUES (1, 1, 'Welcome to the site!', 1);
 CREATE TABLE forum_posts (
     id BIGSERIAL PRIMARY KEY,
@@ -1369,6 +1370,8 @@ CREATE TABLE conversations (
     FOREIGN KEY (sender_id) REFERENCES users(id),
     FOREIGN KEY (receiver_id) REFERENCES users(id)
 );
+CREATE INDEX conversations_sender_id_index ON conversations (sender_id);
+CREATE INDEX conversations_receiver_id_index ON conversations (receiver_id);
 CREATE TABLE conversation_messages (
     id BIGSERIAL PRIMARY KEY,
     conversation_id BIGINT NOT NULL,
@@ -1379,6 +1382,7 @@ CREATE TABLE conversation_messages (
     FOREIGN KEY (conversation_id) REFERENCES conversations(id),
     FOREIGN KEY (created_by_id) REFERENCES users(id)
 );
+CREATE INDEX conversation_messages_conversation_id_created_at_index ON conversation_messages (conversation_id, created_at DESC) INCLUDE (created_by_id);
 CREATE TABLE staff_pms (
 	id BIGSERIAL PRIMARY KEY,
 	created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1413,6 +1417,7 @@ CREATE TABLE notifications_collages (
     FOREIGN KEY (collage_id) REFERENCES collage(id) ON DELETE CASCADE,
     FOREIGN KEY (title_group_id) REFERENCES title_groups(id) ON DELETE CASCADE
 );
+CREATE INDEX notifications_collages_user_id_read_status_index ON notifications_collages (user_id, read_status);
 -- notifies of new threads within a forum sub-category
 CREATE TABLE subscriptions_forum_sub_category_threads (
     id BIGSERIAL PRIMARY KEY,
@@ -1433,6 +1438,7 @@ CREATE TABLE notifications_forum_sub_category_threads (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (forum_thread_id) REFERENCES forum_threads(id) ON DELETE CASCADE
 );
+CREATE INDEX notifications_forum_sub_category_threads_user_id_read_status_index ON notifications_forum_sub_category_threads (user_id, read_status);
 -- notifies of new posts within a forum thread
 CREATE TABLE subscriptions_forum_thread_posts (
     id BIGSERIAL PRIMARY KEY,
@@ -1453,6 +1459,7 @@ CREATE TABLE notifications_forum_thread_posts (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (forum_post_id) REFERENCES forum_posts(id) ON DELETE CASCADE
 );
+CREATE INDEX notifications_forum_thread_posts_user_id_read_status_index ON notifications_forum_thread_posts (user_id, read_status);
 -- notifies of new torrents within a title group
 CREATE TABLE subscriptions_title_group_torrents (
     id BIGSERIAL PRIMARY KEY,
@@ -1472,6 +1479,7 @@ CREATE TABLE notifications_title_group_torrents  (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (torrent_id) REFERENCES torrents(id) ON DELETE CASCADE
 );
+CREATE INDEX notifications_title_group_torrents_user_id_read_status_index ON notifications_title_group_torrents (user_id, read_status);
 -- notifies of new comments within a title group
 CREATE TABLE subscriptions_title_group_comments (
     id BIGSERIAL PRIMARY KEY,
@@ -1492,6 +1500,7 @@ CREATE TABLE notifications_title_group_comments (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (title_group_comment_id) REFERENCES title_group_comments(id) ON DELETE CASCADE
 );
+CREATE INDEX notifications_title_group_comments_user_id_read_status_index ON notifications_title_group_comments (user_id, read_status);
 -- notifies of new comments on a torrent request
 CREATE TABLE subscriptions_torrent_request_comments (
     id BIGSERIAL PRIMARY KEY,
@@ -1512,6 +1521,7 @@ CREATE TABLE notifications_torrent_request_comments (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (torrent_request_comment_id) REFERENCES torrent_request_comments(id) ON DELETE CASCADE
 );
+CREATE INDEX notifications_torrent_request_comments_user_id_read_status_index ON notifications_torrent_request_comments (user_id, read_status);
 -- notifies of title groups newly affiliated to an artist
 CREATE TABLE subscriptions_artist_title_groups (
     id BIGSERIAL PRIMARY KEY,
@@ -1533,6 +1543,7 @@ CREATE TABLE notifications_artist_title_groups (
     FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE,
     FOREIGN KEY (title_group_id) REFERENCES title_groups(id) ON DELETE CASCADE
 );
+CREATE INDEX notifications_artist_title_groups_user_id_read_status_index ON notifications_artist_title_groups (user_id, read_status);
 CREATE TABLE notifications_staff_pm_messages (
     id BIGSERIAL PRIMARY KEY,
     staff_pm_id BIGINT NOT NULL,
@@ -1543,6 +1554,7 @@ CREATE TABLE notifications_staff_pm_messages (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (staff_pm_message_id) REFERENCES staff_pm_messages(id) ON DELETE CASCADE
 );
+CREATE INDEX notifications_staff_pm_messages_user_id_read_status_index ON notifications_staff_pm_messages (user_id, read_status);
 CREATE TABLE notifications_reseed_requests (
     torrent_id      INT NOT NULL REFERENCES torrents(id) ON DELETE CASCADE,
     user_id         INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

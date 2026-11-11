@@ -103,7 +103,7 @@ async fn test_registration_ip_only_trusts_the_configured_proxy_header(pool: PgPo
     // behind a reverse proxy, the address it appended last is used
     let mut config = arcadia_shared::config::load::<Config>();
     config.api.reverse_proxy_client_ip_header_name = Some("X-Forwarded-For".to_string());
-    let (service, _) = create_test_app_with_config(pool, MockRedisPool::default(), config).await;
+    let service = create_test_app_with_config(pool, MockRedisPool::default(), config).await;
     let resp = call_service(&service, register("proxied_user", "proxied@testdomain.com")).await;
     assert_eq!(resp.status(), StatusCode::CREATED);
     let user = read_body_json_data::<RegisterResponse, _>(resp).await;

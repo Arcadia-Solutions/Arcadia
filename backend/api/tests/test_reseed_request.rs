@@ -3,7 +3,7 @@ use crate::{common, mocks};
 use std::sync::Arc;
 
 use actix_web::{http::StatusCode, test};
-use arcadia_storage::{connection_pool::ConnectionPool, models::notification::NotificationEvent};
+use arcadia_storage::connection_pool::ConnectionPool;
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
 
@@ -58,7 +58,7 @@ async fn total_rows(pool: &PgPool) -> i64 {
 ))]
 async fn reseed_request_notifies_past_seeders_and_snatchers(pool: PgPool) {
     set_up_dead_torrent(&pool).await;
-    let (service, mut notification_receiver) = common::create_test_app_with_notifications(
+    let service = common::create_test_app(
         Arc::new(ConnectionPool::with_pg_pool(pool.clone())),
         MockRedisPool::default(),
     )
@@ -71,14 +71,6 @@ async fn reseed_request_notifies_past_seeders_and_snatchers(pool: PgPool) {
         .to_request();
     let resp = test::call_service(&service, req).await;
     assert_eq!(resp.status(), StatusCode::OK);
-
-    match notification_receiver.try_recv() {
-        Ok(NotificationEvent::ReseedRequest { mut user_ids }) => {
-            user_ids.sort();
-            assert_eq!(user_ids, vec![PAST_SEEDER_ID, SNATCHER_ID]);
-        }
-        other => panic!("expected a ReseedRequest notification event, got {other:?}"),
-    }
 
     assert_eq!(reseed_rows(&pool, PAST_SEEDER_ID, false).await, 1);
     assert_eq!(reseed_rows(&pool, SNATCHER_ID, false).await, 1);

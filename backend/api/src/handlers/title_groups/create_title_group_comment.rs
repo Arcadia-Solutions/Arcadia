@@ -28,7 +28,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 ) -> Result<HttpResponse> {
     let title_group_comment = arc
         .pool
-        .create_title_group_comment(&comment, user.sub, &arc.notification_sender)
+        .create_title_group_comment(&comment, user.sub)
         .await?;
 
     Ok(HttpResponse::Created().json(title_group_comment))

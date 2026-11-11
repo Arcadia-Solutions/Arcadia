@@ -171,12 +171,7 @@ async fn test_staff_can_delete_torrent_request_comment(pool: PgPool) {
     .await;
 
     let created_comment = pool
-        .create_torrent_request_comment(
-            1,
-            100,
-            "This request looks interesting",
-            &tokio::sync::broadcast::channel(1).0,
-        )
+        .create_torrent_request_comment(1, 100, "This request looks interesting")
         .await
         .unwrap();
 
@@ -220,12 +215,7 @@ async fn test_author_without_permission_cannot_delete_torrent_request_comment(po
 
     // The comment is created by the logged in user (user_basic)
     let created_comment = pool
-        .create_torrent_request_comment(
-            1,
-            100,
-            "This request looks interesting",
-            &tokio::sync::broadcast::channel(1).0,
-        )
+        .create_torrent_request_comment(1, 100, "This request looks interesting")
         .await
         .unwrap();
 

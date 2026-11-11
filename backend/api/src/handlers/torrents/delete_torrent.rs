@@ -51,9 +51,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         }
     }
 
-    arc.pool
-        .remove_torrent(&form, user.sub, &arc.notification_sender)
-        .await?;
+    arc.pool.remove_torrent(&form, user.sub).await?;
 
     arc.pool
         .notify_tracker(

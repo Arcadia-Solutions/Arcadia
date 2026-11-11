@@ -7,21 +7,18 @@ use crate::{
             MassMessageRequest, MassMessageResult, UserCreatedConversation,
             UserCreatedConversationMessage,
         },
-        notification::NotificationEvent,
         user::UserPermissionMatchMode,
     },
 };
 use arcadia_common::error::{Error, Result};
 use serde_json::Value;
 use sqlx::{Postgres, Transaction};
-use tokio::sync::broadcast;
 
 impl ConnectionPool {
     pub async fn create_conversation(
         &self,
         conversation: &mut UserCreatedConversation,
         current_user_id: i32,
-        notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<Conversation> {
         //TODO: make transactional
         let created_conversation = sqlx::query_as!(
@@ -40,12 +37,8 @@ impl ConnectionPool {
         .map_err(Error::CouldNotCreateConversation)?;
 
         conversation.first_message.conversation_id = created_conversation.id;
-        self.create_conversation_message(
-            &conversation.first_message,
-            current_user_id,
-            notification_sender,
-        )
-        .await?;
+        self.create_conversation_message(&conversation.first_message, current_user_id)
+            .await?;
 
         Ok(created_conversation)
     }
@@ -58,7 +51,6 @@ impl ConnectionPool {
         &self,
         payload: &MassMessageRequest,
         current_user_id: i32,
-        notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<MassMessageResult> {
         let recipients = self
             .find_users_matching_filter(
@@ -89,7 +81,7 @@ impl ConnectionPool {
                     content,
                 },
             };
-            self.create_conversation(&mut conversation, current_user_id, notification_sender)
+            self.create_conversation(&mut conversation, current_user_id)
                 .await?;
             messages_sent += 1;
         }
@@ -101,7 +93,6 @@ impl ConnectionPool {
         &self,
         message: &UserCreatedConversationMessage,
         current_user_id: i32,
-        notification_sender: &broadcast::Sender<NotificationEvent>,
     ) -> Result<ConversationMessage> {
         let result = sqlx::query_as!(
             ConversationMessage,
@@ -121,45 +112,7 @@ impl ConnectionPool {
         .map_err(Error::CouldNotCreateConversation)?;
 
         match result {
-            Some(msg) => {
-                let notification_info = sqlx::query!(
-                    r#"
-                    SELECT
-                        CASE WHEN c.sender_id = $2 THEN c.receiver_id ELSE c.sender_id END as "other_user_id!",
-                        CASE
-                            WHEN prev_msg.created_by_id IS NULL THEN false
-                            WHEN prev_msg.created_by_id != $2 THEN false
-                            WHEN c.sender_id = $2 THEN
-                                c.receiver_last_seen_at IS NULL OR c.receiver_last_seen_at < prev_msg.created_at
-                            ELSE
-                                c.sender_last_seen_at < prev_msg.created_at
-                        END as "was_already_unread!"
-                    FROM conversations c
-                    LEFT JOIN LATERAL (
-                        SELECT cm.created_at, cm.created_by_id
-                        FROM conversation_messages cm
-                        WHERE cm.conversation_id = c.id AND cm.id != $3
-                        ORDER BY cm.created_at DESC
-                        LIMIT 1
-                    ) AS prev_msg ON TRUE
-                    WHERE c.id = $1
-                    "#,
-                    message.conversation_id,
-                    current_user_id,
-                    msg.id
-                )
-                .fetch_one(&self.pool)
-                .await
-                .map_err(Error::CouldNotFindConversation)?;
-
-                if !notification_info.was_already_unread {
-                    let _ = notification_sender.send(NotificationEvent::Conversation {
-                        user_ids: vec![notification_info.other_user_id],
-                    });
-                }
-
-                Ok(msg)
-            }
+            Some(message) => Ok(message),
             None => {
                 // differentiate between not found and locked, a conversation the user is not
                 // part of is reported as not found

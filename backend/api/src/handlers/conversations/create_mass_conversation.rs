@@ -54,7 +54,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 
     let result = arc
         .pool
-        .create_mass_conversation(&payload, current_user.sub, &arc.notification_sender)
+        .create_mass_conversation(&payload, current_user.sub)
         .await?;
 
     Ok(HttpResponse::Ok().json(result))

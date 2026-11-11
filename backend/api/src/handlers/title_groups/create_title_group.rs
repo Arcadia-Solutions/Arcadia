@@ -84,11 +84,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 
         let _ = arc
             .pool
-            .create_artists_affiliation(
-                &form.affiliated_artists,
-                user.sub,
-                &arc.notification_sender,
-            )
+            .create_artists_affiliation(&form.affiliated_artists, user.sub)
             .await?;
     }
 

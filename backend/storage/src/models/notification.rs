@@ -6,56 +6,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 use utoipa::ToSchema;
 
-#[derive(Clone, Debug, Serialize)]
-#[serde(tag = "type")]
-pub enum NotificationEvent {
-    ForumSubCategoryThread { user_ids: Vec<i32> },
-    ForumThreadPost { user_ids: Vec<i32> },
-    TitleGroupComment { user_ids: Vec<i32> },
-    TitleGroupTorrent { user_ids: Vec<i32> },
-    ArtistTitleGroup { user_ids: Vec<i32> },
-    Collage { user_ids: Vec<i32> },
-    TorrentRequestComment { user_ids: Vec<i32> },
-    StaffPmMessage { user_ids: Vec<i32> },
-    Conversation { user_ids: Vec<i32> },
-    TorrentDeletion { user_ids: Vec<i32> },
-    ReseedRequest { user_ids: Vec<i32> },
-}
-
-impl NotificationEvent {
-    pub fn user_ids(&self) -> &[i32] {
-        match self {
-            Self::ForumSubCategoryThread { user_ids }
-            | Self::ForumThreadPost { user_ids }
-            | Self::TitleGroupComment { user_ids }
-            | Self::TitleGroupTorrent { user_ids }
-            | Self::ArtistTitleGroup { user_ids }
-            | Self::Collage { user_ids }
-            | Self::TorrentRequestComment { user_ids }
-            | Self::StaffPmMessage { user_ids }
-            | Self::Conversation { user_ids }
-            | Self::TorrentDeletion { user_ids }
-            | Self::ReseedRequest { user_ids } => user_ids,
-        }
-    }
-
-    pub fn event_type(&self) -> &'static str {
-        match self {
-            Self::ForumSubCategoryThread { .. } => "forum_sub_category_thread",
-            Self::ForumThreadPost { .. } => "forum_thread_post",
-            Self::TitleGroupComment { .. } => "title_group_comment",
-            Self::TitleGroupTorrent { .. } => "title_group_torrent",
-            Self::ArtistTitleGroup { .. } => "artist_title_group",
-            Self::Collage { .. } => "collage",
-            Self::TorrentRequestComment { .. } => "torrent_request_comment",
-            Self::StaffPmMessage { .. } => "staff_pm_message",
-            Self::Conversation { .. } => "conversation",
-            Self::TorrentDeletion { .. } => "torrent_deletion",
-            Self::ReseedRequest { .. } => "reseed_request",
-        }
-    }
-}
-
 #[derive(Debug, Deserialize, Serialize, FromRow, ToSchema)]
 pub struct NotificationForumSubCategoryThread {
     pub id: i64,

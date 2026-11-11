@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                WITH eligible_users AS (\n                    -- Staff PM creator\n                    SELECT created_by_id AS user_id\n                    FROM staff_pms\n                    WHERE id = $1\n                    UNION\n                    -- Users with read_staff_pm permission\n                    SELECT id AS user_id\n                    FROM users\n                    WHERE 'read_staff_pm' = ANY(permissions)\n                )\n                INSERT INTO notifications_staff_pm_messages (user_id, staff_pm_id, staff_pm_message_id)\n                SELECT\n                    user_id,\n                    $1,\n                    $2\n                FROM eligible_users u\n                WHERE u.user_id != $3\n                AND NOT EXISTS (\n                    SELECT 1\n                    FROM notifications_staff_pm_messages n\n                    WHERE n.user_id = u.user_id\n                      AND n.staff_pm_id = $1\n                      AND n.read_status = FALSE\n                )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4ec6be2942c6b3eaa83157c70ebd86c31cda738c2a3c1291f493c05b9abe4634"
+}

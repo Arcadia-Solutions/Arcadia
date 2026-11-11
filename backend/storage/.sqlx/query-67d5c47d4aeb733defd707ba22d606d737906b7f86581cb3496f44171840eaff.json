@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                WITH subscribers AS (\n                    SELECT user_id, MIN(artist_id) AS artist_id\n                    FROM subscriptions_artist_title_groups\n                    WHERE artist_id = ANY($1)\n                    AND user_id != $3\n                    GROUP BY user_id\n                )\n                INSERT INTO notifications_artist_title_groups (user_id, artist_id, title_group_id)\n                SELECT\n                    s.user_id,\n                    s.artist_id,\n                    $2\n                FROM subscribers s\n                -- only one notification per title group, as long as it stays unread\n                WHERE NOT EXISTS (\n                    SELECT 1\n                    FROM notifications_artist_title_groups n\n                    WHERE n.user_id = s.user_id\n                      AND n.title_group_id = $2\n                      AND n.read_status = FALSE\n                )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8Array",
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "67d5c47d4aeb733defd707ba22d606d737906b7f86581cb3496f44171840eaff"
+}

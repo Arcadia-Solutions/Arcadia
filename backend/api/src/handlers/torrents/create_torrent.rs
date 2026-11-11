@@ -68,7 +68,6 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
             torrent_max_release_date_allowed,
             arc.api.max_torrent_size_bytes,
             arc.tracker.torrent_source_tag.as_deref(),
-            &arc.notification_sender,
         )
         .await?;
 

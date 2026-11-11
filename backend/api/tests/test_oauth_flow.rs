@@ -51,7 +51,7 @@ async fn create_test_app_with_client_and_login(
         client_secret: TEST_CLIENT_SECRET.to_string(),
         redirect_uri: TEST_REDIRECT_URI.to_string(),
     });
-    let (service, _) = create_test_app_with_config(pool, MockRedisPool::default(), config).await;
+    let service = create_test_app_with_config(pool, MockRedisPool::default(), config).await;
     let user = login_as(&service, TestUser::Standard).await;
     (service, user)
 }

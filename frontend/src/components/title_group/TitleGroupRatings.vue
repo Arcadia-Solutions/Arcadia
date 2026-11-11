@@ -3,8 +3,7 @@
     <div class="ratings-component">
       <div class="rating">
         <div class="logo-and-note" :class="{ 'cursor-pointer': userRatingCount > 0 }" @click="userRatingCount > 0 && openReviews()">
-          <img v-if="publicArcadiaSettings.rating_icons.length === 0" src="/favicon.ico" alt="site logo" class="logo" />
-          <img v-else-if="averageIcon" :src="averageIcon.icon_url" alt="rating icon" class="logo" />
+          <img :src="averageIcon?.icon_url ?? '/favicon.ico'" alt="rating icon" class="logo" />
           <UserRatingDisplay :rating="userRatingAverage" hideIcon />
         </div>
         <div class="votes">

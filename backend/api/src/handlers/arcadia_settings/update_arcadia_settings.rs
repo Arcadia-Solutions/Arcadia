@@ -102,6 +102,22 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         ));
     }
 
+    // every rating must get an icon, so the lowest threshold has to be 0
+    if !settings.rating_icons.is_empty()
+        && (settings
+            .rating_icons
+            .iter()
+            .all(|icon| icon.minimum_rating != 0)
+            || settings
+                .rating_icons
+                .iter()
+                .any(|icon| !(0..=100).contains(&icon.minimum_rating)))
+    {
+        return Err(arcadia_common::error::Error::InvalidArcadiaSettings(
+            "rating_icons must have one icon with a minimum_rating of 0 and every minimum_rating must be between 0 and 100".to_string(),
+        ));
+    }
+
     // checked against the approved image hosts being saved, which may have just been changed
     for rating_icon in settings.rating_icons.iter() {
         validate_image_url(&rating_icon.icon_url, &settings.approved_image_hosts)?;

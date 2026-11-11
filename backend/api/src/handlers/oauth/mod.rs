@@ -5,11 +5,11 @@ pub mod userinfo;
 
 use actix_web::{
     HttpRequest, HttpResponse,
-    http::header::AUTHORIZATION,
+    http::header::Header,
     web::{ServiceConfig, get, post, resource},
 };
+use actix_web_httpauth::headers::authorization::{Authorization, Basic};
 use arcadia_storage::redis::RedisPoolInterface;
-use base64::{Engine, engine::general_purpose::STANDARD as BASE64_STANDARD};
 use serde::Serialize;
 use utoipa::ToSchema;
 
@@ -35,28 +35,20 @@ pub fn authenticate_client<'a, R: RedisPoolInterface>(
     request: &HttpRequest,
     arc: &'a Arcadia<R>,
 ) -> Result<&'a OidcConfig, Box<HttpResponse>> {
-    basic_auth_credentials(request)
-        .and_then(|(client_id, client_secret)| {
+    Authorization::<Basic>::parse(request)
+        .ok()
+        .and_then(|authorization| {
+            let credentials = authorization.as_ref();
             arc.oidc.as_ref().filter(|client| {
-                client.client_id == client_id
-                    && secrets_match(&client_secret, &client.client_secret)
+                client.client_id == credentials.user_id()
+                    && credentials
+                        .password()
+                        .is_some_and(|secret| secrets_match(secret, &client.client_secret))
             })
         })
         .ok_or_else(|| {
             Box::new(HttpResponse::Unauthorized().json(OAuthErrorResponse::new("invalid_client")))
         })
-}
-
-fn basic_auth_credentials(request: &HttpRequest) -> Option<(String, String)> {
-    let encoded = request
-        .headers()
-        .get(AUTHORIZATION)?
-        .to_str()
-        .ok()?
-        .strip_prefix("Basic ")?;
-    let credentials = String::from_utf8(BASE64_STANDARD.decode(encoded.trim()).ok()?).ok()?;
-    let (client_id, client_secret) = credentials.split_once(':')?;
-    Some((client_id.to_string(), client_secret.to_string()))
 }
 
 pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {

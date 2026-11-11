@@ -73,10 +73,7 @@ impl ConnectionPool {
         }
 
         if !note.can_be_edited_by(requesting_user_id, has_permission) {
-            return Err(Error::InsufficientPermissions(format!(
-                "{:?}",
-                UserPermission::EditUserStaffNotes
-            )));
+            return Err(Error::from(UserPermission::EditUserStaffNotes));
         }
 
         Ok(())

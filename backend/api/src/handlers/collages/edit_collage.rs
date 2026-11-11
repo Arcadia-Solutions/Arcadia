@@ -32,10 +32,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .await?;
 
     if !has_permission && collage.created_by_id != user.sub {
-        return Err(Error::InsufficientPermissions(format!(
-            "{:?}",
-            UserPermission::EditCollage
-        )));
+        return Err(Error::from(UserPermission::EditCollage));
     }
 
     if let Some(edits) = compute_diff(&collage, &form, &["id", "created_at", "created_by_id"]) {

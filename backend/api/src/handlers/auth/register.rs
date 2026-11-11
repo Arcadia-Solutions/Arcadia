@@ -1,9 +1,7 @@
 use crate::{
     Arcadia,
     services::{
-        auth_service::{
-            validate_email, validate_password, validate_password_verification, validate_username,
-        },
+        auth_service::{validate_and_hash_password, validate_email, validate_username},
         email_service::EmailService,
         ip_check,
     },
@@ -17,10 +15,6 @@ use arcadia_storage::{
         user::{Register, User},
     },
     redis::RedisPoolInterface,
-};
-use argon2::{
-    Argon2,
-    password_hash::{PasswordHasher, SaltString, rand_core::OsRng},
 };
 use reqwest::Method;
 use serde::Deserialize;
@@ -67,8 +61,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 
     validate_email(&new_user.email)?;
     validate_username(&new_user.username)?;
-    validate_password(&new_user.password)?;
-    validate_password_verification(&new_user.password, &new_user.password_verify)?;
+    let password_hash = validate_and_hash_password(&new_user.password, &new_user.password_verify)?;
 
     let client_ip = super::client_ip(
         &req,
@@ -77,17 +70,6 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
             .reverse_proxy_client_ip_header_name
             .as_deref(),
     )?;
-
-    let salt = SaltString::generate(&mut OsRng);
-
-    // Argon2 with default params (Argon2id v19)
-    let argon2 = Argon2::default();
-
-    // Hash password to PHC string ($argon2id$v=19$...)
-    let password_hash = argon2
-        .hash_password(new_user.password.as_bytes(), &salt)
-        .unwrap()
-        .to_string();
 
     let arcadia_settings = arc.settings.lock().unwrap().clone();
     let user = arc

@@ -49,10 +49,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
                 CollageCategory::Personal | CollageCategory::StaffPicks
             ) && collage.created_by_id != user.sub
             {
-                return Err(Error::InsufficientPermissions(format!(
-                    "{:?}",
-                    UserPermission::EditCollage
-                )));
+                return Err(Error::from(UserPermission::EditCollage));
             }
         }
     }

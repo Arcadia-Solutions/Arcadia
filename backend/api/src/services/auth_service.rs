@@ -1,7 +1,10 @@
 use std::sync::LazyLock;
 
 use arcadia_common::error::{Error, Result};
-use argon2::{Argon2, PasswordVerifier, password_hash::PasswordHash};
+use argon2::{
+    Argon2, PasswordHasher, PasswordVerifier,
+    password_hash::{PasswordHash, SaltString, rand_core::OsRng},
+};
 use regex::Regex;
 
 static EMAIL_REGEX: LazyLock<Regex> =
@@ -71,4 +74,15 @@ pub fn validate_password_verification(password: &str, password_verify: &str) -> 
         return Err(Error::PasswordsDoNotMatch);
     }
     Ok(())
+}
+
+/// Validates a new password and its confirmation, then hashes it to a PHC string (Argon2id v19).
+pub fn validate_and_hash_password(password: &str, password_verify: &str) -> Result<String> {
+    validate_password(password)?;
+    validate_password_verification(password, password_verify)?;
+    let salt = SaltString::generate(&mut OsRng);
+    Ok(Argon2::default()
+        .hash_password(password.as_bytes(), &salt)
+        .unwrap()
+        .to_string())
 }

@@ -1,6 +1,4 @@
-use crate::{
-    Arcadia, middlewares::auth_middleware::Authdata, services::image_service::validate_image_urls,
-};
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use actix_web::{HttpResponse, web::Data, web::Json};
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::models::artist::Artist;
@@ -28,8 +26,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     arc: Data<Arcadia<R>>,
     user: Authdata,
 ) -> Result<HttpResponse> {
-    let approved_image_hosts = arc.settings.lock().unwrap().approved_image_hosts.clone();
-    validate_image_urls(&form.pictures, &approved_image_hosts)?;
+    arc.validate_image_urls(&form.pictures)?;
 
     let mut artist = arc.pool.find_artist_by_id(form.id).await?;
 
@@ -43,10 +40,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     if !has_permission {
         let grace_period = chrono::Utc::now() - chrono::Duration::days(GRACE_PERIOD_IN_DAYS);
         if artist.created_by_id != user.sub || artist.created_at < grace_period {
-            return Err(Error::InsufficientPermissions(format!(
-                "{:?}",
-                UserPermission::EditArtist
-            )));
+            return Err(Error::from(UserPermission::EditArtist));
         }
     }
 

@@ -41,10 +41,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .await?
         && torrent_request.created_by_id != user.sub
     {
-        return Err(Error::InsufficientPermissions(format!(
-            "{:?}",
-            UserPermission::EditTorrentRequest
-        )));
+        return Err(Error::from(UserPermission::EditTorrentRequest));
     }
 
     if let Some(edits) = compute_diff(&torrent_request, &form, &["id", "initial_vote"]) {

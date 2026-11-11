@@ -6,13 +6,6 @@ use url::{Host, Url};
 
 use crate::services::ip_check::is_public;
 
-pub fn validate_image_urls(image_urls: &[String], approved_image_hosts: &[String]) -> Result<()> {
-    for image_url in image_urls {
-        validate_image_url(image_url, approved_image_hosts)?;
-    }
-    Ok(())
-}
-
 pub fn validate_image_url(image_url: &str, approved_image_hosts: &[String]) -> Result<()> {
     if approved_image_hosts.is_empty() {
         // the image host fetches the urls it is asked to rehost, they must not reach internal services

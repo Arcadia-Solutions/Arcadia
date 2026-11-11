@@ -12,10 +12,8 @@ use arcadia_storage::{
 use futures::future::join_all;
 
 use crate::{
-    Arcadia,
-    handlers::external_db::get_tmdb_data::get_tmdb_rating,
-    middlewares::auth_middleware::Authdata,
-    services::image_service::{validate_image_urls, validate_trailer_urls},
+    Arcadia, handlers::external_db::get_tmdb_data::get_tmdb_rating,
+    middlewares::auth_middleware::Authdata, services::image_service::validate_trailer_urls,
 };
 use arcadia_common::error::{Error, Result};
 
@@ -44,9 +42,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     if arc.settings.lock().unwrap().uploads_disabled {
         return Err(Error::UploadsDisabled);
     }
-    let approved_image_hosts = arc.settings.lock().unwrap().approved_image_hosts.clone();
-    validate_image_urls(&form.covers, &approved_image_hosts)?;
-    validate_image_urls(&form.screenshots, &approved_image_hosts)?;
+    arc.validate_image_urls(form.covers.iter().chain(&form.screenshots))?;
     validate_trailer_urls(&form.trailers)?;
 
     let rating_futures: Vec<_> = form

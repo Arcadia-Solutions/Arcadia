@@ -12,9 +12,7 @@ use arcadia_storage::{
     redis::RedisPoolInterface,
 };
 
-use crate::{
-    Arcadia, middlewares::auth_middleware::Authdata, services::image_service::validate_image_urls,
-};
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use arcadia_common::error::{Error, Result};
 
 #[utoipa::path(
@@ -34,8 +32,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     arc: Data<Arcadia<R>>,
     user: Authdata,
 ) -> Result<HttpResponse> {
-    let approved_image_hosts = arc.settings.lock().unwrap().approved_image_hosts.clone();
-    validate_image_urls(&form.covers, &approved_image_hosts)?;
+    arc.validate_image_urls(&form.covers)?;
 
     let edition_group = arc.pool.find_edition_group(form.id).await?;
 
@@ -45,10 +42,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .await?
         && edition_group.created_by_id != user.sub
     {
-        return Err(Error::InsufficientPermissions(format!(
-            "{:?}",
-            UserPermission::EditEditionGroup
-        )));
+        return Err(Error::from(UserPermission::EditEditionGroup));
     }
 
     if let Some(edits) = compute_diff(&edition_group, &form, &["id"]) {

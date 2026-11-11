@@ -1,10 +1,7 @@
 use crate::{
     Arcadia,
     middlewares::auth_middleware::Authdata,
-    services::{
-        auth_service::{validate_email, verify_password},
-        image_service::validate_image_url,
-    },
+    services::auth_service::{validate_email, verify_password},
 };
 use actix_web::{
     HttpResponse,
@@ -32,10 +29,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     user: Authdata,
     arc: Data<Arcadia<R>>,
 ) -> Result<HttpResponse> {
-    if let Some(ref avatar) = form.avatar {
-        let approved_image_hosts = arc.settings.lock().unwrap().approved_image_hosts.clone();
-        validate_image_url(avatar, &approved_image_hosts)?;
-    }
+    arc.validate_image_urls(&form.avatar)?;
 
     let current_user = arc.pool.find_user_with_id(user.sub).await?;
     if form.email != current_user.email {

@@ -1,6 +1,4 @@
-use crate::{
-    Arcadia, middlewares::auth_middleware::Authdata, services::image_service::validate_image_urls,
-};
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use actix_web::{
     HttpRequest, HttpResponse,
     web::{Data, Json},
@@ -39,8 +37,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     if arc.settings.lock().unwrap().uploads_disabled {
         return Err(Error::UploadsDisabled);
     }
-    let approved_image_hosts = arc.settings.lock().unwrap().approved_image_hosts.clone();
-    validate_image_urls(&form.covers, &approved_image_hosts)?;
+    arc.validate_image_urls(&form.covers)?;
 
     let edition_group = arc.pool.create_edition_group(&form, user.sub).await?;
 

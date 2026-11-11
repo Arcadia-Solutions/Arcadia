@@ -1,6 +1,9 @@
 use crate::{
     connection_pool::ConnectionPool,
-    models::staff_pm::{StaffPm, StaffPmMessage, UserCreatedStaffPm, UserCreatedStaffPmMessage},
+    models::{
+        staff_pm::{StaffPm, StaffPmMessage, UserCreatedStaffPm, UserCreatedStaffPmMessage},
+        user::UserPermission,
+    },
 };
 use arcadia_common::error::{Error, Result};
 use serde_json::Value;
@@ -60,10 +63,7 @@ impl ConnectionPool {
 
         // If the user didn't create the staff PM and doesn't have permission to reply, deny access
         if staff_pm.created_by_id != current_user_id && !can_reply_staff_pm {
-            return Err(Error::InsufficientPermissions(format!(
-                "{:?}",
-                crate::models::user::UserPermission::ReplyStaffPm
-            )));
+            return Err(Error::from(UserPermission::ReplyStaffPm));
         }
 
         let created_message = sqlx::query_as!(
@@ -113,10 +113,7 @@ impl ConnectionPool {
         .map_err(Error::CouldNotFindConversation)?;
 
         if staff_pm_creator_id != current_user_id && !can_resolve_staff_pm {
-            return Err(Error::InsufficientPermissions(format!(
-                "{:?}",
-                crate::models::user::UserPermission::ResolveStaffPm
-            )));
+            return Err(Error::from(UserPermission::ResolveStaffPm));
         }
 
         let updated = sqlx::query_as!(
@@ -155,10 +152,7 @@ impl ConnectionPool {
         .map_err(Error::CouldNotFindConversation)?;
 
         if staff_pm_creator_id != current_user_id && !can_unresolve_staff_pm {
-            return Err(Error::InsufficientPermissions(format!(
-                "{:?}",
-                crate::models::user::UserPermission::UnresolveStaffPm
-            )));
+            return Err(Error::from(UserPermission::UnresolveStaffPm));
         }
 
         let updated = sqlx::query_as!(

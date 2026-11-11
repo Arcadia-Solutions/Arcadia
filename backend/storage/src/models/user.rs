@@ -181,6 +181,12 @@ pub enum UserPermission {
     ManageUnfilledRequests,
 }
 
+impl From<UserPermission> for arcadia_common::error::Error {
+    fn from(permission: UserPermission) -> Self {
+        Self::InsufficientPermissions(format!("{permission:?}"))
+    }
+}
+
 /// User information displayed as a list, that a user can hide with their paranoia settings.
 /// Each variant matches the [`DisplayableUserStats`] variant counting the same information:
 /// a list is hidden as soon as its count is hidden.

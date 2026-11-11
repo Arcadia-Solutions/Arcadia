@@ -348,7 +348,7 @@ impl ConnectionPool {
             .execute(&self.pool)
             .await;
 
-            return Err(Error::InsufficientPermissions(format!("{:?}", permission)));
+            return Err(Error::from(permission.clone()));
         }
 
         Ok(())

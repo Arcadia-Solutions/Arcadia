@@ -1,6 +1,4 @@
-use crate::{
-    Arcadia, middlewares::auth_middleware::Authdata, services::image_service::validate_image_url,
-};
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use actix_web::{
     HttpRequest, HttpResponse,
     web::{Data, Json},
@@ -34,8 +32,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .require_permission(user.sub, &UserPermission::EditUserBadge, req.path())
         .await?;
 
-    let approved_image_hosts = arc.settings.lock().unwrap().approved_image_hosts.clone();
-    validate_image_url(&edited.image_url, &approved_image_hosts)?;
+    arc.validate_image_urls([&edited.image_url])?;
 
     let updated = arc.pool.update_user_badge(&edited).await?;
     Ok(HttpResponse::Ok().json(updated))

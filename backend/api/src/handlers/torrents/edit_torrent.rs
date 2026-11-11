@@ -41,10 +41,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .user_has_permission(user.sub, &UserPermission::EditTorrent)
         .await?;
     if !can_edit_any_torrent && torrent.created_by_id != user.sub {
-        return Err(Error::InsufficientPermissions(format!(
-            "{:?}",
-            UserPermission::EditTorrent
-        )));
+        return Err(Error::from(UserPermission::EditTorrent));
     }
 
     // the uploader is held to the same snatch cost policy as at upload time

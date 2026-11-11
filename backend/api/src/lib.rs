@@ -12,6 +12,7 @@ use crate::{
     services::{
         auth::Auth,
         image_host_service::{ImageHost, configured_image_host},
+        image_service::validate_image_url,
     },
 };
 
@@ -99,5 +100,16 @@ impl<R: RedisPoolInterface> Arcadia<R> {
         self.image_host
             .as_ref()
             .filter(|_| self.config.image_host.rehost_external_images)
+    }
+
+    /// Rejects any url whose host is not in the `approved_image_hosts` setting.
+    pub fn validate_image_urls<'a>(
+        &self,
+        image_urls: impl IntoIterator<Item = &'a String>,
+    ) -> arcadia_common::error::Result<()> {
+        let settings = self.settings.lock().unwrap();
+        image_urls
+            .into_iter()
+            .try_for_each(|url| validate_image_url(url, &settings.approved_image_hosts))
     }
 }

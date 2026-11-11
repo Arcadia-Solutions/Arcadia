@@ -2,7 +2,7 @@
   <ContentContainer :containerTitle="t('title_group.rating', 2)">
     <div class="ratings-component">
       <div class="rating">
-        <div class="logo-and-note">
+        <div class="logo-and-note" :class="{ 'cursor-pointer': userRatingCount > 0 }" @click="userRatingCount > 0 && openReviews()">
           <img src="/favicon.ico" alt="site logo" class="logo" />
           <UserRatingDisplay :rating="userRatingAverage" />
         </div>

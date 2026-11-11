@@ -1,5 +1,5 @@
 <template>
-  <ContentContainer v-for="review in reviews.filter((r) => r.review)" :key="review.id" :id="`review-${review.id}`" class="review">
+  <ContentContainer v-for="review in reviews" :key="review.id" :id="`review-${review.id}`" class="review">
     <template #top-left>
       <UsernameEnriched :user="review.user" displayAllInfo />
       <TimeAgo :date="review.created_at" class="date" />
@@ -13,7 +13,7 @@
         @click="reviewToDelete = review.id"
       />
     </template>
-    <BBCodeRenderer :content="review.review ?? ''" />
+    <BBCodeRenderer v-if="review.review" :content="review.review" />
   </ContentContainer>
   <ContentContainer v-if="userStore.permissions.includes('rate_title_groups')" :containerTitle="t('title_group.your_rating')" class="own-review">
     <div class="rating-input">
@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Button, Dialog, Slider } from 'primevue'
 import ContentContainer from '../ContentContainer.vue'
@@ -55,7 +55,6 @@ import { createTitleGroupReview, deleteTitleGroupReview, editTitleGroupReview, t
 const props = defineProps<{
   titleGroupId: number
   reviews: TitleGroupReviewHierarchy[]
-  ownReview: TitleGroupReviewHierarchy | null
 }>()
 
 const emit = defineEmits<{
@@ -66,20 +65,23 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const userStore = useUserStore()
 
-const rating = ref(props.ownReview?.rating ?? 50)
-const review = ref(props.ownReview?.review ?? '')
+const ownReview = computed(() => props.reviews.find((r) => r.user_id === userStore.id))
+// only read once: the parent re-creates this component when it shows another title group
+const rating = ref(ownReview.value?.rating ?? 50)
+const review = ref(ownReview.value?.review ?? '')
 const saving = ref(false)
 const reviewToDelete = ref<number | null>(null)
 
 const save = () => {
   saving.value = true
   const data = { rating: rating.value, review: review.value.trim() || null }
-  ;(props.ownReview
-    ? editTitleGroupReview({ id: props.ownReview.id, EditedTitleGroupReview: data })
+  ;(ownReview.value
+    ? editTitleGroupReview({ id: ownReview.value.id, EditedTitleGroupReview: data })
     : createTitleGroupReview({ ...data, title_group_id: props.titleGroupId })
   )
     .then((saved) => {
-      emit('saved', { ...saved, user: userStore })
+      const { id, username, class_name, banned, avatar, warned, custom_title } = userStore
+      emit('saved', { ...saved, user: { id, username, class_name, banned, avatar, warned, custom_title } })
       showToast('', t('title_group.review_saved_success'), 'success', 2000)
     })
     .finally(() => (saving.value = false))

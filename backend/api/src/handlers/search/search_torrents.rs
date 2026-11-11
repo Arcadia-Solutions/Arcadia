@@ -32,6 +32,12 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .deserialize_str(req.query_string())
         .map_err(|e| Error::InvalidTorrentSearchQuery(e.to_string()))?;
 
+    if form.title_group_minimum_user_rating > form.title_group_maximum_user_rating {
+        return Err(Error::InvalidTorrentSearchQuery(
+            "the minimum user rating must not exceed the maximum".to_string(),
+        ));
+    }
+
     if let Some(user_id_bookmarks) = form.user_id_bookmarks
         && user_id_bookmarks != user.sub as i64
     {

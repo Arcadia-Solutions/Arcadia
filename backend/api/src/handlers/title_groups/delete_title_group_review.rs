@@ -27,6 +27,8 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     user: Authdata,
     req: HttpRequest,
 ) -> Result<HttpResponse> {
+    // authors deliberately can't delete their own review: once rated, a title group stays rated
+    // by them, they can only edit the rating
     arc.pool
         .require_permission(
             user.sub,

@@ -34,7 +34,7 @@ pub struct EditedTitleGroupReview {
     pub review: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TitleGroupReviewHierarchy {
     pub id: i64,
     pub title_group_id: i32,

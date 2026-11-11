@@ -161,9 +161,9 @@
         </div>
       </ContentContainer>
       <TitleGroupReviews
+        :key="titleGroupAndAssociatedData.title_group.id"
         :titleGroupId="titleGroupAndAssociatedData.title_group.id"
         :reviews="titleGroupAndAssociatedData.title_group_reviews"
-        :ownReview="titleGroupAndAssociatedData.own_title_group_review ?? null"
         @saved="reviewSaved"
         @deleted="reviewDeleted"
       />
@@ -439,13 +439,11 @@ const setReviews = (reviews: TitleGroupReviewHierarchy[]) => {
 const reviewSaved = (review: TitleGroupReviewHierarchy) => {
   if (!titleGroupAndAssociatedData.value) return
   const reviews = titleGroupAndAssociatedData.value.title_group_reviews
-  titleGroupAndAssociatedData.value.own_title_group_review = review
   setReviews(reviews.some((r) => r.id === review.id) ? reviews.map((r) => (r.id === review.id ? review : r)) : [...reviews, review])
 }
 
 const reviewDeleted = (reviewId: number) => {
   if (!titleGroupAndAssociatedData.value) return
-  if (titleGroupAndAssociatedData.value.own_title_group_review?.id === reviewId) titleGroupAndAssociatedData.value.own_title_group_review = null
   setReviews(titleGroupAndAssociatedData.value.title_group_reviews.filter((r) => r.id !== reviewId))
 }
 

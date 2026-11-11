@@ -725,17 +725,11 @@ impl ConnectionPool {
             })
             .collect();
 
-        let related_threads = self
-            .find_related_forum_threads_for_title_group(title_group_id)
-            .await?;
-
-        let similar_title_groups = self.find_similar_title_groups(title_group_id).await?;
-
-        let title_group_reviews = self.find_title_group_reviews(title_group_id).await?;
-        let own_title_group_review = title_group_reviews
-            .iter()
-            .find(|review| review.user_id == user_id)
-            .cloned();
+        let (related_threads, similar_title_groups, title_group_reviews) = tokio::try_join!(
+            self.find_related_forum_threads_for_title_group(title_group_id),
+            self.find_similar_title_groups(title_group_id),
+            self.find_title_group_reviews(title_group_id),
+        )?;
 
         Ok(TitleGroupAndAssociatedData {
             title_group,
@@ -745,7 +739,6 @@ impl ConnectionPool {
             affiliated_entities,
             title_group_comments,
             title_group_reviews,
-            own_title_group_review,
             torrent_requests,
             is_subscribed_to_torrents: subscriptions.is_subscribed_to_torrents,
             is_subscribed_to_comments: subscriptions.is_subscribed_to_comments,
@@ -1147,6 +1140,8 @@ impl ConnectionPool {
         source_title_group_id: i32,
         target_title_group_id: i32,
     ) -> Result<()> {
+        let mut transaction = self.pool.begin().await?;
+
         // Rows that conflict with the target stay on the source and are removed by
         // ON DELETE CASCADE when the source title group is deleted at the end.
         // Move edition_groups (no unique constraint on title_group_id)
@@ -1159,7 +1154,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move title_group_applied_tags (PK on title_group_id, tag_id)
@@ -1176,7 +1171,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move affiliated_artists (UNIQUE on title_group_id, artist_id)
@@ -1193,7 +1188,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move affiliated_entities (UNIQUE on title_group_id, entity_id)
@@ -1210,7 +1205,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move title_group_comments
@@ -1223,7 +1218,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // A user who reviewed both title groups keeps their most recently updated review, the
@@ -1249,7 +1244,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         sqlx::query!(
@@ -1261,10 +1256,10 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
-        Self::update_title_group_user_rating(&self.pool, target_title_group_id).await?;
+        Self::update_title_group_user_rating(&mut transaction, target_title_group_id).await?;
 
         // Move torrent_requests
         sqlx::query!(
@@ -1276,7 +1271,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move title_group_bookmarks
@@ -1293,7 +1288,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move subscriptions_title_group_torrents (UNIQUE on title_group_id, user_id)
@@ -1310,7 +1305,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move subscriptions_title_group_comments (UNIQUE on title_group_id, user_id)
@@ -1327,7 +1322,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move collage_entry (UNIQUE on collage_id, title_group_id, no ON DELETE CASCADE)
@@ -1342,7 +1337,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         sqlx::query!(
@@ -1354,7 +1349,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move notifications_title_group_comments
@@ -1367,7 +1362,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move notifications_artist_title_groups
@@ -1380,7 +1375,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Append the source's covers, external_links and trailers to the target's,
@@ -1407,7 +1402,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Delete the now-empty source title group
@@ -1417,8 +1412,10 @@ impl ConnectionPool {
             "#,
             source_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
+
+        transaction.commit().await?;
 
         Ok(())
     }
@@ -1637,6 +1634,23 @@ impl ConnectionPool {
                 UNION
                 SELECT created_by_id FROM edition_groups WHERE title_group_id = ANY($1)
             )
+            "#,
+            ids
+        )
+        .execute(&mut **tx)
+        .await?;
+
+        sqlx::query!(
+            r#"
+            UPDATE users
+            SET title_group_reviews = title_group_reviews - deleted.amount
+            FROM (
+                SELECT user_id, COUNT(*)::INT AS amount
+                FROM title_group_reviews
+                WHERE title_group_id = ANY($1)
+                GROUP BY user_id
+            ) deleted
+            WHERE users.id = deleted.user_id
             "#,
             ids
         )

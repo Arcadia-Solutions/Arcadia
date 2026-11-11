@@ -289,8 +289,6 @@ pub struct TitleGroupAndAssociatedData {
     pub affiliated_entities: Vec<AffiliatedEntityHierarchy>,
     pub title_group_comments: Vec<TitleGroupCommentHierarchy>,
     pub title_group_reviews: Vec<TitleGroupReviewHierarchy>,
-    /// the review of the requesting user, also part of `title_group_reviews`
-    pub own_title_group_review: Option<TitleGroupReviewHierarchy>,
     pub torrent_requests: Vec<TorrentRequestHierarchyLite>,
     pub is_subscribed_to_torrents: bool,
     pub is_subscribed_to_comments: bool,

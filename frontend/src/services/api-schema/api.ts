@@ -3848,10 +3848,6 @@ export interface TitleGroupAndAssociatedData {
     'in_same_master_group': Array<MasterGroupEntry>;
     'is_subscribed_to_comments': boolean;
     'is_subscribed_to_torrents': boolean;
-    /**
-     * the review of the requesting user, also part of `title_group_reviews`
-     */
-    'own_title_group_review'?: TitleGroupReviewHierarchy | null;
     'related_threads': Array<RelatedForumThread>;
     'series'?: SeriesLite | null;
     'similar_title_groups': Array<SimilarTitleGroupLite>;

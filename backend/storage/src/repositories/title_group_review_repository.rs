@@ -11,7 +11,7 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use sqlx::PgExecutor;
+use sqlx::PgConnection;
 
 impl ConnectionPool {
     pub async fn create_title_group_review(
@@ -45,7 +45,7 @@ impl ConnectionPool {
         .execute(&mut *transaction)
         .await?;
 
-        Self::update_title_group_user_rating(&mut *transaction, review.title_group_id).await?;
+        Self::update_title_group_user_rating(&mut transaction, review.title_group_id).await?;
 
         Self::notify_users_title_group_comments(
             &mut transaction,
@@ -99,7 +99,7 @@ impl ConnectionPool {
         .await?
         .ok_or(Error::TitleGroupReviewNotFound)?;
 
-        Self::update_title_group_user_rating(&mut *transaction, updated_review.title_group_id)
+        Self::update_title_group_user_rating(&mut transaction, updated_review.title_group_id)
             .await?;
 
         transaction.commit().await?;
@@ -125,7 +125,7 @@ impl ConnectionPool {
         .execute(&mut *transaction)
         .await?;
 
-        Self::update_title_group_user_rating(&mut *transaction, deleted_review.title_group_id)
+        Self::update_title_group_user_rating(&mut transaction, deleted_review.title_group_id)
             .await?;
 
         transaction.commit().await?;
@@ -134,10 +134,19 @@ impl ConnectionPool {
     }
 
     /// Recomputes the cached average and amount of ratings of a title group from its reviews.
-    pub async fn update_title_group_user_rating<'c>(
-        executor: impl PgExecutor<'c>,
+    pub async fn update_title_group_user_rating(
+        connection: &mut PgConnection,
         title_group_id: i32,
     ) -> Result<()> {
+        // Concurrent transactions reviewing the same title group wait here for each other, so
+        // the recompute below runs with a fresh snapshot that includes their committed reviews
+        sqlx::query!(
+            "SELECT id FROM title_groups WHERE id = $1 FOR UPDATE",
+            title_group_id
+        )
+        .fetch_optional(&mut *connection)
+        .await?;
+
         sqlx::query!(
             r#"
                 UPDATE title_groups
@@ -150,7 +159,7 @@ impl ConnectionPool {
             "#,
             title_group_id
         )
-        .execute(executor)
+        .execute(connection)
         .await?;
 
         Ok(())

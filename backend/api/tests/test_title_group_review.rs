@@ -76,7 +76,7 @@ async fn test_create_and_edit_review_updates_aggregates(pool: PgPool) {
     assert_eq!(title_group.title_group.user_rating_average, Some(60.0));
     assert_eq!(title_group.title_group.user_rating_count, 1);
     assert_eq!(title_group.title_group_reviews.len(), 1);
-    assert_eq!(title_group.own_title_group_review.unwrap().id, review.id);
+    assert_eq!(title_group.title_group_reviews[0].id, review.id);
 
     let req = test::TestRequest::get()
         .uri("/api/search/title-group-reviews/user?user_id=100&page=1&page_size=10")
@@ -122,7 +122,7 @@ async fn test_only_moderators_can_delete_reviews(pool: PgPool) {
     .await;
     assert_eq!(title_group.title_group.user_rating_average, None);
     assert_eq!(title_group.title_group.user_rating_count, 0);
-    assert!(title_group.own_title_group_review.is_none());
+    assert!(title_group.title_group_reviews.is_empty());
 }
 
 #[sqlx::test(fixtures(

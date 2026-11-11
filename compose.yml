@@ -205,6 +205,12 @@ services:
       - ./elysia/config.yml:/app/config.yml:ro
       # Keep storage.upload_dir at its default (./data/uploads) in elysia/config.yml.
       - elysia_storage:/app/data/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8090/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     depends_on:
       elysia_database:
         condition: service_healthy

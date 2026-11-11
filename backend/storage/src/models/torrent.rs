@@ -493,6 +493,13 @@ pub enum TorrentSearchOrderByColumn {
     #[serde(rename = "torrent_bonus_points_snatch_cost")]
     #[strum(serialize = "torrent_bonus_points_snatch_cost")]
     TorrentBonusPointsSnatchCost,
+    #[serde(rename = "title_group_user_rating_average")]
+    #[strum(serialize = "title_group_user_rating_average")]
+    TitleGroupUserRatingAverage,
+}
+
+fn default_title_group_maximum_user_rating() -> i16 {
+    100
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
@@ -506,6 +513,12 @@ pub struct TorrentSearch {
     pub title_group_category: Vec<TitleGroupCategory>,
     pub title_group_tags: Option<String>,
     pub title_group_include_empty_groups: bool,
+    /// only matches the title groups whose average user rating is within this range, the
+    /// unrated ones are only matched by the default range of 0 to 100
+    #[serde(default)]
+    pub title_group_minimum_user_rating: i16,
+    #[serde(default = "default_title_group_maximum_user_rating")]
+    pub title_group_maximum_user_rating: i16,
     // edition group fields
     #[serde(default)]
     pub edition_group_source: Vec<Source>,

@@ -2,7 +2,8 @@ use crate::{
     connection_pool::ConnectionPool,
     models::arcadia_settings::{
         ArcadiaSettings, AvailableShopItem, BonusPointsEndpoint, DisplayableUserStats,
-        DisplayedTopBarStats, SnatchedTorrentBonusPointsTransferredTo, TorrentRequestVoteCurrency,
+        DisplayedTopBarStats, RatingIcon, SnatchedTorrentBonusPointsTransferredTo,
+        TorrentRequestVoteCurrency,
     },
 };
 use arcadia_common::error::{Error, Result};
@@ -63,7 +64,9 @@ impl ConnectionPool {
                     automated_message_on_torrent_marked_trumpable,
                     reseed_requestable_after_hours,
                     uploads_disabled,
-                    uploads_disabled_message
+                    uploads_disabled_message,
+                    title_group_review_requires_snatch_or_seeding,
+                    rating_icons as "rating_icons: Json<Vec<RatingIcon>>"
                 FROM arcadia_settings
                 LIMIT 1
             "#,
@@ -132,7 +135,9 @@ impl ConnectionPool {
                     global_snatch_bonus_points_cost_factor = $47,
                     global_snatch_bonus_points_reward_factor = $48,
                     uploads_disabled = $49,
-                    uploads_disabled_message = $50
+                    uploads_disabled_message = $50,
+                    title_group_review_requires_snatch_or_seeding = $51,
+                    rating_icons = $52
                 RETURNING
                     user_class_name_on_signup,
                     default_css_sheet_name,
@@ -183,7 +188,9 @@ impl ConnectionPool {
                     automated_message_on_torrent_marked_trumpable,
                     reseed_requestable_after_hours,
                     uploads_disabled,
-                    uploads_disabled_message
+                    uploads_disabled_message,
+                    title_group_review_requires_snatch_or_seeding,
+                    rating_icons as "rating_icons: Json<Vec<RatingIcon>>"
             "#,
             settings.user_class_name_on_signup,
             settings.default_css_sheet_name,
@@ -237,6 +244,8 @@ impl ConnectionPool {
             settings.global_snatch_bonus_points_reward_factor,
             settings.uploads_disabled,
             settings.uploads_disabled_message,
+            settings.title_group_review_requires_snatch_or_seeding,
+            &settings.rating_icons as &Json<Vec<RatingIcon>>,
         )
         .fetch_one(&self.pool)
         .await

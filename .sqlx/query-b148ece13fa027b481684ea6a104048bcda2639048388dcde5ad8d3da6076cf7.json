@@ -1,0 +1,107 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    r.id, r.title_group_id, r.user_id, r.rating, r.review, r.created_at, r.updated_at,\n                    ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS \"user!: UserLiteAvatar\"\n                FROM title_group_reviews r\n                JOIN users u ON u.id = r.user_id\n                WHERE r.title_group_id = $1\n                ORDER BY r.created_at\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "title_group_reviews",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "title_group_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "title_group_reviews",
+            "name": "title_group_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "user_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "title_group_reviews",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "rating",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "title_group_reviews",
+            "name": "rating"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "review",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "title_group_reviews",
+            "name": "review"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "title_group_reviews",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "title_group_reviews",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "user!: UserLiteAvatar",
+        "type_info": "Record",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "b148ece13fa027b481684ea6a104048bcda2639048388dcde5ad8d3da6076cf7"
+}

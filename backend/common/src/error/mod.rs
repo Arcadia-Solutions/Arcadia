@@ -328,6 +328,18 @@ pub enum Error {
     #[error("could not find title group comment")]
     CouldNotFindTitleGroupComment(#[source] sqlx::Error),
 
+    #[error("the rating must be between 0 and 100")]
+    TitleGroupReviewRatingOutOfRange,
+
+    #[error("title group review not found")]
+    TitleGroupReviewNotFound,
+
+    #[error("you already reviewed this title group")]
+    TitleGroupReviewAlreadyExists,
+
+    #[error("you must snatch or seed a torrent of this title group before reviewing it")]
+    TitleGroupReviewRequiresSnatchOrSeeding,
+
     #[error("error while updating title_group_comment: '{0}'")]
     ErrorWhileUpdatingTitleGroupComment(String),
 
@@ -958,6 +970,7 @@ impl actix_web::ResponseError for Error {
             | Error::EmojiNameAlreadyExists
             | Error::InvalidEmojiName
             | Error::EmojiDisabled
+            | Error::TitleGroupReviewRatingOutOfRange
             | Error::IpNotPublic => StatusCode::BAD_REQUEST,
 
             // 401 Unauthorized
@@ -982,6 +995,7 @@ impl actix_web::ResponseError for Error {
             | Error::UploadsDisabled
             | Error::AdventCalendarDoorNotOpenable
             | Error::WrongAdventCalendarDoorPassphrase
+            | Error::TitleGroupReviewRequiresSnatchOrSeeding
             | Error::APIKeyScopeNotAllowed => StatusCode::FORBIDDEN,
 
             // 404 Not Found
@@ -1017,6 +1031,7 @@ impl actix_web::ResponseError for Error {
             | Error::RelatedForumThreadNotFound
             | Error::ExternalSourceNotFound(_)
             | Error::EmojiNotFound
+            | Error::TitleGroupReviewNotFound
             | Error::EmojiOrForumPostNotFound => StatusCode::NOT_FOUND,
 
             // 409 Conflict
@@ -1039,6 +1054,7 @@ impl actix_web::ResponseError for Error {
             | Error::AdventCalendarAlreadyPublished
             | Error::AdventCalendarDoorAlreadyOpened
             | Error::ReseedNotEligible(_)
+            | Error::TitleGroupReviewAlreadyExists
             | Error::ReseedAlreadyRequested => StatusCode::CONFLICT,
 
             // 502 Bad Gateway

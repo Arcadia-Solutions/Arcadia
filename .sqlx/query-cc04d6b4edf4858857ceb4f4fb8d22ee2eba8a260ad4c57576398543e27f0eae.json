@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                id, master_group_id, name, name_aliases AS \"name_aliases!: _\",\n                created_at, updated_at, created_by_id, description,\n                platform AS \"platform: _\", original_language AS \"original_language: _\", original_release_date,\n                original_release_date_only_year_known, tagline, country_from, covers AS \"covers!: _\",\n                external_links AS \"external_links!: _\", trailers,\n                category AS \"category: _\", content_type AS \"content_type: _\",\n                public_ratings, screenshots AS \"screenshots!: _\", series_id,\n                COALESCE(\n                    ARRAY(\n                        SELECT t.name\n                        FROM title_group_applied_tags tat\n                        JOIN title_group_tags t ON t.id = tat.tag_id\n                        WHERE tat.title_group_id = title_groups.id\n                    ),\n                    ARRAY[]::text[]\n                ) AS \"tags!: _\"\n            FROM title_groups\n            WHERE id = $1\n            ",
+  "query": "\n            SELECT\n                id, master_group_id, name, name_aliases AS \"name_aliases!: _\",\n                created_at, updated_at, created_by_id, description,\n                platform AS \"platform: _\", original_language AS \"original_language: _\", original_release_date,\n                original_release_date_only_year_known, tagline, country_from, covers AS \"covers!: _\",\n                external_links AS \"external_links!: _\", trailers,\n                category AS \"category: _\", content_type AS \"content_type: _\",\n                public_ratings, screenshots AS \"screenshots!: _\", series_id,\n                user_rating_average, user_rating_count,\n                COALESCE(\n                    ARRAY(\n                        SELECT t.name\n                        FROM title_group_applied_tags tat\n                        JOIN title_group_tags t ON t.id = tat.tag_id\n                        WHERE tat.title_group_id = title_groups.id\n                    ),\n                    ARRAY[]::text[]\n                ) AS \"tags!: _\"\n            FROM title_groups\n            WHERE id = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -422,6 +422,28 @@
       },
       {
         "ordinal": 22,
+        "name": "user_rating_average",
+        "type_info": "Float4",
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "user_rating_average"
+          }
+        }
+      },
+      {
+        "ordinal": 23,
+        "name": "user_rating_count",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "user_rating_count"
+          }
+        }
+      },
+      {
+        "ordinal": 24,
         "name": "tags!: _",
         "type_info": "VarcharArray",
         "origin": "Expression"
@@ -455,8 +477,10 @@
       false,
       false,
       true,
+      true,
+      false,
       null
     ]
   },
-  "hash": "94b30322d9659d89a1a19c377f2ef7bd4901daa415734eec01f6e249fa915903"
+  "hash": "cc04d6b4edf4858857ceb4f4fb8d22ee2eba8a260ad4c57576398543e27f0eae"
 }

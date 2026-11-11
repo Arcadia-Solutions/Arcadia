@@ -1,0 +1,114 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    r.id, r.title_group_id, tg.name AS title_group_name, r.user_id, r.rating,\n                    r.review, r.created_at, r.updated_at\n                FROM title_group_reviews r\n                JOIN title_groups tg ON tg.id = r.title_group_id\n                WHERE r.user_id = $1\n                ORDER BY r.created_at DESC\n                LIMIT $2 OFFSET $3\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "title_group_reviews",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "title_group_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "title_group_reviews",
+            "name": "title_group_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "title_group_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "user_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "title_group_reviews",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "rating",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "title_group_reviews",
+            "name": "rating"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "review",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "title_group_reviews",
+            "name": "review"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "title_group_reviews",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "title_group_reviews",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "eb1393744015065ba109b6df3dcc487b92603eaee737423fb50b35c15ef297a5"
+}

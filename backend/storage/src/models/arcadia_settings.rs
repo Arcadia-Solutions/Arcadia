@@ -39,6 +39,7 @@ pub enum DisplayableUserStats {
     ForumPosts,
     ForumThreads,
     TitleGroupComments,
+    TitleGroupReviews,
     RequestComments,
     ArtistComments,
     Seeding,
@@ -146,6 +147,19 @@ pub struct ArcadiaSettings {
     pub uploads_disabled: bool,
     /// Shown on the upload page while uploads are disabled. Leave empty to show a generic notice.
     pub uploads_disabled_message: Option<String>,
+    /// When enabled, a user can only review a title group after snatching or seeding one of
+    /// its torrents.
+    pub title_group_review_requires_snatch_or_seeding: bool,
+    #[schema(value_type = Vec<RatingIcon>)]
+    pub rating_icons: Json<Vec<RatingIcon>>,
+}
+
+/// The icon displayed next to the ratings greater than or equal to `minimum_rating`, up to the
+/// next threshold.
+#[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
+pub struct RatingIcon {
+    pub minimum_rating: i16,
+    pub icon_url: String,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema, PartialEq)]
@@ -190,6 +204,9 @@ pub struct PublicArcadiaSettings {
     pub custom_footer: Option<String>,
     pub uploads_disabled: bool,
     pub uploads_disabled_message: Option<String>,
+    pub title_group_review_requires_snatch_or_seeding: bool,
+    #[schema(value_type = Vec<RatingIcon>)]
+    pub rating_icons: Json<Vec<RatingIcon>>,
     /// set when an advent calendar is published and currently running
     pub running_advent_calendar_button_text: Option<String>,
 }

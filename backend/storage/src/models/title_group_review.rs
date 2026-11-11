@@ -1,0 +1,80 @@
+use arcadia_common::error::{Error, Result};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use sqlx::prelude::FromRow;
+use utoipa::{IntoParams, ToSchema};
+
+use super::user::UserLiteAvatar;
+
+/// A user's rating (percentage from 0 to 100) of a title group, optionally explained by a
+/// BBCode review. A user has at most one per title group.
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+pub struct TitleGroupReview {
+    pub id: i64,
+    pub title_group_id: i32,
+    pub user_id: i32,
+    pub rating: i16,
+    pub review: Option<String>,
+    #[schema(value_type = String, format = DateTime)]
+    pub created_at: DateTime<Utc>,
+    #[schema(value_type = String, format = DateTime)]
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct UserCreatedTitleGroupReview {
+    pub title_group_id: i32,
+    pub rating: i16,
+    pub review: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct EditedTitleGroupReview {
+    pub rating: i16,
+    pub review: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TitleGroupReviewHierarchy {
+    pub id: i64,
+    pub title_group_id: i32,
+    pub user_id: i32,
+    pub rating: i16,
+    pub review: Option<String>,
+    #[schema(value_type = String, format = DateTime)]
+    pub created_at: DateTime<Utc>,
+    #[schema(value_type = String, format = DateTime)]
+    pub updated_at: DateTime<Utc>,
+    pub user: UserLiteAvatar,
+}
+
+/// A review displayed outside of its title group, on the profile of its author.
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct TitleGroupReviewWithTitleGroup {
+    pub id: i64,
+    pub title_group_id: i32,
+    pub title_group_name: String,
+    pub user_id: i32,
+    pub rating: i16,
+    pub review: Option<String>,
+    #[schema(value_type = String, format = DateTime)]
+    pub created_at: DateTime<Utc>,
+    #[schema(value_type = String, format = DateTime)]
+    pub updated_at: DateTime<Utc>,
+}
+
+/// Query of the paginated list of every title group review written by a user.
+#[derive(Debug, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct UserTitleGroupReviewSearchQuery {
+    pub user_id: i32,
+    pub page: u32,
+    pub page_size: u32,
+}
+
+pub fn validate_rating(rating: i16) -> Result<()> {
+    if (0..=100).contains(&rating) {
+        Ok(())
+    } else {
+        Err(Error::TitleGroupReviewRatingOutOfRange)
+    }
+}

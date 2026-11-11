@@ -731,6 +731,12 @@ impl ConnectionPool {
 
         let similar_title_groups = self.find_similar_title_groups(title_group_id).await?;
 
+        let title_group_reviews = self.find_title_group_reviews(title_group_id).await?;
+        let own_title_group_review = title_group_reviews
+            .iter()
+            .find(|review| review.user_id == user_id)
+            .cloned();
+
         Ok(TitleGroupAndAssociatedData {
             title_group,
             edition_groups,
@@ -738,6 +744,8 @@ impl ConnectionPool {
             affiliated_artists,
             affiliated_entities,
             title_group_comments,
+            title_group_reviews,
+            own_title_group_review,
             torrent_requests,
             is_subscribed_to_torrents: subscriptions.is_subscribed_to_torrents,
             is_subscribed_to_comments: subscriptions.is_subscribed_to_comments,
@@ -979,6 +987,7 @@ impl ConnectionPool {
                 external_links AS "external_links!: _", trailers,
                 category AS "category: _", content_type AS "content_type: _",
                 public_ratings, screenshots AS "screenshots!: _", series_id,
+                user_rating_average, user_rating_count,
                 COALESCE(
                     ARRAY(
                         SELECT t.name
@@ -1036,6 +1045,7 @@ impl ConnectionPool {
                 external_links AS "external_links!: _", trailers,
                 category AS "category: _", content_type AS "content_type: _",
                 public_ratings, screenshots AS "screenshots!: _", series_id,
+                user_rating_average, user_rating_count,
                 COALESCE(
                     ARRAY(
                         SELECT t.name
@@ -1215,6 +1225,46 @@ impl ConnectionPool {
         )
         .execute(&self.pool)
         .await?;
+
+        // A user who reviewed both title groups keeps their most recently updated review, the
+        // other one is deleted and no longer counts in their amount of reviews
+        sqlx::query!(
+            r#"
+            WITH deleted_reviews AS (
+                DELETE FROM title_group_reviews review
+                USING title_group_reviews other_review
+                WHERE review.user_id = other_review.user_id
+                  AND (
+                      (review.title_group_id = $1 AND other_review.title_group_id = $2
+                          AND other_review.updated_at >= review.updated_at)
+                      OR (review.title_group_id = $2 AND other_review.title_group_id = $1
+                          AND other_review.updated_at > review.updated_at)
+                  )
+                RETURNING review.user_id
+            )
+            UPDATE users
+            SET title_group_reviews = title_group_reviews - 1
+            WHERE id IN (SELECT user_id FROM deleted_reviews)
+            "#,
+            source_title_group_id,
+            target_title_group_id
+        )
+        .execute(&self.pool)
+        .await?;
+
+        sqlx::query!(
+            r#"
+            UPDATE title_group_reviews
+            SET title_group_id = $2
+            WHERE title_group_id = $1
+            "#,
+            source_title_group_id,
+            target_title_group_id
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Self::update_title_group_user_rating(&self.pool, target_title_group_id).await?;
 
         // Move torrent_requests
         sqlx::query!(
@@ -1430,7 +1480,9 @@ impl ConnectionPool {
                 '[]'::jsonb AS "affiliated_artists!: _",
                 CASE
                     WHEN s.id IS NOT NULL THEN jsonb_build_object('id', s.id, 'name', s.name)
-                END AS "series: _"
+                END AS "series: _",
+                tg.user_rating_average,
+                tg.user_rating_count
             FROM title_groups tg
             LEFT JOIN series s ON s.id = tg.series_id
             WHERE ($1::TIMESTAMPTZ IS NULL OR tg.created_at >= $1)

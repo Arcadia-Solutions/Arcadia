@@ -53,7 +53,8 @@ impl ConnectionPool {
         Self::notify_users_title_group_comments(
             &mut tx,
             title_group_comment.title_group_id,
-            created_title_group_comment.id,
+            Some(created_title_group_comment.id),
+            None,
             user_id,
         )
         .await?;

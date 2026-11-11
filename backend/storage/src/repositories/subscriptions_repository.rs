@@ -184,9 +184,12 @@ impl ConnectionPool {
                     CASE
                         WHEN tgh.title_group_series_id IS NOT NULL THEN jsonb_build_object('id', tgh.title_group_series_id, 'name', tgh.title_group_series_name)
                         ELSE NULL
-                    END AS "series: _"
+                    END AS "series: _",
+                    tg.user_rating_average,
+                    tg.user_rating_count
                 FROM subscriptions_title_group_torrents s
                 JOIN title_group_hierarchy_lite tgh ON tgh.title_group_id = s.title_group_id
+                JOIN title_groups tg ON tg.id = tgh.title_group_id
                 WHERE s.user_id = $1
                 ORDER BY tgh.title_group_id
                 LIMIT $2 OFFSET $3
@@ -247,9 +250,12 @@ impl ConnectionPool {
                     CASE
                         WHEN tgh.title_group_series_id IS NOT NULL THEN jsonb_build_object('id', tgh.title_group_series_id, 'name', tgh.title_group_series_name)
                         ELSE NULL
-                    END AS "series: _"
+                    END AS "series: _",
+                    tg.user_rating_average,
+                    tg.user_rating_count
                 FROM subscriptions_title_group_comments s
                 JOIN title_group_hierarchy_lite tgh ON tgh.title_group_id = s.title_group_id
+                JOIN title_groups tg ON tg.id = tgh.title_group_id
                 WHERE s.user_id = $1
                 ORDER BY tgh.title_group_id
                 LIMIT $2 OFFSET $3

@@ -29,6 +29,7 @@
                       "forum_posts",
                       "forum_threads",
                       "title_group_comments",
+                      "title_group_reviews",
                       "request_comments",
                       "artist_comments",
                       "seeding",
@@ -67,7 +68,8 @@
                       "snatched",
                       "forum_posts",
                       "title_group_comments",
-                      "request_comments"
+                      "request_comments",
+                      "title_group_reviews"
                     ]
                   }
                 }

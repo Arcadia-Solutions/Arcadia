@@ -50,6 +50,7 @@ impl ConnectionPool {
                     forum_posts AS "forum_posts?",
                     forum_threads AS "forum_threads?",
                     title_group_comments AS "title_group_comments?",
+                    title_group_reviews AS "title_group_reviews?",
                     request_comments AS "request_comments?",
                     artist_comments AS "artist_comments?",
                     seeding AS "seeding?",

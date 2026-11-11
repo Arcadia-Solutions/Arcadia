@@ -1,4 +1,6 @@
-use crate::{Arcadia, middlewares::auth_middleware::Authdata};
+use crate::{
+    Arcadia, middlewares::auth_middleware::Authdata, services::image_service::validate_image_url,
+};
 use actix_web::{
     HttpRequest, HttpResponse,
     web::{Data, Json},
@@ -98,6 +100,11 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
             "global_snatch_bonus_points_reward_factor must be greater than or equal to 0"
                 .to_string(),
         ));
+    }
+
+    // checked against the approved image hosts being saved, which may have just been changed
+    for rating_icon in settings.rating_icons.iter() {
+        validate_image_url(&rating_icon.icon_url, &settings.approved_image_hosts)?;
     }
 
     let updated_settings = arc.pool.update_arcadia_settings(&settings).await?;

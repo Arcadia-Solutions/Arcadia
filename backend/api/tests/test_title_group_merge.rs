@@ -214,3 +214,44 @@ async fn test_cannot_merge_title_groups_with_different_content_types(pool: PgPoo
     assert!(pool.find_title_group(10).await.is_ok());
     assert!(pool.find_title_group(12).await.is_ok());
 }
+
+#[sqlx::test(fixtures("with_test_users", "with_merge_title_groups"))]
+async fn test_merge_title_groups_keeps_most_recent_review_per_user(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) = create_test_app_and_login(
+        pool.clone(),
+        MockRedisPool::default(),
+        TestUser::MergeTitleGroup,
+    )
+    .await;
+
+    let req = test::TestRequest::post()
+        .uri("/api/title-groups/merge?source_title_group_id=10&target_title_group_id=11")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+    assert_eq!(
+        test::call_service(&service, req).await.status(),
+        StatusCode::OK
+    );
+
+    let mut ratings: Vec<(i32, i16)> = pool
+        .find_title_group_reviews(11)
+        .await
+        .unwrap()
+        .iter()
+        .map(|review| (review.user_id, review.rating))
+        .collect();
+    ratings.sort();
+    assert_eq!(ratings, vec![(100, 20), (146, 90)]);
+
+    let target = pool.find_title_group(11).await.unwrap();
+    assert_eq!(target.user_rating_average, Some(55.0));
+    assert_eq!(target.user_rating_count, 2);
+    assert_eq!(
+        pool.find_user_profile(&146)
+            .await
+            .unwrap()
+            .title_group_reviews,
+        Some(1)
+    );
+}

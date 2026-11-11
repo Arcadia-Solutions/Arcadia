@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                SELECT DISTINCT ON (tgh.title_group_id)\n                    tgh.title_group_id AS \"id!\",\n                    tgh.title_group_name AS \"name!\",\n                    tgh.title_group_covers AS \"covers!\",\n                    tgh.title_group_category AS \"category!: _\",\n                    tgh.title_group_content_type AS \"content_type!: _\",\n                    tgh.title_group_tag_names AS \"tags!\",\n                    tgh.title_group_original_release_date AS \"original_release_date\",\n                    tgh.title_group_original_release_date_only_year_known AS \"original_release_date_only_year_known!\",\n                    tgh.title_group_platform AS \"platform!: _\",\n                    '[]'::jsonb AS \"edition_groups!: _\",\n                    '[]'::jsonb AS \"affiliated_artists!: _\",\n                    CASE\n                        WHEN tgh.title_group_series_id IS NOT NULL THEN jsonb_build_object('id', tgh.title_group_series_id, 'name', tgh.title_group_series_name)\n                        ELSE NULL\n                    END AS \"series: _\"\n                FROM subscriptions_title_group_comments s\n                JOIN title_group_hierarchy_lite tgh ON tgh.title_group_id = s.title_group_id\n                WHERE s.user_id = $1\n                ORDER BY tgh.title_group_id\n                LIMIT $2 OFFSET $3\n            ",
+  "query": "\n            SELECT DISTINCT ON (title_group_id)\n                title_group_id AS \"id!\",\n                title_group_name AS \"name!\",\n                title_group_covers AS \"covers!\",\n                title_group_category AS \"category!: _\",\n                title_group_content_type AS \"content_type!: _\",\n                title_group_tag_names AS \"tags!\",\n                title_group_original_release_date AS \"original_release_date\",\n                title_group_original_release_date_only_year_known AS \"original_release_date_only_year_known!\",\n                title_group_platform AS \"platform!: _\",\n                '[]'::jsonb AS \"edition_groups!: _\",\n                '[]'::jsonb AS \"affiliated_artists!: _\",\n                CASE\n                    WHEN title_group_series_id IS NOT NULL THEN jsonb_build_object('id', title_group_series_id, 'name', title_group_series_name)\n                    ELSE NULL\n                END AS \"series: _\",\n                tg.user_rating_average,\n                tg.user_rating_count\n            FROM title_group_hierarchy_lite\n            JOIN title_groups tg ON tg.id = title_group_id\n            WHERE title_group_id = ANY($1)\n            ",
   "describe": {
     "columns": [
       {
@@ -229,13 +229,33 @@
         "name": "series: _",
         "type_info": "Jsonb",
         "origin": "Expression"
+      },
+      {
+        "ordinal": 12,
+        "name": "user_rating_average",
+        "type_info": "Float4",
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "user_rating_average"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "user_rating_count",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "user_rating_count"
+          }
+        }
       }
     ],
     "parameters": {
       "Left": [
-        "Int4",
-        "Int8",
-        "Int8"
+        "Int4Array"
       ]
     },
     "nullable": [
@@ -250,8 +270,10 @@
       true,
       null,
       null,
-      null
+      null,
+      true,
+      false
     ]
   },
-  "hash": "0e1ebdac1caa25c18bc1893ee2542d6ccc6dc820e68a6548124b0861474e247f"
+  "hash": "e85eeadb7b04cafdfb339890170b477c7342e5aefaf088ef39f79efc4ee2240e"
 }

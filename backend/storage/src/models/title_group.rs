@@ -10,6 +10,7 @@ use super::{
     edition_group::{EditionGroupHierarchy, EditionGroupHierarchyLite, EditionGroupInfoLite},
     series::SeriesLite,
     title_group_comment::TitleGroupCommentHierarchy,
+    title_group_review::TitleGroupReviewHierarchy,
 };
 use crate::models::{
     collage::CollageSearchResult, entity::AffiliatedEntityHierarchy, torrent::Language,
@@ -175,6 +176,9 @@ pub struct TitleGroup {
     pub public_ratings: Value, // {service: rating}
     pub series_id: Option<i64>,
     pub screenshots: Vec<String>,
+    /// mean of the ratings of the title group's reviews, None when there is none
+    pub user_rating_average: Option<f32>,
+    pub user_rating_count: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -240,6 +244,8 @@ pub struct TitleGroupHierarchyLite {
     pub affiliated_artists: Json<Vec<AffiliatedArtistLite>>,
     #[schema(value_type = Option<SeriesLite>)]
     pub series: Option<Json<SeriesLite>>,
+    pub user_rating_average: Option<f32>,
+    pub user_rating_count: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
@@ -282,6 +288,9 @@ pub struct TitleGroupAndAssociatedData {
     pub affiliated_artists: Vec<AffiliatedArtistHierarchy>,
     pub affiliated_entities: Vec<AffiliatedEntityHierarchy>,
     pub title_group_comments: Vec<TitleGroupCommentHierarchy>,
+    pub title_group_reviews: Vec<TitleGroupReviewHierarchy>,
+    /// the review of the requesting user, also part of `title_group_reviews`
+    pub own_title_group_review: Option<TitleGroupReviewHierarchy>,
     pub torrent_requests: Vec<TorrentRequestHierarchyLite>,
     pub is_subscribed_to_torrents: bool,
     pub is_subscribed_to_comments: bool,

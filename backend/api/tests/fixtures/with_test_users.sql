@@ -1,6 +1,6 @@
 -- Basic user for read operations and permission denial tests
 INSERT INTO users (id, username, email, password_hash, registered_from_ip, passkey, class_name, css_sheet_name, permissions)
-VALUES (100, 'user_basic', 'test_user@testdomain.com', '$argon2id$v=19$m=19456,t=2,p=1$WM6V9pJ2ya7+N+NNIUtolg$n128u9idizCHLwZ9xhKaxOttLaAVZZgvfRZlRAnfyKk', '10.10.4.88', 'd2037c66dd3e13044e0d2f9b891c3837', 'newbie', 'arcadia', '{download_torrent,upload_torrent,create_torrent_request,create_forum_thread,create_forum_post,create_forum_poll_vote}');
+VALUES (100, 'user_basic', 'test_user@testdomain.com', '$argon2id$v=19$m=19456,t=2,p=1$WM6V9pJ2ya7+N+NNIUtolg$n128u9idizCHLwZ9xhKaxOttLaAVZZgvfRZlRAnfyKk', '10.10.4.88', 'd2037c66dd3e13044e0d2f9b891c3837', 'newbie', 'arcadia', '{download_torrent,upload_torrent,create_torrent_request,create_forum_thread,create_forum_post,create_forum_poll_vote,rate_title_groups}');
 
 -- User with edit_artist permission
 INSERT INTO users (id, username, email, password_hash, registered_from_ip, passkey, class_name, css_sheet_name, permissions)
@@ -337,3 +337,7 @@ VALUES (173, 'user_badge_edt', 'test_user_edit_user_badge@testdomain.com', '$arg
 -- User with manage_unfilled_requests permission
 INSERT INTO users (id, username, email, password_hash, registered_from_ip, passkey, class_name, css_sheet_name, permissions)
 VALUES (174, 'user_unfill', 'test_user_manage_unfilled_requests@testdomain.com', '$argon2id$v=19$m=19456,t=2,p=1$WM6V9pJ2ya7+N+NNIUtolg$n128u9idizCHLwZ9xhKaxOttLaAVZZgvfRZlRAnfyKk', '10.10.4.88', 'd2037c66dd3e13044e0d2f9b891c38fc', 'newbie', 'arcadia', '{manage_unfilled_requests}');
+
+-- User with delete_title_group_review permission
+INSERT INTO users (id, username, email, password_hash, registered_from_ip, passkey, class_name, css_sheet_name, permissions)
+VALUES (175, 'user_del_tgr', 'test_user_delete_title_group_review@testdomain.com', '$argon2id$v=19$m=19456,t=2,p=1$WM6V9pJ2ya7+N+NNIUtolg$n128u9idizCHLwZ9xhKaxOttLaAVZZgvfRZlRAnfyKk', '10.10.4.88', 'd2037c66dd3e13044e0d2f9b891c3a75', 'newbie', 'arcadia', '{delete_title_group_review}');

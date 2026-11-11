@@ -1,44 +1,44 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                tg.id,\n                tg.name,\n                tg.covers,\n                tg.category AS \"category: _\",\n                tg.content_type AS \"content_type: _\",\n                ARRAY(\n                    SELECT t.name\n                    FROM title_group_applied_tags tat\n                    JOIN title_group_tags t ON t.id = tat.tag_id\n                    WHERE tat.title_group_id = tg.id AND t.deleted_at IS NULL\n                ) AS \"tags!\",\n                tg.original_release_date,\n                tg.original_release_date_only_year_known,\n                tg.platform AS \"platform: _\",\n                '[]'::jsonb AS \"edition_groups!: _\",\n                '[]'::jsonb AS \"affiliated_artists!: _\",\n                CASE\n                    WHEN s.id IS NOT NULL THEN jsonb_build_object('id', s.id, 'name', s.name)\n                END AS \"series: _\"\n            FROM title_groups tg\n            LEFT JOIN series s ON s.id = tg.series_id\n            WHERE ($1::TIMESTAMPTZ IS NULL OR tg.created_at >= $1)\n              AND ($2::TIMESTAMPTZ IS NULL OR tg.created_at < $2)\n              AND NOT EXISTS (\n                  SELECT 1 FROM torrents t\n                  JOIN edition_groups eg ON eg.id = t.edition_group_id\n                  WHERE eg.title_group_id = tg.id AND t.deleted_at IS NULL\n              )\n              AND NOT EXISTS (\n                  SELECT 1 FROM torrent_requests tr WHERE tr.title_group_id = tg.id\n              )\n            ORDER BY tg.created_at\n            ",
+  "query": "\n                SELECT DISTINCT ON (tgh.title_group_id)\n                    tgh.title_group_id AS \"id!\",\n                    tgh.title_group_name AS \"name!\",\n                    tgh.title_group_covers AS \"covers!\",\n                    tgh.title_group_category AS \"category!: _\",\n                    tgh.title_group_content_type AS \"content_type!: _\",\n                    tgh.title_group_tag_names AS \"tags!\",\n                    tgh.title_group_original_release_date AS \"original_release_date\",\n                    tgh.title_group_original_release_date_only_year_known AS \"original_release_date_only_year_known!\",\n                    tgh.title_group_platform AS \"platform!: _\",\n                    '[]'::jsonb AS \"edition_groups!: _\",\n                    '[]'::jsonb AS \"affiliated_artists!: _\",\n                    CASE\n                        WHEN tgh.title_group_series_id IS NOT NULL THEN jsonb_build_object('id', tgh.title_group_series_id, 'name', tgh.title_group_series_name)\n                        ELSE NULL\n                    END AS \"series: _\",\n                    tg.user_rating_average,\n                    tg.user_rating_count\n                FROM subscriptions_title_group_torrents s\n                JOIN title_group_hierarchy_lite tgh ON tgh.title_group_id = s.title_group_id\n                JOIN title_groups tg ON tg.id = tgh.title_group_id\n                WHERE s.user_id = $1\n                ORDER BY tgh.title_group_id\n                LIMIT $2 OFFSET $3\n            ",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "id",
+        "name": "id!",
         "type_info": "Int4",
         "origin": {
           "Table": {
-            "table": "title_groups",
-            "name": "id"
+            "table": "title_group_hierarchy_lite",
+            "name": "title_group_id"
           }
         }
       },
       {
         "ordinal": 1,
-        "name": "name",
+        "name": "name!",
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "title_groups",
-            "name": "name"
+            "table": "title_group_hierarchy_lite",
+            "name": "title_group_name"
           }
         }
       },
       {
         "ordinal": 2,
-        "name": "covers",
+        "name": "covers!",
         "type_info": "TextArray",
         "origin": {
           "Table": {
-            "table": "title_groups",
-            "name": "covers"
+            "table": "title_group_hierarchy_lite",
+            "name": "title_group_covers"
           }
         }
       },
       {
         "ordinal": 3,
-        "name": "category: _",
+        "name": "category!: _",
         "type_info": {
           "Custom": {
             "name": "title_group_category_enum",
@@ -71,14 +71,14 @@
         },
         "origin": {
           "Table": {
-            "table": "title_groups",
-            "name": "category"
+            "table": "title_group_hierarchy_lite",
+            "name": "title_group_category"
           }
         }
       },
       {
         "ordinal": 4,
-        "name": "content_type: _",
+        "name": "content_type!: _",
         "type_info": {
           "Custom": {
             "name": "content_type_enum",
@@ -99,8 +99,8 @@
         },
         "origin": {
           "Table": {
-            "table": "title_groups",
-            "name": "content_type"
+            "table": "title_group_hierarchy_lite",
+            "name": "title_group_content_type"
           }
         }
       },
@@ -108,7 +108,12 @@
         "ordinal": 5,
         "name": "tags!",
         "type_info": "VarcharArray",
-        "origin": "Expression"
+        "origin": {
+          "Table": {
+            "table": "title_group_hierarchy_lite",
+            "name": "title_group_tag_names"
+          }
+        }
       },
       {
         "ordinal": 6,
@@ -116,25 +121,25 @@
         "type_info": "Date",
         "origin": {
           "Table": {
-            "table": "title_groups",
-            "name": "original_release_date"
+            "table": "title_group_hierarchy_lite",
+            "name": "title_group_original_release_date"
           }
         }
       },
       {
         "ordinal": 7,
-        "name": "original_release_date_only_year_known",
+        "name": "original_release_date_only_year_known!",
         "type_info": "Bool",
         "origin": {
           "Table": {
-            "table": "title_groups",
-            "name": "original_release_date_only_year_known"
+            "table": "title_group_hierarchy_lite",
+            "name": "title_group_original_release_date_only_year_known"
           }
         }
       },
       {
         "ordinal": 8,
-        "name": "platform: _",
+        "name": "platform!: _",
         "type_info": {
           "Custom": {
             "name": "platform_enum",
@@ -202,8 +207,8 @@
         },
         "origin": {
           "Table": {
-            "table": "title_groups",
-            "name": "platform"
+            "table": "title_group_hierarchy_lite",
+            "name": "title_group_platform"
           }
         }
       },
@@ -224,28 +229,53 @@
         "name": "series: _",
         "type_info": "Jsonb",
         "origin": "Expression"
+      },
+      {
+        "ordinal": 12,
+        "name": "user_rating_average",
+        "type_info": "Float4",
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "user_rating_average"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "user_rating_count",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "user_rating_count"
+          }
+        }
       }
     ],
     "parameters": {
       "Left": [
-        "Timestamptz",
-        "Timestamptz"
+        "Int4",
+        "Int8",
+        "Int8"
       ]
     },
     "nullable": [
-      false,
-      false,
-      false,
       true,
-      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      null,
+      null,
       null,
       true,
-      false,
-      true,
-      null,
-      null,
-      null
+      false
     ]
   },
-  "hash": "4952ed04db9231bcb8eac898798c8e85b821972768c6d1dde37aa579fed28562"
+  "hash": "594a513c3d6fb1efdc9c9c8a91a144ffde3fe2a36206eeffe00c3de8b42e49c6"
 }

@@ -26,12 +26,20 @@
       </template>
     </div>
     <Dialog closeOnEscape modal :header="t('title_group.rating', 2)" v-model:visible="reviewsVisible" class="reviews-dialog">
-      <div class="review-filters">
-        <InputNumber v-model="minimumRating" :min="0" :max="100" :placeholder="t('title_group.minimum_rating')" size="small" />
-        <InputNumber v-model="maximumRating" :min="0" :max="100" :placeholder="t('title_group.maximum_rating')" size="small" />
-        <InputText v-model="content" :placeholder="t('general.content')" size="small" @keyup.enter="fetchReviews(1)" />
-        <Button :label="t('general.search')" size="small" :loading @click="fetchReviews(1)" />
-      </div>
+      <ContentContainer class="review-filters-container">
+        <div class="review-filters">
+          <label>
+            {{ t('title_group.minimum_rating') }}
+            <InputNumber v-model="minimumRating" :min="0" :max="100" showButtons :inputStyle="{ width: '4em' }" size="small" />
+          </label>
+          <label>
+            {{ t('title_group.maximum_rating') }}
+            <InputNumber v-model="maximumRating" :min="0" :max="100" showButtons :inputStyle="{ width: '4em' }" size="small" />
+          </label>
+          <InputText v-model="content" :placeholder="t('title_group.search_rating_text')" size="small" @keyup.enter="fetchReviews(1)" />
+          <Button :label="t('general.search')" size="small" :loading @click="fetchReviews(1)" />
+        </div>
+      </ContentContainer>
       <PaginatedResults v-if="reviews" :totalItems :pageSize :initialPage="page" :totalPages @changePage="fetchReviews($event.page)">
         <TitleGroupReviews :reviews @deleted="reviewDeleted" />
       </PaginatedResults>
@@ -128,10 +136,19 @@ onMounted(() => {
 })
 </script>
 <style scoped>
+.review-filters-container {
+  margin-bottom: 10px;
+}
 .review-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  align-items: center;
+  gap: 15px;
+  label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
 }
 .ratings-component {
   display: flex;

@@ -387,6 +387,7 @@
     "supported_sources": "Supported sources:",
     "minimum_rating": "Minimum rating",
     "maximum_rating": "Maximum rating",
+    "search_rating_text": "Search rating text",
     "latest_title_group_comment": "Latest title group comment | Latest title group comments",
     "description": "Title description",
     "title": "Title",

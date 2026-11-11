@@ -184,6 +184,10 @@ onMounted(() => {
 .vote-link {
   font-style: italic;
 }
+a.vote-count:hover,
+.vote-link:hover {
+  color: var(--color-primary);
+}
 </style>
 <style>
 .reviews-dialog {

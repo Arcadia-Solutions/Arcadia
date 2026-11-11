@@ -1,0 +1,51 @@
+# Use this file to list revs that git blame should skip. This can be useful for
+# bulk moves/renames, formatting-only changes that touch a lot of files, etc.
+# The commits in this file are ordered, so that the most recent blame-skipped
+# commit is furthest down in the file.
+#
+# To ensure this is picked up by your git, run:
+#
+# ```sh
+# git config blame.ignoreRevsFile .git-blame-ignore-revs
+# ```
+#
+# GitHub/GitLab blame UIs recognize this file automatically.
+
+# 2025-04-30: prettier
+8d3cfe928506b7d4862ff09a8d18d40255ef20bc
+
+# 2025-05-17: apply formatter
+2a3ef953887a3bb2a7e55fb099f85ef90905f6b9
+
+# 2025-06-02: format  using prettier
+0592d72dcb44b65b8d1b94501de62c7d7cd28585
+
+# 2025-06-13: formatted files with new prettier rule
+7103ba87c63e801c436e6895e67b44c36d62bb2d
+
+# 2025-06-17: style: fmt
+1aa47c7007a28ed9a274be73f64349219436dc04
+
+# 2025-06-17: style: format
+b692d235b4e9bccb7acc5e91cfdcbf2613c0df7e
+
+# 2025-06-30: chore: fmt
+a18a4c75aba56e6f76d4b7f95d207749709c50c8
+
+# 2025-06-30: chore: fmt
+dac41cb5a265e8ef7b6a0d777e8485da11dbfd85
+
+# 2025-08-13: fixtures: `extras` formatting
+2ecbe94355b781c032837cd5018cd886f4c6e894
+
+# 2025-08-13: applied cargo fmt
+9a5da79a62ec36d435cc5048312ca8c2158d9fcb
+
+# 2025-12-31: chore: `cargo fmt`
+a4d906b1b4bc54e41c5b6a6de1a3ef44876586f9
+
+# 2026-11-06: chore: switch rustfmt to edition 2024 and drop the stale 1.86 pin in the CI fmt jobs
+0ecd8468a5e504fa04ca66b7156b18f6bb694fa1
+
+# 2026-11-11: refactor: shrink routes.rs imports with a handlers glob import
+9fbca741f033ed35c8ec7ebc2fb08d87bafffb45

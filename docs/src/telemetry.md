@@ -61,4 +61,14 @@ The Arcadia dashboard provides real-time visibility into:
 
 ## Production Reverse Proxy & HTTPS
 
-To access Grafana securely in production, enable the Grafana block in `Caddyfile` (pre-configured in [`Caddyfile.example`](https://github.com/Arcadia-Solutions/arcadia/blob/main/Caddyfile.example)).
+To access Grafana securely in production, enable the Grafana block in `Caddyfile` (pre-configured in [`Caddyfile.example`](https://github.com/Arcadia-Solutions/arcadia/blob/main/Caddyfile.example)), and uncomment its `@allowed` matcher to restrict the dashboards to your management IPs.
+
+`compose.yml` also publishes Grafana on port `3000` of the host, which bypasses Caddy's HTTPS and IP filter. Once Caddy serves it, stop publishing that port in `compose.override.yml`:
+
+```yaml
+services:
+  otel-lgtm:
+    ports: !reset []
+```
+
+The OTLP collector (`4317`) is only reachable inside the Docker network: keep it that way, it accepts data without authentication.

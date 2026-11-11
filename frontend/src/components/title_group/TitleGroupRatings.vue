@@ -136,6 +136,6 @@ onMounted(() => {
 </style>
 <style>
 .reviews-dialog {
-  width: 50vw;
+  width: 70vw;
 }
 </style>

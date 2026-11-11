@@ -1,6 +1,8 @@
 <template>
   <div v-if="reviews.length === 0" class="no-rating">{{ t('title_group.no_ratings') }}</div>
-  <TitleGroupReview v-for="review in reviews" :key="review.id" :review @delete="reviewToDelete = review.id" />
+  <div class="reviews">
+    <TitleGroupReview v-for="review in reviews" :key="review.id" :review @delete="reviewToDelete = review.id" />
+  </div>
   <Dialog closeOnEscape modal :header="t('title_group.delete_review')" :visible="reviewToDelete !== null" @update:visible="reviewToDelete = null">
     <DeleteDialog
       v-if="reviewToDelete !== null"
@@ -41,5 +43,16 @@ const reviewDeleted = () => {
 <style scoped>
 .no-rating {
   opacity: 0.7;
+}
+.reviews {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: start;
+  gap: 10px;
+}
+@media (max-width: 767px) {
+  .reviews {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

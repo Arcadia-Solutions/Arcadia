@@ -19,7 +19,7 @@ use arcadia_storage::{
     tag = "Search",
     path = "/api/search/title-group-reviews/user",
     params (UserTitleGroupReviewSearchQuery),
-    description = "Every title group review written by a user, most recent first",
+    description = "Search the title group reviews written by a user",
     responses(
         (status = 200, description = "Successfully got the title group reviews of the user", body=PaginatedResults<TitleGroupReviewWithTitleGroup>),
     )

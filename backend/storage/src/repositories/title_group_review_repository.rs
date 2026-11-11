@@ -1,7 +1,10 @@
 use crate::{
     connection_pool::ConnectionPool,
     models::{
+        artist::AffiliatedArtistLite,
         common::PaginatedResults,
+        series::SeriesLite,
+        title_group::{ContentType, Platform, TitleGroupCategory, TitleGroupHierarchyLite},
         title_group_review::{
             EditedTitleGroupReview, TitleGroupReview, TitleGroupReviewHierarchy,
             TitleGroupReviewSearchQuery, TitleGroupReviewWithTitleGroup,
@@ -11,7 +14,7 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use sqlx::PgConnection;
+use sqlx::{PgConnection, types::Json};
 
 impl ConnectionPool {
     pub async fn create_title_group_review(
@@ -239,8 +242,6 @@ impl ConnectionPool {
                 ORDER BY
                     CASE WHEN $7 = 'created_at' AND $8 = 'asc' THEN r.created_at END ASC,
                     CASE WHEN $7 = 'created_at' AND $8 = 'desc' THEN r.created_at END DESC,
-                    CASE WHEN $7 = 'updated_at' AND $8 = 'asc' THEN r.updated_at END ASC,
-                    CASE WHEN $7 = 'updated_at' AND $8 = 'desc' THEN r.updated_at END DESC,
                     CASE WHEN $7 = 'rating' AND $8 = 'asc' THEN r.rating END ASC,
                     CASE WHEN $7 = 'rating' AND $8 = 'desc' THEN r.rating END DESC,
                     r.id DESC
@@ -282,7 +283,7 @@ impl ConnectionPool {
         })
     }
 
-    /// Every title group review written by a user, most recent first.
+    /// The reviews written by a user matching the query, ties broken by the most recent first.
     pub async fn search_user_title_group_reviews(
         &self,
         form: &UserTitleGroupReviewSearchQuery,
@@ -290,28 +291,102 @@ impl ConnectionPool {
         let limit = form.page_size as i64;
         let offset = (form.page as i64 - 1).max(0) * limit;
 
-        let results = sqlx::query_as!(
-            TitleGroupReviewWithTitleGroup,
+        let rows = sqlx::query!(
             r#"
                 SELECT
-                    r.id, r.title_group_id, tg.name AS title_group_name, r.user_id, r.rating,
-                    r.review, r.created_at, r.updated_at
+                    r.id, r.user_id, r.rating, r.review, r.created_at, r.updated_at,
+                    tg.id AS title_group_id,
+                    tg.name AS title_group_name,
+                    tg.covers,
+                    tg.category AS "category: TitleGroupCategory",
+                    tg.content_type AS "content_type: ContentType",
+                    tg.original_release_date,
+                    tg.original_release_date_only_year_known,
+                    tg.platform AS "platform: Platform",
+                    tg.user_rating_average,
+                    tg.user_rating_count,
+                    COALESCE((
+                        SELECT ARRAY_AGG(tag.name ORDER BY tag.name)
+                        FROM title_group_applied_tags applied_tag
+                        JOIN title_group_tags tag ON tag.id = applied_tag.tag_id
+                        WHERE applied_tag.title_group_id = tg.id
+                    ), '{}') AS "tags!",
+                    COALESCE((
+                        SELECT jsonb_agg(jsonb_build_object('artist_id', a.id, 'name', a.name))
+                        FROM affiliated_artists aa
+                        JOIN artists a ON a.id = aa.artist_id
+                        WHERE aa.title_group_id = tg.id
+                    ), '[]'::jsonb) AS "affiliated_artists!: Json<Vec<AffiliatedArtistLite>>",
+                    CASE WHEN s.id IS NOT NULL
+                        THEN jsonb_build_object('id', s.id, 'name', s.name)
+                    END AS "series: Json<SeriesLite>"
                 FROM title_group_reviews r
                 JOIN title_groups tg ON tg.id = r.title_group_id
+                LEFT JOIN series s ON s.id = tg.series_id
                 WHERE r.user_id = $1
-                ORDER BY r.created_at DESC
-                LIMIT $2 OFFSET $3
+                  AND r.rating BETWEEN $2 AND $3
+                  AND COALESCE(r.review, '') ILIKE '%' || $4 || '%'
+                ORDER BY
+                    CASE WHEN $7 = 'created_at' AND $8 = 'asc' THEN r.created_at END ASC,
+                    CASE WHEN $7 = 'created_at' AND $8 = 'desc' THEN r.created_at END DESC,
+                    CASE WHEN $7 = 'rating' AND $8 = 'asc' THEN r.rating END ASC,
+                    CASE WHEN $7 = 'rating' AND $8 = 'desc' THEN r.rating END DESC,
+                    r.id DESC
+                LIMIT $5 OFFSET $6
             "#,
             form.user_id,
+            form.minimum_rating,
+            form.maximum_rating,
+            form.content,
             limit,
-            offset
+            offset,
+            form.order_by_column.to_string(),
+            form.order_by_direction.to_string()
         )
         .fetch_all(&self.pool)
         .await?;
 
+        let results = rows
+            .into_iter()
+            .map(|row| TitleGroupReviewWithTitleGroup {
+                id: row.id,
+                user_id: row.user_id,
+                rating: row.rating,
+                review: row.review,
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+                title_group: TitleGroupHierarchyLite {
+                    id: row.title_group_id,
+                    name: row.title_group_name,
+                    covers: row.covers,
+                    category: row.category,
+                    content_type: row.content_type,
+                    tags: row.tags,
+                    original_release_date: row.original_release_date,
+                    original_release_date_only_year_known: row
+                        .original_release_date_only_year_known,
+                    platform: row.platform,
+                    edition_groups: Json(vec![]),
+                    affiliated_artists: row.affiliated_artists,
+                    series: row.series,
+                    user_rating_average: row.user_rating_average,
+                    user_rating_count: row.user_rating_count,
+                },
+            })
+            .collect();
+
         let total_items = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) AS "count!" FROM title_group_reviews WHERE user_id = $1"#,
-            form.user_id
+            r#"
+                SELECT COUNT(*) AS "count!"
+                FROM title_group_reviews
+                WHERE user_id = $1
+                  AND rating BETWEEN $2 AND $3
+                  AND COALESCE(review, '') ILIKE '%' || $4 || '%'
+            "#,
+            form.user_id,
+            form.minimum_rating,
+            form.maximum_rating,
+            form.content
         )
         .fetch_one(&self.pool)
         .await?;

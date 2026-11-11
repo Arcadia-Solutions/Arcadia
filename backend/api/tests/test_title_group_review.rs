@@ -112,13 +112,13 @@ async fn test_create_and_edit_review_updates_aggregates(pool: PgPool) {
     assert_eq!(reviews.results[0].id, review.id);
 
     let req = test::TestRequest::get()
-        .uri("/api/search/title-group-reviews/user?user_id=100&page=1&page_size=10")
+        .uri("/api/search/title-group-reviews/user?user_id=100&order_by_column=created_at&order_by_direction=desc&page=1&page_size=10")
         .insert_header(auth_header(&user.token))
         .to_request();
     let user_reviews: PaginatedResults<TitleGroupReviewWithTitleGroup> =
         common::call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
     assert_eq!(user_reviews.total_items, 1);
-    assert_eq!(user_reviews.results[0].title_group_id, 1);
+    assert_eq!(user_reviews.results[0].title_group.id, 1);
 }
 
 #[sqlx::test(fixtures("with_test_users", "with_test_title_group"))]

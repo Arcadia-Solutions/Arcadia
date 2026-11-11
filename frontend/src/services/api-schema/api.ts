@@ -2780,8 +2780,7 @@ export interface PaginatedResultsTitleGroupReviewWithTitleGroupResultsInner {
     'id': number;
     'rating': number;
     'review'?: string | null;
-    'title_group_id': number;
-    'title_group_name': string;
+    'title_group': TitleGroupHierarchyLite;
     'updated_at': string;
     'user_id': number;
 }
@@ -4071,7 +4070,6 @@ export interface TitleGroupReviewHierarchy {
 
 export const TitleGroupReviewSearchOrderByColumn = {
     CreatedAt: 'created_at',
-    UpdatedAt: 'updated_at',
     Rating: 'rating'
 } as const;
 
@@ -4101,8 +4099,7 @@ export interface TitleGroupReviewWithTitleGroup {
     'id': number;
     'rating': number;
     'review'?: string | null;
-    'title_group_id': number;
-    'title_group_name': string;
+    'title_group': TitleGroupHierarchyLite;
     'updated_at': string;
     'user_id': number;
 }
@@ -5624,13 +5621,20 @@ export interface UserTitleGroupCommentSearchQuery {
     'page_size': number;
 }
 /**
- * Query of the paginated list of every title group review written by a user.
+ * Query of the paginated reviews written by a user, filtered like [`TitleGroupReviewSearchQuery`].
  */
 export interface UserTitleGroupReviewSearchQuery {
+    'content'?: string;
+    'maximum_rating'?: number;
+    'minimum_rating'?: number;
+    'order_by_column': TitleGroupReviewSearchOrderByColumn;
+    'order_by_direction': OrderByDirection;
     'page': number;
     'page_size': number;
     'user_id': number;
 }
+
+
 /**
  * Query of the paginated list of every torrent request comment written by a user.
  */
@@ -7482,8 +7486,13 @@ export const searchUserTitleGroupComments = async (request: SearchUserTitleGroup
 
 export interface SearchUserTitleGroupReviewsRequest {
     'user_id': number;
+    'order_by_column': TitleGroupReviewSearchOrderByColumn;
+    'order_by_direction': OrderByDirection;
     'page': number;
     'page_size': number;
+    'minimum_rating'?: number | null;
+    'maximum_rating'?: number | null;
+    'content'?: string | null;
 }
 
 
@@ -7492,7 +7501,7 @@ export const searchUserTitleGroupReviews = async (request: SearchUserTitleGroupR
     const response = await globalAxios.request<SearchUserTitleGroupReviews200Response>({
         url: `/api/search/title-group-reviews/user`,
         method: 'GET',
-        params: { 'user_id': request['user_id'], 'page': request['page'], 'page_size': request['page_size'] },
+        params: { 'user_id': request['user_id'], 'minimum_rating': request['minimum_rating'], 'maximum_rating': request['maximum_rating'], 'content': request['content'], 'order_by_column': request['order_by_column'], 'order_by_direction': request['order_by_direction'], 'page': request['page'], 'page_size': request['page_size'] },
         ...options
     });
     return response.data.data;

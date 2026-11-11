@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                SELECT\n                    r.id, r.rating, r.review, r.created_at, r.updated_at,\n                    ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS \"created_by!: UserLiteAvatar\"\n                FROM title_group_reviews r\n                JOIN users u ON u.id = r.user_id\n                WHERE r.title_group_id = $1\n                  AND r.rating BETWEEN $2 AND $3\n                  AND COALESCE(r.review, '') ILIKE '%' || $4 || '%'\n                ORDER BY\n                    CASE WHEN $7 = 'created_at' AND $8 = 'asc' THEN r.created_at END ASC,\n                    CASE WHEN $7 = 'created_at' AND $8 = 'desc' THEN r.created_at END DESC,\n                    CASE WHEN $7 = 'updated_at' AND $8 = 'asc' THEN r.updated_at END ASC,\n                    CASE WHEN $7 = 'updated_at' AND $8 = 'desc' THEN r.updated_at END DESC,\n                    CASE WHEN $7 = 'rating' AND $8 = 'asc' THEN r.rating END ASC,\n                    CASE WHEN $7 = 'rating' AND $8 = 'desc' THEN r.rating END DESC,\n                    r.id DESC\n                LIMIT $5 OFFSET $6\n            ",
+  "query": "\n                SELECT\n                    r.id, r.rating, r.review, r.created_at, r.updated_at,\n                    ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS \"created_by!: UserLiteAvatar\"\n                FROM title_group_reviews r\n                JOIN users u ON u.id = r.user_id\n                WHERE r.title_group_id = $1\n                  AND r.rating BETWEEN $2 AND $3\n                  AND COALESCE(r.review, '') ILIKE '%' || $4 || '%'\n                ORDER BY\n                    CASE WHEN $7 = 'created_at' AND $8 = 'asc' THEN r.created_at END ASC,\n                    CASE WHEN $7 = 'created_at' AND $8 = 'desc' THEN r.created_at END DESC,\n                    CASE WHEN $7 = 'rating' AND $8 = 'asc' THEN r.rating END ASC,\n                    CASE WHEN $7 = 'rating' AND $8 = 'desc' THEN r.rating END DESC,\n                    r.id DESC\n                LIMIT $5 OFFSET $6\n            ",
   "describe": {
     "columns": [
       {
@@ -86,5 +86,5 @@
       null
     ]
   },
-  "hash": "3bd04d060ea80279578f0fd990e9e430b246d519256a9d693442b263f1b55a7f"
+  "hash": "92e71cac21b4f21bb9f636c8838cb8a0fb7df2a95c3afc36a980ac936a937031"
 }

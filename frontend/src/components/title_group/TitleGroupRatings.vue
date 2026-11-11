@@ -10,9 +10,12 @@
           <a v-if="userRatingCount > 0" class="vote-count cursor-pointer" @click="openReviews">
             ({{ formatNumber(userRatingCount) }} {{ t('title_group.vote', userRatingCount) }})
           </a>
-          <a v-if="userStore.permissions.includes('rate_title_groups')" class="vote-link cursor-pointer" @click="openVoteForm">
-            {{ t(ownReview === null ? 'title_group.add_your_rating' : 'title_group.edit_your_rating') }}
-          </a>
+          <i
+            v-if="userStore.permissions.includes('rate_title_groups')"
+            v-tooltip.top="t(ownReview === null ? 'title_group.add_your_rating' : 'title_group.edit_your_rating')"
+            :class="['vote-link', 'cursor-pointer', 'pi', ownReview === null ? 'pi-plus' : 'pi-pen-to-square']"
+            @click="openVoteForm"
+          />
         </div>
       </div>
       <template v-for="rating in publicRatings" :key="rating.service">
@@ -26,28 +29,7 @@
       </template>
     </div>
     <Dialog closeOnEscape modal :header="t('title_group.rating', 2)" v-model:visible="reviewsVisible" class="reviews-dialog">
-      <ContentContainer class="review-filters-container">
-        <div class="review-filters">
-          <label>
-            {{ t('title_group.minimum_rating') }}
-            <InputNumber v-model="minimumRating" :min="0" :max="100" showButtons :inputStyle="{ width: '6.5em' }" size="small" />
-          </label>
-          <label>
-            {{ t('title_group.maximum_rating') }}
-            <InputNumber v-model="maximumRating" :min="0" :max="100" showButtons :inputStyle="{ width: '6.5em' }" size="small" />
-          </label>
-          <label>
-            {{ t('general.sort_by') }}
-            <Select v-model="orderByColumn" :options="orderByColumnOptions" optionLabel="label" optionValue="value" size="small" />
-          </label>
-          <label>
-            {{ t('general.order_by') }}
-            <Select v-model="orderByDirection" :options="getOrderByDirectionOptions(t)" optionLabel="label" optionValue="value" size="small" />
-          </label>
-          <InputText v-model="content" :placeholder="t('title_group.search_review_text')" size="small" class="content-search" @keyup.enter="fetchReviews(1)" />
-          <Button :label="t('general.search')" size="small" :loading @click="fetchReviews(1)" />
-        </div>
-      </ContentContainer>
+      <TitleGroupReviewFilters v-model="filters" :loading @search="fetchReviews(1)" />
       <PaginatedResults v-if="reviews" :totalItems :pageSize :initialPage="page" :totalPages @changePage="fetchReviews($event.page)">
         <TitleGroupReviews :reviews @deleted="reviewDeleted" />
       </PaginatedResults>
@@ -61,7 +43,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { Button, Dialog, InputNumber, InputText, Select } from 'primevue'
+import { Dialog } from 'primevue'
 import ProgressSpinner from 'primevue/progressspinner'
 import {
   OrderByDirection,
@@ -74,12 +56,13 @@ import {
 import ContentContainer from '../ContentContainer.vue'
 import PaginatedResults from '../PaginatedResults.vue'
 import { useI18n } from 'vue-i18n'
-import { formatNumber, getOrderByDirectionOptions, getRatingIcon } from '@/services/helpers'
+import { formatNumber, getRatingIcon } from '@/services/helpers'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 import { useUserStore } from '@/stores/user'
 import UserRatingDisplay from './UserRatingDisplay.vue'
 import TitleGroupReviews from './TitleGroupReviews.vue'
 import TitleGroupVoteForm from './TitleGroupVoteForm.vue'
+import TitleGroupReviewFilters, { type TitleGroupReviewFilters as Filters } from './TitleGroupReviewFilters.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -105,16 +88,13 @@ const pageSize = 12
 const page = ref(1)
 const totalItems = ref(0)
 const totalPages = computed(() => Math.ceil(totalItems.value / pageSize))
-const minimumRating = ref<number | null>(null)
-const maximumRating = ref<number | null>(null)
-const content = ref('')
-const orderByColumn = ref(TitleGroupReviewSearchOrderByColumn.CreatedAt)
-const orderByDirection = ref(OrderByDirection.Desc)
-const orderByColumnOptions = [
-  { label: t('general.created_at'), value: TitleGroupReviewSearchOrderByColumn.CreatedAt },
-  { label: t('general.updated_at'), value: TitleGroupReviewSearchOrderByColumn.UpdatedAt },
-  { label: t('title_group.rating'), value: TitleGroupReviewSearchOrderByColumn.Rating },
-]
+const filters = ref<Filters>({
+  minimum_rating: null,
+  maximum_rating: null,
+  content: '',
+  order_by_column: TitleGroupReviewSearchOrderByColumn.CreatedAt,
+  order_by_direction: OrderByDirection.Desc,
+})
 const reviews = ref<TitleGroupReviewHierarchy[]>()
 const loading = ref(false)
 const reviewsVisible = ref(false)
@@ -125,11 +105,7 @@ const fetchReviews = (newPage: number) => {
   loading.value = true
   return searchTitleGroupReviews({
     title_group_id: props.titleGroupId,
-    minimum_rating: minimumRating.value,
-    maximum_rating: maximumRating.value,
-    content: content.value,
-    order_by_column: orderByColumn.value,
-    order_by_direction: orderByDirection.value,
+    ...filters.value,
     page: newPage,
     page_size: pageSize,
   })
@@ -163,24 +139,6 @@ onMounted(() => {
 })
 </script>
 <style scoped>
-.content-search {
-  flex: 1;
-  min-width: 15em;
-}
-.review-filters-container {
-  margin-bottom: 10px;
-}
-.review-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 15px;
-  label {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-}
 .ratings-component {
   display: flex;
   justify-content: space-around;
@@ -209,7 +167,8 @@ onMounted(() => {
   font-weight: bold;
 }
 .vote-link {
-  font-style: italic;
+  margin-top: 5px;
+  font-size: 0.8em;
 }
 a.vote-count,
 .vote-link {

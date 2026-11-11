@@ -37,7 +37,10 @@ pub async fn check_and_deduct_snatch_cost(
     reward_factor: i16,
 ) -> Result<(), AnnounceError> {
     let mut tx = pool.begin().await.map_err(|e| {
-        log::error!("Failed to begin transaction: {}", e);
+        log::error!(
+            "check_and_deduct_snatch_cost failed: could not begin transaction: {}",
+            e
+        );
         AnnounceError::InternalTrackerError
     })?;
 
@@ -113,7 +116,7 @@ pub async fn check_and_deduct_snatch_cost(
     .fetch_one(&mut *tx)
     .await
     .map_err(|e| {
-        log::error!("Failed to check/deduct bonus points: {}", e);
+        log::error!("check_and_deduct_snatch_cost failed: could not check/deduct bonus points: {}", e);
         AnnounceError::InternalTrackerError
     })?;
 
@@ -137,8 +140,8 @@ pub async fn check_and_deduct_snatch_cost(
 
     // If cost > 0, user is not uploader, has not paid already, and deduction failed
     if cost > 0 && !is_uploader && !has_already_paid_activity && !deducted {
-        log::info!(
-            "check_and_deduct_snatch_cost: user=\"{}\" (id={}) has insufficient bonus points for torrent_id={}, charged={}",
+        log::error!(
+            "check_and_deduct_snatch_cost failed: user=\"{}\" (id={}) has insufficient bonus points for torrent_id={}, charged={}",
             username,
             user_id,
             torrent_id,
@@ -162,7 +165,10 @@ pub async fn check_and_deduct_snatch_cost(
         .execute(&mut *tx)
         .await
         .map_err(|e| {
-            log::error!("Failed to log snatch cost deduction: {}", e);
+            log::error!(
+                "check_and_deduct_snatch_cost failed: could not log snatch cost deduction: {}",
+                e
+            );
             AnnounceError::InternalTrackerError
         })?;
 
@@ -187,7 +193,7 @@ pub async fn check_and_deduct_snatch_cost(
                 .execute(&mut *tx)
                 .await
                 .map_err(|e| {
-                    log::error!("Failed to transfer bonus points to uploader: {}", e);
+                    log::error!("check_and_deduct_snatch_cost failed: could not transfer bonus points to uploader: {}", e);
                     AnnounceError::InternalTrackerError
                 })?;
             }
@@ -219,7 +225,7 @@ pub async fn check_and_deduct_snatch_cost(
                 .execute(&mut *tx)
                 .await
                 .map_err(|e| {
-                    log::error!("Failed to transfer bonus points to seeders: {}", e);
+                    log::error!("check_and_deduct_snatch_cost failed: could not transfer bonus points to seeders: {}", e);
                     AnnounceError::InternalTrackerError
                 })?;
             }
@@ -228,7 +234,10 @@ pub async fn check_and_deduct_snatch_cost(
     }
 
     tx.commit().await.map_err(|e| {
-        log::error!("Failed to commit transaction: {}", e);
+        log::error!(
+            "check_and_deduct_snatch_cost failed: could not commit transaction: {}",
+            e
+        );
         AnnounceError::InternalTrackerError
     })?;
 
@@ -249,7 +258,7 @@ pub async fn check_and_deduct_snatch_cost(
     {
         Ok(tg_row) => {
             log::info!(
-                "check_and_deduct_snatch_cost: user=\"{}\" (id={}), title_group=\"{:?}\" (title_group_id={:?}, torrent_id={}), cost={}, is_uploader={}, has_already_paid_activity={}, deducted={}, transfer_to={:?}",
+                "check_and_deduct_snatch_cost succeeded: user=\"{}\" (id={}), title_group=\"{:?}\" (title_group_id={:?}, torrent_id={}), cost={}, is_uploader={}, has_already_paid_activity={}, deducted={}, transfer_to={:?}",
                 username,
                 user_id,
                 tg_row.title_group_name,

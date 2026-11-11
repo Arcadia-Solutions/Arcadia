@@ -1835,8 +1835,8 @@
       "targets": [
         {
           "direction": "backward",
-          "editorMode": "builder",
-          "expr": "{service_name=\"arcadia-tracker\"} |= ``",
+          "editorMode": "code",
+          "expr": "{service_name=\"arcadia-tracker\"} |~ `${tracker_log:regex}`",
           "queryType": "range",
           "refId": "A"
         }
@@ -4460,7 +4460,21 @@
   "schemaVersion": 42,
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allValue": ".*",
+        "current": {
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "includeAll": true,
+        "label": "Tracker logs",
+        "multi": true,
+        "name": "tracker_log",
+        "query": "check_and_deduct_snatch_cost succeeded,check_and_deduct_snatch_cost failed,Rate limit warning,Inserting user,Inserting torrent,Marking torrent,Updating settings,Updating user,Updating torrent,[Setup],Graceful shutdown",
+        "type": "custom"
+      }
+    ]
   },
   "time": {
     "from": "now-2d",

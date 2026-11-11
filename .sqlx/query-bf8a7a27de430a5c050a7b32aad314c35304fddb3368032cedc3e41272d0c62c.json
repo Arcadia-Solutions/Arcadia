@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                SELECT\n                    r.id, r.title_group_id, r.user_id, r.rating, COALESCE(r.review, '') AS \"content!\", r.created_at, r.updated_at,\n                    ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS \"created_by!: UserLiteAvatar\"\n                FROM title_group_reviews r\n                JOIN users u ON u.id = r.user_id\n                WHERE r.title_group_id = $1\n                ORDER BY r.created_at\n            ",
+  "query": "\n                SELECT id, title_group_id, user_id, rating, review, created_at, updated_at\n                FROM title_group_reviews\n                WHERE user_id = $1 AND title_group_id = $2\n            ",
   "describe": {
     "columns": [
       {
@@ -49,9 +49,14 @@
       },
       {
         "ordinal": 4,
-        "name": "content!",
+        "name": "review",
         "type_info": "Text",
-        "origin": "Expression"
+        "origin": {
+          "Table": {
+            "table": "title_group_reviews",
+            "name": "review"
+          }
+        }
       },
       {
         "ordinal": 5,
@@ -74,16 +79,11 @@
             "name": "updated_at"
           }
         }
-      },
-      {
-        "ordinal": 7,
-        "name": "created_by!: UserLiteAvatar",
-        "type_info": "Record",
-        "origin": "Expression"
       }
     ],
     "parameters": {
       "Left": [
+        "Int4",
         "Int4"
       ]
     },
@@ -92,11 +92,10 @@
       false,
       false,
       false,
-      null,
+      true,
       false,
-      false,
-      null
+      false
     ]
   },
-  "hash": "9cf4a8f56b5be8055524983d3d9614e8e86d5f4a1dba0828e2d2f742818a8988"
+  "hash": "bf8a7a27de430a5c050a7b32aad314c35304fddb3368032cedc3e41272d0c62c"
 }

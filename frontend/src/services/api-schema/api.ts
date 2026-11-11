@@ -1887,10 +1887,6 @@ export interface GetTitleGroupBookmark200Response {
     'data': TitleGroupBookmark;
     'side_effects': Array<SideEffect>;
 }
-export interface GetTitleGroupReviews200Response {
-    'data': Array<TitleGroupReviewHierarchy>;
-    'side_effects': Array<SideEffect>;
-}
 export interface GetTopTorrent200Response {
     'data': PaginatedResultsTorrentHierarchyLite;
     'side_effects': Array<SideEffect>;
@@ -2756,6 +2752,23 @@ export interface PaginatedResultsTitleGroupHierarchyLiteResultsInner {
 }
 
 
+export interface PaginatedResultsTitleGroupReviewHierarchy {
+    'page': number;
+    'page_size': number;
+    'results': Array<PaginatedResultsTitleGroupReviewHierarchyResultsInner>;
+    'total_items': number;
+}
+export interface PaginatedResultsTitleGroupReviewHierarchyResultsInner {
+    /**
+     * the review text, empty when the user only rated, named like comments so it renders as one
+     */
+    'content': string;
+    'created_at': string;
+    'created_by': UserLiteAvatar;
+    'id': number;
+    'rating': number;
+    'updated_at': string;
+}
 export interface PaginatedResultsTitleGroupReviewWithTitleGroup {
     'page': number;
     'page_size': number;
@@ -3473,6 +3486,10 @@ export interface SearchTitleGroupInfo200Response {
     'data': Array<TitleGroupLite>;
     'side_effects': Array<SideEffect>;
 }
+export interface SearchTitleGroupReviews200Response {
+    'data': PaginatedResultsTitleGroupReviewHierarchy;
+    'side_effects': Array<SideEffect>;
+}
 export interface SearchTitleGroupTags200Response {
     'data': PaginatedResultsTitleGroupTagEnriched;
     'side_effects': Array<SideEffect>;
@@ -3862,9 +3879,9 @@ export interface TitleGroupAndAssociatedData {
     'is_subscribed_to_comments': boolean;
     'is_subscribed_to_torrents': boolean;
     /**
-     * the requesting user\'s rating of this title group
+     * the requesting user\'s review of this title group
      */
-    'own_rating'?: number | null;
+    'own_review'?: TitleGroupReview | null;
     'related_threads': Array<RelatedForumThread>;
     'series'?: SeriesLite | null;
     'similar_title_groups': Array<SimilarTitleGroupLite>;
@@ -4056,9 +4073,18 @@ export interface TitleGroupReviewHierarchy {
     'created_by': UserLiteAvatar;
     'id': number;
     'rating': number;
-    'title_group_id': number;
     'updated_at': string;
-    'user_id': number;
+}
+/**
+ * Query of the paginated reviews of a title group whose rating is within `minimum_rating..=maximum_rating` and whose text contains `content` (case insensitive, empty matches every review).
+ */
+export interface TitleGroupReviewSearchQuery {
+    'content'?: string;
+    'maximum_rating'?: number;
+    'minimum_rating'?: number;
+    'page': number;
+    'page_size': number;
+    'title_group_id': number;
 }
 /**
  * A review displayed outside of its title group, on the profile of its author.
@@ -7303,6 +7329,28 @@ export const searchTitleGroupInfo = async (request: SearchTitleGroupInfoRequest,
 };
 
 
+export interface SearchTitleGroupReviewsRequest {
+    'title_group_id': number;
+    'page': number;
+    'page_size': number;
+    'minimum_rating'?: number | null;
+    'maximum_rating'?: number | null;
+    'content'?: string | null;
+}
+
+
+
+export const searchTitleGroupReviews = async (request: SearchTitleGroupReviewsRequest, options?: RawAxiosRequestConfig): Promise<SearchTitleGroupReviews200Response['data']> => {
+    const response = await globalAxios.request<SearchTitleGroupReviews200Response>({
+        url: `/api/search/title-group-reviews`,
+        method: 'GET',
+        params: { 'title_group_id': request['title_group_id'], 'minimum_rating': request['minimum_rating'], 'maximum_rating': request['maximum_rating'], 'content': request['content'], 'page': request['page'], 'page_size': request['page_size'] },
+        ...options
+    });
+    return response.data.data;
+};
+
+
 export interface SearchTitleGroupTagsRequest {
     'name': string;
     'show_deleted': boolean;
@@ -8286,19 +8334,6 @@ export const getTitleGroupInfoLite = async (id: number, options?: RawAxiosReques
         url: '/api/title-groups/lite',
         method: 'GET',
         params: { 'id': id },
-        ...options
-    });
-    return response.data.data;
-};
-
-
-
-
-export const getTitleGroupReviews = async (titleGroupId: number, options?: RawAxiosRequestConfig): Promise<GetTitleGroupReviews200Response['data']> => {
-    const response = await globalAxios.request<GetTitleGroupReviews200Response>({
-        url: '/api/title-groups/reviews',
-        method: 'GET',
-        params: { 'title_group_id': titleGroupId },
         ...options
     });
     return response.data.data;

@@ -32,7 +32,9 @@ use arcadia_storage::models::series::{SearchSeriesQuery, SeriesSearchOrderByColu
 use arcadia_storage::models::title_group_comment::{
     TitleGroupCommentSearchQuery, UserTitleGroupCommentSearchQuery,
 };
-use arcadia_storage::models::title_group_review::UserTitleGroupReviewSearchQuery;
+use arcadia_storage::models::title_group_review::{
+    TitleGroupReviewSearchQuery, UserTitleGroupReviewSearchQuery,
+};
 use arcadia_storage::models::title_group_tag::{
     SearchTitleGroupAppliedTagsQuery, SearchTitleGroupTagsQuery,
 };
@@ -220,7 +222,6 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         crate::handlers::title_groups::create_title_group_review::exec,
         crate::handlers::title_groups::edit_title_group_review::exec,
         crate::handlers::title_groups::delete_title_group_review::exec,
-        crate::handlers::title_groups::get_title_group_reviews::exec,
         crate::handlers::title_groups::create_title_group::exec,
         crate::handlers::title_groups::edit_title_group::exec,
         crate::handlers::title_groups::get_title_group::exec,
@@ -252,6 +253,7 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         crate::handlers::search::search_forum_posts::exec,
         crate::handlers::search::search_title_group_comments::exec,
         crate::handlers::search::search_user_title_group_comments::exec,
+        crate::handlers::search::search_title_group_reviews::exec,
         crate::handlers::search::search_user_title_group_reviews::exec,
         crate::handlers::search::search_user_torrent_request_comments::exec,
         crate::handlers::search::search_users::exec,
@@ -407,6 +409,7 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         ForumPostSearchQuery,
         TitleGroupCommentSearchQuery,
         UserTitleGroupCommentSearchQuery,
+        TitleGroupReviewSearchQuery,
         UserTitleGroupReviewSearchQuery,
         UserTorrentRequestCommentSearchQuery,
         DeleteForumCategoryQuery,

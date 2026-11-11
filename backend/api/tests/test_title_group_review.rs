@@ -36,10 +36,10 @@ fn get_title_group_request(token: &str, title_group_id: i32) -> actix_http::Requ
         .to_request()
 }
 
-fn get_title_group_reviews_request(token: &str, title_group_id: i32) -> actix_http::Request {
+fn search_reviews_request(token: &str, parameters: &str) -> actix_http::Request {
     test::TestRequest::get()
         .uri(&format!(
-            "/api/title-groups/reviews?title_group_id={title_group_id}"
+            "/api/search/title-group-reviews?page=1&page_size=10&{parameters}"
         ))
         .insert_header(auth_header(token))
         .to_request()
@@ -99,16 +99,17 @@ async fn test_create_and_edit_review_updates_aggregates(pool: PgPool) {
     assert_eq!(title_group.title_group.user_rating_average, Some(60.0));
     assert_eq!(title_group.title_group.user_rating_count, 1);
     assert_eq!(title_group.title_group_comments[0].author_rating, Some(60));
-    assert_eq!(title_group.own_rating, Some(60));
+    assert_eq!(title_group.own_review.map(|review| review.rating), Some(60));
 
-    let reviews: Vec<TitleGroupReviewHierarchy> = common::call_and_read_body_json_with_status(
-        &service,
-        get_title_group_reviews_request(&user.token, 1),
-        StatusCode::OK,
-    )
-    .await;
-    assert_eq!(reviews.len(), 1);
-    assert_eq!(reviews[0].id, review.id);
+    let reviews: PaginatedResults<TitleGroupReviewHierarchy> =
+        common::call_and_read_body_json_with_status(
+            &service,
+            search_reviews_request(&user.token, "title_group_id=1"),
+            StatusCode::OK,
+        )
+        .await;
+    assert_eq!(reviews.results.len(), 1);
+    assert_eq!(reviews.results[0].id, review.id);
 
     let req = test::TestRequest::get()
         .uri("/api/search/title-group-reviews/user?user_id=100&page=1&page_size=10")
@@ -155,13 +156,55 @@ async fn test_only_moderators_can_delete_reviews(pool: PgPool) {
     assert_eq!(title_group.title_group.user_rating_average, None);
     assert_eq!(title_group.title_group.user_rating_count, 0);
 
-    let reviews: Vec<TitleGroupReviewHierarchy> = common::call_and_read_body_json_with_status(
+    let reviews: PaginatedResults<TitleGroupReviewHierarchy> =
+        common::call_and_read_body_json_with_status(
+            &service,
+            search_reviews_request(&user.token, "title_group_id=1"),
+            StatusCode::OK,
+        )
+        .await;
+    assert_eq!(reviews.total_items, 0);
+}
+
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_title_group_reviews"
+))]
+async fn test_search_reviews_filters_by_rating_and_content(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+
+    // title group 1 has a single review, rated 80 with the text "Great"
+    for (parameters, expected_total_items) in [
+        (
+            "title_group_id=1&minimum_rating=80&maximum_rating=80&content=gReAt",
+            1,
+        ),
+        ("title_group_id=1&minimum_rating=81", 0),
+        ("title_group_id=1&maximum_rating=79", 0),
+        ("title_group_id=1&content=bad", 0),
+    ] {
+        let reviews: PaginatedResults<TitleGroupReviewHierarchy> =
+            common::call_and_read_body_json_with_status(
+                &service,
+                search_reviews_request(&user.token, parameters),
+                StatusCode::OK,
+            )
+            .await;
+        assert_eq!(reviews.total_items, expected_total_items, "{parameters}");
+    }
+
+    let response = test::call_service(
         &service,
-        get_title_group_reviews_request(&user.token, 1),
-        StatusCode::OK,
+        search_reviews_request(
+            &user.token,
+            "title_group_id=1&minimum_rating=60&maximum_rating=40",
+        ),
     )
     .await;
-    assert!(reviews.is_empty());
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
 #[sqlx::test(fixtures(

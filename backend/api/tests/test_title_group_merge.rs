@@ -234,15 +234,13 @@ async fn test_merge_title_groups_keeps_most_recent_review_per_user(pool: PgPool)
         StatusCode::OK
     );
 
-    let mut ratings: Vec<(i32, i16)> = pool
-        .find_title_group_reviews(11)
-        .await
-        .unwrap()
-        .iter()
-        .map(|review| (review.user_id, review.rating))
-        .collect();
-    ratings.sort();
-    assert_eq!(ratings, vec![(100, 20), (146, 90)]);
+    for (user_id, rating) in [(100, 20), (146, 90)] {
+        let review = pool
+            .find_user_title_group_review(user_id, 11)
+            .await
+            .unwrap();
+        assert_eq!(review.unwrap().rating, rating);
+    }
 
     let target = pool.find_title_group(11).await.unwrap();
     assert_eq!(target.user_rating_average, Some(55.0));

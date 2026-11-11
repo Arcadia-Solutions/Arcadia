@@ -10,6 +10,7 @@ use super::{
     edition_group::{EditionGroupHierarchy, EditionGroupHierarchyLite, EditionGroupInfoLite},
     series::SeriesLite,
     title_group_comment::TitleGroupCommentHierarchy,
+    title_group_review::TitleGroupReview,
 };
 use crate::models::{
     collage::CollageSearchResult, entity::AffiliatedEntityHierarchy, torrent::Language,
@@ -291,8 +292,8 @@ pub struct TitleGroupAndAssociatedData {
     pub is_subscribed_to_torrents: bool,
     pub is_subscribed_to_comments: bool,
     pub bookmark_id: Option<i64>,
-    /// the requesting user's rating of this title group
-    pub own_rating: Option<i16>,
+    /// the requesting user's review of this title group
+    pub own_review: Option<TitleGroupReview>,
     pub in_same_master_group: Vec<MasterGroupEntry>,
     pub collages: Vec<CollageSearchResult>,
     pub related_threads: Vec<crate::models::forum::RelatedForumThread>,

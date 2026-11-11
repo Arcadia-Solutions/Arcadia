@@ -11,7 +11,7 @@
             ({{ formatNumber(userRatingCount) }} {{ t('title_group.vote', userRatingCount) }})
           </a>
           <a v-if="userStore.permissions.includes('rate_title_groups')" class="vote-link cursor-pointer" @click="openVoteForm">
-            {{ t(ownRating === null ? 'title_group.add_your_vote' : 'title_group.edit_your_rating') }}
+            {{ t(ownReview === null ? 'title_group.add_your_vote' : 'title_group.edit_your_rating') }}
           </a>
         </div>
       </div>
@@ -26,22 +26,30 @@
       </template>
     </div>
     <Dialog closeOnEscape modal :header="t('title_group.rating', 2)" v-model:visible="reviewsVisible" class="reviews-dialog">
-      <TitleGroupReviews v-if="reviews" :reviews @deleted="reviewDeleted" />
+      <div class="review-filters">
+        <InputNumber v-model="minimumRating" :min="0" :max="100" :placeholder="t('title_group.minimum_rating')" size="small" />
+        <InputNumber v-model="maximumRating" :min="0" :max="100" :placeholder="t('title_group.maximum_rating')" size="small" />
+        <InputText v-model="content" :placeholder="t('general.content')" size="small" @keyup.enter="fetchReviews(1)" />
+        <Button :label="t('general.search')" size="small" :loading @click="fetchReviews(1)" />
+      </div>
+      <PaginatedResults v-if="reviews" :totalItems :pageSize :initialPage="page" :totalPages @changePage="fetchReviews($event.page)">
+        <TitleGroupReviews :reviews @deleted="reviewDeleted" />
+      </PaginatedResults>
       <ProgressSpinner v-else />
     </Dialog>
     <Dialog closeOnEscape modal :header="t('title_group.your_rating')" v-model:visible="voteFormVisible">
-      <TitleGroupVoteForm v-if="reviews" :titleGroupId :ownReview="reviews.find((r) => r.user_id === userStore.id)" @saved="reviewSaved" />
-      <ProgressSpinner v-else />
+      <TitleGroupVoteForm :titleGroupId :ownReview @saved="ownReviewSaved" />
     </Dialog>
   </ContentContainer>
 </template>
 <script setup lang="ts">
-import { nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { Dialog } from 'primevue'
+import { Button, Dialog, InputNumber, InputText } from 'primevue'
 import ProgressSpinner from 'primevue/progressspinner'
-import { getTitleGroupReviews, type PublicRating, type TitleGroupReviewHierarchy } from '@/services/api-schema'
+import { searchTitleGroupReviews, type PublicRating, type TitleGroupReview, type TitleGroupReviewHierarchy } from '@/services/api-schema'
 import ContentContainer from '../ContentContainer.vue'
+import PaginatedResults from '../PaginatedResults.vue'
 import { useI18n } from 'vue-i18n'
 import { formatNumber } from '@/services/helpers'
 import { useUserStore } from '@/stores/user'
@@ -58,51 +66,73 @@ const props = defineProps<{
   publicRatings: PublicRating[]
   userRatingAverage: number | null
   userRatingCount: number
-  ownRating: number | null
+  ownReview: TitleGroupReview | null
 }>()
 
 const emit = defineEmits<{
-  reviewsChanged: [TitleGroupReviewHierarchy[]]
+  ownReviewSaved: [TitleGroupReview]
+  reviewDeleted: [TitleGroupReviewHierarchy]
 }>()
 
+const pageSize = 12
+const page = ref(1)
+const totalItems = ref(0)
+const totalPages = computed(() => Math.ceil(totalItems.value / pageSize))
+const minimumRating = ref<number | null>(null)
+const maximumRating = ref<number | null>(null)
+const content = ref('')
 const reviews = ref<TitleGroupReviewHierarchy[]>()
+const loading = ref(false)
 const reviewsVisible = ref(false)
 const voteFormVisible = ref(false)
 
-const fetchReviews = () => {
-  reviews.value = undefined
-  return getTitleGroupReviews(props.titleGroupId).then((r) => (reviews.value = r))
+const fetchReviews = (newPage: number) => {
+  page.value = newPage
+  loading.value = true
+  return searchTitleGroupReviews({
+    title_group_id: props.titleGroupId,
+    minimum_rating: minimumRating.value,
+    maximum_rating: maximumRating.value,
+    content: content.value,
+    page: newPage,
+    page_size: pageSize,
+  })
+    .then((paginatedReviews) => {
+      reviews.value = paginatedReviews.results
+      totalItems.value = paginatedReviews.total_items
+    })
+    .finally(() => (loading.value = false))
 }
 
 const openReviews = () => {
   reviewsVisible.value = true
-  return fetchReviews()
+  return fetchReviews(1)
 }
 
-const openVoteForm = () => {
-  voteFormVisible.value = true
-  fetchReviews()
-}
+const openVoteForm = () => (voteFormVisible.value = true)
 
-const updateReviews = (newReviews: TitleGroupReviewHierarchy[]) => {
-  reviews.value = newReviews
-  emit('reviewsChanged', newReviews)
-}
-
-const reviewSaved = (review: TitleGroupReviewHierarchy) => {
-  const current = reviews.value ?? []
-  updateReviews(current.some((r) => r.id === review.id) ? current.map((r) => (r.id === review.id ? review : r)) : [...current, review])
+const ownReviewSaved = (review: TitleGroupReview) => {
+  emit('ownReviewSaved', review)
   voteFormVisible.value = false
 }
 
-const reviewDeleted = (reviewId: number) => updateReviews((reviews.value ?? []).filter((r) => r.id !== reviewId))
+const reviewDeleted = (review: TitleGroupReviewHierarchy) => {
+  emit('reviewDeleted', review)
+  fetchReviews(page.value)
+}
 
-// notifications link to `#review-{id}`, the reviews only exist in the dialog
+// notifications link to `#review-{id}`, the reviews only exist in the dialog, so it is opened on the
+// unfiltered first page, which may not contain the review
 onMounted(() => {
   if (route.hash.startsWith('#review-')) openReviews().then(() => nextTick(() => document.querySelector(route.hash)?.scrollIntoView()))
 })
 </script>
 <style scoped>
+.review-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 .ratings-component {
   display: flex;
   justify-content: space-around;

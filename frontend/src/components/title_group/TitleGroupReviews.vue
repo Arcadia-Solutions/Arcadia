@@ -1,13 +1,13 @@
 <template>
   <div v-if="reviews.length === 0" class="no-rating">{{ t('title_group.no_ratings') }}</div>
   <div class="reviews">
-    <TitleGroupReview v-for="review in reviews" :key="review.id" :review @delete="reviewToDelete = review.id" />
+    <TitleGroupReview v-for="review in reviews" :key="review.id" :review @delete="reviewToDelete = review" />
   </div>
   <Dialog closeOnEscape modal :header="t('title_group.delete_review')" :visible="reviewToDelete !== null" @update:visible="reviewToDelete = null">
     <DeleteDialog
       v-if="reviewToDelete !== null"
       :message="t('title_group.confirm_delete_review')"
-      :action="() => deleteTitleGroupReview(reviewToDelete!)"
+      :action="() => deleteTitleGroupReview(reviewToDelete!.id)"
       :successMessage="t('title_group.review_deleted_success')"
       @deleted="reviewDeleted"
     />
@@ -27,12 +27,12 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  deleted: [number]
+  deleted: [TitleGroupReviewHierarchy]
 }>()
 
 const { t } = useI18n()
 
-const reviewToDelete = ref<number | null>(null)
+const reviewToDelete = ref<TitleGroupReviewHierarchy | null>(null)
 
 const reviewDeleted = () => {
   if (reviewToDelete.value !== null) emit('deleted', reviewToDelete.value)

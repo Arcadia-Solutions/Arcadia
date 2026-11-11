@@ -9,6 +9,7 @@ pub mod search_series;
 pub mod search_series_lite;
 pub mod search_title_group_comments;
 pub mod search_title_group_info_lite;
+pub mod search_title_group_reviews;
 pub mod search_title_group_tags;
 pub mod search_title_group_tags_lite;
 pub mod search_torrent_requests;
@@ -58,6 +59,10 @@ pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {
     cfg.service(
         resource("/title-group-comments/user")
             .route(get().to(self::search_user_title_group_comments::exec::<R>)),
+    );
+    cfg.service(
+        resource("/title-group-reviews")
+            .route(get().to(self::search_title_group_reviews::exec::<R>)),
     );
     cfg.service(
         resource("/title-group-reviews/user")

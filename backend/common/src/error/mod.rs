@@ -331,6 +331,9 @@ pub enum Error {
     #[error("the rating must be between 0 and 100")]
     TitleGroupReviewRatingOutOfRange,
 
+    #[error("the minimum rating must not be greater than the maximum rating")]
+    TitleGroupReviewRatingRangeInverted,
+
     #[error("title group review not found")]
     TitleGroupReviewNotFound,
 
@@ -971,6 +974,7 @@ impl actix_web::ResponseError for Error {
             | Error::InvalidEmojiName
             | Error::EmojiDisabled
             | Error::TitleGroupReviewRatingOutOfRange
+            | Error::TitleGroupReviewRatingRangeInverted
             | Error::IpNotPublic => StatusCode::BAD_REQUEST,
 
             // 401 Unauthorized

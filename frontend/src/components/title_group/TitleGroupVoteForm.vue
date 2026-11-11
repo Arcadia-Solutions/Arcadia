@@ -3,7 +3,7 @@
     <Slider v-model="rating" :min="0" :max="100" class="slider" />
     <UserRatingDisplay :rating class="rating-preview" />
   </div>
-  <BBCodeEditor :initialValue="ownReview?.content ?? ''" :label="t('title_group.review_optional')" @valueChange="review = $event">
+  <BBCodeEditor :initialValue="ownReview?.review ?? ''" :label="t('title_group.review_optional')" @valueChange="review = $event">
     <template #buttons>
       <Button :label="t(ownReview ? 'general.edit' : 'general.submit')" size="small" :loading="saving" @click="save" />
     </template>
@@ -16,25 +16,23 @@ import { useI18n } from 'vue-i18n'
 import { Button, Slider } from 'primevue'
 import BBCodeEditor from '../community/BBCodeEditor.vue'
 import UserRatingDisplay from './UserRatingDisplay.vue'
-import { useUserStore } from '@/stores/user'
 import { showToast } from '@/main'
-import { createTitleGroupReview, editTitleGroupReview, type TitleGroupReviewHierarchy } from '@/services/api-schema'
+import { createTitleGroupReview, editTitleGroupReview, type TitleGroupReview } from '@/services/api-schema'
 
 const props = defineProps<{
   titleGroupId: number
-  ownReview?: TitleGroupReviewHierarchy
+  ownReview: TitleGroupReview | null
 }>()
 
 const emit = defineEmits<{
-  saved: [TitleGroupReviewHierarchy]
+  saved: [TitleGroupReview]
 }>()
 
 const { t } = useI18n()
-const userStore = useUserStore()
 
-// only read once: the parent mounts this form after the user's own review is fetched
+// only read once: the dialog mounts this form each time it opens
 const rating = ref(props.ownReview?.rating ?? 50)
-const review = ref(props.ownReview?.content ?? '')
+const review = ref(props.ownReview?.review ?? '')
 const saving = ref(false)
 
 const save = () => {
@@ -45,8 +43,7 @@ const save = () => {
     : createTitleGroupReview({ ...data, title_group_id: props.titleGroupId })
   )
     .then((saved) => {
-      const { id, username, class_name, banned, avatar, warned, custom_title } = userStore
-      emit('saved', { ...saved, content: saved.review ?? '', created_by: { id, username, class_name, banned, avatar, warned, custom_title } })
+      emit('saved', saved)
       showToast('', t('title_group.review_saved_success'), 'success', 2000)
     })
     .finally(() => (saving.value = false))

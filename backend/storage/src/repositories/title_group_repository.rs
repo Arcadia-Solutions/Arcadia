@@ -349,11 +349,7 @@ impl ConnectionPool {
                         SELECT id FROM title_group_bookmarks
                         WHERE title_group_id = $1 AND user_id = $2
                         LIMIT 1
-                    ) AS bookmark_id,
-                    (
-                        SELECT rating FROM title_group_reviews
-                        WHERE title_group_id = $1 AND user_id = $2
-                    ) AS own_rating
+                    ) AS bookmark_id
                 "#,
                 title_group_id,
                 user_id
@@ -732,9 +728,10 @@ impl ConnectionPool {
             })
             .collect();
 
-        let (related_threads, similar_title_groups) = tokio::try_join!(
+        let (related_threads, similar_title_groups, own_review) = tokio::try_join!(
             self.find_related_forum_threads_for_title_group(title_group_id),
             self.find_similar_title_groups(title_group_id),
+            self.find_user_title_group_review(user_id, title_group_id),
         )?;
 
         Ok(TitleGroupAndAssociatedData {
@@ -748,7 +745,7 @@ impl ConnectionPool {
             is_subscribed_to_torrents: subscriptions.is_subscribed_to_torrents,
             is_subscribed_to_comments: subscriptions.is_subscribed_to_comments,
             bookmark_id: subscriptions.bookmark_id,
-            own_rating: subscriptions.own_rating,
+            own_review,
             in_same_master_group: master_group_entries,
             collages,
             related_threads,

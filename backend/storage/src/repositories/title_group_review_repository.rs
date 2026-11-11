@@ -4,8 +4,8 @@ use crate::{
         common::PaginatedResults,
         title_group_review::{
             EditedTitleGroupReview, TitleGroupReview, TitleGroupReviewHierarchy,
-            TitleGroupReviewWithTitleGroup, UserCreatedTitleGroupReview,
-            UserTitleGroupReviewSearchQuery,
+            TitleGroupReviewSearchQuery, TitleGroupReviewWithTitleGroup,
+            UserCreatedTitleGroupReview, UserTitleGroupReviewSearchQuery,
         },
         user::UserLiteAvatar,
     },
@@ -191,25 +191,79 @@ impl ConnectionPool {
         .await?)
     }
 
-    pub async fn find_title_group_reviews(
+    pub async fn find_user_title_group_review(
         &self,
+        user_id: i32,
         title_group_id: i32,
-    ) -> Result<Vec<TitleGroupReviewHierarchy>> {
+    ) -> Result<Option<TitleGroupReview>> {
         Ok(sqlx::query_as!(
+            TitleGroupReview,
+            r#"
+                SELECT id, title_group_id, user_id, rating, review, created_at, updated_at
+                FROM title_group_reviews
+                WHERE user_id = $1 AND title_group_id = $2
+            "#,
+            user_id,
+            title_group_id
+        )
+        .fetch_optional(&self.pool)
+        .await?)
+    }
+
+    /// The reviews of a title group matching the query, oldest first.
+    pub async fn search_title_group_reviews(
+        &self,
+        form: &TitleGroupReviewSearchQuery,
+    ) -> Result<PaginatedResults<TitleGroupReviewHierarchy>> {
+        let limit = form.page_size as i64;
+        let offset = (form.page as i64 - 1).max(0) * limit;
+
+        let results = sqlx::query_as!(
             TitleGroupReviewHierarchy,
             r#"
                 SELECT
-                    r.id, r.title_group_id, r.user_id, r.rating, COALESCE(r.review, '') AS "content!", r.created_at, r.updated_at,
+                    r.id, r.rating, COALESCE(r.review, '') AS "content!", r.created_at, r.updated_at,
                     ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS "created_by!: UserLiteAvatar"
                 FROM title_group_reviews r
                 JOIN users u ON u.id = r.user_id
                 WHERE r.title_group_id = $1
+                  AND r.rating BETWEEN $2 AND $3
+                  AND COALESCE(r.review, '') ILIKE '%' || $4 || '%'
                 ORDER BY r.created_at
+                LIMIT $5 OFFSET $6
             "#,
-            title_group_id
+            form.title_group_id,
+            form.minimum_rating,
+            form.maximum_rating,
+            form.content,
+            limit,
+            offset
         )
         .fetch_all(&self.pool)
-        .await?)
+        .await?;
+
+        let total_items = sqlx::query_scalar!(
+            r#"
+                SELECT COUNT(*) AS "count!"
+                FROM title_group_reviews
+                WHERE title_group_id = $1
+                  AND rating BETWEEN $2 AND $3
+                  AND COALESCE(review, '') ILIKE '%' || $4 || '%'
+            "#,
+            form.title_group_id,
+            form.minimum_rating,
+            form.maximum_rating,
+            form.content
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(PaginatedResults {
+            results,
+            total_items,
+            page: form.page,
+            page_size: form.page_size,
+        })
     }
 
     /// Every title group review written by a user, most recent first.

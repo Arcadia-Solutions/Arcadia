@@ -385,6 +385,8 @@
   },
   "title_group": {
     "supported_sources": "Supported sources:",
+    "minimum_rating": "Minimum rating",
+    "maximum_rating": "Maximum rating",
     "latest_title_group_comment": "Latest title group comment | Latest title group comments",
     "description": "Title description",
     "title": "Title",

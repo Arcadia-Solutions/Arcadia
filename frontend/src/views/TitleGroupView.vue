@@ -135,9 +135,10 @@
         :publicRatings="titleGroupAndAssociatedData.title_group.public_ratings"
         :userRatingAverage="titleGroupAndAssociatedData.title_group.user_rating_average ?? null"
         :userRatingCount="titleGroupAndAssociatedData.title_group.user_rating_count"
-        :ownRating="titleGroupAndAssociatedData.own_rating ?? null"
+        :ownReview="titleGroupAndAssociatedData.own_review ?? null"
         class="ratings"
-        @reviewsChanged="reviewsChanged"
+        @ownReviewSaved="ownReviewSaved"
+        @reviewDeleted="reviewDeleted"
       />
       <ContentContainer
         v-if="userStore.permissions.includes('link_similar_title_group') || titleGroupAndAssociatedData.similar_title_groups.length != 0"
@@ -291,6 +292,7 @@ import {
   type TitleGroupAndAssociatedData,
   type TitleGroupBookmark,
   type TitleGroupCommentHierarchy,
+  type TitleGroupReview,
   type TitleGroupReviewHierarchy,
 } from '@/services/api-schema'
 
@@ -426,15 +428,28 @@ const commentDeleted = (commentId: number) => {
   titleGroupAndAssociatedData.value.title_group_comments = titleGroupAndAssociatedData.value.title_group_comments.filter((comment) => comment.id !== commentId)
 }
 
-// the reviews dialog holds the full review list, so the average and the comment authors' ratings are derived from it
-const reviewsChanged = (reviews: TitleGroupReviewHierarchy[]) => {
+// the reviews dialog is filtered and paginated, so the aggregates are updated from the changed rating alone
+const updateUserRating = (userId: number, oldRating: number | null, newRating: number | null) => {
   if (!titleGroupAndAssociatedData.value) return
-  const ratingsByUser = new Map(reviews.map((r) => [r.user_id, r.rating]))
-  titleGroupAndAssociatedData.value.own_rating = ratingsByUser.get(userStore.id) ?? null
-  titleGroupAndAssociatedData.value.title_group.user_rating_count = reviews.length
-  titleGroupAndAssociatedData.value.title_group.user_rating_average =
-    reviews.length === 0 ? null : reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-  titleGroupAndAssociatedData.value.title_group_comments.forEach((c) => (c.author_rating = ratingsByUser.get(c.created_by.id) ?? null))
+  const titleGroup = titleGroupAndAssociatedData.value.title_group
+  const ratingSum = (titleGroup.user_rating_average ?? 0) * titleGroup.user_rating_count - (oldRating ?? 0) + (newRating ?? 0)
+  titleGroup.user_rating_count += Number(newRating !== null) - Number(oldRating !== null)
+  titleGroup.user_rating_average = titleGroup.user_rating_count === 0 ? null : ratingSum / titleGroup.user_rating_count
+  titleGroupAndAssociatedData.value.title_group_comments
+    .filter((comment) => comment.created_by.id === userId)
+    .forEach((comment) => (comment.author_rating = newRating))
+}
+
+const ownReviewSaved = (review: TitleGroupReview) => {
+  if (!titleGroupAndAssociatedData.value) return
+  updateUserRating(review.user_id, titleGroupAndAssociatedData.value.own_review?.rating ?? null, review.rating)
+  titleGroupAndAssociatedData.value.own_review = review
+}
+
+const reviewDeleted = (review: TitleGroupReviewHierarchy) => {
+  if (!titleGroupAndAssociatedData.value) return
+  updateUserRating(review.created_by.id, review.rating, null)
+  if (review.created_by.id === userStore.id) titleGroupAndAssociatedData.value.own_review = null
 }
 
 const affiliatedArtistsEdited = (newAffiliatedArtists: AffiliatedArtistHierarchy[], removedAffiliatedArtistsIds: number[]) => {

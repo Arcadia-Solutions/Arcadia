@@ -37,8 +37,6 @@ pub struct EditedTitleGroupReview {
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TitleGroupReviewHierarchy {
     pub id: i64,
-    pub title_group_id: i32,
-    pub user_id: i32,
     pub rating: i16,
     /// the review text, empty when the user only rated, named like comments so it renders as one
     pub content: String,
@@ -70,6 +68,26 @@ pub struct UserTitleGroupReviewSearchQuery {
     pub user_id: i32,
     pub page: u32,
     pub page_size: u32,
+}
+
+/// Query of the paginated reviews of a title group whose rating is within
+/// `minimum_rating..=maximum_rating` and whose text contains `content` (case insensitive, empty
+/// matches every review).
+#[derive(Debug, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct TitleGroupReviewSearchQuery {
+    pub title_group_id: i32,
+    #[serde(default)]
+    pub minimum_rating: i16,
+    #[serde(default = "default_maximum_rating")]
+    pub maximum_rating: i16,
+    #[serde(default)]
+    pub content: String,
+    pub page: u32,
+    pub page_size: u32,
+}
+
+fn default_maximum_rating() -> i16 {
+    100
 }
 
 pub fn validate_rating(rating: i16) -> Result<()> {

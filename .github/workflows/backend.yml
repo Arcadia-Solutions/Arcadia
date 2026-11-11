@@ -158,7 +158,4 @@ jobs:
 
       - name: Ensure schema and query metadata are in sync
         working-directory: ./
-        run: |
-          for crate in backend/storage backend/periodic-tasks shared tracker/arcadia_tracker; do
-            (cd "$crate" && cargo sqlx prepare --check)
-          done
+        run: cargo sqlx prepare --workspace --check

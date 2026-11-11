@@ -55,6 +55,7 @@ RUN --mount=type=cache,id=arcadia-api-target,target=/app/target,sharing=locked \
 # Only the Rust sources. A blanket `COPY . .` also pulled in frontend/, docs/ and media/, so
 # editing anything there invalidated the layer below and re-linked the binary for nothing.
 COPY Cargo.toml Cargo.lock rust-toolchain ./
+COPY ./.sqlx ./.sqlx
 COPY ./backend ./backend
 COPY ./shared ./shared
 COPY ./tracker/arcadia_tracker ./tracker/arcadia_tracker

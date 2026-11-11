@@ -10,7 +10,11 @@
       :deleteCommentMethod="deleteTitleGroupComment"
       :hasEditPermission="userStore.permissions.includes('edit_title_group_comment') || (comment.created_by.id === userStore.id && !comment.locked)"
       :hasDeletePermission="userStore.permissions.includes('delete_title_group_comment')"
-    />
+    >
+      <template #top-right>
+        <UserRatingDisplay v-if="ratingsByUser.has(comment.created_by.id)" :rating="ratingsByUser.get(comment.created_by.id) ?? null" />
+      </template>
+    </GeneralComment>
   </div>
   <Form v-slot="$form" :initialValues="new_comment" :resolver @submit="onFormSubmit" validateOnSubmit :validateOnValueUpdate="false">
     <div class="new-comment">
@@ -40,7 +44,8 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import UserRatingDisplay from './UserRatingDisplay.vue'
 import GeneralComment from '../community/GeneralComment.vue'
 import { Button, Checkbox } from 'primevue'
 import BBCodeEditor from '../community/BBCodeEditor.vue'
@@ -55,12 +60,14 @@ import {
   editTitleGroupComment,
   type EditedTitleGroupComment,
   type TitleGroupCommentHierarchy,
+  type TitleGroupReviewHierarchy,
   type UserCreatedTitleGroupComment,
 } from '@/services/api-schema'
 
 const props = defineProps<{
   comments: TitleGroupCommentHierarchy[]
   isSubscribedToComments: boolean
+  reviews: TitleGroupReviewHierarchy[]
 }>()
 
 const emit = defineEmits<{
@@ -73,6 +80,7 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const route = useRoute()
+const ratingsByUser = computed(() => new Map(props.reviews.map((r) => [r.user_id, r.rating])))
 const userStore = useUserStore()
 
 const new_comment = ref<UserCreatedTitleGroupComment>({

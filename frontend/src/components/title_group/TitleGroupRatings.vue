@@ -1,6 +1,10 @@
 <template>
   <ContentContainer :containerTitle="t('title_group.rating', 2)">
     <div class="ratings-component">
+      <div class="rating">
+        <img src="/favicon.ico" alt="site logo" class="logo" />
+        <UserRatingDisplay :rating="userRatingAverage" :count="userRatingCount" />
+      </div>
       <template v-for="rating in publicRatings" :key="rating.service">
         <div class="rating" v-if="rating.service === 'tmdb'">
           <img src="/logos/external_links/tmdb.svg" alt="tmdb logo" class="logo" />
@@ -18,11 +22,14 @@ import type { PublicRating } from '@/services/api-schema'
 import ContentContainer from '../ContentContainer.vue'
 import { useI18n } from 'vue-i18n'
 import { formatNumber } from '@/services/helpers'
+import UserRatingDisplay from './UserRatingDisplay.vue'
 
 const { t } = useI18n()
 
 defineProps<{
   publicRatings: PublicRating[]
+  userRatingAverage: number | null
+  userRatingCount: number
 }>()
 </script>
 <style scoped>

@@ -2,6 +2,7 @@
   <ContentContainer class="comment-container" :id="`post-${comment.id}`">
     <template #top-right>
       <div class="actions">
+        <slot name="top-right" />
         <i
           class="pi pi-pen-to-square"
           v-if="(userStore.id === comment.created_by.id && 'locked' in comment && comment.locked === false) || hasEditPermission"

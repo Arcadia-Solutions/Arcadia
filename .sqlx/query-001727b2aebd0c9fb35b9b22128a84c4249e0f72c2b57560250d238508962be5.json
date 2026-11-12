@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE users SET title_group_ratings = title_group_ratings + 1 WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "001727b2aebd0c9fb35b9b22128a84c4249e0f72c2b57560250d238508962be5"
+}

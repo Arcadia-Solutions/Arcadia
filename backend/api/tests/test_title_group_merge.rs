@@ -214,3 +214,45 @@ async fn test_cannot_merge_title_groups_with_different_content_types(pool: PgPoo
     assert!(pool.find_title_group(10).await.is_ok());
     assert!(pool.find_title_group(12).await.is_ok());
 }
+
+// User 100 only rated the source (20), so their rating moves to the target. User 146 rated both,
+// so only their most recently updated rating (90, on the source) is kept on the target. The
+// target's cached average and count, and user 146's amount of ratings, account for the dropped one.
+#[sqlx::test(fixtures("with_test_users", "with_merge_title_groups"))]
+async fn test_merge_title_groups_keeps_most_recent_rating_per_user(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) = create_test_app_and_login(
+        pool.clone(),
+        MockRedisPool::default(),
+        TestUser::MergeTitleGroup,
+    )
+    .await;
+
+    let req = test::TestRequest::post()
+        .uri("/api/title-groups/merge?source_title_group_id=10&target_title_group_id=11")
+        .insert_header(auth_header(&user.token))
+        .to_request();
+    assert_eq!(
+        test::call_service(&service, req).await.status(),
+        StatusCode::OK
+    );
+
+    for (user_id, expected_rating) in [(100, 20), (146, 90)] {
+        let rating = pool
+            .find_user_title_group_rating(user_id, 11)
+            .await
+            .unwrap();
+        assert_eq!(rating.unwrap().rating, expected_rating);
+    }
+
+    let target = pool.find_title_group(11).await.unwrap();
+    assert_eq!(target.user_rating_average, Some(55.0));
+    assert_eq!(target.user_rating_count, 2);
+    assert_eq!(
+        pool.find_user_profile(&146)
+            .await
+            .unwrap()
+            .title_group_ratings,
+        Some(1)
+    );
+}

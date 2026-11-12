@@ -324,6 +324,7 @@ const sortByOptions = computed(() => {
     { label: t('torrent.snatched'), value: TorrentSearchOrderByColumn.TorrentSnatched },
     { label: t('torrent.seeders'), value: TorrentSearchOrderByColumn.TorrentSeeders },
     { label: t('torrent.leecher', 2), value: TorrentSearchOrderByColumn.TorrentLeechers },
+    { label: t('title_group.user_rating'), value: TorrentSearchOrderByColumn.TitleGroupUserRatingAverage },
     {
       label: `${publicArcadiaSettings.bonus_points_alias} ${t('torrent.snatch_cost')}`,
       value: TorrentSearchOrderByColumn.TorrentBonusPointsSnatchCost,

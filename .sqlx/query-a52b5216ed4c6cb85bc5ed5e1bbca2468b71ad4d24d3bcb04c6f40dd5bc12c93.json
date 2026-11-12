@@ -1,0 +1,346 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    r.id, r.user_id, r.rating, r.comment, r.created_at, r.updated_at,\n                    tg.id AS title_group_id,\n                    tg.name AS title_group_name,\n                    tg.covers,\n                    tg.category AS \"category: TitleGroupCategory\",\n                    tg.content_type AS \"content_type: ContentType\",\n                    tg.original_release_date,\n                    tg.original_release_date_only_year_known,\n                    tg.platform AS \"platform: Platform\",\n                    tg.user_rating_average,\n                    tg.user_rating_count,\n                    COALESCE((\n                        SELECT ARRAY_AGG(tag.name ORDER BY tag.name)\n                        FROM title_group_applied_tags applied_tag\n                        JOIN title_group_tags tag ON tag.id = applied_tag.tag_id\n                        WHERE applied_tag.title_group_id = tg.id\n                    ), '{}') AS \"tags!\",\n                    COALESCE((\n                        SELECT jsonb_agg(jsonb_build_object('artist_id', a.id, 'name', a.name))\n                        FROM affiliated_artists aa\n                        JOIN artists a ON a.id = aa.artist_id\n                        WHERE aa.title_group_id = tg.id\n                    ), '[]'::jsonb) AS \"affiliated_artists!: Json<Vec<AffiliatedArtistLite>>\",\n                    CASE WHEN s.id IS NOT NULL\n                        THEN jsonb_build_object('id', s.id, 'name', s.name)\n                    END AS \"series: Json<SeriesLite>\"\n                FROM title_group_ratings r\n                JOIN title_groups tg ON tg.id = r.title_group_id\n                LEFT JOIN series s ON s.id = tg.series_id\n                WHERE r.user_id = $1\n                  AND r.rating BETWEEN $2 AND $3\n                  AND COALESCE(r.comment, '') ILIKE '%' || $4 || '%'\n                ORDER BY\n                    CASE WHEN $7 = 'created_at' AND $8 = 'asc' THEN r.created_at END ASC,\n                    CASE WHEN $7 = 'created_at' AND $8 = 'desc' THEN r.created_at END DESC,\n                    CASE WHEN $7 = 'rating' AND $8 = 'asc' THEN r.rating END ASC,\n                    CASE WHEN $7 = 'rating' AND $8 = 'desc' THEN r.rating END DESC,\n                    r.id DESC\n                LIMIT $5 OFFSET $6\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "title_group_ratings",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "title_group_ratings",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "rating",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "title_group_ratings",
+            "name": "rating"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "comment",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "title_group_ratings",
+            "name": "comment"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "title_group_ratings",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "title_group_ratings",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "title_group_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "title_group_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "covers",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "covers"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "category: TitleGroupCategory",
+        "type_info": {
+          "Custom": {
+            "name": "title_group_category_enum",
+            "kind": {
+              "Enum": [
+                "Ep",
+                "Album",
+                "Single",
+                "Soundtrack",
+                "Anthology",
+                "Compilation",
+                "Remix",
+                "Bootleg",
+                "Mixtape",
+                "ConcertRecording",
+                "DjMix",
+                "FeatureFilm",
+                "ShortFilm",
+                "Game",
+                "Program",
+                "Illustrated",
+                "Periodical",
+                "Book",
+                "Article",
+                "Manual",
+                "Other"
+              ]
+            }
+          }
+        },
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "category"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "content_type: ContentType",
+        "type_info": {
+          "Custom": {
+            "name": "content_type_enum",
+            "kind": {
+              "Enum": [
+                "movie",
+                "video",
+                "tv_show",
+                "music",
+                "podcast",
+                "software",
+                "book",
+                "live_performance",
+                "collection"
+              ]
+            }
+          }
+        },
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "content_type"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "original_release_date",
+        "type_info": "Date",
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "original_release_date"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "original_release_date_only_year_known",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "original_release_date_only_year_known"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "platform: Platform",
+        "type_info": {
+          "Custom": {
+            "name": "platform_enum",
+            "kind": {
+              "Enum": [
+                "Linux",
+                "MacOS",
+                "IOS",
+                "AppleBandaiPippin",
+                "AppleII",
+                "Android",
+                "Windows",
+                "DOS",
+                "Xbox",
+                "Xbox360",
+                "XboxOne",
+                "XboxSeriesXS",
+                "Playstation",
+                "Playstation2",
+                "Playstation3",
+                "Playstation4",
+                "Playstation5",
+                "PlaystationPortable",
+                "PlaystationVita",
+                "GameBoy",
+                "GameBoyAdvance",
+                "GameBoyColor",
+                "NES",
+                "SNES",
+                "N64",
+                "ThreeDS",
+                "New3DS",
+                "DS",
+                "VirtualBoy",
+                "GameCube",
+                "Wii",
+                "WiiU",
+                "Switch",
+                "Switch2",
+                "Dreamcast",
+                "GameGear",
+                "MasterSystem",
+                "MegaDrive",
+                "Pico",
+                "Saturn",
+                "SG1000",
+                "Atari2600",
+                "Atari5200",
+                "Atari7800",
+                "AtariJaguar",
+                "AtariLynx",
+                "AtariST",
+                "AmstradCPC",
+                "BandaiWonderSwan",
+                "BandaiWonderSwanColor",
+                "Commodore64",
+                "Commodore128",
+                "CommodoreAmiga",
+                "AmigaCD32",
+                "CommodorePlus4",
+                "CommodoreVIC20"
+              ]
+            }
+          }
+        },
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "platform"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "user_rating_average",
+        "type_info": "Float4",
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "user_rating_average"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "user_rating_count",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "title_groups",
+            "name": "user_rating_count"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "tags!",
+        "type_info": "VarcharArray",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 17,
+        "name": "affiliated_artists!: Json<Vec<AffiliatedArtistLite>>",
+        "type_info": "Jsonb",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 18,
+        "name": "series: Json<SeriesLite>",
+        "type_info": "Jsonb",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int2",
+        "Int2",
+        "Text",
+        "Int8",
+        "Int8",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "a52b5216ed4c6cb85bc5ed5e1bbca2468b71ad4d24d3bcb04c6f40dd5bc12c93"
+}

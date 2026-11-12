@@ -128,7 +128,9 @@
                 "view_foreign_user_staff_notes",
                 "view_registration_ips",
                 "manage_advent_calendars",
-                "manage_unfilled_requests"
+                "manage_unfilled_requests",
+                "rate_title_groups",
+                "delete_title_group_rating"
               ]
             }
           }

@@ -680,6 +680,8 @@ impl ConnectionPool {
                 tg.original_release_date,
                 tg.original_release_date_only_year_known,
                 tg.platform AS "platform: Platform",
+                tg.user_rating_average,
+                tg.user_rating_count,
                 title_group_tags.names AS "title_group_tag_names!",
                 COALESCE((
                     SELECT jsonb_agg(jsonb_build_object('artist_id', a.id, 'name', a.name))
@@ -770,6 +772,8 @@ impl ConnectionPool {
                     edition_groups: Json(vec![]),
                     affiliated_artists: row.affiliated_artists,
                     series: row.series,
+                    user_rating_average: row.user_rating_average,
+                    user_rating_count: row.user_rating_count,
                 },
             })
             .collect();

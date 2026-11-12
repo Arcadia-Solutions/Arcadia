@@ -1,4 +1,6 @@
-use crate::{Arcadia, middlewares::auth_middleware::Authdata};
+use crate::{
+    Arcadia, middlewares::auth_middleware::Authdata, services::image_service::validate_image_url,
+};
 use actix_web::{
     HttpRequest, HttpResponse,
     web::{Data, Json},
@@ -6,7 +8,10 @@ use actix_web::{
 use arcadia_common::error::Result;
 use arcadia_shared::tracker::models::env::ArcadiaSettingsForTracker;
 use arcadia_storage::{
-    models::{arcadia_settings::ArcadiaSettings, user::UserPermission},
+    models::{
+        arcadia_settings::ArcadiaSettings, title_group_rating::validate_rating,
+        user::UserPermission,
+    },
     redis::RedisPoolInterface,
 };
 use reqwest::Method;
@@ -98,6 +103,24 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
             "global_snatch_bonus_points_reward_factor must be greater than or equal to 0"
                 .to_string(),
         ));
+    }
+
+    // every rating must get an icon, so the lowest threshold has to be 0
+    let rating_icons = &settings.rating_icons;
+    if !rating_icons.is_empty()
+        && (!rating_icons.iter().any(|icon| icon.minimum_rating == 0)
+            || rating_icons
+                .iter()
+                .any(|icon| validate_rating(icon.minimum_rating).is_err()))
+    {
+        return Err(arcadia_common::error::Error::InvalidArcadiaSettings(
+            "rating_icons must have one icon with a minimum_rating of 0 and every minimum_rating must be between 0 and 100".to_string(),
+        ));
+    }
+
+    // checked against the approved image hosts being saved, which may have just been changed
+    for rating_icon in settings.rating_icons.iter() {
+        validate_image_url(&rating_icon.icon_url, &settings.approved_image_hosts)?;
     }
 
     let updated_settings = arc.pool.update_arcadia_settings(&settings).await?;

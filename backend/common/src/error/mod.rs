@@ -328,6 +328,21 @@ pub enum Error {
     #[error("could not find title group comment")]
     CouldNotFindTitleGroupComment(#[source] sqlx::Error),
 
+    #[error("the rating must be between 0 and 100")]
+    TitleGroupRatingOutOfRange,
+
+    #[error("the minimum rating must not be greater than the maximum rating")]
+    TitleGroupRatingRangeInverted,
+
+    #[error("title group rating not found")]
+    TitleGroupRatingNotFound,
+
+    #[error("you already rated this title group")]
+    TitleGroupRatingAlreadyExists,
+
+    #[error("you must snatch or seed a torrent of this title group before rating it")]
+    TitleGroupRatingRequiresSnatchOrSeeding,
+
     #[error("error while updating title_group_comment: '{0}'")]
     ErrorWhileUpdatingTitleGroupComment(String),
 
@@ -958,6 +973,8 @@ impl actix_web::ResponseError for Error {
             | Error::EmojiNameAlreadyExists
             | Error::InvalidEmojiName
             | Error::EmojiDisabled
+            | Error::TitleGroupRatingOutOfRange
+            | Error::TitleGroupRatingRangeInverted
             | Error::IpNotPublic => StatusCode::BAD_REQUEST,
 
             // 401 Unauthorized
@@ -982,6 +999,7 @@ impl actix_web::ResponseError for Error {
             | Error::UploadsDisabled
             | Error::AdventCalendarDoorNotOpenable
             | Error::WrongAdventCalendarDoorPassphrase
+            | Error::TitleGroupRatingRequiresSnatchOrSeeding
             | Error::APIKeyScopeNotAllowed => StatusCode::FORBIDDEN,
 
             // 404 Not Found
@@ -1017,6 +1035,7 @@ impl actix_web::ResponseError for Error {
             | Error::RelatedForumThreadNotFound
             | Error::ExternalSourceNotFound(_)
             | Error::EmojiNotFound
+            | Error::TitleGroupRatingNotFound
             | Error::EmojiOrForumPostNotFound => StatusCode::NOT_FOUND,
 
             // 409 Conflict
@@ -1039,6 +1058,7 @@ impl actix_web::ResponseError for Error {
             | Error::AdventCalendarAlreadyPublished
             | Error::AdventCalendarDoorAlreadyOpened
             | Error::ReseedNotEligible(_)
+            | Error::TitleGroupRatingAlreadyExists
             | Error::ReseedAlreadyRequested => StatusCode::CONFLICT,
 
             // 502 Bad Gateway

@@ -271,9 +271,11 @@ impl ConnectionPool {
                     c.title_group_id, c.locked, c.refers_to_torrent_id, c.answers_to_comment_id,
                     u.id AS "u_id!", u.username AS "u_username!", u.class_name AS "u_class_name!",
                     u.banned AS "u_banned!", u.avatar AS "u_avatar?", u.warned AS "u_warned!",
-                    u.custom_title AS "u_custom_title?"
+                    u.custom_title AS "u_custom_title?",
+                    r.rating AS "author_rating?"
                 FROM title_group_comments c
                 JOIN users u ON u.id = c.created_by_id
+                LEFT JOIN title_group_ratings r ON r.title_group_id = c.title_group_id AND r.user_id = c.created_by_id
                 WHERE c.title_group_id = $1
                 ORDER BY c.created_at
                 "#,
@@ -650,6 +652,7 @@ impl ConnectionPool {
                     warned: row.u_warned,
                     custom_title: row.u_custom_title,
                 },
+                author_rating: row.author_rating,
             })
             .collect();
 
@@ -725,11 +728,11 @@ impl ConnectionPool {
             })
             .collect();
 
-        let related_threads = self
-            .find_related_forum_threads_for_title_group(title_group_id)
-            .await?;
-
-        let similar_title_groups = self.find_similar_title_groups(title_group_id).await?;
+        let (related_threads, similar_title_groups, own_rating) = tokio::try_join!(
+            self.find_related_forum_threads_for_title_group(title_group_id),
+            self.find_similar_title_groups(title_group_id),
+            self.find_user_title_group_rating(user_id, title_group_id),
+        )?;
 
         Ok(TitleGroupAndAssociatedData {
             title_group,
@@ -742,6 +745,7 @@ impl ConnectionPool {
             is_subscribed_to_torrents: subscriptions.is_subscribed_to_torrents,
             is_subscribed_to_comments: subscriptions.is_subscribed_to_comments,
             bookmark_id: subscriptions.bookmark_id,
+            own_rating,
             in_same_master_group: master_group_entries,
             collages,
             related_threads,
@@ -979,6 +983,7 @@ impl ConnectionPool {
                 external_links AS "external_links!: _", trailers,
                 category AS "category: _", content_type AS "content_type: _",
                 public_ratings, screenshots AS "screenshots!: _", series_id,
+                user_rating_average, user_rating_count,
                 COALESCE(
                     ARRAY(
                         SELECT t.name
@@ -1036,6 +1041,7 @@ impl ConnectionPool {
                 external_links AS "external_links!: _", trailers,
                 category AS "category: _", content_type AS "content_type: _",
                 public_ratings, screenshots AS "screenshots!: _", series_id,
+                user_rating_average, user_rating_count,
                 COALESCE(
                     ARRAY(
                         SELECT t.name
@@ -1137,6 +1143,8 @@ impl ConnectionPool {
         source_title_group_id: i32,
         target_title_group_id: i32,
     ) -> Result<()> {
+        let mut transaction = self.pool.begin().await?;
+
         // Rows that conflict with the target stay on the source and are removed by
         // ON DELETE CASCADE when the source title group is deleted at the end.
         // Move edition_groups (no unique constraint on title_group_id)
@@ -1149,7 +1157,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move title_group_applied_tags (PK on title_group_id, tag_id)
@@ -1166,7 +1174,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move affiliated_artists (UNIQUE on title_group_id, artist_id)
@@ -1183,7 +1191,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move affiliated_entities (UNIQUE on title_group_id, entity_id)
@@ -1200,7 +1208,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move title_group_comments
@@ -1213,8 +1221,48 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
+
+        // A user who rated both title groups keeps their most recently updated rating, the
+        // other one is deleted and no longer counts in their amount of ratings
+        sqlx::query!(
+            r#"
+            WITH deleted_ratings AS (
+                DELETE FROM title_group_ratings rating
+                USING title_group_ratings other_rating
+                WHERE rating.user_id = other_rating.user_id
+                  AND (
+                      (rating.title_group_id = $1 AND other_rating.title_group_id = $2
+                          AND other_rating.updated_at >= rating.updated_at)
+                      OR (rating.title_group_id = $2 AND other_rating.title_group_id = $1
+                          AND other_rating.updated_at > rating.updated_at)
+                  )
+                RETURNING rating.user_id
+            )
+            UPDATE users
+            SET title_group_ratings = title_group_ratings - 1
+            WHERE id IN (SELECT user_id FROM deleted_ratings)
+            "#,
+            source_title_group_id,
+            target_title_group_id
+        )
+        .execute(&mut *transaction)
+        .await?;
+
+        sqlx::query!(
+            r#"
+            UPDATE title_group_ratings
+            SET title_group_id = $2
+            WHERE title_group_id = $1
+            "#,
+            source_title_group_id,
+            target_title_group_id
+        )
+        .execute(&mut *transaction)
+        .await?;
+
+        Self::update_title_group_user_rating(&mut transaction, target_title_group_id).await?;
 
         // Move torrent_requests
         sqlx::query!(
@@ -1226,7 +1274,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move title_group_bookmarks
@@ -1243,7 +1291,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move subscriptions_title_group_torrents (UNIQUE on title_group_id, user_id)
@@ -1260,7 +1308,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move subscriptions_title_group_comments (UNIQUE on title_group_id, user_id)
@@ -1277,7 +1325,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move collage_entry (UNIQUE on collage_id, title_group_id, no ON DELETE CASCADE)
@@ -1292,7 +1340,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         sqlx::query!(
@@ -1304,7 +1352,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move notifications_title_group_comments
@@ -1317,7 +1365,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Move notifications_artist_title_groups
@@ -1330,7 +1378,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Append the source's covers, external_links and trailers to the target's,
@@ -1357,7 +1405,7 @@ impl ConnectionPool {
             source_title_group_id,
             target_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
 
         // Delete the now-empty source title group
@@ -1367,8 +1415,10 @@ impl ConnectionPool {
             "#,
             source_title_group_id
         )
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
+
+        transaction.commit().await?;
 
         Ok(())
     }
@@ -1430,7 +1480,9 @@ impl ConnectionPool {
                 '[]'::jsonb AS "affiliated_artists!: _",
                 CASE
                     WHEN s.id IS NOT NULL THEN jsonb_build_object('id', s.id, 'name', s.name)
-                END AS "series: _"
+                END AS "series: _",
+                tg.user_rating_average,
+                tg.user_rating_count
             FROM title_groups tg
             LEFT JOIN series s ON s.id = tg.series_id
             WHERE ($1::TIMESTAMPTZ IS NULL OR tg.created_at >= $1)
@@ -1585,6 +1637,23 @@ impl ConnectionPool {
                 UNION
                 SELECT created_by_id FROM edition_groups WHERE title_group_id = ANY($1)
             )
+            "#,
+            ids
+        )
+        .execute(&mut **tx)
+        .await?;
+
+        sqlx::query!(
+            r#"
+            UPDATE users
+            SET title_group_ratings = title_group_ratings - deleted.amount
+            FROM (
+                SELECT user_id, COUNT(*)::INT AS amount
+                FROM title_group_ratings
+                WHERE title_group_id = ANY($1)
+                GROUP BY user_id
+            ) deleted
+            WHERE users.id = deleted.user_id
             "#,
             ids
         )

@@ -1,7 +1,10 @@
 use crate::{common, mocks};
 
 use actix_web::{http::StatusCode, test};
-use arcadia_storage::{connection_pool::ConnectionPool, models::arcadia_settings::ArcadiaSettings};
+use arcadia_storage::{
+    connection_pool::ConnectionPool,
+    models::arcadia_settings::{ArcadiaSettings, RatingIcon},
+};
 use common::{
     TestUser, auth_header, call_and_read_body_json, create_test_app, create_test_app_and_login,
 };
@@ -337,6 +340,39 @@ async fn test_staff_cannot_set_reseed_requestable_after_hours_to_zero(pool: PgPo
         bonus_points_alias: "bonus points".to_string(),
         invitation_expiration_days: 3,
         reseed_requestable_after_hours: 0,
+        ..Default::default()
+    };
+
+    let req = test::TestRequest::put()
+        .insert_header(auth_header(&user.token))
+        .uri("/api/arcadia-settings")
+        .set_json(&updated_settings)
+        .to_request();
+
+    let resp = test::call_service(&service, req).await;
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+}
+
+#[sqlx::test(fixtures("with_test_users"))]
+async fn test_staff_cannot_leave_ratings_without_icon(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) = create_test_app_and_login(
+        pool,
+        MockRedisPool::default(),
+        TestUser::EditArcadiaSettings,
+    )
+    .await;
+
+    let updated_settings = ArcadiaSettings {
+        user_class_name_on_signup: "newbie".to_string(),
+        default_css_sheet_name: "arcadia".to_string(),
+        bonus_points_alias: "bonus points".to_string(),
+        invitation_expiration_days: 3,
+        reseed_requestable_after_hours: 72,
+        rating_icons: vec![RatingIcon {
+            minimum_rating: 40,
+            icon_url: "https://example.com/icon.png".to_string(),
+        }],
         ..Default::default()
     };
 

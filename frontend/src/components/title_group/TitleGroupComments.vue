@@ -10,7 +10,11 @@
       :deleteCommentMethod="deleteTitleGroupComment"
       :hasEditPermission="userStore.permissions.includes('edit_title_group_comment') || (comment.created_by.id === userStore.id && !comment.locked)"
       :hasDeletePermission="userStore.permissions.includes('delete_title_group_comment')"
-    />
+    >
+      <template #top-right>
+        <UserRatingDisplay v-if="comment.author_rating != null" :rating="comment.author_rating" />
+      </template>
+    </GeneralComment>
   </div>
   <Form v-slot="$form" :initialValues="new_comment" :resolver @submit="onFormSubmit" validateOnSubmit :validateOnValueUpdate="false">
     <div class="new-comment">
@@ -41,6 +45,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { ref } from 'vue'
+import UserRatingDisplay from './UserRatingDisplay.vue'
 import GeneralComment from '../community/GeneralComment.vue'
 import { Button, Checkbox } from 'primevue'
 import BBCodeEditor from '../community/BBCodeEditor.vue'

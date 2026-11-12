@@ -48,6 +48,8 @@ pub struct TitleGroupCommentHierarchy {
     pub refers_to_torrent_id: Option<i32>,
     pub answers_to_comment_id: Option<i64>,
     pub created_by: UserLiteAvatar,
+    /// the rating the author gave to the title group, if they rated it
+    pub author_rating: Option<i16>,
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, IntoParams)]

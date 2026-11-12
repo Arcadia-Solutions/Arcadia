@@ -493,6 +493,9 @@ pub enum TorrentSearchOrderByColumn {
     #[serde(rename = "torrent_bonus_points_snatch_cost")]
     #[strum(serialize = "torrent_bonus_points_snatch_cost")]
     TorrentBonusPointsSnatchCost,
+    #[serde(rename = "title_group_user_rating_average")]
+    #[strum(serialize = "title_group_user_rating_average")]
+    TitleGroupUserRatingAverage,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]

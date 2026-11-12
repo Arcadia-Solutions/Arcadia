@@ -67,6 +67,14 @@ const router = createRouter({
       component: () => import('../views/UserTitleGroupCommentsView.vue'),
     },
     {
+      path: '/user/:id/title-group-ratings',
+      name: 'UserTitleGroupRatings',
+      meta: {
+        documentTitle: 'Title group ratings',
+      },
+      component: () => import('../views/UserTitleGroupRatingsView.vue'),
+    },
+    {
       path: '/title-group-tags',
       name: 'TitleGroupTags',
       meta: {

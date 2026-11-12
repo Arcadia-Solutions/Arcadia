@@ -734,9 +734,12 @@ impl ConnectionPool {
              CASE
                 WHEN title_group_series_id IS NOT NULL THEN jsonb_build_object('id', title_group_series_id, 'name', title_group_series_name)
                 ELSE NULL
-             END AS "series: _"
+             END AS "series: _",
+             tg.user_rating_average,
+             tg.user_rating_count
 
              FROM title_group_hierarchy_lite tgh
+             JOIN title_groups tg ON tg.id = tgh.title_group_id
 
              WHERE ($4::BOOLEAN IS NULL OR tgh.torrent_staff_checked = $4)
              AND ($5::BOOLEAN IS NULL OR tgh.torrent_reported = $5)
@@ -809,7 +812,7 @@ impl ConnectionPool {
             GROUP BY title_group_id, title_group_name, title_group_covers, title_group_category,
             title_group_content_type, title_group_tag_names, title_group_original_release_date,
             title_group_original_release_date_only_year_known, title_group_platform,
-            tgh.title_group_series_id, tgh.title_group_series_name
+            tgh.title_group_series_id, tgh.title_group_series_name, tg.id
 
             ORDER BY
                 CASE WHEN $1 = 'title_group_original_release_date' AND $6 = 'asc' THEN title_group_original_release_date END ASC NULLS LAST,
@@ -836,6 +839,8 @@ impl ConnectionPool {
                 CASE WHEN $1 = 'torrent_snatched_at' AND $6 = 'desc' THEN
                     MAX((SELECT ta.completed_at FROM torrent_activities ta WHERE ta.torrent_id = tgh.torrent_id AND ta.user_id = $20))
                 END DESC NULLS LAST,
+                CASE WHEN $1 = 'title_group_user_rating_average' AND $6 = 'asc' THEN tg.user_rating_average END ASC NULLS LAST,
+                CASE WHEN $1 = 'title_group_user_rating_average' AND $6 = 'desc' THEN tg.user_rating_average END DESC NULLS LAST,
                 title_group_original_release_date ASC,
                 title_group_name ASC
 
@@ -1626,8 +1631,11 @@ impl ConnectionPool {
                 CASE
                     WHEN title_group_series_id IS NOT NULL THEN jsonb_build_object('id', title_group_series_id, 'name', title_group_series_name)
                     ELSE NULL
-                END AS "series: _"
+                END AS "series: _",
+                tg.user_rating_average,
+                tg.user_rating_count
             FROM title_group_hierarchy_lite
+            JOIN title_groups tg ON tg.id = title_group_id
             WHERE title_group_id = ANY($1)
             "#,
             &title_group_ids

@@ -109,7 +109,9 @@ CREATE TYPE user_permissions_enum AS ENUM (
     'view_foreign_user_staff_notes',
     'view_registration_ips',
     'manage_advent_calendars',
-    'manage_unfilled_requests'
+    'manage_unfilled_requests',
+    'rate_title_groups',
+    'delete_title_group_rating'
 );
 CREATE TABLE user_classes (
     name VARCHAR(30) UNIQUE NOT NULL,
@@ -154,6 +156,7 @@ CREATE TYPE displayable_user_stats_enum AS ENUM (
     'forum_posts',
     'forum_threads',
     'title_group_comments',
+    'title_group_ratings',
     'request_comments',
     'artist_comments',
     'seeding',
@@ -181,7 +184,8 @@ CREATE TYPE displayable_user_lists_enum AS ENUM (
     'snatched',
     'forum_posts',
     'title_group_comments',
-    'request_comments'
+    'request_comments',
+    'title_group_ratings'
 );
 CREATE TYPE ip_check_provider_enum AS ENUM (
     'ip_api',
@@ -230,6 +234,7 @@ CREATE TABLE users (
     forum_posts INTEGER NOT NULL DEFAULT 0,
     forum_threads INTEGER NOT NULL DEFAULT 0,
     title_group_comments INTEGER NOT NULL DEFAULT 0,
+    title_group_ratings INTEGER NOT NULL DEFAULT 0,
     request_comments INTEGER NOT NULL DEFAULT 0,
     artist_comments BIGINT NOT NULL DEFAULT 0,
     seeding INTEGER NOT NULL DEFAULT 0,
@@ -317,6 +322,11 @@ CREATE TYPE available_shop_item_enum AS ENUM (
     'freeleech_tokens',
     'user_class_promotion'
 );
+-- a rating shows the icon of the highest minimum_rating it reaches
+CREATE TYPE rating_icon AS (
+    minimum_rating SMALLINT,
+    icon_url TEXT
+);
 CREATE TABLE arcadia_settings (
     user_class_name_on_signup VARCHAR(30) NOT NULL REFERENCES user_classes(name) ON UPDATE CASCADE,
     default_css_sheet_name VARCHAR(30) NOT NULL REFERENCES css_sheets(name) ON UPDATE CASCADE,
@@ -349,7 +359,7 @@ CREATE TABLE arcadia_settings (
     bonus_points_per_endpoint JSONB NOT NULL DEFAULT '[]',
     reward_bonus_points_per_seeding_client BOOLEAN NOT NULL DEFAULT FALSE,
     charge_bonus_points_on_resnatch BOOLEAN NOT NULL DEFAULT FALSE,
-    displayable_user_stats displayable_user_stats_enum[] NOT NULL DEFAULT '{uploaded,real_uploaded,downloaded,real_downloaded,ratio,title_groups,edition_groups,torrents,forum_posts,forum_threads,title_group_comments,request_comments,artist_comments,seeding,leeching,snatched,seeding_size,requests_filled,collages_started,requests_voted,average_seeding_time,invited,invitations,bonus_points,freeleech_tokens,current_streak,highest_streak,joined_at,last_seen}',
+    displayable_user_stats displayable_user_stats_enum[] NOT NULL DEFAULT '{uploaded,real_uploaded,downloaded,real_downloaded,ratio,title_groups,edition_groups,torrents,forum_posts,forum_threads,title_group_comments,title_group_ratings,request_comments,artist_comments,seeding,leeching,snatched,seeding_size,requests_filled,collages_started,requests_voted,average_seeding_time,invited,invitations,bonus_points,freeleech_tokens,current_streak,highest_streak,joined_at,last_seen}',
     torrent_request_vote_currencies torrent_request_vote_currency_enum[] NOT NULL DEFAULT '{upload,bonus_points}',
     available_shop_items available_shop_item_enum[] NOT NULL DEFAULT '{upload_amount,freeleech_tokens,user_class_promotion}',
     default_user_uploaded_on_registration BIGINT NOT NULL DEFAULT 0,
@@ -367,7 +377,13 @@ CREATE TABLE arcadia_settings (
     invitation_expiration_days INT NOT NULL DEFAULT 3,
     automated_message_on_torrent_marked_trumpable TEXT DEFAULT NULL,
     uploads_disabled BOOLEAN NOT NULL DEFAULT FALSE,
-    uploads_disabled_message TEXT DEFAULT NULL
+    uploads_disabled_message TEXT DEFAULT NULL,
+    -- only the users who snatched or were seen seeding a torrent of a title group can rate it
+    title_group_rating_requires_snatch_or_seeding BOOLEAN NOT NULL DEFAULT FALSE,
+    rating_icons rating_icon[] NOT NULL DEFAULT '{}',
+    -- shown before the user rating of a title group in the torrent search, e.g. "ACV: 47%"
+    -- here ACV stands for Arcadia Vault as an example
+    user_rating_label TEXT NOT NULL DEFAULT 'ACV'
 );
 INSERT INTO arcadia_settings (user_class_name_on_signup, default_css_sheet_name, open_signups, global_upload_factor, global_download_factor, bonus_points_given_on_upload, allow_uploader_set_torrent_bonus_points_cost, default_torrent_bonus_points_cost, automated_message_on_signup, automated_message_on_signup_sender_id, automated_message_on_signup_locked, automated_message_on_signup_conversation_name, automated_message_on_torrent_marked_trumpable)
 VALUES ('newbie', 'arcadia', TRUE, 100, 100, 100, FALSE, 0, 'Welcome to the site, {username}!', 1, FALSE, 'Welcome', 'You can fix your upload if you want to, but you are not obliged to.');
@@ -691,6 +707,9 @@ CREATE TABLE title_groups (
     public_ratings JSONB NOT NULL,
     screenshots TEXT[] NOT NULL,
     series_id BIGINT,
+    -- mean of the ratings in title_group_ratings, NULL when there is none
+    user_rating_average REAL,
+    user_rating_count INT NOT NULL DEFAULT 0,
     FOREIGN KEY (master_group_id) REFERENCES master_groups(id) ON DELETE
     SET NULL,
         FOREIGN KEY (created_by_id) REFERENCES users(id) ON DELETE
@@ -1003,6 +1022,17 @@ CREATE TABLE title_group_comments (
     FOREIGN KEY (refers_to_torrent_id) REFERENCES torrents(id) ON DELETE SET NULL,
     FOREIGN KEY (answers_to_comment_id) REFERENCES title_group_comments(id) ON DELETE SET NULL
 );
+CREATE TABLE title_group_ratings (
+    id BIGSERIAL PRIMARY KEY,
+    title_group_id INT NOT NULL REFERENCES title_groups(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    rating SMALLINT NOT NULL CHECK (rating BETWEEN 0 AND 100),
+    comment TEXT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    UNIQUE (title_group_id, user_id)
+);
+CREATE INDEX title_group_ratings_user_id_index ON title_group_ratings (user_id);
 CREATE TABLE torrent_requests (
     id BIGSERIAL PRIMARY KEY,
     title_group_id INT NOT NULL,
@@ -1490,15 +1520,19 @@ CREATE TABLE subscriptions_title_group_comments (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE (title_group_id, user_id)
 );
+-- also notifies of new ratings with a comment, each notification points to either a title group comment or a rating
 CREATE TABLE notifications_title_group_comments (
     id BIGSERIAL PRIMARY KEY,
     title_group_id INT NOT NULL,
-    title_group_comment_id BIGINT NOT NULL,
+    title_group_comment_id BIGINT,
+    title_group_rating_id BIGINT,
     user_id INT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     read_status BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (title_group_comment_id) REFERENCES title_group_comments(id) ON DELETE CASCADE
+    FOREIGN KEY (title_group_comment_id) REFERENCES title_group_comments(id) ON DELETE CASCADE,
+    FOREIGN KEY (title_group_rating_id) REFERENCES title_group_ratings(id) ON DELETE CASCADE,
+    CHECK ((title_group_comment_id IS NULL) <> (title_group_rating_id IS NULL))
 );
 CREATE INDEX notifications_title_group_comments_user_id_read_status_index ON notifications_title_group_comments (user_id, read_status);
 -- notifies of new comments on a torrent request

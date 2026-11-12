@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            WITH deleted_ratings AS (\n                DELETE FROM title_group_ratings rating\n                USING title_group_ratings other_rating\n                WHERE rating.user_id = other_rating.user_id\n                  AND (\n                      (rating.title_group_id = $1 AND other_rating.title_group_id = $2\n                          AND other_rating.updated_at >= rating.updated_at)\n                      OR (rating.title_group_id = $2 AND other_rating.title_group_id = $1\n                          AND other_rating.updated_at > rating.updated_at)\n                  )\n                RETURNING rating.user_id\n            )\n            UPDATE users\n            SET title_group_ratings = title_group_ratings - 1\n            WHERE id IN (SELECT user_id FROM deleted_ratings)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "325fc86be935eec87cf7f85fc40dc4bc4ef7d43fe99db0bd2abc3d3abad9c54f"
+}

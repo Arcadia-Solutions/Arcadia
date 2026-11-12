@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                SELECT\n                    id,\n                    username,\n                    avatar,\n                    created_at AS \"created_at?\",\n                    description,\n                    uploaded AS \"uploaded?\",\n                    downloaded AS \"downloaded?\",\n                    real_uploaded AS \"real_uploaded?\",\n                    real_downloaded AS \"real_downloaded?\",\n                    last_seen AS \"last_seen?\",\n                    class_name,\n                    class_locked,\n                    title_groups AS \"title_groups?\",\n                    edition_groups AS \"edition_groups?\",\n                    torrents AS \"torrents?\",\n                    forum_posts AS \"forum_posts?\",\n                    forum_threads AS \"forum_threads?\",\n                    title_group_comments AS \"title_group_comments?\",\n                    request_comments AS \"request_comments?\",\n                    artist_comments AS \"artist_comments?\",\n                    seeding AS \"seeding?\",\n                    leeching AS \"leeching?\",\n                    snatched AS \"snatched?\",\n                    seeding_size AS \"seeding_size?\",\n                    requests_filled AS \"requests_filled?\",\n                    collages_started AS \"collages_started?\",\n                    requests_voted AS \"requests_voted?\",\n                    average_seeding_time AS \"average_seeding_time?\",\n                    invited AS \"invited?\",\n                    invitations AS \"invitations?\",\n                    bonus_points AS \"bonus_points?\",\n                    warned,\n                    banned,\n                    custom_title,\n                    paranoia_hidden_stats AS \"paranoia_hidden_stats: Vec<DisplayableUserStats>\",\n                    paranoia_hidden_lists AS \"paranoia_hidden_lists: Vec<HideableUserList>\"\n                FROM users\n                WHERE id = $1\n            ",
+  "query": "\n                SELECT\n                    id,\n                    username,\n                    avatar,\n                    created_at AS \"created_at?\",\n                    description,\n                    uploaded AS \"uploaded?\",\n                    downloaded AS \"downloaded?\",\n                    real_uploaded AS \"real_uploaded?\",\n                    real_downloaded AS \"real_downloaded?\",\n                    last_seen AS \"last_seen?\",\n                    class_name,\n                    class_locked,\n                    title_groups AS \"title_groups?\",\n                    edition_groups AS \"edition_groups?\",\n                    torrents AS \"torrents?\",\n                    forum_posts AS \"forum_posts?\",\n                    forum_threads AS \"forum_threads?\",\n                    title_group_comments AS \"title_group_comments?\",\n                    title_group_ratings AS \"title_group_ratings?\",\n                    request_comments AS \"request_comments?\",\n                    artist_comments AS \"artist_comments?\",\n                    seeding AS \"seeding?\",\n                    leeching AS \"leeching?\",\n                    snatched AS \"snatched?\",\n                    seeding_size AS \"seeding_size?\",\n                    requests_filled AS \"requests_filled?\",\n                    collages_started AS \"collages_started?\",\n                    requests_voted AS \"requests_voted?\",\n                    average_seeding_time AS \"average_seeding_time?\",\n                    invited AS \"invited?\",\n                    invitations AS \"invitations?\",\n                    bonus_points AS \"bonus_points?\",\n                    warned,\n                    banned,\n                    custom_title,\n                    paranoia_hidden_stats AS \"paranoia_hidden_stats: Vec<DisplayableUserStats>\",\n                    paranoia_hidden_lists AS \"paranoia_hidden_lists: Vec<HideableUserList>\"\n                FROM users\n                WHERE id = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -203,6 +203,17 @@
       },
       {
         "ordinal": 18,
+        "name": "title_group_ratings?",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "title_group_ratings"
+          }
+        }
+      },
+      {
+        "ordinal": 19,
         "name": "request_comments?",
         "type_info": "Int4",
         "origin": {
@@ -213,7 +224,7 @@
         }
       },
       {
-        "ordinal": 19,
+        "ordinal": 20,
         "name": "artist_comments?",
         "type_info": "Int8",
         "origin": {
@@ -224,7 +235,7 @@
         }
       },
       {
-        "ordinal": 20,
+        "ordinal": 21,
         "name": "seeding?",
         "type_info": "Int4",
         "origin": {
@@ -235,7 +246,7 @@
         }
       },
       {
-        "ordinal": 21,
+        "ordinal": 22,
         "name": "leeching?",
         "type_info": "Int4",
         "origin": {
@@ -246,7 +257,7 @@
         }
       },
       {
-        "ordinal": 22,
+        "ordinal": 23,
         "name": "snatched?",
         "type_info": "Int4",
         "origin": {
@@ -257,7 +268,7 @@
         }
       },
       {
-        "ordinal": 23,
+        "ordinal": 24,
         "name": "seeding_size?",
         "type_info": "Int8",
         "origin": {
@@ -268,7 +279,7 @@
         }
       },
       {
-        "ordinal": 24,
+        "ordinal": 25,
         "name": "requests_filled?",
         "type_info": "Int8",
         "origin": {
@@ -279,7 +290,7 @@
         }
       },
       {
-        "ordinal": 25,
+        "ordinal": 26,
         "name": "collages_started?",
         "type_info": "Int8",
         "origin": {
@@ -290,7 +301,7 @@
         }
       },
       {
-        "ordinal": 26,
+        "ordinal": 27,
         "name": "requests_voted?",
         "type_info": "Int8",
         "origin": {
@@ -301,7 +312,7 @@
         }
       },
       {
-        "ordinal": 27,
+        "ordinal": 28,
         "name": "average_seeding_time?",
         "type_info": "Int8",
         "origin": {
@@ -312,7 +323,7 @@
         }
       },
       {
-        "ordinal": 28,
+        "ordinal": 29,
         "name": "invited?",
         "type_info": "Int8",
         "origin": {
@@ -323,7 +334,7 @@
         }
       },
       {
-        "ordinal": 29,
+        "ordinal": 30,
         "name": "invitations?",
         "type_info": "Int2",
         "origin": {
@@ -334,7 +345,7 @@
         }
       },
       {
-        "ordinal": 30,
+        "ordinal": 31,
         "name": "bonus_points?",
         "type_info": "Int8",
         "origin": {
@@ -345,7 +356,7 @@
         }
       },
       {
-        "ordinal": 31,
+        "ordinal": 32,
         "name": "warned",
         "type_info": "Bool",
         "origin": {
@@ -356,7 +367,7 @@
         }
       },
       {
-        "ordinal": 32,
+        "ordinal": 33,
         "name": "banned",
         "type_info": "Bool",
         "origin": {
@@ -367,7 +378,7 @@
         }
       },
       {
-        "ordinal": 33,
+        "ordinal": 34,
         "name": "custom_title",
         "type_info": "Text",
         "origin": {
@@ -378,7 +389,7 @@
         }
       },
       {
-        "ordinal": 34,
+        "ordinal": 35,
         "name": "paranoia_hidden_stats: Vec<DisplayableUserStats>",
         "type_info": {
           "Custom": {
@@ -400,6 +411,7 @@
                       "forum_posts",
                       "forum_threads",
                       "title_group_comments",
+                      "title_group_ratings",
                       "request_comments",
                       "artist_comments",
                       "seeding",
@@ -433,7 +445,7 @@
         }
       },
       {
-        "ordinal": 35,
+        "ordinal": 36,
         "name": "paranoia_hidden_lists: Vec<HideableUserList>",
         "type_info": {
           "Custom": {
@@ -448,7 +460,8 @@
                       "snatched",
                       "forum_posts",
                       "title_group_comments",
-                      "request_comments"
+                      "request_comments",
+                      "title_group_ratings"
                     ]
                   }
                 }
@@ -503,10 +516,11 @@
       false,
       false,
       false,
+      false,
       true,
       false,
       false
     ]
   },
-  "hash": "76c2aa01a4d98ce7048a882475c79aedb3eceee03baaf178a98a2c6fc0d0c508"
+  "hash": "d0b4521829399565a45a0761e64777d0c8bf1ee1eeb80a683cc3cfaafcc772db"
 }

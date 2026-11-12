@@ -249,6 +249,7 @@ export interface ArcadiaSettings {
     'logo_subtitle'?: string | null;
     'min_amount_tags_title_group': number;
     'open_signups': boolean;
+    'rating_icons': Array<RatingIcon>;
     'reseed_requestable_after_hours': number;
     /**
      * When enabled, a torrent seeded from several clients by the same user is rewarded once per client instead of once per torrent.
@@ -259,6 +260,10 @@ export interface ArcadiaSettings {
     'shop_upload_base_price_per_gb': number;
     'shop_upload_discount_tiers': any;
     'snatched_torrent_bonus_points_transferred_to'?: SnatchedTorrentBonusPointsTransferredTo | null;
+    /**
+     * When enabled, a user can only rate a title group after snatching or seeding one of its torrents.
+     */
+    'title_group_rating_requires_snatch_or_seeding': boolean;
     'torrent_bonus_points_cost_max': number;
     'torrent_bonus_points_cost_min': number;
     'torrent_max_release_date_allowed'?: string | null;
@@ -273,6 +278,10 @@ export interface ArcadiaSettings {
      */
     'uploads_disabled_message'?: string | null;
     'user_class_name_on_signup': string;
+    /**
+     * Shown before the user rating of a title group in the torrent search, e.g. \"ACV: 47%\".
+     */
+    'user_rating_label': string;
 }
 
 
@@ -752,6 +761,10 @@ export interface CreateTitleGroupComment200Response {
     'data': TitleGroupComment;
     'side_effects': Array<SideEffect>;
 }
+export interface CreateTitleGroupRating201Response {
+    'data': TitleGroupRating;
+    'side_effects': Array<SideEffect>;
+}
 export interface CreateTorrentReport200Response {
     'data': TorrentReport;
     'side_effects': Array<SideEffect>;
@@ -883,6 +896,7 @@ export const DisplayableUserStats = {
     ForumPosts: 'forum_posts',
     ForumThreads: 'forum_threads',
     TitleGroupComments: 'title_group_comments',
+    TitleGroupRatings: 'title_group_ratings',
     RequestComments: 'request_comments',
     ArtistComments: 'artist_comments',
     Seeding: 'seeding',
@@ -1142,6 +1156,10 @@ export interface EditedTitleGroupBookmark {
 export interface EditedTitleGroupComment {
     'content': string;
     'locked': boolean;
+}
+export interface EditedTitleGroupRating {
+    'comment'?: string | null;
+    'rating': number;
 }
 export interface EditedTitleGroupTag {
     'id': number;
@@ -1962,7 +1980,8 @@ export const HideableUserList = {
     Snatched: 'snatched',
     ForumPosts: 'forum_posts',
     TitleGroupComments: 'title_group_comments',
-    RequestComments: 'request_comments'
+    RequestComments: 'request_comments',
+    TitleGroupRatings: 'title_group_ratings'
 } as const;
 
 export type HideableUserList = typeof HideableUserList[keyof typeof HideableUserList];
@@ -2354,9 +2373,13 @@ export interface NotificationTitleGroupComment {
     'created_at': string;
     'id': number;
     'read_status': boolean;
-    'title_group_comment_id': number;
+    /**
+     * exactly one of the comment and the rating is set
+     */
+    'title_group_comment_id'?: number | null;
     'title_group_id': number;
     'title_group_name': string;
+    'title_group_rating_id'?: number | null;
 }
 export interface NotificationTitleGroupTorrent {
     'created_at': string;
@@ -2690,6 +2713,10 @@ export interface PaginatedResultsTitleGroupCommentWithLocation {
  */
 export interface PaginatedResultsTitleGroupCommentWithLocationResultsInner {
     'answers_to_comment_id'?: number;
+    /**
+     * the rating the author gave to the title group, if they rated it
+     */
+    'author_rating'?: number;
     'content': string;
     'created_at': string;
     'created_by': UserLiteAvatar;
@@ -2720,9 +2747,43 @@ export interface PaginatedResultsTitleGroupHierarchyLiteResultsInner {
     'platform'?: Platform | null;
     'series'?: SeriesLite | null;
     'tags': Array<string>;
+    'user_rating_average'?: number | null;
+    'user_rating_count': number;
 }
 
 
+export interface PaginatedResultsTitleGroupRatingHierarchy {
+    'page': number;
+    'page_size': number;
+    'results': Array<PaginatedResultsTitleGroupRatingHierarchyResultsInner>;
+    'total_items': number;
+}
+export interface PaginatedResultsTitleGroupRatingHierarchyResultsInner {
+    'comment'?: string | null;
+    'created_at': string;
+    'created_by': UserLiteAvatar;
+    'id': number;
+    'rating': number;
+    'updated_at': string;
+}
+export interface PaginatedResultsTitleGroupRatingWithTitleGroup {
+    'page': number;
+    'page_size': number;
+    'results': Array<PaginatedResultsTitleGroupRatingWithTitleGroupResultsInner>;
+    'total_items': number;
+}
+/**
+ * A rating displayed outside of its title group, on the profile of its author.
+ */
+export interface PaginatedResultsTitleGroupRatingWithTitleGroupResultsInner {
+    'comment'?: string | null;
+    'created_at': string;
+    'id': number;
+    'rating': number;
+    'title_group': TitleGroupHierarchyLite;
+    'updated_at': string;
+    'user_id': number;
+}
 export interface PaginatedResultsTitleGroupTagEnriched {
     'page': number;
     'page_size': number;
@@ -3060,6 +3121,7 @@ export interface PublicArcadiaSettings {
     'logo_subtitle'?: string | null;
     'min_amount_tags_title_group': number;
     'open_signups': boolean;
+    'rating_icons': Array<RatingIcon>;
     'reseed_requestable_after_hours': number;
     /**
      * set when an advent calendar is published and currently running
@@ -3068,6 +3130,7 @@ export interface PublicArcadiaSettings {
     'torrent_request_vote_currencies': Array<TorrentRequestVoteCurrency>;
     'uploads_disabled': boolean;
     'uploads_disabled_message'?: string | null;
+    'user_rating_label': string;
 }
 export interface PublicPeer {
     'agent': string;
@@ -3128,6 +3191,7 @@ export interface PublicUser {
     'seeding_size'?: number | null;
     'snatched'?: number | null;
     'title_group_comments'?: number | null;
+    'title_group_ratings'?: number | null;
     'title_groups'?: number | null;
     'torrents'?: number | null;
     'uploaded'?: number | null;
@@ -3141,6 +3205,13 @@ export interface PublishedAdventCalendar {
     'name': string;
     'starts_at': string;
     'top_message': string;
+}
+/**
+ * The icon displayed next to the ratings greater than or equal to `minimum_rating`, up to the next threshold.
+ */
+export interface RatingIcon {
+    'icon_url': string;
+    'minimum_rating': number;
 }
 export interface RefreshToken {
     'refresh_token': string;
@@ -3410,6 +3481,10 @@ export interface SearchTitleGroupInfo200Response {
     'data': Array<TitleGroupLite>;
     'side_effects': Array<SideEffect>;
 }
+export interface SearchTitleGroupRatings200Response {
+    'data': PaginatedResultsTitleGroupRatingHierarchy;
+    'side_effects': Array<SideEffect>;
+}
 export interface SearchTitleGroupTags200Response {
     'data': PaginatedResultsTitleGroupTagEnriched;
     'side_effects': Array<SideEffect>;
@@ -3487,6 +3562,10 @@ export interface SearchUserEditChangeLogsQuery {
 
 export interface SearchUserTitleGroupComments200Response {
     'data': PaginatedResultsTitleGroupCommentWithLocation;
+    'side_effects': Array<SideEffect>;
+}
+export interface SearchUserTitleGroupRatings200Response {
+    'data': PaginatedResultsTitleGroupRatingWithTitleGroup;
     'side_effects': Array<SideEffect>;
 }
 export interface SearchUserTorrentRequestComments200Response {
@@ -3777,6 +3856,11 @@ export interface TitleGroup {
     'tags': Array<string>;
     'trailers': Array<string>;
     'updated_at': string;
+    /**
+     * mean of the ratings of the title group, None when there is none
+     */
+    'user_rating_average'?: number | null;
+    'user_rating_count': number;
 }
 
 
@@ -3789,6 +3873,10 @@ export interface TitleGroupAndAssociatedData {
     'in_same_master_group': Array<MasterGroupEntry>;
     'is_subscribed_to_comments': boolean;
     'is_subscribed_to_torrents': boolean;
+    /**
+     * the requesting user\'s rating of this title group
+     */
+    'own_rating'?: TitleGroupRating | null;
     'related_threads': Array<RelatedForumThread>;
     'series'?: SeriesLite | null;
     'similar_title_groups': Array<SimilarTitleGroupLite>;
@@ -3879,6 +3967,10 @@ export interface TitleGroupComment {
 }
 export interface TitleGroupCommentHierarchy {
     'answers_to_comment_id'?: number | null;
+    /**
+     * the rating the author gave to the title group, if they rated it
+     */
+    'author_rating'?: number | null;
     'content': string;
     'created_at': string;
     'created_by': UserLiteAvatar;
@@ -3907,6 +3999,10 @@ export interface TitleGroupCommentSearchResult {
  */
 export interface TitleGroupCommentWithLocation {
     'answers_to_comment_id'?: number;
+    /**
+     * the rating the author gave to the title group, if they rated it
+     */
+    'author_rating'?: number;
     'content': string;
     'created_at': string;
     'created_by': UserLiteAvatar;
@@ -3931,6 +4027,8 @@ export interface TitleGroupHierarchyLite {
     'platform'?: Platform | null;
     'series'?: SeriesLite | null;
     'tags': Array<string>;
+    'user_rating_average'?: number | null;
+    'user_rating_count': number;
 }
 
 
@@ -3949,6 +4047,62 @@ export interface TitleGroupLite {
 }
 
 
+/**
+ * A user\'s rating (percentage from 0 to 100) of a title group, optionally explained by a BBCode comment. A user has at most one per title group.
+ */
+export interface TitleGroupRating {
+    'comment'?: string | null;
+    'created_at': string;
+    'id': number;
+    'rating': number;
+    'title_group_id': number;
+    'updated_at': string;
+    'user_id': number;
+}
+export interface TitleGroupRatingHierarchy {
+    'comment'?: string | null;
+    'created_at': string;
+    'created_by': UserLiteAvatar;
+    'id': number;
+    'rating': number;
+    'updated_at': string;
+}
+
+export const TitleGroupRatingSearchOrderByColumn = {
+    CreatedAt: 'created_at',
+    Rating: 'rating'
+} as const;
+
+export type TitleGroupRatingSearchOrderByColumn = typeof TitleGroupRatingSearchOrderByColumn[keyof typeof TitleGroupRatingSearchOrderByColumn];
+
+
+/**
+ * Query of the paginated ratings of a title group whose rating is within `minimum_rating..=maximum_rating` and whose comment contains `content` (case insensitive, empty matches every rating).
+ */
+export interface TitleGroupRatingSearchQuery {
+    'content': string;
+    'maximum_rating': number;
+    'minimum_rating': number;
+    'order_by_column': TitleGroupRatingSearchOrderByColumn;
+    'order_by_direction': OrderByDirection;
+    'page': number;
+    'page_size': number;
+    'title_group_id': number;
+}
+
+
+/**
+ * A rating displayed outside of its title group, on the profile of its author.
+ */
+export interface TitleGroupRatingWithTitleGroup {
+    'comment'?: string | null;
+    'created_at': string;
+    'id': number;
+    'rating': number;
+    'title_group': TitleGroupHierarchyLite;
+    'updated_at': string;
+    'user_id': number;
+}
 /**
  * Aggregates over every title group of a single catalog, be it an artist, a series or a collage, without any period filter: unlike the torrent stats, these describe the catalog of that entry rather than its upload activity.
  */
@@ -4447,7 +4601,8 @@ export const TorrentSearchOrderByColumn = {
     TorrentSeeders: 'torrent_seeders',
     TorrentLeechers: 'torrent_leechers',
     TorrentSnatched: 'torrent_snatched',
-    TorrentBonusPointsSnatchCost: 'torrent_bonus_points_snatch_cost'
+    TorrentBonusPointsSnatchCost: 'torrent_bonus_points_snatch_cost',
+    TitleGroupUserRatingAverage: 'title_group_user_rating_average'
 } as const;
 
 export type TorrentSearchOrderByColumn = typeof TorrentSearchOrderByColumn[keyof typeof TorrentSearchOrderByColumn];
@@ -4647,6 +4802,7 @@ export interface User {
     'show_upload_method': boolean;
     'snatched': number;
     'title_group_comments': number;
+    'title_group_ratings': number;
     'title_groups': number;
     'torrents': number;
     'uploaded': number;
@@ -5048,6 +5204,11 @@ export interface UserCreatedTitleGroupComment {
     'refers_to_torrent_id'?: number | null;
     'title_group_id': number;
 }
+export interface UserCreatedTitleGroupRating {
+    'comment'?: string | null;
+    'rating': number;
+    'title_group_id': number;
+}
 export interface UserCreatedTitleGroupTag {
     'name': string;
 }
@@ -5303,7 +5464,9 @@ export const UserPermission = {
     ViewForeignUserStaffNotes: 'view_foreign_user_staff_notes',
     ViewRegistrationIps: 'view_registration_ips',
     ManageAdventCalendars: 'manage_advent_calendars',
-    ManageUnfilledRequests: 'manage_unfilled_requests'
+    ManageUnfilledRequests: 'manage_unfilled_requests',
+    RateTitleGroups: 'rate_title_groups',
+    DeleteTitleGroupRating: 'delete_title_group_rating'
 } as const;
 
 export type UserPermission = typeof UserPermission[keyof typeof UserPermission];
@@ -5457,6 +5620,21 @@ export interface UserTitleGroupCommentSearchQuery {
     'page': number;
     'page_size': number;
 }
+/**
+ * Query of the paginated ratings written by a user, filtered like [`TitleGroupRatingSearchQuery`].
+ */
+export interface UserTitleGroupRatingSearchQuery {
+    'content': string;
+    'maximum_rating': number;
+    'minimum_rating': number;
+    'order_by_column': TitleGroupRatingSearchOrderByColumn;
+    'order_by_direction': OrderByDirection;
+    'page': number;
+    'page_size': number;
+    'user_id': number;
+}
+
+
 /**
  * Query of the paginated list of every torrent request comment written by a user.
  */
@@ -7162,6 +7340,30 @@ export const searchTitleGroupInfo = async (request: SearchTitleGroupInfoRequest,
 };
 
 
+export interface SearchTitleGroupRatingsRequest {
+    'title_group_id': number;
+    'minimum_rating': number;
+    'maximum_rating': number;
+    'content': string;
+    'order_by_column': TitleGroupRatingSearchOrderByColumn;
+    'order_by_direction': OrderByDirection;
+    'page': number;
+    'page_size': number;
+}
+
+
+
+export const searchTitleGroupRatings = async (request: SearchTitleGroupRatingsRequest, options?: RawAxiosRequestConfig): Promise<SearchTitleGroupRatings200Response['data']> => {
+    const response = await globalAxios.request<SearchTitleGroupRatings200Response>({
+        url: `/api/search/title-group-ratings`,
+        method: 'GET',
+        params: { 'title_group_id': request['title_group_id'], 'minimum_rating': request['minimum_rating'], 'maximum_rating': request['maximum_rating'], 'content': request['content'], 'order_by_column': request['order_by_column'], 'order_by_direction': request['order_by_direction'], 'page': request['page'], 'page_size': request['page_size'] },
+        ...options
+    });
+    return response.data.data;
+};
+
+
 export interface SearchTitleGroupTagsRequest {
     'name': string;
     'show_deleted': boolean;
@@ -7276,6 +7478,30 @@ export const searchUserTitleGroupComments = async (request: SearchUserTitleGroup
         url: `/api/search/title-group-comments/user`,
         method: 'GET',
         params: { 'created_by_id': request['created_by_id'], 'page': request['page'], 'page_size': request['page_size'] },
+        ...options
+    });
+    return response.data.data;
+};
+
+
+export interface SearchUserTitleGroupRatingsRequest {
+    'user_id': number;
+    'minimum_rating': number;
+    'maximum_rating': number;
+    'content': string;
+    'order_by_column': TitleGroupRatingSearchOrderByColumn;
+    'order_by_direction': OrderByDirection;
+    'page': number;
+    'page_size': number;
+}
+
+
+
+export const searchUserTitleGroupRatings = async (request: SearchUserTitleGroupRatingsRequest, options?: RawAxiosRequestConfig): Promise<SearchUserTitleGroupRatings200Response['data']> => {
+    const response = await globalAxios.request<SearchUserTitleGroupRatings200Response>({
+        url: `/api/search/title-group-ratings/user`,
+        method: 'GET',
+        params: { 'user_id': request['user_id'], 'minimum_rating': request['minimum_rating'], 'maximum_rating': request['maximum_rating'], 'content': request['content'], 'order_by_column': request['order_by_column'], 'order_by_direction': request['order_by_direction'], 'page': request['page'], 'page_size': request['page_size'] },
         ...options
     });
     return response.data.data;
@@ -8009,6 +8235,19 @@ export const createTitleGroupComment = async (userCreatedTitleGroupComment: User
 
 
 
+export const createTitleGroupRating = async (userCreatedTitleGroupRating: UserCreatedTitleGroupRating, options?: RawAxiosRequestConfig): Promise<CreateTitleGroupRating201Response['data']> => {
+    const response = await globalAxios.request<CreateTitleGroupRating201Response>({
+        url: '/api/title-groups/ratings',
+        method: 'POST',
+        data: userCreatedTitleGroupRating,
+        ...options
+    });
+    return response.data.data;
+};
+
+
+
+
 export const deleteTitleGroup = async (titleGroupId: number, options?: RawAxiosRequestConfig): Promise<void> => {
     const response = await globalAxios.request<void>({
         url: '/api/title-groups',
@@ -8025,6 +8264,18 @@ export const deleteTitleGroup = async (titleGroupId: number, options?: RawAxiosR
 export const deleteTitleGroupComment = async (id: number, options?: RawAxiosRequestConfig): Promise<void> => {
     const response = await globalAxios.request<void>({
         url: `/api/title-groups/comments/{id}`.replace('{' + 'id' + '}', String(id)),
+        method: 'DELETE',
+        ...options
+    });
+    return response.data;
+};
+
+
+
+
+export const deleteTitleGroupRating = async (id: number, options?: RawAxiosRequestConfig): Promise<void> => {
+    const response = await globalAxios.request<void>({
+        url: `/api/title-groups/ratings/{id}`.replace('{' + 'id' + '}', String(id)),
         method: 'DELETE',
         ...options
     });
@@ -8058,6 +8309,24 @@ export const editTitleGroupComment = async (request: EditTitleGroupCommentReques
         url: `/api/title-groups/comments/{id}`.replace('{' + 'id' + '}', String(request['id'])),
         method: 'PUT',
         data: request['EditedTitleGroupComment'],
+        ...options
+    });
+    return response.data.data;
+};
+
+
+export interface EditTitleGroupRatingRequest {
+    'id': number;
+    'EditedTitleGroupRating': EditedTitleGroupRating;
+}
+
+
+
+export const editTitleGroupRating = async (request: EditTitleGroupRatingRequest, options?: RawAxiosRequestConfig): Promise<CreateTitleGroupRating201Response['data']> => {
+    const response = await globalAxios.request<CreateTitleGroupRating201Response>({
+        url: `/api/title-groups/ratings/{id}`.replace('{' + 'id' + '}', String(request['id'])),
+        method: 'PUT',
+        data: request['EditedTitleGroupRating'],
         ...options
     });
     return response.data.data;

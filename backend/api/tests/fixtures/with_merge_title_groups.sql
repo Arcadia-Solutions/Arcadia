@@ -110,3 +110,12 @@ VALUES (10, 10, 100);
 
 INSERT INTO notifications_artist_title_groups (artist_id, title_group_id, user_id)
 VALUES (10, 10, 100);
+
+-- Ratings: user 100 on source, user 146 on both (conflict, the source one is the most recent)
+INSERT INTO title_group_ratings (title_group_id, user_id, rating, updated_at)
+VALUES
+  (10, 100, 20, NOW()),
+  (10, 146, 90, NOW()),
+  (11, 146, 10, NOW() - INTERVAL '1 day');
+UPDATE users SET title_group_ratings = 1 WHERE id = 100;
+UPDATE users SET title_group_ratings = 2 WHERE id = 146;

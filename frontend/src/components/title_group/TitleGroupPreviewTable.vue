@@ -15,12 +15,22 @@
             nameLink
           />
         </div>
-        <span class="tags">
-          <template v-for="(tag, index) in title_group.tags" :key="tag">
-            <RouterLink :to="{ path: '/torrents', query: { title_group_tags: tag } }" @click="scrollToTop">{{ tag }}</RouterLink>
-            <template v-if="index < title_group.tags.length - 1">, </template>
-          </template>
-        </span>
+        <div class="tags">
+          <span
+            v-if="title_group.user_rating_average != null"
+            v-tooltip.top="`${formatNumber(title_group.user_rating_count)} ${t('title_group.vote', title_group.user_rating_count)}`"
+            class="user-rating"
+          >
+            <span v-if="publicArcadiaSettings.user_rating_label">{{ publicArcadiaSettings.user_rating_label }}:</span>
+            <UserRatingDisplay :rating="title_group.user_rating_average" />
+          </span>
+          <span>
+            <template v-for="(tag, index) in title_group.tags" :key="tag">
+              <RouterLink :to="{ path: '/torrents', query: { title_group_tags: tag } }" @click="scrollToTop">{{ tag }}</RouterLink>
+              <template v-if="index < title_group.tags.length - 1">, </template>
+            </template>
+          </span>
+        </div>
         <TitleGroupTable v-if="title_group.edition_groups.length" :title_group="title_group" :editionGroups="title_group.edition_groups" :preview="true" />
       </div>
       <div class="left">
@@ -35,6 +45,10 @@ import ContentContainer from '../ContentContainer.vue'
 import ImagePreview from '../ImagePreview.vue'
 import type { TitleGroupHierarchyLite } from '@/services/api-schema'
 import TitleGroupSlimHeader from './TitleGroupSlimHeader.vue'
+import UserRatingDisplay from './UserRatingDisplay.vue'
+import { useI18n } from 'vue-i18n'
+import { formatNumber } from '@/services/helpers'
+import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 
 defineProps<{
   title_group: TitleGroupHierarchyLite
@@ -46,6 +60,9 @@ defineProps<{
 const emit = defineEmits<{
   delete: [titleGroupId: number]
 }>()
+
+const { t } = useI18n()
+const publicArcadiaSettings = usePublicArcadiaSettingsStore()
 
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 </script>
@@ -62,7 +79,17 @@ const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
   margin-top: -5px;
   font-size: 1.4em;
 }
+.user-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: bold;
+  font-style: normal;
+}
 .tags {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 0.9em;
   font-weight: 350;
   font-style: italic;

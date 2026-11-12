@@ -47,6 +47,8 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         custom_footer: settings.custom_footer,
         uploads_disabled: settings.uploads_disabled,
         uploads_disabled_message: settings.uploads_disabled_message,
+        rating_icons: settings.rating_icons,
+        user_rating_label: settings.user_rating_label,
         running_advent_calendar_button_text,
     }))
 }

@@ -76,12 +76,12 @@ const canSeeList = (list: HideableUserList) =>
   !props.user.paranoia_hidden_lists.includes(list)
 
 // a statistic whose amount links to the list of the items it counts
-const listRow = (stat: DisplayableUserStats, amount: number | null | undefined, list: HideableUserList, listPath: string): UserStatisticRow | null => {
+const listRow = (stat: DisplayableUserStats, amount: number | null | undefined, list: HideableUserList, link: string): UserStatisticRow | null => {
   const row = amountRow(stat, amount)
   if (row === null || !canSeeList(list)) {
     return row
   }
-  return { ...row, link: `${listPath}?created_by_id=${props.user.id}` }
+  return { ...row, link }
 }
 
 const displayedRows = (rows: (UserStatisticRow | null)[]) => rows.filter((row) => row !== null)
@@ -117,10 +117,16 @@ const communityStatistics = computed(() => {
     amountRow(DisplayableUserStats.EditionGroups, user.edition_groups),
     amountRow(DisplayableUserStats.Torrents, user.torrents),
     amountRow(DisplayableUserStats.ForumThreads, user.forum_threads),
-    listRow(DisplayableUserStats.ForumPosts, user.forum_posts, HideableUserList.ForumPosts, '/forum/posts'),
+    listRow(DisplayableUserStats.ForumPosts, user.forum_posts, HideableUserList.ForumPosts, `/forum/posts?created_by_id=${user.id}`),
     amountRow(DisplayableUserStats.CollagesStarted, user.collages_started),
-    listRow(DisplayableUserStats.TitleGroupComments, user.title_group_comments, HideableUserList.TitleGroupComments, '/title-group-comments'),
-    listRow(DisplayableUserStats.RequestComments, user.request_comments, HideableUserList.RequestComments, '/request-comments'),
+    listRow(
+      DisplayableUserStats.TitleGroupComments,
+      user.title_group_comments,
+      HideableUserList.TitleGroupComments,
+      `/title-group-comments?created_by_id=${user.id}`,
+    ),
+    listRow(DisplayableUserStats.TitleGroupRatings, user.title_group_ratings, HideableUserList.TitleGroupRatings, `/user/${user.id}/title-group-ratings`),
+    listRow(DisplayableUserStats.RequestComments, user.request_comments, HideableUserList.RequestComments, `/request-comments?created_by_id=${user.id}`),
     amountRow(DisplayableUserStats.RequestsVoted, user.requests_voted),
     amountRow(DisplayableUserStats.RequestsFilled, user.requests_filled),
     amountRow(DisplayableUserStats.ArtistComments, user.artist_comments),

@@ -53,7 +53,8 @@ impl ConnectionPool {
         Self::notify_users_title_group_comments(
             &mut tx,
             title_group_comment.title_group_id,
-            created_title_group_comment.id,
+            Some(created_title_group_comment.id),
+            None,
             user_id,
         )
         .await?;
@@ -206,10 +207,12 @@ impl ConnectionPool {
                 c.refers_to_torrent_id,
                 c.answers_to_comment_id,
                 tg.name AS title_group_name,
-                ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS "created_by!: UserLiteAvatar"
+                ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS "created_by!: UserLiteAvatar",
+                r.rating AS "author_rating?"
             FROM title_group_comments c
             JOIN users u ON u.id = c.created_by_id
             JOIN title_groups tg ON tg.id = c.title_group_id
+            LEFT JOIN title_group_ratings r ON r.title_group_id = c.title_group_id AND r.user_id = c.created_by_id
             WHERE c.created_by_id = $1
             ORDER BY c.created_at DESC
             LIMIT $2 OFFSET $3
@@ -236,6 +239,7 @@ impl ConnectionPool {
                     refers_to_torrent_id: comment.refers_to_torrent_id,
                     answers_to_comment_id: comment.answers_to_comment_id,
                     created_by: comment.created_by,
+                    author_rating: comment.author_rating,
                 },
                 title_group_name: comment.title_group_name,
             })

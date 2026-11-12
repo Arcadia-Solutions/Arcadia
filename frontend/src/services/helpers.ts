@@ -6,6 +6,7 @@ import {
   AudioCodec,
   CollageCategory,
   type EditionGroupInfoLite,
+  type RatingIcon,
   Extras,
   Features,
   Language,
@@ -553,3 +554,7 @@ export const mediumImageUrl = (url: string) => {
   }
   return url
 }
+
+// the icon of the highest threshold the rating reaches
+export const getRatingIcon = (ratingIcons: RatingIcon[], rating: number | null) =>
+  rating === null ? undefined : ratingIcons.filter((icon) => icon.minimum_rating <= rating).sort((a, b) => b.minimum_rating - a.minimum_rating)[0]

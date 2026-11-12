@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                SELECT id, username, avatar, email, password_hash, registered_from_ip, created_at,\n                       description, uploaded, real_uploaded, downloaded, real_downloaded, last_seen,\n                       class_name, class_locked, permissions as \"permissions: Vec<UserPermission>\",\n                       title_groups, edition_groups, torrents, forum_posts, forum_threads,\n                       title_group_comments, request_comments, artist_comments, seeding, leeching,\n                       snatched, seeding_size, requests_filled, collages_started, requests_voted,\n                       average_seeding_time, invited, invitations, bonus_points, freeleech_tokens,\n                       warned, banned, passkey, css_sheet_name, current_streak,\n                       highest_streak, custom_title, max_snatches_per_day, irc_password, irc_site_embed_enabled, show_upload_method\n                FROM users\n                WHERE username = $1\n            ",
+  "query": "\n                SELECT id, username, avatar, email, password_hash, registered_from_ip, created_at,\n                       description, uploaded, real_uploaded, downloaded, real_downloaded, last_seen,\n                       class_name, class_locked, permissions as \"permissions: Vec<UserPermission>\",\n                       title_groups, edition_groups, torrents, forum_posts, forum_threads,\n                       title_group_comments, title_group_ratings, request_comments, artist_comments, seeding, leeching,\n                       snatched, seeding_size, requests_filled, collages_started, requests_voted,\n                       average_seeding_time, invited, invitations, bonus_points, freeleech_tokens,\n                       warned, banned, passkey, css_sheet_name, current_streak,\n                       highest_streak, custom_title, max_snatches_per_day, irc_password, irc_site_embed_enabled, show_upload_method\n                FROM users\n                WHERE id = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -288,7 +288,9 @@
                       "view_foreign_user_staff_notes",
                       "view_registration_ips",
                       "manage_advent_calendars",
-                      "manage_unfilled_requests"
+                      "manage_unfilled_requests",
+                      "rate_title_groups",
+                      "delete_title_group_rating"
                     ]
                   }
                 }
@@ -371,6 +373,17 @@
       },
       {
         "ordinal": 22,
+        "name": "title_group_ratings",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "title_group_ratings"
+          }
+        }
+      },
+      {
+        "ordinal": 23,
         "name": "request_comments",
         "type_info": "Int4",
         "origin": {
@@ -381,7 +394,7 @@
         }
       },
       {
-        "ordinal": 23,
+        "ordinal": 24,
         "name": "artist_comments",
         "type_info": "Int8",
         "origin": {
@@ -392,7 +405,7 @@
         }
       },
       {
-        "ordinal": 24,
+        "ordinal": 25,
         "name": "seeding",
         "type_info": "Int4",
         "origin": {
@@ -403,7 +416,7 @@
         }
       },
       {
-        "ordinal": 25,
+        "ordinal": 26,
         "name": "leeching",
         "type_info": "Int4",
         "origin": {
@@ -414,7 +427,7 @@
         }
       },
       {
-        "ordinal": 26,
+        "ordinal": 27,
         "name": "snatched",
         "type_info": "Int4",
         "origin": {
@@ -425,7 +438,7 @@
         }
       },
       {
-        "ordinal": 27,
+        "ordinal": 28,
         "name": "seeding_size",
         "type_info": "Int8",
         "origin": {
@@ -436,7 +449,7 @@
         }
       },
       {
-        "ordinal": 28,
+        "ordinal": 29,
         "name": "requests_filled",
         "type_info": "Int8",
         "origin": {
@@ -447,7 +460,7 @@
         }
       },
       {
-        "ordinal": 29,
+        "ordinal": 30,
         "name": "collages_started",
         "type_info": "Int8",
         "origin": {
@@ -458,7 +471,7 @@
         }
       },
       {
-        "ordinal": 30,
+        "ordinal": 31,
         "name": "requests_voted",
         "type_info": "Int8",
         "origin": {
@@ -469,7 +482,7 @@
         }
       },
       {
-        "ordinal": 31,
+        "ordinal": 32,
         "name": "average_seeding_time",
         "type_info": "Int8",
         "origin": {
@@ -480,7 +493,7 @@
         }
       },
       {
-        "ordinal": 32,
+        "ordinal": 33,
         "name": "invited",
         "type_info": "Int8",
         "origin": {
@@ -491,7 +504,7 @@
         }
       },
       {
-        "ordinal": 33,
+        "ordinal": 34,
         "name": "invitations",
         "type_info": "Int2",
         "origin": {
@@ -502,7 +515,7 @@
         }
       },
       {
-        "ordinal": 34,
+        "ordinal": 35,
         "name": "bonus_points",
         "type_info": "Int8",
         "origin": {
@@ -513,7 +526,7 @@
         }
       },
       {
-        "ordinal": 35,
+        "ordinal": 36,
         "name": "freeleech_tokens",
         "type_info": "Int4",
         "origin": {
@@ -524,7 +537,7 @@
         }
       },
       {
-        "ordinal": 36,
+        "ordinal": 37,
         "name": "warned",
         "type_info": "Bool",
         "origin": {
@@ -535,7 +548,7 @@
         }
       },
       {
-        "ordinal": 37,
+        "ordinal": 38,
         "name": "banned",
         "type_info": "Bool",
         "origin": {
@@ -546,7 +559,7 @@
         }
       },
       {
-        "ordinal": 38,
+        "ordinal": 39,
         "name": "passkey",
         "type_info": "Varchar",
         "origin": {
@@ -557,7 +570,7 @@
         }
       },
       {
-        "ordinal": 39,
+        "ordinal": 40,
         "name": "css_sheet_name",
         "type_info": "Varchar",
         "origin": {
@@ -568,7 +581,7 @@
         }
       },
       {
-        "ordinal": 40,
+        "ordinal": 41,
         "name": "current_streak",
         "type_info": "Int4",
         "origin": {
@@ -579,7 +592,7 @@
         }
       },
       {
-        "ordinal": 41,
+        "ordinal": 42,
         "name": "highest_streak",
         "type_info": "Int4",
         "origin": {
@@ -590,7 +603,7 @@
         }
       },
       {
-        "ordinal": 42,
+        "ordinal": 43,
         "name": "custom_title",
         "type_info": "Text",
         "origin": {
@@ -601,7 +614,7 @@
         }
       },
       {
-        "ordinal": 43,
+        "ordinal": 44,
         "name": "max_snatches_per_day",
         "type_info": "Int4",
         "origin": {
@@ -612,7 +625,7 @@
         }
       },
       {
-        "ordinal": 44,
+        "ordinal": 45,
         "name": "irc_password",
         "type_info": "Varchar",
         "origin": {
@@ -623,7 +636,7 @@
         }
       },
       {
-        "ordinal": 45,
+        "ordinal": 46,
         "name": "irc_site_embed_enabled",
         "type_info": "Bool",
         "origin": {
@@ -634,7 +647,7 @@
         }
       },
       {
-        "ordinal": 46,
+        "ordinal": 47,
         "name": "show_upload_method",
         "type_info": "Bool",
         "origin": {
@@ -647,13 +660,14 @@
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Int4"
       ]
     },
     "nullable": [
       false,
       false,
       true,
+      false,
       false,
       false,
       false,
@@ -700,5 +714,5 @@
       false
     ]
   },
-  "hash": "25250890ce21ce2e9a7e71304cb4e2361b7f20b7a5f152ced11b686f0541cec2"
+  "hash": "07eedf04b82f24f9d5eeb6f589505b220821e94254cccc9e54306b43a6ce7154"
 }

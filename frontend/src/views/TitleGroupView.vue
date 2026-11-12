@@ -126,9 +126,20 @@
         </div>
       </ContentContainer>
       <TitleGroupRatings
-        v-if="titleGroupAndAssociatedData.title_group.public_ratings.length > 0"
+        v-if="
+          titleGroupAndAssociatedData.title_group.public_ratings.length > 0 ||
+          titleGroupAndAssociatedData.title_group.user_rating_count > 0 ||
+          userStore.permissions.includes('rate_title_groups')
+        "
+        :key="titleGroupAndAssociatedData.title_group.id"
+        :titleGroupId="titleGroupAndAssociatedData.title_group.id"
         :publicRatings="titleGroupAndAssociatedData.title_group.public_ratings"
+        :userRatingAverage="titleGroupAndAssociatedData.title_group.user_rating_average ?? null"
+        :userRatingCount="titleGroupAndAssociatedData.title_group.user_rating_count"
+        :ownRating="titleGroupAndAssociatedData.own_rating ?? null"
         class="ratings"
+        @ownRatingSaved="ownRatingSaved"
+        @ratingDeleted="ratingDeleted"
       />
       <ContentContainer
         v-if="userStore.permissions.includes('link_similar_title_group') || titleGroupAndAssociatedData.similar_title_groups.length != 0"
@@ -282,6 +293,8 @@ import {
   type TitleGroupAndAssociatedData,
   type TitleGroupBookmark,
   type TitleGroupCommentHierarchy,
+  type TitleGroupRating,
+  type TitleGroupRatingHierarchy,
 } from '@/services/api-schema'
 
 const router = useRouter()
@@ -414,6 +427,30 @@ const newComment = (comment: TitleGroupCommentHierarchy) => {
 const commentDeleted = (commentId: number) => {
   if (!titleGroupAndAssociatedData.value) return
   titleGroupAndAssociatedData.value.title_group_comments = titleGroupAndAssociatedData.value.title_group_comments.filter((comment) => comment.id !== commentId)
+}
+
+// the ratings dialog is filtered and paginated, so the aggregates are updated from the changed rating alone
+const updateUserRating = (userId: number, oldRating: number | null, newRating: number | null) => {
+  if (!titleGroupAndAssociatedData.value) return
+  const titleGroup = titleGroupAndAssociatedData.value.title_group
+  const ratingSum = (titleGroup.user_rating_average ?? 0) * titleGroup.user_rating_count - (oldRating ?? 0) + (newRating ?? 0)
+  titleGroup.user_rating_count += Number(newRating !== null) - Number(oldRating !== null)
+  titleGroup.user_rating_average = titleGroup.user_rating_count === 0 ? null : ratingSum / titleGroup.user_rating_count
+  titleGroupAndAssociatedData.value.title_group_comments
+    .filter((comment) => comment.created_by.id === userId)
+    .forEach((comment) => (comment.author_rating = newRating))
+}
+
+const ownRatingSaved = (rating: TitleGroupRating) => {
+  if (!titleGroupAndAssociatedData.value) return
+  updateUserRating(rating.user_id, titleGroupAndAssociatedData.value.own_rating?.rating ?? null, rating.rating)
+  titleGroupAndAssociatedData.value.own_rating = rating
+}
+
+const ratingDeleted = (rating: TitleGroupRatingHierarchy) => {
+  if (!titleGroupAndAssociatedData.value) return
+  updateUserRating(rating.created_by.id, rating.rating, null)
+  if (rating.created_by.id === userStore.id) titleGroupAndAssociatedData.value.own_rating = null
 }
 
 const affiliatedArtistsEdited = (newAffiliatedArtists: AffiliatedArtistHierarchy[], removedAffiliatedArtistsIds: number[]) => {

@@ -283,6 +283,56 @@
         />
       </ContentContainer>
 
+      <ContentContainer class="settings-section" :containerTitle="t('arcadia_settings.title_group_rating_settings')">
+        <div style="margin-bottom: 10px">
+          <Checkbox
+            v-model="settings.title_group_rating_requires_snatch_or_seeding"
+            name="title_group_rating_requires_snatch_or_seeding"
+            :binary="true"
+            inputId="title_group_rating_requires_snatch_or_seeding"
+            style="margin-right: 5px"
+          />
+          <label for="title_group_rating_requires_snatch_or_seeding">{{ t('arcadia_settings.title_group_rating_requires_snatch_or_seeding') }}</label>
+        </div>
+
+        <div style="margin-bottom: 10px">
+          <label for="user_rating_label" style="margin-right: 5px">{{ t('arcadia_settings.user_rating_label') }}</label>
+          <InputText v-model="settings.user_rating_label" id="user_rating_label" size="small" />
+        </div>
+
+        <label>{{ t('arcadia_settings.rating_icons') }}</label>
+        <DataTable :value="settings.rating_icons" size="small">
+          <Column :header="t('arcadia_settings.minimum_rating')">
+            <template #body="{ data }">
+              <InputNumber v-model="data.minimum_rating" :min="0" :max="100" suffix="%" size="small" />
+            </template>
+          </Column>
+          <Column :header="t('arcadia_settings.icon_url')">
+            <template #body="{ data }">
+              <InputText v-model="data.icon_url" size="small" style="width: 30em" />
+            </template>
+          </Column>
+          <Column>
+            <template #body="{ data }">
+              <img v-if="data.icon_url" :src="data.icon_url" alt="rating icon" class="rating-icon-preview" />
+            </template>
+          </Column>
+          <Column>
+            <template #body="{ index }">
+              <Button icon="pi pi-trash" severity="danger" size="small" text @click="settings.rating_icons.splice(index, 1)" />
+            </template>
+          </Column>
+        </DataTable>
+        <Button
+          :label="t('arcadia_settings.add_rating_icon')"
+          icon="pi pi-plus"
+          size="small"
+          severity="secondary"
+          @click="settings.rating_icons.push({ minimum_rating: 0, icon_url: '' })"
+          style="margin-top: 10px"
+        />
+      </ContentContainer>
+
       <ContentContainer class="settings-section" :containerTitle="t('arcadia_settings.signup_settings')">
         <Checkbox v-model="settings.open_signups" name="open_signups" :binary="true" inputId="open_signups" style="margin-right: 5px" />
         <label for="open_signups">{{ t('arcadia_settings.open_signups') }}</label>
@@ -452,7 +502,7 @@
 </template>
 
 <script setup lang="ts">
-import { FloatLabel, InputNumber, Checkbox, Button, Message, Select, InputText, Chips, DatePicker, MultiSelect, Textarea } from 'primevue'
+import { FloatLabel, InputNumber, Checkbox, Button, Message, Select, InputText, Chips, DatePicker, MultiSelect, Textarea, DataTable, Column } from 'primevue'
 import BBCodeEditor from '@/components/community/BBCodeEditor.vue'
 import ShopDiscountTiersEditor from '@/components/staff/ShopDiscountTiersEditor.vue'
 import BonusPointsEndpointEditor from '@/components/staff/BonusPointsEndpointEditor.vue'
@@ -612,6 +662,9 @@ onMounted(() => {
 <style scoped>
 .settings-section {
   margin-top: 20px;
+}
+.rating-icon-preview {
+  height: 1.5em;
 }
 .displayed-top-bar-stats :deep(.p-multiselect-label),
 .displayable-user-stats :deep(.p-multiselect-label),

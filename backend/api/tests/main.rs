@@ -64,6 +64,7 @@ mod test_title_group_delete;
 mod test_title_group_edit;
 mod test_title_group_hierarchy;
 mod test_title_group_merge;
+mod test_title_group_rating;
 mod test_title_group_stats;
 mod test_title_group_tag;
 mod test_token_invalidation;

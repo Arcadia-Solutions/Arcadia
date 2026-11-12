@@ -7,7 +7,11 @@
             {{ slotProps.data.title_group_name }}
           </RouterLink>
           <RouterLink
-            :to="`/title-group/${slotProps.data.title_group_id}?post_id=${slotProps.data.title_group_comment_id}#post-${slotProps.data.title_group_comment_id}`"
+            :to="
+              slotProps.data.title_group_rating_id
+                ? `/title-group/${slotProps.data.title_group_id}#rating-${slotProps.data.title_group_rating_id}`
+                : `/title-group/${slotProps.data.title_group_id}?post_id=${slotProps.data.title_group_comment_id}#post-${slotProps.data.title_group_comment_id}`
+            "
           >
             <i class="pi pi-arrow-right" style="color: white; font-size: 0.7em; margin-left: 5px" />
           </RouterLink>

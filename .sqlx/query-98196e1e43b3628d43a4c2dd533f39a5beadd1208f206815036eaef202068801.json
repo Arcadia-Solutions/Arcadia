@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                c.id,\n                c.content,\n                c.created_at,\n                c.updated_at,\n                c.created_by_id,\n                c.title_group_id,\n                c.locked,\n                c.refers_to_torrent_id,\n                c.answers_to_comment_id,\n                tg.name AS title_group_name,\n                ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS \"created_by!: UserLiteAvatar\"\n            FROM title_group_comments c\n            JOIN users u ON u.id = c.created_by_id\n            JOIN title_groups tg ON tg.id = c.title_group_id\n            WHERE c.created_by_id = $1\n            ORDER BY c.created_at DESC\n            LIMIT $2 OFFSET $3\n            ",
+  "query": "\n            SELECT\n                c.id,\n                c.content,\n                c.created_at,\n                c.updated_at,\n                c.created_by_id,\n                c.title_group_id,\n                c.locked,\n                c.refers_to_torrent_id,\n                c.answers_to_comment_id,\n                tg.name AS title_group_name,\n                ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS \"created_by!: UserLiteAvatar\",\n                r.rating AS \"author_rating?\"\n            FROM title_group_comments c\n            JOIN users u ON u.id = c.created_by_id\n            JOIN title_groups tg ON tg.id = c.title_group_id\n            LEFT JOIN title_group_ratings r ON r.title_group_id = c.title_group_id AND r.user_id = c.created_by_id\n            WHERE c.created_by_id = $1\n            ORDER BY c.created_at DESC\n            LIMIT $2 OFFSET $3\n            ",
   "describe": {
     "columns": [
       {
@@ -118,6 +118,17 @@
         "name": "created_by!: UserLiteAvatar",
         "type_info": "Record",
         "origin": "Expression"
+      },
+      {
+        "ordinal": 11,
+        "name": "author_rating?",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "title_group_ratings",
+            "name": "rating"
+          }
+        }
       }
     ],
     "parameters": {
@@ -138,8 +149,9 @@
       true,
       true,
       false,
-      null
+      null,
+      false
     ]
   },
-  "hash": "f8925cd684c28a31511aff3943ded90ad28c75ef96f641f7a000b9107d604440"
+  "hash": "98196e1e43b3628d43a4c2dd533f39a5beadd1208f206815036eaef202068801"
 }

@@ -132,6 +132,34 @@ impl ConnectionPool {
 
         sqlx::query!(
             "UPDATE users
+             SET title_group_ratings = (
+                 SELECT COUNT(*)
+                 FROM title_group_ratings
+                 WHERE title_group_ratings.user_id = users.id
+             )"
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        // only rewrites the title groups whose cached rating drifted
+        sqlx::query!(
+            "UPDATE title_groups
+             SET user_rating_average = computed.average, user_rating_count = computed.count
+             FROM (
+                 SELECT tg.id, AVG(r.rating)::REAL AS average, COUNT(r.id)::INT AS count
+                 FROM title_groups tg
+                 LEFT JOIN title_group_ratings r ON r.title_group_id = tg.id
+                 GROUP BY tg.id
+             ) computed
+             WHERE title_groups.id = computed.id
+               AND (title_groups.user_rating_average, title_groups.user_rating_count)
+                   IS DISTINCT FROM (computed.average, computed.count)"
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        sqlx::query!(
+            "UPDATE users
              SET request_comments = (
                  SELECT COUNT(*)
                  FROM torrent_request_comments

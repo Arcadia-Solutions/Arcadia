@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE users\n            SET title_group_ratings = title_group_ratings - deleted.amount\n            FROM (\n                SELECT user_id, COUNT(*)::INT AS amount\n                FROM title_group_ratings\n                WHERE title_group_id = ANY($1)\n                GROUP BY user_id\n            ) deleted\n            WHERE users.id = deleted.user_id\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e6847720345f8bce79fda1f3843f240b2a05e176fdbbce6b4dcf47328da773be"
+}

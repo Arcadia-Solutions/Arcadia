@@ -77,7 +77,7 @@ impl ConnectionPool {
             SELECT
                 n.id,
                 n.title_group_comment_id,
-                n.title_group_review_id,
+                n.title_group_rating_id,
                 n.title_group_id,
                 tg.name AS title_group_name,
                 n.created_at,
@@ -858,12 +858,12 @@ impl ConnectionPool {
         Ok(())
     }
 
-    /// Notifies the users subscribed to the comments of a title group of a new comment or review.
+    /// Notifies the users subscribed to the comments of a title group of a new comment or rating.
     pub async fn notify_users_title_group_comments(
         tx: &mut Transaction<'_, Postgres>,
         title_group_id: i32,
         comment_id: Option<i64>,
-        review_id: Option<i64>,
+        rating_id: Option<i64>,
         current_user_id: i32,
     ) -> Result<()> {
         sqlx::query!(
@@ -874,7 +874,7 @@ impl ConnectionPool {
                     WHERE title_group_id = $1
                     AND user_id != $3
                 )
-                INSERT INTO notifications_title_group_comments (user_id, title_group_comment_id, title_group_review_id, title_group_id)
+                INSERT INTO notifications_title_group_comments (user_id, title_group_comment_id, title_group_rating_id, title_group_id)
                 SELECT
                     user_id,
                     $2,
@@ -892,7 +892,7 @@ impl ConnectionPool {
             title_group_id,
             comment_id,
             current_user_id,
-            review_id
+            rating_id
         )
         .execute(&mut **tx)
         .await

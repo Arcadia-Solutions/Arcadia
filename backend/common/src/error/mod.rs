@@ -329,19 +329,19 @@ pub enum Error {
     CouldNotFindTitleGroupComment(#[source] sqlx::Error),
 
     #[error("the rating must be between 0 and 100")]
-    TitleGroupReviewRatingOutOfRange,
+    TitleGroupRatingOutOfRange,
 
     #[error("the minimum rating must not be greater than the maximum rating")]
-    TitleGroupReviewRatingRangeInverted,
+    TitleGroupRatingRangeInverted,
 
-    #[error("title group review not found")]
-    TitleGroupReviewNotFound,
+    #[error("title group rating not found")]
+    TitleGroupRatingNotFound,
 
-    #[error("you already reviewed this title group")]
-    TitleGroupReviewAlreadyExists,
+    #[error("you already rated this title group")]
+    TitleGroupRatingAlreadyExists,
 
-    #[error("you must snatch or seed a torrent of this title group before reviewing it")]
-    TitleGroupReviewRequiresSnatchOrSeeding,
+    #[error("you must snatch or seed a torrent of this title group before rating it")]
+    TitleGroupRatingRequiresSnatchOrSeeding,
 
     #[error("error while updating title_group_comment: '{0}'")]
     ErrorWhileUpdatingTitleGroupComment(String),
@@ -973,8 +973,8 @@ impl actix_web::ResponseError for Error {
             | Error::EmojiNameAlreadyExists
             | Error::InvalidEmojiName
             | Error::EmojiDisabled
-            | Error::TitleGroupReviewRatingOutOfRange
-            | Error::TitleGroupReviewRatingRangeInverted
+            | Error::TitleGroupRatingOutOfRange
+            | Error::TitleGroupRatingRangeInverted
             | Error::IpNotPublic => StatusCode::BAD_REQUEST,
 
             // 401 Unauthorized
@@ -999,7 +999,7 @@ impl actix_web::ResponseError for Error {
             | Error::UploadsDisabled
             | Error::AdventCalendarDoorNotOpenable
             | Error::WrongAdventCalendarDoorPassphrase
-            | Error::TitleGroupReviewRequiresSnatchOrSeeding
+            | Error::TitleGroupRatingRequiresSnatchOrSeeding
             | Error::APIKeyScopeNotAllowed => StatusCode::FORBIDDEN,
 
             // 404 Not Found
@@ -1035,7 +1035,7 @@ impl actix_web::ResponseError for Error {
             | Error::RelatedForumThreadNotFound
             | Error::ExternalSourceNotFound(_)
             | Error::EmojiNotFound
-            | Error::TitleGroupReviewNotFound
+            | Error::TitleGroupRatingNotFound
             | Error::EmojiOrForumPostNotFound => StatusCode::NOT_FOUND,
 
             // 409 Conflict
@@ -1058,7 +1058,7 @@ impl actix_web::ResponseError for Error {
             | Error::AdventCalendarAlreadyPublished
             | Error::AdventCalendarDoorAlreadyOpened
             | Error::ReseedNotEligible(_)
-            | Error::TitleGroupReviewAlreadyExists
+            | Error::TitleGroupRatingAlreadyExists
             | Error::ReseedAlreadyRequested => StatusCode::CONFLICT,
 
             // 502 Bad Gateway

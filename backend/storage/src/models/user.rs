@@ -39,7 +39,7 @@ pub struct User {
     pub forum_posts: i32,
     pub forum_threads: i32,
     pub title_group_comments: i32,
-    pub title_group_reviews: i32,
+    pub title_group_ratings: i32,
     pub request_comments: i32,
     pub artist_comments: i64,
     pub seeding: i32,
@@ -181,7 +181,7 @@ pub enum UserPermission {
     ManageAdventCalendars,
     ManageUnfilledRequests,
     RateTitleGroups,
-    DeleteTitleGroupReview,
+    DeleteTitleGroupRating,
 }
 
 impl From<UserPermission> for arcadia_common::error::Error {
@@ -202,7 +202,7 @@ pub enum HideableUserList {
     ForumPosts,
     TitleGroupComments,
     RequestComments,
-    TitleGroupReviews,
+    TitleGroupRatings,
 }
 
 impl HideableUserList {
@@ -213,7 +213,7 @@ impl HideableUserList {
             HideableUserList::ForumPosts => DisplayableUserStats::ForumPosts,
             HideableUserList::TitleGroupComments => DisplayableUserStats::TitleGroupComments,
             HideableUserList::RequestComments => DisplayableUserStats::RequestComments,
-            HideableUserList::TitleGroupReviews => DisplayableUserStats::TitleGroupReviews,
+            HideableUserList::TitleGroupRatings => DisplayableUserStats::TitleGroupRatings,
         }
     }
 }
@@ -333,7 +333,7 @@ pub struct PublicUser {
     pub forum_posts: Option<i32>,
     pub forum_threads: Option<i32>,
     pub title_group_comments: Option<i32>,
-    pub title_group_reviews: Option<i32>,
+    pub title_group_ratings: Option<i32>,
     pub request_comments: Option<i32>,
     pub artist_comments: Option<i64>,
     pub seeding: Option<i32>,
@@ -374,7 +374,7 @@ impl PublicUser {
                 DisplayableUserStats::ForumPosts => self.forum_posts = None,
                 DisplayableUserStats::ForumThreads => self.forum_threads = None,
                 DisplayableUserStats::TitleGroupComments => self.title_group_comments = None,
-                DisplayableUserStats::TitleGroupReviews => self.title_group_reviews = None,
+                DisplayableUserStats::TitleGroupRatings => self.title_group_ratings = None,
                 DisplayableUserStats::RequestComments => self.request_comments = None,
                 DisplayableUserStats::ArtistComments => self.artist_comments = None,
                 DisplayableUserStats::Seeding => self.seeding = None,

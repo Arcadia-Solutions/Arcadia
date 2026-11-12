@@ -10,7 +10,6 @@ use common::{
 };
 use mocks::mock_redis::MockRedisPool;
 use sqlx::PgPool;
-use sqlx::types::Json;
 use std::sync::Arc;
 
 #[sqlx::test(fixtures("with_test_users"))]
@@ -355,7 +354,7 @@ async fn test_staff_cannot_set_reseed_requestable_after_hours_to_zero(pool: PgPo
 }
 
 #[sqlx::test(fixtures("with_test_users"))]
-async fn test_staff_cannot_leave_low_ratings_without_icon(pool: PgPool) {
+async fn test_staff_cannot_leave_ratings_without_icon(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
         pool,
@@ -370,10 +369,10 @@ async fn test_staff_cannot_leave_low_ratings_without_icon(pool: PgPool) {
         bonus_points_alias: "bonus points".to_string(),
         invitation_expiration_days: 3,
         reseed_requestable_after_hours: 72,
-        rating_icons: Json(vec![RatingIcon {
+        rating_icons: vec![RatingIcon {
             minimum_rating: 40,
             icon_url: "https://example.com/icon.png".to_string(),
-        }]),
+        }],
         ..Default::default()
     };
 

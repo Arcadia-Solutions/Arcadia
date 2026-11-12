@@ -9,13 +9,13 @@ pub mod search_series;
 pub mod search_series_lite;
 pub mod search_title_group_comments;
 pub mod search_title_group_info_lite;
-pub mod search_title_group_reviews;
+pub mod search_title_group_ratings;
 pub mod search_title_group_tags;
 pub mod search_title_group_tags_lite;
 pub mod search_torrent_requests;
 pub mod search_torrents;
 pub mod search_user_title_group_comments;
-pub mod search_user_title_group_reviews;
+pub mod search_user_title_group_ratings;
 pub mod search_user_torrent_request_comments;
 pub mod search_users;
 pub mod search_users_lite;
@@ -61,12 +61,12 @@ pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {
             .route(get().to(self::search_user_title_group_comments::exec::<R>)),
     );
     cfg.service(
-        resource("/title-group-reviews")
-            .route(get().to(self::search_title_group_reviews::exec::<R>)),
+        resource("/title-group-ratings")
+            .route(get().to(self::search_title_group_ratings::exec::<R>)),
     );
     cfg.service(
-        resource("/title-group-reviews/user")
-            .route(get().to(self::search_user_title_group_reviews::exec::<R>)),
+        resource("/title-group-ratings/user")
+            .route(get().to(self::search_user_title_group_ratings::exec::<R>)),
     );
     cfg.service(
         resource("/torrent-request-comments/user")

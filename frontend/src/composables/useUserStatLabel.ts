@@ -27,7 +27,7 @@ const translationKeys: Record<Exclude<DisplayableUserStats, typeof DisplayableUs
   [DisplayableUserStats.ForumPosts]: 'community.forum_posts',
   [DisplayableUserStats.CollagesStarted]: 'community.collages_started',
   [DisplayableUserStats.TitleGroupComments]: 'community.title_group_comments',
-  [DisplayableUserStats.TitleGroupReviews]: 'community.title_group_reviews',
+  [DisplayableUserStats.TitleGroupRatings]: 'community.title_group_ratings',
   [DisplayableUserStats.RequestComments]: 'community.request_comments',
   [DisplayableUserStats.ArtistComments]: 'community.artist_comments',
   [DisplayableUserStats.RequestsVoted]: 'community.request_voted',

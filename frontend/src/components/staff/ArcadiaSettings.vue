@@ -283,16 +283,16 @@
         />
       </ContentContainer>
 
-      <ContentContainer class="settings-section" :containerTitle="t('arcadia_settings.title_group_review_settings')">
+      <ContentContainer class="settings-section" :containerTitle="t('arcadia_settings.title_group_rating_settings')">
         <div style="margin-bottom: 10px">
           <Checkbox
-            v-model="settings.title_group_review_requires_snatch_or_seeding"
-            name="title_group_review_requires_snatch_or_seeding"
+            v-model="settings.title_group_rating_requires_snatch_or_seeding"
+            name="title_group_rating_requires_snatch_or_seeding"
             :binary="true"
-            inputId="title_group_review_requires_snatch_or_seeding"
+            inputId="title_group_rating_requires_snatch_or_seeding"
             style="margin-right: 5px"
           />
-          <label for="title_group_review_requires_snatch_or_seeding">{{ t('arcadia_settings.title_group_review_requires_snatch_or_seeding') }}</label>
+          <label for="title_group_rating_requires_snatch_or_seeding">{{ t('arcadia_settings.title_group_rating_requires_snatch_or_seeding') }}</label>
         </div>
 
         <div style="margin-bottom: 10px">

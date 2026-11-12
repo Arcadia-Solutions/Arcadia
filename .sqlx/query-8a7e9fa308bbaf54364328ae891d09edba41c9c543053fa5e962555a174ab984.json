@@ -136,7 +136,7 @@
                       "manage_advent_calendars",
                       "manage_unfilled_requests",
                       "rate_title_groups",
-                      "delete_title_group_review"
+                      "delete_title_group_rating"
                     ]
                   }
                 }
@@ -461,7 +461,7 @@
                       "manage_advent_calendars",
                       "manage_unfilled_requests",
                       "rate_title_groups",
-                      "delete_title_group_review"
+                      "delete_title_group_rating"
                     ]
                   }
                 }

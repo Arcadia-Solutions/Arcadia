@@ -125,7 +125,7 @@ const communityStatistics = computed(() => {
       HideableUserList.TitleGroupComments,
       `/title-group-comments?created_by_id=${user.id}`,
     ),
-    listRow(DisplayableUserStats.TitleGroupReviews, user.title_group_reviews, HideableUserList.TitleGroupReviews, `/user/${user.id}/title-group-reviews`),
+    listRow(DisplayableUserStats.TitleGroupRatings, user.title_group_ratings, HideableUserList.TitleGroupRatings, `/user/${user.id}/title-group-ratings`),
     listRow(DisplayableUserStats.RequestComments, user.request_comments, HideableUserList.RequestComments, `/request-comments?created_by_id=${user.id}`),
     amountRow(DisplayableUserStats.RequestsVoted, user.requests_voted),
     amountRow(DisplayableUserStats.RequestsFilled, user.requests_filled),

@@ -136,10 +136,10 @@
         :publicRatings="titleGroupAndAssociatedData.title_group.public_ratings"
         :userRatingAverage="titleGroupAndAssociatedData.title_group.user_rating_average ?? null"
         :userRatingCount="titleGroupAndAssociatedData.title_group.user_rating_count"
-        :ownReview="titleGroupAndAssociatedData.own_review ?? null"
+        :ownRating="titleGroupAndAssociatedData.own_rating ?? null"
         class="ratings"
-        @ownReviewSaved="ownReviewSaved"
-        @reviewDeleted="reviewDeleted"
+        @ownRatingSaved="ownRatingSaved"
+        @ratingDeleted="ratingDeleted"
       />
       <ContentContainer
         v-if="userStore.permissions.includes('link_similar_title_group') || titleGroupAndAssociatedData.similar_title_groups.length != 0"
@@ -293,8 +293,8 @@ import {
   type TitleGroupAndAssociatedData,
   type TitleGroupBookmark,
   type TitleGroupCommentHierarchy,
-  type TitleGroupReview,
-  type TitleGroupReviewHierarchy,
+  type TitleGroupRating,
+  type TitleGroupRatingHierarchy,
 } from '@/services/api-schema'
 
 const router = useRouter()
@@ -429,7 +429,7 @@ const commentDeleted = (commentId: number) => {
   titleGroupAndAssociatedData.value.title_group_comments = titleGroupAndAssociatedData.value.title_group_comments.filter((comment) => comment.id !== commentId)
 }
 
-// the reviews dialog is filtered and paginated, so the aggregates are updated from the changed rating alone
+// the ratings dialog is filtered and paginated, so the aggregates are updated from the changed rating alone
 const updateUserRating = (userId: number, oldRating: number | null, newRating: number | null) => {
   if (!titleGroupAndAssociatedData.value) return
   const titleGroup = titleGroupAndAssociatedData.value.title_group
@@ -441,16 +441,16 @@ const updateUserRating = (userId: number, oldRating: number | null, newRating: n
     .forEach((comment) => (comment.author_rating = newRating))
 }
 
-const ownReviewSaved = (review: TitleGroupReview) => {
+const ownRatingSaved = (rating: TitleGroupRating) => {
   if (!titleGroupAndAssociatedData.value) return
-  updateUserRating(review.user_id, titleGroupAndAssociatedData.value.own_review?.rating ?? null, review.rating)
-  titleGroupAndAssociatedData.value.own_review = review
+  updateUserRating(rating.user_id, titleGroupAndAssociatedData.value.own_rating?.rating ?? null, rating.rating)
+  titleGroupAndAssociatedData.value.own_rating = rating
 }
 
-const reviewDeleted = (review: TitleGroupReviewHierarchy) => {
+const ratingDeleted = (rating: TitleGroupRatingHierarchy) => {
   if (!titleGroupAndAssociatedData.value) return
-  updateUserRating(review.created_by.id, review.rating, null)
-  if (review.created_by.id === userStore.id) titleGroupAndAssociatedData.value.own_review = null
+  updateUserRating(rating.created_by.id, rating.rating, null)
+  if (rating.created_by.id === userStore.id) titleGroupAndAssociatedData.value.own_rating = null
 }
 
 const affiliatedArtistsEdited = (newAffiliatedArtists: AffiliatedArtistHierarchy[], removedAffiliatedArtistsIds: number[]) => {

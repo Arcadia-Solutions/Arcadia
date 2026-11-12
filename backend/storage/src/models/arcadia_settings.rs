@@ -39,7 +39,7 @@ pub enum DisplayableUserStats {
     ForumPosts,
     ForumThreads,
     TitleGroupComments,
-    TitleGroupReviews,
+    TitleGroupRatings,
     RequestComments,
     ArtistComments,
     Seeding,
@@ -147,18 +147,18 @@ pub struct ArcadiaSettings {
     pub uploads_disabled: bool,
     /// Shown on the upload page while uploads are disabled. Leave empty to show a generic notice.
     pub uploads_disabled_message: Option<String>,
-    /// When enabled, a user can only review a title group after snatching or seeding one of
+    /// When enabled, a user can only rate a title group after snatching or seeding one of
     /// its torrents.
-    pub title_group_review_requires_snatch_or_seeding: bool,
-    #[schema(value_type = Vec<RatingIcon>)]
-    pub rating_icons: Json<Vec<RatingIcon>>,
+    pub title_group_rating_requires_snatch_or_seeding: bool,
+    pub rating_icons: Vec<RatingIcon>,
     /// Shown before the user rating of a title group in the torrent search, e.g. "ACV: 47%".
     pub user_rating_label: String,
 }
 
 /// The icon displayed next to the ratings greater than or equal to `minimum_rating`, up to the
 /// next threshold.
-#[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema, sqlx::Type)]
+#[sqlx(type_name = "rating_icon")]
 pub struct RatingIcon {
     pub minimum_rating: i16,
     pub icon_url: String,
@@ -206,8 +206,7 @@ pub struct PublicArcadiaSettings {
     pub custom_footer: Option<String>,
     pub uploads_disabled: bool,
     pub uploads_disabled_message: Option<String>,
-    #[schema(value_type = Vec<RatingIcon>)]
-    pub rating_icons: Json<Vec<RatingIcon>>,
+    pub rating_icons: Vec<RatingIcon>,
     pub user_rating_label: String,
     /// set when an advent calendar is published and currently running
     pub running_advent_calendar_button_text: Option<String>,

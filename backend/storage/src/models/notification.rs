@@ -32,9 +32,9 @@ pub struct NotificationForumThreadPost {
 #[derive(Debug, Deserialize, Serialize, FromRow, ToSchema)]
 pub struct NotificationTitleGroupComment {
     pub id: i64,
-    /// exactly one of the comment and the review is set
+    /// exactly one of the comment and the rating is set
     pub title_group_comment_id: Option<i64>,
-    pub title_group_review_id: Option<i64>,
+    pub title_group_rating_id: Option<i64>,
     pub title_group_id: i32,
     pub title_group_name: String,
     #[schema(value_type = String, format = DateTime)]

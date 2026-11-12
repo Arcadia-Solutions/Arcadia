@@ -23,7 +23,7 @@ SET row_security = off;
 -- fails because the table does not exist yet).
 
 INSERT INTO user_classes (name, new_permissions)
-VALUES ('staff', '{create_user_class,edit_user_class,delete_user_class,set_and_view_user_permissions,change_user_class,lock_user_class,upload_torrent,download_torrent,create_torrent_request,immune_activity_pruning,edit_title_group,edit_title_group_comment,edit_edition_group,edit_torrent,edit_artist,edit_collage,edit_series,edit_torrent_request,edit_forum_post,edit_forum_thread,edit_forum_sub_category,edit_forum_category,create_forum_category,create_forum_sub_category,create_forum_thread,create_forum_post,send_pm,create_css_sheet,edit_css_sheet,read_staff_pm,reply_staff_pm,resolve_staff_pm,unresolve_staff_pm,manage_title_group_tags,edit_title_group_tag,delete_torrent,get_user_application,update_user_application,warn_user,edit_user,create_wiki_article,edit_wiki_article,rate_title_groups,delete_title_group_review}');
+VALUES ('staff', '{create_user_class,edit_user_class,delete_user_class,set_and_view_user_permissions,change_user_class,lock_user_class,upload_torrent,download_torrent,create_torrent_request,immune_activity_pruning,edit_title_group,edit_title_group_comment,edit_edition_group,edit_torrent,edit_artist,edit_collage,edit_series,edit_torrent_request,edit_forum_post,edit_forum_thread,edit_forum_sub_category,edit_forum_category,create_forum_category,create_forum_sub_category,create_forum_thread,create_forum_post,send_pm,create_css_sheet,edit_css_sheet,read_staff_pm,reply_staff_pm,resolve_staff_pm,unresolve_staff_pm,manage_title_group_tags,edit_title_group_tag,delete_torrent,get_user_application,update_user_application,warn_user,edit_user,create_wiki_article,edit_wiki_article,rate_title_groups,delete_title_group_rating}');
 
 --
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: arcadia
@@ -24921,10 +24921,10 @@ INSERT INTO public.title_group_comments (id, content, created_at, updated_at, cr
     (1, 'Great single, nice to see that it''s now in the public domain', '2025-03-30 18:03:49.188365+00', '2025-03-30 18:03:49.188365+00', 1, 1, FALSE, NULL, NULL);
 
 --
--- Data for Name: title_group_reviews; Type: TABLE DATA; Schema: public; Owner: arcadia
+-- Data for Name: title_group_ratings; Type: TABLE DATA; Schema: public; Owner: arcadia
 --
 
-INSERT INTO public.title_group_reviews (title_group_id, user_id, rating, review, created_at, updated_at) VALUES
+INSERT INTO public.title_group_ratings (title_group_id, user_id, rating, comment, created_at, updated_at) VALUES
     (420, 2, 85, 'Really enjoyed this one, well worth the download.', '2026-04-06 10:00:00+00', '2026-04-06 10:00:00+00'),
     (420, 3, 70, NULL, '2026-04-06 12:00:00+00', '2026-04-06 12:00:00+00'),
     (420, 5, 92, 'One of the best releases I grabbed this month.', '2026-04-06 15:00:00+00', '2026-04-06 15:00:00+00'),
@@ -24942,15 +24942,15 @@ INSERT INTO public.title_group_reviews (title_group_id, user_id, rating, review,
     (416, 5, 70, 'Good, nothing exceptional.', '2026-04-04 23:00:00+00', '2026-04-04 23:00:00+00');
 
 UPDATE public.title_groups SET (user_rating_average, user_rating_count) = (
-    SELECT AVG(rating), COUNT(*) FROM public.title_group_reviews WHERE title_group_id = title_groups.id
-) WHERE id IN (SELECT title_group_id FROM public.title_group_reviews);
+    SELECT AVG(rating), COUNT(*) FROM public.title_group_ratings WHERE title_group_id = title_groups.id
+) WHERE id IN (SELECT title_group_id FROM public.title_group_ratings);
 
-UPDATE public.users SET title_group_reviews = (
-    SELECT COUNT(*) FROM public.title_group_reviews WHERE user_id = users.id
-) WHERE id IN (SELECT user_id FROM public.title_group_reviews);
+UPDATE public.users SET title_group_ratings = (
+    SELECT COUNT(*) FROM public.title_group_ratings WHERE user_id = users.id
+) WHERE id IN (SELECT user_id FROM public.title_group_ratings);
 
 -- red, yellow and green faces
-UPDATE public.arcadia_settings SET rating_icons = '[{"minimum_rating": 0, "icon_url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTUiIGZpbGw9IiNlMDUyNTIiLz48Y2lyY2xlIGN4PSIxMSIgY3k9IjEyIiByPSIyIiBmaWxsPSIjMjIyIi8+PGNpcmNsZSBjeD0iMjEiIGN5PSIxMiIgcj0iMiIgZmlsbD0iIzIyMiIvPjxwYXRoIGQ9Ik0xMCAyMyBRMTYgMTcgMjIgMjMiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIyLjUiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg=="}, {"minimum_rating": 40, "icon_url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTUiIGZpbGw9IiNlMGMyNTIiLz48Y2lyY2xlIGN4PSIxMSIgY3k9IjEyIiByPSIyIiBmaWxsPSIjMjIyIi8+PGNpcmNsZSBjeD0iMjEiIGN5PSIxMiIgcj0iMiIgZmlsbD0iIzIyMiIvPjxwYXRoIGQ9Ik0xMCAyMSBMMjIgMjEiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIyLjUiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg=="}, {"minimum_rating": 75, "icon_url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTUiIGZpbGw9IiM1MmIwNTIiLz48Y2lyY2xlIGN4PSIxMSIgY3k9IjEyIiByPSIyIiBmaWxsPSIjMjIyIi8+PGNpcmNsZSBjeD0iMjEiIGN5PSIxMiIgcj0iMiIgZmlsbD0iIzIyMiIvPjxwYXRoIGQ9Ik0xMCAxOSBRMTYgMjUgMjIgMTkiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIyLjUiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg=="}]';
+UPDATE public.arcadia_settings SET rating_icons = ARRAY[ROW(0, 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTUiIGZpbGw9IiNlMDUyNTIiLz48Y2lyY2xlIGN4PSIxMSIgY3k9IjEyIiByPSIyIiBmaWxsPSIjMjIyIi8+PGNpcmNsZSBjeD0iMjEiIGN5PSIxMiIgcj0iMiIgZmlsbD0iIzIyMiIvPjxwYXRoIGQ9Ik0xMCAyMyBRMTYgMTcgMjIgMjMiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIyLjUiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==')::rating_icon, ROW(40, 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTUiIGZpbGw9IiNlMGMyNTIiLz48Y2lyY2xlIGN4PSIxMSIgY3k9IjEyIiByPSIyIiBmaWxsPSIjMjIyIi8+PGNpcmNsZSBjeD0iMjEiIGN5PSIxMiIgcj0iMiIgZmlsbD0iIzIyMiIvPjxwYXRoIGQ9Ik0xMCAyMSBMMjIgMjEiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIyLjUiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==')::rating_icon, ROW(75, 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTUiIGZpbGw9IiM1MmIwNTIiLz48Y2lyY2xlIGN4PSIxMSIgY3k9IjEyIiByPSIyIiBmaWxsPSIjMjIyIi8+PGNpcmNsZSBjeD0iMjEiIGN5PSIxMiIgcj0iMiIgZmlsbD0iIzIyMiIvPjxwYXRoIGQ9Ik0xMCAxOSBRMTYgMjUgMjIgMTkiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIyLjUiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==')::rating_icon];
 
 --
 -- Data for Name: torrent_activities; Type: TABLE DATA; Schema: public; Owner: arcadia

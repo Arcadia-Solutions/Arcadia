@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE users\n             SET title_group_ratings = (\n                 SELECT COUNT(*)\n                 FROM title_group_ratings\n                 WHERE title_group_ratings.user_id = users.id\n             )",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "da165bc39d574da9f0189eb11c0abce9da032e8413cd706ba33aee905f44100e"
+}

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE title_groups\n                SET (user_rating_average, user_rating_count) = (\n                    SELECT AVG(rating)::REAL, COUNT(*)::INT\n                    FROM title_group_ratings\n                    WHERE title_group_id = $1\n                )\n                WHERE id = $1\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "08440e2ab364ef3f6ad810c891f9f25c96ed1d05b919a95c8e224107ee0ed7ad"
+}

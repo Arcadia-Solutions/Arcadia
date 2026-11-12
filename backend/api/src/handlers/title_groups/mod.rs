@@ -1,12 +1,12 @@
 pub mod create_title_group;
 pub mod create_title_group_comment;
-pub mod create_title_group_review;
+pub mod create_title_group_rating;
 pub mod delete_title_group;
 pub mod delete_title_group_comment;
-pub mod delete_title_group_review;
+pub mod delete_title_group_rating;
 pub mod edit_title_group;
 pub mod edit_title_group_comment;
-pub mod edit_title_group_review;
+pub mod edit_title_group_rating;
 pub mod get_title_group;
 pub mod get_title_group_info_lite;
 pub mod link_similar_title_groups;
@@ -39,10 +39,10 @@ pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {
             .route(put().to(self::edit_title_group_comment::exec::<R>))
             .route(delete().to(self::delete_title_group_comment::exec::<R>)),
     );
-    cfg.service(resource("/reviews").route(post().to(self::create_title_group_review::exec::<R>)));
+    cfg.service(resource("/ratings").route(post().to(self::create_title_group_rating::exec::<R>)));
     cfg.service(
-        resource("/reviews/{id}")
-            .route(put().to(self::edit_title_group_review::exec::<R>))
-            .route(delete().to(self::delete_title_group_review::exec::<R>)),
+        resource("/ratings/{id}")
+            .route(put().to(self::edit_title_group_rating::exec::<R>))
+            .route(delete().to(self::delete_title_group_rating::exec::<R>)),
     );
 }

@@ -8,8 +8,8 @@
           </RouterLink>
           <RouterLink
             :to="
-              slotProps.data.title_group_review_id
-                ? `/title-group/${slotProps.data.title_group_id}#review-${slotProps.data.title_group_review_id}`
+              slotProps.data.title_group_rating_id
+                ? `/title-group/${slotProps.data.title_group_id}#rating-${slotProps.data.title_group_rating_id}`
                 : `/title-group/${slotProps.data.title_group_id}?post_id=${slotProps.data.title_group_comment_id}#post-${slotProps.data.title_group_comment_id}`
             "
           >

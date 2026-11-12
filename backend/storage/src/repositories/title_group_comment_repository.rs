@@ -212,7 +212,7 @@ impl ConnectionPool {
             FROM title_group_comments c
             JOIN users u ON u.id = c.created_by_id
             JOIN title_groups tg ON tg.id = c.title_group_id
-            LEFT JOIN title_group_reviews r ON r.title_group_id = c.title_group_id AND r.user_id = c.created_by_id
+            LEFT JOIN title_group_ratings r ON r.title_group_id = c.title_group_id AND r.user_id = c.created_by_id
             WHERE c.created_by_id = $1
             ORDER BY c.created_at DESC
             LIMIT $2 OFFSET $3

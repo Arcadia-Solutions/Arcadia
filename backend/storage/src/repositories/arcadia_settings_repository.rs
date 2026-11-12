@@ -65,8 +65,8 @@ impl ConnectionPool {
                     reseed_requestable_after_hours,
                     uploads_disabled,
                     uploads_disabled_message,
-                    title_group_review_requires_snatch_or_seeding,
-                    rating_icons as "rating_icons: Json<Vec<RatingIcon>>",
+                    title_group_rating_requires_snatch_or_seeding,
+                    rating_icons as "rating_icons: Vec<RatingIcon>",
                     user_rating_label
                 FROM arcadia_settings
                 LIMIT 1
@@ -137,7 +137,7 @@ impl ConnectionPool {
                     global_snatch_bonus_points_reward_factor = $48,
                     uploads_disabled = $49,
                     uploads_disabled_message = $50,
-                    title_group_review_requires_snatch_or_seeding = $51,
+                    title_group_rating_requires_snatch_or_seeding = $51,
                     rating_icons = $52,
                     user_rating_label = $53
                 RETURNING
@@ -191,8 +191,8 @@ impl ConnectionPool {
                     reseed_requestable_after_hours,
                     uploads_disabled,
                     uploads_disabled_message,
-                    title_group_review_requires_snatch_or_seeding,
-                    rating_icons as "rating_icons: Json<Vec<RatingIcon>>",
+                    title_group_rating_requires_snatch_or_seeding,
+                    rating_icons as "rating_icons: Vec<RatingIcon>",
                     user_rating_label
             "#,
             settings.user_class_name_on_signup,
@@ -247,8 +247,8 @@ impl ConnectionPool {
             settings.global_snatch_bonus_points_reward_factor,
             settings.uploads_disabled,
             settings.uploads_disabled_message,
-            settings.title_group_review_requires_snatch_or_seeding,
-            &settings.rating_icons as &Json<Vec<RatingIcon>>,
+            settings.title_group_rating_requires_snatch_or_seeding,
+            &settings.rating_icons as &[RatingIcon],
             settings.user_rating_label,
         )
         .fetch_one(&self.pool)

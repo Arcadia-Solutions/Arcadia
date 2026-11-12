@@ -3,9 +3,9 @@
     <Slider v-model="rating" :min="0" :max="100" class="slider" />
     <UserRatingDisplay :rating class="rating-preview" />
   </div>
-  <BBCodeEditor :initialValue="ownReview?.review ?? ''" :label="t('title_group.review_optional')" @valueChange="review = $event">
+  <BBCodeEditor :initialValue="ownRating?.comment ?? ''" :label="t('title_group.comment_optional')" @valueChange="comment = $event">
     <template #buttons>
-      <Button :label="t(ownReview ? 'general.edit' : 'general.submit')" size="small" :loading="saving" @click="save" />
+      <Button :label="t(ownRating ? 'general.edit' : 'general.submit')" size="small" :loading="saving" @click="save" />
     </template>
   </BBCodeEditor>
 </template>
@@ -17,34 +17,34 @@ import { Button, Slider } from 'primevue'
 import BBCodeEditor from '../community/BBCodeEditor.vue'
 import UserRatingDisplay from './UserRatingDisplay.vue'
 import { showToast } from '@/main'
-import { createTitleGroupReview, editTitleGroupReview, type TitleGroupReview } from '@/services/api-schema'
+import { createTitleGroupRating, editTitleGroupRating, type TitleGroupRating } from '@/services/api-schema'
 
 const props = defineProps<{
   titleGroupId: number
-  ownReview: TitleGroupReview | null
+  ownRating: TitleGroupRating | null
 }>()
 
 const emit = defineEmits<{
-  saved: [TitleGroupReview]
+  saved: [TitleGroupRating]
 }>()
 
 const { t } = useI18n()
 
 // only read once: the dialog mounts this form each time it opens
-const rating = ref(props.ownReview?.rating ?? 50)
-const review = ref(props.ownReview?.review ?? '')
+const rating = ref(props.ownRating?.rating ?? 50)
+const comment = ref(props.ownRating?.comment ?? '')
 const saving = ref(false)
 
 const save = () => {
   saving.value = true
-  const data = { rating: rating.value, review: review.value.trim() || null }
-  ;(props.ownReview
-    ? editTitleGroupReview({ id: props.ownReview.id, EditedTitleGroupReview: data })
-    : createTitleGroupReview({ ...data, title_group_id: props.titleGroupId })
+  const data = { rating: rating.value, comment: comment.value.trim() || null }
+  ;(props.ownRating
+    ? editTitleGroupRating({ id: props.ownRating.id, EditedTitleGroupRating: data })
+    : createTitleGroupRating({ ...data, title_group_id: props.titleGroupId })
   )
     .then((saved) => {
       emit('saved', saved)
-      showToast('', t('title_group.review_saved_success'), 'success', 2000)
+      showToast('', t('title_group.rating_saved_success'), 'success', 2000)
     })
     .finally(() => (saving.value = false))
 }

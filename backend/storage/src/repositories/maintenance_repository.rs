@@ -132,10 +132,10 @@ impl ConnectionPool {
 
         sqlx::query!(
             "UPDATE users
-             SET title_group_reviews = (
+             SET title_group_ratings = (
                  SELECT COUNT(*)
-                 FROM title_group_reviews
-                 WHERE title_group_reviews.user_id = users.id
+                 FROM title_group_ratings
+                 WHERE title_group_ratings.user_id = users.id
              )"
         )
         .execute(&mut *tx)
@@ -148,7 +148,7 @@ impl ConnectionPool {
              FROM (
                  SELECT tg.id, AVG(r.rating)::REAL AS average, COUNT(r.id)::INT AS count
                  FROM title_groups tg
-                 LEFT JOIN title_group_reviews r ON r.title_group_id = tg.id
+                 LEFT JOIN title_group_ratings r ON r.title_group_id = tg.id
                  GROUP BY tg.id
              ) computed
              WHERE title_groups.id = computed.id

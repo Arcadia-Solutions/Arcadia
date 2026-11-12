@@ -141,7 +141,7 @@ pub enum TestUser {
     ManageAdventCalendars,
     EditTitleGroup,
     ManageUnfilledRequests,
-    DeleteTitleGroupReview,
+    DeleteTitleGroupRating,
 }
 
 impl TestUser {
@@ -232,7 +232,7 @@ impl TestUser {
             TestUser::ManageAdventCalendars => "user_advent_cal",
             TestUser::EditTitleGroup => "user_tg_edit",
             TestUser::ManageUnfilledRequests => "user_unfill",
-            TestUser::DeleteTitleGroupReview => "user_del_tgr",
+            TestUser::DeleteTitleGroupRating => "user_del_tgr",
         };
 
         Login {

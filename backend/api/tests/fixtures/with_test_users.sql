@@ -338,6 +338,6 @@ VALUES (173, 'user_badge_edt', 'test_user_edit_user_badge@testdomain.com', '$arg
 INSERT INTO users (id, username, email, password_hash, registered_from_ip, passkey, class_name, css_sheet_name, permissions)
 VALUES (174, 'user_unfill', 'test_user_manage_unfilled_requests@testdomain.com', '$argon2id$v=19$m=19456,t=2,p=1$WM6V9pJ2ya7+N+NNIUtolg$n128u9idizCHLwZ9xhKaxOttLaAVZZgvfRZlRAnfyKk', '10.10.4.88', 'd2037c66dd3e13044e0d2f9b891c38fc', 'newbie', 'arcadia', '{manage_unfilled_requests}');
 
--- User with delete_title_group_review permission
+-- User with delete_title_group_rating permission
 INSERT INTO users (id, username, email, password_hash, registered_from_ip, passkey, class_name, css_sheet_name, permissions)
-VALUES (175, 'user_del_tgr', 'test_user_delete_title_group_review@testdomain.com', '$argon2id$v=19$m=19456,t=2,p=1$WM6V9pJ2ya7+N+NNIUtolg$n128u9idizCHLwZ9xhKaxOttLaAVZZgvfRZlRAnfyKk', '10.10.4.88', 'd2037c66dd3e13044e0d2f9b891c3a75', 'newbie', 'arcadia', '{delete_title_group_review}');
+VALUES (175, 'user_del_tgr', 'test_user_delete_title_group_rating@testdomain.com', '$argon2id$v=19$m=19456,t=2,p=1$WM6V9pJ2ya7+N+NNIUtolg$n128u9idizCHLwZ9xhKaxOttLaAVZZgvfRZlRAnfyKk', '10.10.4.88', 'd2037c66dd3e13044e0d2f9b891c3a75', 'newbie', 'arcadia', '{delete_title_group_rating}');

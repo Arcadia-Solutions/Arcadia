@@ -275,7 +275,7 @@ impl ConnectionPool {
                     r.rating AS "author_rating?"
                 FROM title_group_comments c
                 JOIN users u ON u.id = c.created_by_id
-                LEFT JOIN title_group_reviews r ON r.title_group_id = c.title_group_id AND r.user_id = c.created_by_id
+                LEFT JOIN title_group_ratings r ON r.title_group_id = c.title_group_id AND r.user_id = c.created_by_id
                 WHERE c.title_group_id = $1
                 ORDER BY c.created_at
                 "#,
@@ -728,10 +728,10 @@ impl ConnectionPool {
             })
             .collect();
 
-        let (related_threads, similar_title_groups, own_review) = tokio::try_join!(
+        let (related_threads, similar_title_groups, own_rating) = tokio::try_join!(
             self.find_related_forum_threads_for_title_group(title_group_id),
             self.find_similar_title_groups(title_group_id),
-            self.find_user_title_group_review(user_id, title_group_id),
+            self.find_user_title_group_rating(user_id, title_group_id),
         )?;
 
         Ok(TitleGroupAndAssociatedData {
@@ -745,7 +745,7 @@ impl ConnectionPool {
             is_subscribed_to_torrents: subscriptions.is_subscribed_to_torrents,
             is_subscribed_to_comments: subscriptions.is_subscribed_to_comments,
             bookmark_id: subscriptions.bookmark_id,
-            own_review,
+            own_rating,
             in_same_master_group: master_group_entries,
             collages,
             related_threads,
@@ -1224,25 +1224,25 @@ impl ConnectionPool {
         .execute(&mut *transaction)
         .await?;
 
-        // A user who reviewed both title groups keeps their most recently updated review, the
-        // other one is deleted and no longer counts in their amount of reviews
+        // A user who rated both title groups keeps their most recently updated rating, the
+        // other one is deleted and no longer counts in their amount of ratings
         sqlx::query!(
             r#"
-            WITH deleted_reviews AS (
-                DELETE FROM title_group_reviews review
-                USING title_group_reviews other_review
-                WHERE review.user_id = other_review.user_id
+            WITH deleted_ratings AS (
+                DELETE FROM title_group_ratings rating
+                USING title_group_ratings other_rating
+                WHERE rating.user_id = other_rating.user_id
                   AND (
-                      (review.title_group_id = $1 AND other_review.title_group_id = $2
-                          AND other_review.updated_at >= review.updated_at)
-                      OR (review.title_group_id = $2 AND other_review.title_group_id = $1
-                          AND other_review.updated_at > review.updated_at)
+                      (rating.title_group_id = $1 AND other_rating.title_group_id = $2
+                          AND other_rating.updated_at >= rating.updated_at)
+                      OR (rating.title_group_id = $2 AND other_rating.title_group_id = $1
+                          AND other_rating.updated_at > rating.updated_at)
                   )
-                RETURNING review.user_id
+                RETURNING rating.user_id
             )
             UPDATE users
-            SET title_group_reviews = title_group_reviews - 1
-            WHERE id IN (SELECT user_id FROM deleted_reviews)
+            SET title_group_ratings = title_group_ratings - 1
+            WHERE id IN (SELECT user_id FROM deleted_ratings)
             "#,
             source_title_group_id,
             target_title_group_id
@@ -1252,7 +1252,7 @@ impl ConnectionPool {
 
         sqlx::query!(
             r#"
-            UPDATE title_group_reviews
+            UPDATE title_group_ratings
             SET title_group_id = $2
             WHERE title_group_id = $1
             "#,
@@ -1646,10 +1646,10 @@ impl ConnectionPool {
         sqlx::query!(
             r#"
             UPDATE users
-            SET title_group_reviews = title_group_reviews - deleted.amount
+            SET title_group_ratings = title_group_ratings - deleted.amount
             FROM (
                 SELECT user_id, COUNT(*)::INT AS amount
-                FROM title_group_reviews
+                FROM title_group_ratings
                 WHERE title_group_id = ANY($1)
                 GROUP BY user_id
             ) deleted

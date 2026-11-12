@@ -9,7 +9,7 @@ use arcadia_common::error::Result;
 use arcadia_shared::tracker::models::env::ArcadiaSettingsForTracker;
 use arcadia_storage::{
     models::{
-        arcadia_settings::ArcadiaSettings, title_group_review::validate_rating,
+        arcadia_settings::ArcadiaSettings, title_group_rating::validate_rating,
         user::UserPermission,
     },
     redis::RedisPoolInterface,

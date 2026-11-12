@@ -215,8 +215,11 @@ async fn test_cannot_merge_title_groups_with_different_content_types(pool: PgPoo
     assert!(pool.find_title_group(12).await.is_ok());
 }
 
+// User 100 only rated the source (20), so their rating moves to the target. User 146 rated both,
+// so only their most recently updated rating (90, on the source) is kept on the target. The
+// target's cached average and count, and user 146's amount of ratings, account for the dropped one.
 #[sqlx::test(fixtures("with_test_users", "with_merge_title_groups"))]
-async fn test_merge_title_groups_keeps_most_recent_review_per_user(pool: PgPool) {
+async fn test_merge_title_groups_keeps_most_recent_rating_per_user(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) = create_test_app_and_login(
         pool.clone(),
@@ -234,12 +237,12 @@ async fn test_merge_title_groups_keeps_most_recent_review_per_user(pool: PgPool)
         StatusCode::OK
     );
 
-    for (user_id, rating) in [(100, 20), (146, 90)] {
-        let review = pool
-            .find_user_title_group_review(user_id, 11)
+    for (user_id, expected_rating) in [(100, 20), (146, 90)] {
+        let rating = pool
+            .find_user_title_group_rating(user_id, 11)
             .await
             .unwrap();
-        assert_eq!(review.unwrap().rating, rating);
+        assert_eq!(rating.unwrap().rating, expected_rating);
     }
 
     let target = pool.find_title_group(11).await.unwrap();
@@ -249,7 +252,7 @@ async fn test_merge_title_groups_keeps_most_recent_review_per_user(pool: PgPool)
         pool.find_user_profile(&146)
             .await
             .unwrap()
-            .title_group_reviews,
+            .title_group_ratings,
         Some(1)
     );
 }

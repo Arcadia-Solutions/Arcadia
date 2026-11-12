@@ -1,0 +1,718 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT id, username, avatar, email, password_hash, registered_from_ip, created_at,\n                       description, uploaded, real_uploaded, downloaded, real_downloaded, last_seen,\n                       class_name, class_locked, permissions as \"permissions: Vec<UserPermission>\",\n                       title_groups, edition_groups, torrents, forum_posts, forum_threads,\n                       title_group_comments, title_group_ratings, request_comments, artist_comments, seeding, leeching,\n                       snatched, seeding_size, requests_filled, collages_started, requests_voted,\n                       average_seeding_time, invited, invitations, bonus_points, freeleech_tokens,\n                       warned, banned, passkey, css_sheet_name, current_streak,\n                       highest_streak, custom_title, max_snatches_per_day, irc_password, irc_site_embed_enabled, show_upload_method\n                FROM users\n                WHERE id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "username",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "username"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "avatar",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "avatar"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "email",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "email"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "password_hash",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "password_hash"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "registered_from_ip",
+        "type_info": "Inet",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "registered_from_ip"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "uploaded",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "uploaded"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "real_uploaded",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "real_uploaded"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "downloaded",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "downloaded"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "real_downloaded",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "real_downloaded"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "last_seen",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "last_seen"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "class_name",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "class_name"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "class_locked",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "class_locked"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "permissions: Vec<UserPermission>",
+        "type_info": {
+          "Custom": {
+            "name": "user_permissions_enum[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "user_permissions_enum",
+                  "kind": {
+                    "Enum": [
+                      "create_user_class",
+                      "edit_user_class",
+                      "delete_user_class",
+                      "set_and_view_user_permissions",
+                      "change_user_class",
+                      "lock_user_class",
+                      "upload_torrent",
+                      "download_torrent",
+                      "create_torrent_request",
+                      "immune_activity_pruning",
+                      "edit_title_group",
+                      "edit_title_group_comment",
+                      "edit_edition_group",
+                      "edit_torrent",
+                      "edit_artist",
+                      "delete_artist",
+                      "delete_title_group",
+                      "edit_collage",
+                      "delete_collage",
+                      "edit_series",
+                      "delete_series",
+                      "remove_title_group_from_series",
+                      "edit_torrent_request",
+                      "edit_forum_post",
+                      "edit_forum_thread",
+                      "pin_forum_thread",
+                      "lock_forum_thread",
+                      "edit_forum_sub_category",
+                      "edit_forum_category",
+                      "create_forum_category",
+                      "create_forum_sub_category",
+                      "create_forum_thread",
+                      "create_forum_post",
+                      "send_pm",
+                      "create_css_sheet",
+                      "edit_css_sheet",
+                      "read_staff_pm",
+                      "reply_staff_pm",
+                      "resolve_staff_pm",
+                      "unresolve_staff_pm",
+                      "manage_title_group_tags",
+                      "edit_title_group_tag",
+                      "delete_torrent",
+                      "request_reseed",
+                      "set_torrent_staff_checked",
+                      "get_user_application",
+                      "update_user_application",
+                      "warn_user",
+                      "ban_user",
+                      "remove_user_warning",
+                      "edit_user",
+                      "generate_reset_password_token",
+                      "create_wiki_article",
+                      "edit_wiki_article",
+                      "link_similar_wiki_articles",
+                      "edit_arcadia_settings",
+                      "create_donation",
+                      "edit_donation",
+                      "delete_donation",
+                      "search_donation",
+                      "search_users",
+                      "search_unauthorized_access",
+                      "search_user_edit_change_logs",
+                      "delete_user_edit_change_log",
+                      "delete_forum_category",
+                      "delete_forum_sub_category",
+                      "delete_forum_thread",
+                      "delete_forum_post",
+                      "delete_title_group_comment",
+                      "delete_torrent_request_comment",
+                      "delete_torrent_request",
+                      "view_torrent_peers_and_activities",
+                      "edit_torrent_up_down_factors",
+                      "delete_collage_entry",
+                      "delete_torrent_report",
+                      "see_foreign_torrent_clients",
+                      "set_user_custom_title",
+                      "merge_title_group",
+                      "delete_edition_group",
+                      "move_torrent_to_other_edition_group",
+                      "view_stats_details",
+                      "read_all_conversations",
+                      "create_user_badge",
+                      "edit_user_badge",
+                      "delete_user_badge",
+                      "view_invisible_user_badges",
+                      "create_user_badge_category",
+                      "edit_user_badge_category",
+                      "delete_user_badge_category",
+                      "award_user_badge",
+                      "revoke_user_badge",
+                      "manage_site_highlights",
+                      "manage_related_forum_thread",
+                      "create_forum_poll_vote",
+                      "use_maintenance_tools",
+                      "edit_torrent_trumpable",
+                      "link_similar_title_group",
+                      "unlink_similar_title_group",
+                      "send_mass_pm",
+                      "see_paranoia_hidden_user_info",
+                      "see_foreign_bonus_points_logs",
+                      "react_to_content",
+                      "view_foreign_invitations",
+                      "write_user_staff_note",
+                      "edit_user_staff_notes",
+                      "view_foreign_user_staff_notes",
+                      "view_registration_ips",
+                      "manage_advent_calendars",
+                      "manage_unfilled_requests",
+                      "rate_title_groups",
+                      "delete_title_group_rating"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "permissions"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "title_groups",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "title_groups"
+          }
+        }
+      },
+      {
+        "ordinal": 17,
+        "name": "edition_groups",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "edition_groups"
+          }
+        }
+      },
+      {
+        "ordinal": 18,
+        "name": "torrents",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "torrents"
+          }
+        }
+      },
+      {
+        "ordinal": 19,
+        "name": "forum_posts",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "forum_posts"
+          }
+        }
+      },
+      {
+        "ordinal": 20,
+        "name": "forum_threads",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "forum_threads"
+          }
+        }
+      },
+      {
+        "ordinal": 21,
+        "name": "title_group_comments",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "title_group_comments"
+          }
+        }
+      },
+      {
+        "ordinal": 22,
+        "name": "title_group_ratings",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "title_group_ratings"
+          }
+        }
+      },
+      {
+        "ordinal": 23,
+        "name": "request_comments",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "request_comments"
+          }
+        }
+      },
+      {
+        "ordinal": 24,
+        "name": "artist_comments",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "artist_comments"
+          }
+        }
+      },
+      {
+        "ordinal": 25,
+        "name": "seeding",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "seeding"
+          }
+        }
+      },
+      {
+        "ordinal": 26,
+        "name": "leeching",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "leeching"
+          }
+        }
+      },
+      {
+        "ordinal": 27,
+        "name": "snatched",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "snatched"
+          }
+        }
+      },
+      {
+        "ordinal": 28,
+        "name": "seeding_size",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "seeding_size"
+          }
+        }
+      },
+      {
+        "ordinal": 29,
+        "name": "requests_filled",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "requests_filled"
+          }
+        }
+      },
+      {
+        "ordinal": 30,
+        "name": "collages_started",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "collages_started"
+          }
+        }
+      },
+      {
+        "ordinal": 31,
+        "name": "requests_voted",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "requests_voted"
+          }
+        }
+      },
+      {
+        "ordinal": 32,
+        "name": "average_seeding_time",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "average_seeding_time"
+          }
+        }
+      },
+      {
+        "ordinal": 33,
+        "name": "invited",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "invited"
+          }
+        }
+      },
+      {
+        "ordinal": 34,
+        "name": "invitations",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "invitations"
+          }
+        }
+      },
+      {
+        "ordinal": 35,
+        "name": "bonus_points",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "bonus_points"
+          }
+        }
+      },
+      {
+        "ordinal": 36,
+        "name": "freeleech_tokens",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "freeleech_tokens"
+          }
+        }
+      },
+      {
+        "ordinal": 37,
+        "name": "warned",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "warned"
+          }
+        }
+      },
+      {
+        "ordinal": 38,
+        "name": "banned",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "banned"
+          }
+        }
+      },
+      {
+        "ordinal": 39,
+        "name": "passkey",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "passkey"
+          }
+        }
+      },
+      {
+        "ordinal": 40,
+        "name": "css_sheet_name",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "css_sheet_name"
+          }
+        }
+      },
+      {
+        "ordinal": 41,
+        "name": "current_streak",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "current_streak"
+          }
+        }
+      },
+      {
+        "ordinal": 42,
+        "name": "highest_streak",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "highest_streak"
+          }
+        }
+      },
+      {
+        "ordinal": 43,
+        "name": "custom_title",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "custom_title"
+          }
+        }
+      },
+      {
+        "ordinal": 44,
+        "name": "max_snatches_per_day",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "max_snatches_per_day"
+          }
+        }
+      },
+      {
+        "ordinal": 45,
+        "name": "irc_password",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "irc_password"
+          }
+        }
+      },
+      {
+        "ordinal": 46,
+        "name": "irc_site_embed_enabled",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "irc_site_embed_enabled"
+          }
+        }
+      },
+      {
+        "ordinal": 47,
+        "name": "show_upload_method",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "show_upload_method"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "07eedf04b82f24f9d5eeb6f589505b220821e94254cccc9e54306b43a6ce7154"
+}

@@ -1,0 +1,90 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    r.id, r.rating, r.comment, r.created_at, r.updated_at,\n                    ROW(u.id, u.username, u.class_name, u.banned, u.avatar, u.warned, u.custom_title) AS \"created_by!: UserLiteAvatar\"\n                FROM title_group_ratings r\n                JOIN users u ON u.id = r.user_id\n                WHERE r.title_group_id = $1\n                  AND r.rating BETWEEN $2 AND $3\n                  AND COALESCE(r.comment, '') ILIKE '%' || $4 || '%'\n                ORDER BY\n                    CASE WHEN $7 = 'created_at' AND $8 = 'asc' THEN r.created_at END ASC,\n                    CASE WHEN $7 = 'created_at' AND $8 = 'desc' THEN r.created_at END DESC,\n                    CASE WHEN $7 = 'rating' AND $8 = 'asc' THEN r.rating END ASC,\n                    CASE WHEN $7 = 'rating' AND $8 = 'desc' THEN r.rating END DESC,\n                    r.id DESC\n                LIMIT $5 OFFSET $6\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "title_group_ratings",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "rating",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "title_group_ratings",
+            "name": "rating"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "comment",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "title_group_ratings",
+            "name": "comment"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "title_group_ratings",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "title_group_ratings",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "created_by!: UserLiteAvatar",
+        "type_info": "Record",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int2",
+        "Int2",
+        "Text",
+        "Int8",
+        "Int8",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "5bb6ddc8543a2032fa0063ba5f73b6cccda0fa158ab16bb76eaed320c9a7f6a6"
+}

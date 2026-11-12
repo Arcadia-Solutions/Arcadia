@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE title_groups\n             SET user_rating_average = computed.average, user_rating_count = computed.count\n             FROM (\n                 SELECT tg.id, AVG(r.rating)::REAL AS average, COUNT(r.id)::INT AS count\n                 FROM title_groups tg\n                 LEFT JOIN title_group_ratings r ON r.title_group_id = tg.id\n                 GROUP BY tg.id\n             ) computed\n             WHERE title_groups.id = computed.id\n               AND (title_groups.user_rating_average, title_groups.user_rating_count)\n                   IS DISTINCT FROM (computed.average, computed.count)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "91f1e76996b4699f78adc6152b894bdd40cd5a76eaf45969365fefcad40d603b"
+}

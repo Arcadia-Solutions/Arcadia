@@ -2,18 +2,18 @@
   <ContentContainer :containerTitle="t('title_group.rating', 2)">
     <div class="ratings-component">
       <div class="rating">
-        <div class="logo-and-note" :class="{ 'cursor-pointer': userRatingCount > 0 }" @click="userRatingCount > 0 && openReviews()">
+        <div class="logo-and-note" :class="{ 'cursor-pointer': userRatingCount > 0 }" @click="userRatingCount > 0 && openRatings()">
           <img :src="averageIcon?.icon_url ?? '/favicon.ico'" alt="rating icon" class="logo" />
           <UserRatingDisplay :rating="userRatingAverage" hideIcon />
         </div>
         <div class="votes">
-          <a v-if="userRatingCount > 0" class="vote-count cursor-pointer" @click="openReviews">
+          <a v-if="userRatingCount > 0" class="vote-count cursor-pointer" @click="openRatings">
             ({{ formatNumber(userRatingCount) }} {{ t('title_group.vote', userRatingCount) }})
           </a>
           <i
             v-if="userStore.permissions.includes('rate_title_groups')"
-            v-tooltip.top="t(ownReview === null ? 'title_group.add_your_rating' : 'title_group.edit_your_rating')"
-            :class="['vote-link', 'cursor-pointer', 'pi', ownReview === null ? 'pi-plus' : 'pi-pen-to-square']"
+            v-tooltip.top="t(ownRating === null ? 'title_group.add_your_rating' : 'title_group.edit_your_rating')"
+            :class="['vote-link', 'cursor-pointer', 'pi', ownRating === null ? 'pi-plus' : 'pi-pen-to-square']"
             @click="openVoteForm"
           />
         </div>
@@ -28,15 +28,15 @@
         </div>
       </template>
     </div>
-    <Dialog closeOnEscape modal :header="t('title_group.rating', 2)" v-model:visible="reviewsVisible" class="reviews-dialog">
-      <TitleGroupReviewFilters v-model="filters" :loading @search="fetchReviews(1)" />
-      <PaginatedResults v-if="reviews" :totalItems :pageSize :initialPage="page" :totalPages @changePage="fetchReviews($event.page)">
-        <TitleGroupReviews :reviews @deleted="reviewDeleted" />
+    <Dialog closeOnEscape modal :header="t('title_group.rating', 2)" v-model:visible="ratingsVisible" class="ratings-dialog">
+      <TitleGroupRatingFilters v-model="filters" :loading @search="fetchRatings(1)" />
+      <PaginatedResults v-if="ratings" :totalItems :pageSize :initialPage="page" :totalPages @changePage="fetchRatings($event.page)">
+        <TitleGroupRatingList :ratings @deleted="ratingDeleted" />
       </PaginatedResults>
       <ProgressSpinner v-else />
     </Dialog>
     <Dialog closeOnEscape modal :header="t('title_group.your_rating')" v-model:visible="voteFormVisible">
-      <TitleGroupVoteForm :titleGroupId :ownReview @saved="ownReviewSaved" />
+      <TitleGroupVoteForm :titleGroupId :ownRating @saved="ownRatingSaved" />
     </Dialog>
   </ContentContainer>
 </template>
@@ -47,11 +47,11 @@ import { Dialog } from 'primevue'
 import ProgressSpinner from 'primevue/progressspinner'
 import {
   OrderByDirection,
-  searchTitleGroupReviews,
-  TitleGroupReviewSearchOrderByColumn,
+  searchTitleGroupRatings,
+  TitleGroupRatingSearchOrderByColumn,
   type PublicRating,
-  type TitleGroupReview,
-  type TitleGroupReviewHierarchy,
+  type TitleGroupRating,
+  type TitleGroupRatingHierarchy,
 } from '@/services/api-schema'
 import ContentContainer from '../ContentContainer.vue'
 import PaginatedResults from '../PaginatedResults.vue'
@@ -60,9 +60,9 @@ import { formatNumber, getRatingIcon } from '@/services/helpers'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 import { useUserStore } from '@/stores/user'
 import UserRatingDisplay from './UserRatingDisplay.vue'
-import TitleGroupReviews from './TitleGroupReviews.vue'
+import TitleGroupRatingList from './TitleGroupRatingList.vue'
 import TitleGroupVoteForm from './TitleGroupVoteForm.vue'
-import TitleGroupReviewFilters, { type TitleGroupReviewFilters as Filters } from './TitleGroupReviewFilters.vue'
+import TitleGroupRatingFilters, { type TitleGroupRatingFilters as Filters } from './TitleGroupRatingFilters.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -74,14 +74,14 @@ const props = defineProps<{
   publicRatings: PublicRating[]
   userRatingAverage: number | null
   userRatingCount: number
-  ownReview: TitleGroupReview | null
+  ownRating: TitleGroupRating | null
 }>()
 
 const averageIcon = computed(() => getRatingIcon(publicArcadiaSettings.rating_icons, props.userRatingAverage))
 
 const emit = defineEmits<{
-  ownReviewSaved: [TitleGroupReview]
-  reviewDeleted: [TitleGroupReviewHierarchy]
+  ownRatingSaved: [TitleGroupRating]
+  ratingDeleted: [TitleGroupRatingHierarchy]
 }>()
 
 const pageSize = 12
@@ -89,53 +89,53 @@ const page = ref(1)
 const totalItems = ref(0)
 const totalPages = computed(() => Math.ceil(totalItems.value / pageSize))
 const filters = ref<Filters>({
-  minimum_rating: null,
-  maximum_rating: null,
+  minimum_rating: 0,
+  maximum_rating: 100,
   content: '',
-  order_by_column: TitleGroupReviewSearchOrderByColumn.CreatedAt,
+  order_by_column: TitleGroupRatingSearchOrderByColumn.CreatedAt,
   order_by_direction: OrderByDirection.Desc,
 })
-const reviews = ref<TitleGroupReviewHierarchy[]>()
+const ratings = ref<TitleGroupRatingHierarchy[]>()
 const loading = ref(false)
-const reviewsVisible = ref(false)
+const ratingsVisible = ref(false)
 const voteFormVisible = ref(false)
 
-const fetchReviews = (newPage: number) => {
+const fetchRatings = (newPage: number) => {
   page.value = newPage
   loading.value = true
-  return searchTitleGroupReviews({
+  return searchTitleGroupRatings({
     title_group_id: props.titleGroupId,
     ...filters.value,
     page: newPage,
     page_size: pageSize,
   })
-    .then((paginatedReviews) => {
-      reviews.value = paginatedReviews.results
-      totalItems.value = paginatedReviews.total_items
+    .then((paginatedRatings) => {
+      ratings.value = paginatedRatings.results
+      totalItems.value = paginatedRatings.total_items
     })
     .finally(() => (loading.value = false))
 }
 
-const openReviews = () => {
-  reviewsVisible.value = true
-  return fetchReviews(1)
+const openRatings = () => {
+  ratingsVisible.value = true
+  return fetchRatings(1)
 }
 
 const openVoteForm = () => (voteFormVisible.value = true)
 
-const ownReviewSaved = (review: TitleGroupReview) => {
-  emit('ownReviewSaved', review)
+const ownRatingSaved = (rating: TitleGroupRating) => {
+  emit('ownRatingSaved', rating)
   voteFormVisible.value = false
 }
 
-const reviewDeleted = (review: TitleGroupReviewHierarchy) => {
-  emit('reviewDeleted', review)
-  fetchReviews(page.value)
+const ratingDeleted = (rating: TitleGroupRatingHierarchy) => {
+  emit('ratingDeleted', rating)
+  fetchRatings(page.value)
 }
 
-// notifications link to `#review-{id}` of a new review, which is on the first page of the default sort
+// notifications link to `#rating-{id}` of a new rating, which is on the first page of the default sort
 onMounted(() => {
-  if (route.hash.startsWith('#review-')) openReviews().then(() => nextTick(() => document.querySelector(route.hash)?.scrollIntoView()))
+  if (route.hash.startsWith('#rating-')) openRatings().then(() => nextTick(() => document.querySelector(route.hash)?.scrollIntoView()))
 })
 </script>
 <style scoped>
@@ -180,7 +180,7 @@ a.vote-count:hover,
 }
 </style>
 <style>
-.reviews-dialog {
+.ratings-dialog {
   width: 70vw;
 }
 </style>

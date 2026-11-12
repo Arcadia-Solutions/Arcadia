@@ -49,11 +49,15 @@ services:
 
 ## Writing a scraper plugin
 
-The declared endpoint is called with the identifier the user typed as the `url` query parameter:
+The declared endpoint is called with the identifier the user typed as the `url` query parameter,
+and the content type the uploader picked as `content_type` when they picked one:
 
 ```
-GET http://anime-plugin:9000/scrape?url=https://anidb.net/anime/1234
+GET http://anime-plugin:9000/scrape?url=https://anidb.net/anime/1234&content_type=tv_show
 ```
+
+`content_type` is context rather than an order: it may be absent, and the plugin may answer with
+another one.
 
 It must answer with JSON:
 
@@ -81,7 +85,8 @@ It must answer with JSON:
 Artists are given **by name**: arcadia creates them, merges the roles of an artist appearing several
 times, and returns real affiliated artists to
 the interface. Arcadia also checks beforehand whether a title group already has the submitted link,
-and appends that link to the scraped title group.
+exactly as it was typed. It does not add that link to the scraped title group: the plugin puts the
+source link in the title group's `external_links` itself, cleaned up as it sees fit.
 
 `external_links` is optional and holds the artist's pages on public databases and other trackers.
 

@@ -15,7 +15,7 @@ use arcadia_storage::{models::title_group::ContentType, redis::RedisPoolInterfac
 use serde::{Deserialize, Serialize};
 
 /// What a plugin is asked to scrape. The content type is the one the uploader picked, and is
-/// context rather than an order (can be overriden by the scraper's response)
+/// context rather than an order (can be overridden by the scraper's response)
 #[derive(Serialize)]
 struct PluginQuery<'a> {
     url: &'a str,
@@ -99,7 +99,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     };
 
     // the plugin returns the source link, in the title group's external_links itself (in case it needs
-    // to clean it on  its own), so it is not added here.
+    // to clean it on its own), so it is not added here.
     // The built-in scrapers still add their own.
 
     respond_with_scraped_data(

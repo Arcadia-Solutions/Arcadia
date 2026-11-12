@@ -84,7 +84,7 @@ const emit = defineEmits<{
   ratingDeleted: [TitleGroupRatingHierarchy]
 }>()
 
-const pageSize = 12
+const pageSize = 25
 const page = ref(1)
 const totalItems = ref(0)
 const totalPages = computed(() => Math.ceil(totalItems.value / pageSize))

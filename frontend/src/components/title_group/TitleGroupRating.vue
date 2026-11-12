@@ -1,5 +1,5 @@
 <template>
-  <div class="rating" :id="`rating-${rating.id}`">
+  <ContentContainer :id="`rating-${rating.id}`" class="rating-card">
     <div class="header">
       <img class="avatar" :src="rating.created_by.avatar ?? '/default_user_avatar.png'" :alt="rating.created_by.username + '\'s avatar'" />
       <div class="author">
@@ -10,7 +10,7 @@
       <i v-if="userStore.permissions.includes('delete_title_group_rating')" v-tooltip.top="t('general.delete')" class="pi pi-trash" @click="emit('delete')" />
     </div>
     <BBCodeRenderer v-if="rating.comment" :content="rating.comment" class="content" />
-  </div>
+  </ContentContainer>
 </template>
 
 <script setup lang="ts">
@@ -18,6 +18,7 @@ import { useI18n } from 'vue-i18n'
 import BBCodeRenderer from '../community/BBCodeRenderer.vue'
 import UsernameEnriched from '../user/UsernameEnriched.vue'
 import TimeAgo from '../TimeAgo.vue'
+import ContentContainer from '../ContentContainer.vue'
 import UserRatingDisplay from './UserRatingDisplay.vue'
 import { useUserStore } from '@/stores/user'
 import type { TitleGroupRatingHierarchy } from '@/services/api-schema'
@@ -35,13 +36,7 @@ const userStore = useUserStore()
 </script>
 
 <style scoped>
-.comment {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: 7px;
+.rating-card {
   min-width: 0;
 }
 .header {
@@ -75,6 +70,7 @@ const userStore = useUserStore()
   cursor: pointer;
 }
 .content {
+  margin-top: 10px;
   overflow-wrap: anywhere;
 }
 </style>

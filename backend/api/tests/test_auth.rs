@@ -323,6 +323,27 @@ async fn test_login_with_banned_user(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
+#[sqlx::test]
+async fn test_login_with_schema_admin(pool: PgPool) {
+    let service = create_test_app(
+        Arc::new(ConnectionPool::with_pg_pool(pool)),
+        MockRedisPool::default(),
+    )
+    .await;
+
+    let req = TestRequest::post()
+        .uri("/api/auth/login")
+        .set_json(serde_json::json!({
+            "username": "admin",
+            "password": "arcadia",
+            "remember_me": false,
+        }))
+        .to_request();
+
+    let resp = call_service(&service, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+}
+
 #[sqlx::test(fixtures("with_test_users"))]
 async fn test_refresh_with_invalidated_token(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));

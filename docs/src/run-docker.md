@@ -53,15 +53,12 @@ Also don't forget to use `sudo` if you aren't in the `docker` group!
     - **Username**: `picolo`
     - **Password**: `test`
 
-    **Option B: Production (Clean Database & First Admin Setup)**
-    If you do not load `fixtures.sql`, the database initializes cleanly with schema migrations alone. To set up your first administrator:
-    
-    1. Navigate to `http://localhost:5173/register` (or your domain) and register your desired username and password.
-    2. By default, newly registered users have the `newbie` class with zero administrative permissions. Promote your account to have full administrator permissions:
-       ```bash
-       docker compose exec -it db psql -U arcadia -d arcadia -c "UPDATE users SET permissions = enum_range(NULL::user_permissions_enum) WHERE username = 'YOUR_USERNAME';"
-       ```
-    3. Log in to the web interface to access site administration and create user classes.
+    **Option B: Production (Clean Database)**
+    If you do not load `fixtures.sql`, the database initializes cleanly with schema migrations alone. It comes with an `admin` user having all permissions:
+    - **Username**: `admin`
+    - **Password**: `arcadia`
+
+    Log in with it and change its password right away from the user settings, then create your user classes from the site administration.
 
 4. **Access the Application**
     - Frontend Web UI: `http://localhost:5173`

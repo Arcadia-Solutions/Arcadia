@@ -197,12 +197,7 @@ The BitTorrent tracker will start listening on port `8081`.
 
 ## Bootstrapping the Administrator
 
-If you did not load the development `fixtures.sql`:
-1. Open the web interface at `http://localhost:5173/register` and create your user account.
-2. Newly created accounts default to the `newbie` user class. Connect to PostgreSQL to grant full administrator permissions:
-   ```bash
-   psql -U arcadia -d arcadia -c "UPDATE users SET permissions = enum_range(NULL::user_permissions_enum) WHERE username = 'YOUR_USERNAME';"
-   ```
+The database schema comes with an `admin` user having all permissions, its password is `arcadia`. Log in with it at `http://localhost:5173/login` and change its password right away from the user settings.
 
 ## Upgrading
 

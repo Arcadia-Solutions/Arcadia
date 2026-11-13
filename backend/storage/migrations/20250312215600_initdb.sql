@@ -270,6 +270,9 @@ CREATE TABLE users (
 CREATE UNIQUE INDEX users_username_lower_key ON users (LOWER(username));
 INSERT INTO users (username, email, password_hash, registered_from_ip, passkey, class_name, css_sheet_name)
 VALUES ('creator', 'none@domain.com', 'none', '127.0.0.1', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'newbie', 'arcadia');
+-- site administrator with every permission, its password is "arcadia" and must be changed after the first login
+INSERT INTO users (username, email, password_hash, registered_from_ip, passkey, class_name, css_sheet_name, permissions)
+VALUES ('admin', 'admin@domain.com', '$argon2id$v=19$m=19456,t=2,p=1$ypzN/gG/RR/bTPdLKpQsWA$aTUa44hxmy0oN1UXtGEX2X1TRVejrA201TGYrCp1UJw', '127.0.0.1', md5(random()::text), 'newbie', 'arcadia', enum_range(NULL::user_permissions_enum));
 CREATE TABLE css_sheets (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     created_by_id INT NOT NULL REFERENCES users(id),

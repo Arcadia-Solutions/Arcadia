@@ -23,6 +23,13 @@
     </div>
     <div class="tool">
       <div class="tool-info">
+        <h3>{{ t('maintenance_tools.fetch_missing_public_ratings') }}</h3>
+        <p>{{ t('maintenance_tools.fetch_missing_public_ratings_description') }}</p>
+      </div>
+      <Button size="small" :label="t('maintenance_tools.run')" :loading="fetchingMissingPublicRatings" @click="fetchMissingPublicRatingsTool" />
+    </div>
+    <div class="tool">
+      <div class="tool-info">
         <h3>{{ t('maintenance_tools.delete_empty_title_groups') }}</h3>
         <p>{{ t('maintenance_tools.delete_empty_title_groups_description') }}</p>
         <div class="tool-options">
@@ -77,6 +84,7 @@ import {
   rehashTorrentsWithSourceTag,
   recomputeCachedAmounts,
   checkMissingRegistrationIps,
+  fetchMissingPublicRatings,
   getEmptyTitleGroups,
   deleteEmptyTitleGroups,
   type TitleGroupHierarchyLite,
@@ -88,6 +96,7 @@ const { t } = useI18n()
 const rehashing = ref(false)
 const recomputingCachedAmounts = ref(false)
 const checkingRegistrationIps = ref(false)
+const fetchingMissingPublicRatings = ref(false)
 const emptyTitleGroupsDates = ref<(Date | null)[] | null>(null)
 const listEmptyTitleGroups = ref(false)
 const emptyTitleGroups = ref<TitleGroupHierarchyLite[]>([])
@@ -129,6 +138,17 @@ const checkMissingRegistrationIpsTool = () => {
     })
     .finally(() => {
       checkingRegistrationIps.value = false
+    })
+}
+
+const fetchMissingPublicRatingsTool = () => {
+  fetchingMissingPublicRatings.value = true
+  fetchMissingPublicRatings()
+    .then((data) => {
+      showToast('Success', t('maintenance_tools.fetch_missing_public_ratings_success', { amount: data.created_ratings_amount }), 'success', 5000)
+    })
+    .finally(() => {
+      fetchingMissingPublicRatings.value = false
     })
 }
 

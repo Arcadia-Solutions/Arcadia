@@ -10,6 +10,7 @@ use super::{
     edition_group::{EditionGroupHierarchy, EditionGroupHierarchyLite, EditionGroupInfoLite},
     series::SeriesLite,
     title_group_comment::TitleGroupCommentHierarchy,
+    title_group_public_rating::PublicRating,
     title_group_rating::TitleGroupRating,
 };
 use crate::models::{
@@ -131,20 +132,6 @@ pub enum TitleGroupCategory {
     Other,
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema, sqlx::Type)]
-pub enum ExternalDB {
-    #[sqlx(rename = "tmdb")]
-    #[serde(rename = "tmdb")]
-    Tmdb,
-}
-
-#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
-pub struct PublicRating {
-    pub service: ExternalDB,
-    pub rating: f64,
-    pub votes: i64,
-}
-
 // Every attribute is specific to the title,
 // no specific information should be entered about the editions or the torrents
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
@@ -172,8 +159,9 @@ pub struct TitleGroup {
     pub category: Option<TitleGroupCategory>, // ((movie: feature film, short film), (music: ep, album, compilation))
     pub content_type: ContentType,            // movies, tv shows, books, games, etc
     pub tags: Vec<String>,
+    /// the collected ratings of the title group on external websites
     #[schema(value_type = Vec<PublicRating>)]
-    pub public_ratings: Value, // {service: rating}
+    pub public_ratings: Value,
     pub series_id: Option<i64>,
     pub screenshots: Vec<String>,
     /// mean of the ratings of the title group, None when there is none

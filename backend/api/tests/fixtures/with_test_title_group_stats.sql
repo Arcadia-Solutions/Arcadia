@@ -14,38 +14,38 @@ INSERT INTO title_groups (
     id, master_group_id, name, name_aliases, created_at, updated_at, created_by_id,
     description, platform, original_language, original_release_date,
     original_release_date_only_year_known, tagline, country_from,
-    covers, external_links, trailers, category, content_type, public_ratings,
+    covers, external_links, trailers, category, content_type,
     series_id, screenshots
 ) VALUES
 (
     20, NULL, 'Stats Series Movie', '{}', '2025-01-01 00:00:00', '2025-01-01 00:00:00', 100,
     'In the series and affiliated to the artist', NULL, 'English', '2020-01-01',
     FALSE, NULL, 'US',
-    '{}', '{}', '{}', 'FeatureFilm', 'movie', '[]'::JSONB, 20, '{}'
+    '{}', '{}', '{}', 'FeatureFilm', 'movie', 20, '{}'
 ),
 (
     21, NULL, 'Stats Series Album', '{}', '2025-01-01 00:00:00', '2025-01-01 00:00:00', 100,
     'In the series and affiliated to the artist', NULL, 'English', '2021-06-01',
     FALSE, NULL, 'US',
-    '{}', '{}', '{}', 'Album', 'music', '[]'::JSONB, 20, '{}'
+    '{}', '{}', '{}', 'Album', 'music', 20, '{}'
 ),
 (
     22, NULL, 'Stats Collage Movie', '{}', '2025-01-01 00:00:00', '2025-01-01 00:00:00', 100,
     'In the collage and affiliated to the artist, without release date', NULL, 'English', NULL,
     FALSE, NULL, 'US',
-    '{}', '{}', '{}', 'FeatureFilm', 'movie', '[]'::JSONB, NULL, '{}'
+    '{}', '{}', '{}', 'FeatureFilm', 'movie', NULL, '{}'
 ),
 (
     23, NULL, 'Stats Collage Book', '{}', '2025-01-01 00:00:00', '2025-01-01 00:00:00', 100,
     'Only in the collage', NULL, 'English', '1999-01-01',
     FALSE, NULL, 'US',
-    '{}', '{}', '{}', 'Book', 'book', '[]'::JSONB, NULL, '{}'
+    '{}', '{}', '{}', 'Book', 'book', NULL, '{}'
 ),
 (
     24, NULL, 'Stats Unrelated Movie', '{}', '2025-01-01 00:00:00', '2025-01-01 00:00:00', 100,
     'Attached to no catalog', NULL, 'English', '2018-01-01',
     FALSE, NULL, 'US',
-    '{}', '{}', '{}', 'FeatureFilm', 'movie', '[]'::JSONB, NULL, '{}'
+    '{}', '{}', '{}', 'FeatureFilm', 'movie', NULL, '{}'
 );
 
 -- Title group 20 has two Blu-Ray edition groups on purpose: the source of a title group must be

@@ -52,7 +52,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         log::warn!(
             "external source plugin '{}' ({}) failed: {error}",
             plugin.id,
-            plugin.url
+            plugin.title_url
         );
         Error::ExternalSourcePluginError(plugin.id.clone())
     };
@@ -60,7 +60,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     // plugins run alongside arcadia, so their requests must never go through the outbound proxy
     let response = arc
         .internal_http_client
-        .get(&plugin.url)
+        .get(&plugin.title_url)
         .query(&PluginQuery { url, content_type })
         .timeout(Duration::from_secs(plugin.timeout_seconds))
         .send()

@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE title_group_public_ratings\n            SET rating = $4, votes = $5, collected_at = NOW()\n            WHERE title_group_id = $1 AND external_link = $2 AND provider = $3\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text",
+        "Text",
+        "Float8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8724ae1a6abc5495676d26957e5a7f7625dfcb2658af42df22a144d5a92a27c0"
+}

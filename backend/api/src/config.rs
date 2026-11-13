@@ -209,13 +209,27 @@ pub struct ExternalSourcePlugin {
     /// Used as the last segment of `/api/external-sources/{source_id}`.
     pub id: String,
     pub placeholder: String,
-    /// The websites the endpoint accepts links from, each with the content types it supports.
-    /// A single endpoint may serve several websites, dispatching on the link it is given.
-    pub sources: BTreeMap<String, Vec<ContentType>>,
-    /// Endpoint of the plugin, called with the `url` query parameter.
-    pub url: String,
+    /// The websites the plugin accepts links from, by name.
+    /// A single plugin may serve several websites, dispatching on the link it is given.
+    pub sources: BTreeMap<String, ExternalSourceWebsite>,
+    /// Endpoint scraping a title, called with the `url` query parameter.
+    pub title_url: String,
+    /// Endpoint collecting the rating of a link, called with the `url` query parameter.
+    /// `None` when the plugin does not collect ratings.
+    pub ratings_url: Option<String>,
     #[serde(default = "default_timeout_seconds")]
     pub timeout_seconds: u64,
+}
+
+/// A website a plugin accepts links from.
+#[derive(Debug, Clone, Deserialize)]
+pub struct ExternalSourceWebsite {
+    pub content_types: Vec<ContentType>,
+    /// The plugin is only asked for the ratings of the links on this domain (or one of its
+    /// subdomains), displayed with the website's name and icon. Both are added to the frontend at
+    /// build time.
+    pub domain: String,
+    pub icon: String,
 }
 
 impl ExternalSourcePlugin {
@@ -224,7 +238,24 @@ impl ExternalSourcePlugin {
         ExternalSource {
             id: self.id.clone(),
             placeholder: self.placeholder.clone(),
-            sources: self.sources.clone(),
+            sources: self
+                .sources
+                .iter()
+                .map(|(name, website)| (name.clone(), website.content_types.clone()))
+                .collect(),
         }
+    }
+
+    /// Whether the link is on the domain (or a subdomain) of one of the plugin's websites.
+    pub fn accepts_link(&self, link: &str) -> bool {
+        let Some(host) = Url::parse(link)
+            .ok()
+            .and_then(|url| url.host_str().map(str::to_owned))
+        else {
+            return false;
+        };
+        self.sources.values().any(|website| {
+            host == website.domain || host.ends_with(&format!(".{}", website.domain))
+        })
     }
 }

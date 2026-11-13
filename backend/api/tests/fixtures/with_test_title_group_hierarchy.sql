@@ -8,13 +8,12 @@ UPDATE title_groups SET master_group_id = 1, series_id = 1 WHERE id = 1;
 -- Second title group in the same master group
 INSERT INTO title_groups (
     id, master_group_id, name, name_aliases, created_by_id,
-    description, content_type, covers, external_links, trailers,
-    public_ratings, screenshots, original_release_date
+    description, content_type, covers, external_links, trailers, screenshots, original_release_date
 )
 VALUES (
     3, 1, 'Please Please Me', '{}', 1,
     'The debut album by The Beatles',
-    'music', '{}', '{}', '{}', '[]'::JSONB, '{}',
+    'music', '{}', '{}', '{}', '{}',
     '1963-03-22'
 );
 

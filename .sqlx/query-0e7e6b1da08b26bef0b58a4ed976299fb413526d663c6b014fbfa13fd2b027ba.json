@@ -1,0 +1,74 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE title_group_public_ratings rating\n            SET last_tried_fetching_at = NOW()\n            FROM (\n                SELECT title_group_id, external_link, provider\n                FROM title_group_public_ratings\n                WHERE ($1::INT IS NULL OR title_group_id = $1)\n                  AND provider = ANY($2)\n                  AND (\n                      last_tried_fetching_at IS NULL\n                      OR last_tried_fetching_at < NOW() - make_interval(secs => $3)\n                  )\n                ORDER BY last_tried_fetching_at NULLS FIRST\n                LIMIT $4\n                FOR UPDATE SKIP LOCKED\n            ) due\n            WHERE rating.title_group_id = due.title_group_id\n              AND rating.external_link = due.external_link\n              AND rating.provider = due.provider\n            RETURNING\n                rating.title_group_id, rating.external_link, rating.provider, rating.collected_at,\n                (\n                    SELECT original_release_date FROM title_groups\n                    WHERE id = rating.title_group_id\n                ) AS \"title_group_original_release_date?\"\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "title_group_id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "title_group_public_ratings",
+            "name": "title_group_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "external_link",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "title_group_public_ratings",
+            "name": "external_link"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "provider",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "title_group_public_ratings",
+            "name": "provider"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "collected_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "title_group_public_ratings",
+            "name": "collected_at"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "title_group_original_release_date?",
+        "type_info": "Date",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "TextArray",
+        "Float8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      null
+    ]
+  },
+  "hash": "0e7e6b1da08b26bef0b58a4ed976299fb413526d663c6b014fbfa13fd2b027ba"
+}

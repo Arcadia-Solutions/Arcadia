@@ -1,8 +1,9 @@
 use actix_cors::Cors;
 use actix_web::{App, HttpServer, web::Data};
 use arcadia_api::routes::init;
+use arcadia_api::services::public_rating_service::fetch_all_due_public_ratings;
 use arcadia_api::{Arcadia, api_doc::ApiDoc, config::Config};
-use arcadia_periodic_tasks::periodic_tasks::scheduler::run_periodic_tasks;
+use arcadia_periodic_tasks::periodic_tasks::scheduler::{repeated_job, run_periodic_tasks};
 use arcadia_storage::connection_pool::ConnectionPool;
 use arcadia_storage::redis::{RedisPool, RedisPoolInterface};
 use std::sync::Arc;
@@ -86,7 +87,7 @@ async fn main() -> std::io::Result<()> {
     // Initialize and start periodic tasks before starting the web server
     // This ensures that if periodic tasks fail to initialize (e.g., an invalid bonus formula),
     // the entire application fails to start
-    let _scheduler = run_periodic_tasks(
+    let scheduler = run_periodic_tasks(
         Arc::clone(&pool),
         Arc::clone(&redis_pool),
         config.periodic_tasks.clone(),
@@ -106,6 +107,24 @@ async fn main() -> std::io::Result<()> {
         config,
         settings,
     ));
+
+    // registered here as asking the providers needs the HTTP clients and the plugins of `Arcadia`
+    let ratings_arc = arc.clone();
+    scheduler
+        .add(
+            repeated_job(
+                &pool,
+                arc.periodic_tasks.public_ratings_fetch_seconds,
+                "public_ratings_fetch",
+                move |_pool| {
+                    let arc = ratings_arc.clone();
+                    async move { fetch_all_due_public_ratings(&arc, None).await }
+                },
+            )
+            .expect("Failed to create the public ratings fetch task"),
+        )
+        .await
+        .expect("Failed to schedule the public ratings fetch task");
     let server = HttpServer::new(move || {
         let cors = Cors::permissive();
         App::new()

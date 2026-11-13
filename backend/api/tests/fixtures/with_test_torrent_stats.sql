@@ -6,32 +6,32 @@ INSERT INTO title_groups (
     id, master_group_id, name, name_aliases, created_at, updated_at, created_by_id,
     description, platform, original_language, original_release_date,
     original_release_date_only_year_known, tagline, country_from,
-    covers, external_links, trailers, category, content_type, public_ratings,
+    covers, external_links, trailers, category, content_type,
     series_id, screenshots
 ) VALUES
 (
     10, NULL, 'Stats Movie A', '{}', '2025-01-01 00:00:00', '2025-01-01 00:00:00', 100,
     'A movie for stats', NULL, 'English', '2025-01-01',
     FALSE, NULL, 'US',
-    '{}', '{}', '{}', 'FeatureFilm', 'movie', '[]'::JSONB, NULL, '{}'
+    '{}', '{}', '{}', 'FeatureFilm', 'movie', NULL, '{}'
 ),
 (
     11, NULL, 'Stats Album B', '{}', '2025-01-01 00:00:00', '2025-01-01 00:00:00', 100,
     'An album for stats', NULL, 'French', '2025-01-01',
     FALSE, NULL, 'FR',
-    '{}', '{}', '{}', 'Album', 'music', '[]'::JSONB, NULL, '{}'
+    '{}', '{}', '{}', 'Album', 'music', NULL, '{}'
 ),
 (
     12, NULL, 'Stats Movie C', '{}', '2025-01-01 00:00:00', '2025-01-01 00:00:00', 100,
     'A 2023 movie for stats', NULL, 'English', '2023-06-15',
     FALSE, NULL, 'US',
-    '{}', '{}', '{}', 'FeatureFilm', 'movie', '[]'::JSONB, NULL, '{}'
+    '{}', '{}', '{}', 'FeatureFilm', 'movie', NULL, '{}'
 ),
 (
     13, NULL, 'Stats Movie D', '{}', '2025-01-01 00:00:00', '2025-01-01 00:00:00', 100,
     'A title group without release date', NULL, 'English', NULL,
     FALSE, NULL, 'US',
-    '{}', '{}', '{}', 'FeatureFilm', 'movie', '[]'::JSONB, NULL, '{}'
+    '{}', '{}', '{}', 'FeatureFilm', 'movie', NULL, '{}'
 );
 
 INSERT INTO edition_groups (

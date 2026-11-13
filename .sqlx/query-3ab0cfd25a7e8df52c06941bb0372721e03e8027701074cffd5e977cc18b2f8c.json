@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO title_groups (\n                master_group_id,\n                name,\n                name_aliases,\n                created_by_id,\n                description,\n                original_language,\n                country_from,\n                covers,\n                external_links,\n                trailers,\n                category,\n                content_type,\n                original_release_date,\n                original_release_date_only_year_known,\n                tagline,\n                platform,\n                screenshots,\n                public_ratings\n            )\n            VALUES (\n                $1, $2, $3, $4, $5, $6::language_enum,\n                $7, $8, $9, $10, $11::title_group_category_enum,\n                $12::content_type_enum, $13, $14, $15, $16, $17, $18\n            )\n            RETURNING id\n            ",
+  "query": "\n            INSERT INTO title_groups (\n                master_group_id,\n                name,\n                name_aliases,\n                created_by_id,\n                description,\n                original_language,\n                country_from,\n                covers,\n                external_links,\n                trailers,\n                category,\n                content_type,\n                original_release_date,\n                original_release_date_only_year_known,\n                tagline,\n                platform,\n                screenshots\n            )\n            VALUES (\n                $1, $2, $3, $4, $5, $6::language_enum,\n                $7, $8, $9, $10, $11::title_group_category_enum,\n                $12::content_type_enum, $13, $14, $15, $16, $17\n            )\n            RETURNING id\n            ",
   "describe": {
     "columns": [
       {
@@ -208,13 +208,12 @@
             }
           }
         },
-        "TextArray",
-        "Jsonb"
+        "TextArray"
       ]
     },
     "nullable": [
       false
     ]
   },
-  "hash": "67043b47e1d8d584e0329facdc6ccf25e2c4545a4e22a4e0e979373a424458d9"
+  "hash": "3ab0cfd25a7e8df52c06941bb0372721e03e8027701074cffd5e977cc18b2f8c"
 }

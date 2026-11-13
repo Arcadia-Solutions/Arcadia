@@ -4,16 +4,19 @@ use actix_web::{
 };
 use arcadia_storage::{
     models::{
-        title_group::{PublicRating, TitleGroup, UserCreatedTitleGroup},
+        title_group::{TitleGroup, UserCreatedTitleGroup},
         user::UserPermission,
     },
     redis::RedisPoolInterface,
 };
-use futures::future::join_all;
 
 use crate::{
-    Arcadia, handlers::external_db::get_tmdb_data::get_tmdb_rating,
-    middlewares::auth_middleware::Authdata, services::image_service::validate_trailer_urls,
+    Arcadia,
+    middlewares::auth_middleware::Authdata,
+    services::{
+        image_service::validate_trailer_urls,
+        public_rating_service::sync_title_group_public_ratings,
+    },
 };
 use arcadia_common::error::{Error, Result};
 
@@ -45,28 +48,14 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     arc.validate_image_urls(form.covers.iter().chain(&form.screenshots))?;
     validate_trailer_urls(&form.trailers)?;
 
-    let rating_futures: Vec<_> = form
-        .external_links
-        .iter()
-        .filter(|link| link.contains("https://www.themoviedb.org/"))
-        .map(|link| {
-            get_tmdb_rating(
-                &arc.http_client,
-                link,
-                arc.api.tmdb_api_key.clone().unwrap(),
-            )
-        })
-        .collect();
-    let ratings: Vec<PublicRating> = join_all(rating_futures)
-        .await
-        .into_iter()
-        .filter_map(Result::ok)
-        .collect();
+    let created_title_group = arc.pool.create_title_group(&form, user.sub).await?;
 
-    let created_title_group = arc
-        .pool
-        .create_title_group(&form, &ratings, user.sub)
-        .await?;
+    sync_title_group_public_ratings(
+        &arc,
+        created_title_group.id,
+        &created_title_group.external_links,
+    )
+    .await;
 
     // Subscribe the creator to the title group's comments
     arc.pool

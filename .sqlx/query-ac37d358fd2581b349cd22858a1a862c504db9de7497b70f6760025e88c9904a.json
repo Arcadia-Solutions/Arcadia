@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            DELETE FROM title_group_public_ratings\n            WHERE title_group_id = $1 AND external_link = $2 AND provider = $3\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ac37d358fd2581b349cd22858a1a862c504db9de7497b70f6760025e88c9904a"
+}

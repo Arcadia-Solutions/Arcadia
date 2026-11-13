@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE title_group_public_ratings source\n            SET title_group_id = $2\n            WHERE source.title_group_id = $1\n              AND NOT EXISTS (\n                  SELECT 1 FROM title_group_public_ratings target\n                  WHERE target.title_group_id = $2\n                    AND target.external_link = source.external_link\n                    AND target.provider = source.provider\n              )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2bcd0ca86b07e04552e4a24a25f382001eeef737c22dbfa77eb06e7841ba6607"
+}

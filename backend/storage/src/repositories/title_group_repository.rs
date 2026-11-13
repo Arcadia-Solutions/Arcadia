@@ -7,9 +7,9 @@ use crate::{
         entity::{AffiliatedEntityHierarchy, Entity, EntityRole},
         series::SeriesLite,
         title_group::{
-            ContentType, EditedTitleGroup, MasterGroupEntry, Platform, PublicRating,
-            SimilarTitleGroupLite, SimilarTitleGroupsLink, TitleGroup, TitleGroupAndAssociatedData,
-            TitleGroupCategory, TitleGroupHierarchyLite, UserCreatedTitleGroup,
+            ContentType, EditedTitleGroup, MasterGroupEntry, Platform, SimilarTitleGroupLite,
+            SimilarTitleGroupsLink, TitleGroup, TitleGroupAndAssociatedData, TitleGroupCategory,
+            TitleGroupHierarchyLite, UserCreatedTitleGroup,
         },
         title_group_comment::TitleGroupCommentHierarchy,
         title_group_tag::UserCreatedTitleGroupTag,
@@ -24,7 +24,7 @@ use crate::{
 };
 use arcadia_common::error::{Error, Result};
 use chrono::{DateTime, Local, Utc};
-use serde_json::{Value, json};
+use serde_json::Value;
 use sqlx::{PgExecutor, Postgres, Transaction, types::Json};
 use std::collections::HashMap;
 
@@ -32,7 +32,6 @@ impl ConnectionPool {
     pub async fn create_title_group(
         &self,
         title_group_form: &UserCreatedTitleGroup,
-        public_ratings: &Vec<PublicRating>,
         user_id: i32,
     ) -> Result<TitleGroup> {
         let created_title_group_id: i32 = sqlx::query_scalar!(
@@ -54,13 +53,12 @@ impl ConnectionPool {
                 original_release_date_only_year_known,
                 tagline,
                 platform,
-                screenshots,
-                public_ratings
+                screenshots
             )
             VALUES (
                 $1, $2, $3, $4, $5, $6::language_enum,
                 $7, $8, $9, $10, $11::title_group_category_enum,
-                $12::content_type_enum, $13, $14, $15, $16, $17, $18
+                $12::content_type_enum, $13, $14, $15, $16, $17
             )
             RETURNING id
             "#,
@@ -80,8 +78,7 @@ impl ConnectionPool {
             title_group_form.original_release_date_only_year_known,
             title_group_form.tagline,
             title_group_form.platform.clone() as Option<Platform>,
-            &title_group_form.screenshots,
-            json!(public_ratings)
+            &title_group_form.screenshots
         )
         .fetch_one(&self.pool)
         .await
@@ -982,7 +979,7 @@ impl ConnectionPool {
                 original_release_date_only_year_known, tagline, country_from, covers AS "covers!: _",
                 external_links AS "external_links!: _", trailers,
                 category AS "category: _", content_type AS "content_type: _",
-                public_ratings, screenshots AS "screenshots!: _", series_id,
+                screenshots AS "screenshots!: _", series_id,
                 user_rating_average, user_rating_count,
                 COALESCE(
                     ARRAY(
@@ -992,7 +989,19 @@ impl ConnectionPool {
                         WHERE tat.title_group_id = title_groups.id
                     ),
                     ARRAY[]::text[]
-                ) AS "tags!: _"
+                ) AS "tags!: _",
+                COALESCE(
+                    (
+                        SELECT json_agg(json_build_object(
+                            'external_link', r.external_link,
+                            'rating', r.rating,
+                            'votes', r.votes, 'collected_at', r.collected_at
+                        ) ORDER BY r.external_link)
+                        FROM title_group_public_ratings r
+                        WHERE r.title_group_id = title_groups.id AND r.rating IS NOT NULL
+                    ),
+                    '[]'
+                ) AS "public_ratings!: _"
             FROM title_groups
             WHERE id = $1
             "#,
@@ -1010,8 +1019,7 @@ impl ConnectionPool {
         edited_title_group: &EditedTitleGroup,
         title_group_id: i32,
     ) -> Result<TitleGroup> {
-        let updated_title_group = sqlx::query_as!(
-            TitleGroup,
+        sqlx::query!(
             r#"
             UPDATE title_groups
             SET
@@ -1033,24 +1041,6 @@ impl ConnectionPool {
                 screenshots = $17,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING
-                id, master_group_id, name, name_aliases AS "name_aliases!: _",
-                created_at, updated_at, created_by_id, description,
-                platform AS "platform: _", original_language AS "original_language: _", original_release_date,
-                original_release_date_only_year_known, tagline, country_from, covers AS "covers!: _",
-                external_links AS "external_links!: _", trailers,
-                category AS "category: _", content_type AS "content_type: _",
-                public_ratings, screenshots AS "screenshots!: _", series_id,
-                user_rating_average, user_rating_count,
-                COALESCE(
-                    ARRAY(
-                        SELECT t.name
-                        FROM title_group_applied_tags tat
-                        JOIN title_group_tags t ON t.id = tat.tag_id
-                        WHERE tat.title_group_id = title_groups.id
-                    ),
-                    ARRAY[]::text[]
-                ) AS "tags!: _"
             "#,
             title_group_id,
             edited_title_group.master_group_id,
@@ -1070,11 +1060,11 @@ impl ConnectionPool {
             edited_title_group.content_type as _,
             edited_title_group.screenshots as _
         )
-        .fetch_one(&self.pool)
+        .execute(&self.pool)
         .await
         .map_err(|e| Error::ErrorWhileUpdatingTitleGroup(e.to_string()))?;
 
-        Ok(updated_title_group)
+        self.find_title_group(title_group_id).await
     }
 
     pub async fn assign_title_group_to_series(
@@ -1374,6 +1364,25 @@ impl ConnectionPool {
             UPDATE notifications_artist_title_groups
             SET title_group_id = $2
             WHERE title_group_id = $1
+            "#,
+            source_title_group_id,
+            target_title_group_id
+        )
+        .execute(&mut *transaction)
+        .await?;
+
+        // Move title_group_public_ratings (PK on title_group_id, external_link, provider)
+        sqlx::query!(
+            r#"
+            UPDATE title_group_public_ratings source
+            SET title_group_id = $2
+            WHERE source.title_group_id = $1
+              AND NOT EXISTS (
+                  SELECT 1 FROM title_group_public_ratings target
+                  WHERE target.title_group_id = $2
+                    AND target.external_link = source.external_link
+                    AND target.provider = source.provider
+              )
             "#,
             source_title_group_id,
             target_title_group_id

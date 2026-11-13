@@ -9,8 +9,11 @@ use actix_web::{
     },
     test, web,
 };
-use arcadia_api::{Arcadia, config::Config};
-use arcadia_storage::models::user::Login;
+use arcadia_api::{
+    Arcadia,
+    config::{Config, ExternalSourcePlugin, ExternalSourceWebsite},
+};
+use arcadia_storage::models::{title_group::ContentType, user::Login};
 use arcadia_storage::{
     connection_pool::ConnectionPool,
     models::user::{LoginResponse, User},
@@ -18,6 +21,8 @@ use arcadia_storage::{
 };
 use serde::{Deserialize, de::DeserializeOwned};
 use std::sync::Arc;
+
+use crate::mocks::mock_redis::MockRedisPool;
 
 #[derive(Deserialize)]
 pub struct Profile {
@@ -409,4 +414,32 @@ pub fn spawn_http_server(
     });
 
     (format!("http://{address}"), receiver)
+}
+
+pub fn website(content_types: Vec<ContentType>) -> ExternalSourceWebsite {
+    ExternalSourceWebsite {
+        content_types,
+        domain: String::from("example.com"),
+        icon: String::from("https://example.com/icon.svg"),
+    }
+}
+
+/// The plugins are loaded from the configuration file at startup, tests declare them by hand instead.
+pub async fn arcadia_with_plugin(
+    pool: Arc<ConnectionPool>,
+    plugin: ExternalSourcePlugin,
+) -> web::Data<Arcadia<MockRedisPool>> {
+    let mut config = arcadia_shared::config::load::<Config>();
+    config.scrapers = vec![plugin];
+    let settings = pool
+        .get_arcadia_settings()
+        .await
+        .expect("failed to load arcadia settings from database");
+
+    web::Data::new(Arcadia::<MockRedisPool>::new(
+        pool,
+        Arc::new(MockRedisPool::default()),
+        config,
+        settings,
+    ))
 }

@@ -28,3 +28,15 @@ export interface ArcadiaFrontendConfig {
 declare const __ARCADIA_CONFIG__: ArcadiaFrontendConfig
 
 export const config: ArcadiaFrontendConfig = __ARCADIA_CONFIG__
+
+export interface PublicRatingWebsite {
+  name: string
+  /** The ratings of the links on this domain or one of its subdomains belong to the website. */
+  domain: string
+  icon: string
+}
+
+declare const __PUBLIC_RATING_WEBSITES__: PublicRatingWebsite[]
+
+/** The websites the scraper plugins accept links from, from the `scrapers` section of config.yml. */
+export const publicRatingWebsites: PublicRatingWebsite[] = __PUBLIC_RATING_WEBSITES__

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO title_group_public_ratings (title_group_id, external_link, provider)\n            SELECT * FROM unnest($1::INT[], $2::TEXT[], $3::TEXT[])\n            ON CONFLICT DO NOTHING\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4Array",
+        "TextArray",
+        "TextArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "930020b67188f3ba50088074ecc2f4cdfeb925d0d506cccaffe4cc577203a914"
+}

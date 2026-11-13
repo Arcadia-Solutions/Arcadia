@@ -1360,14 +1360,6 @@ export const EntityRole = {
 export type EntityRole = typeof EntityRole[keyof typeof EntityRole];
 
 
-
-export const ExternalDB = {
-    Tmdb: 'tmdb'
-} as const;
-
-export type ExternalDB = typeof ExternalDB[keyof typeof ExternalDB];
-
-
 export interface ExternalDBData {
     'affiliated_artists': Array<AffiliatedArtistHierarchy>;
     'edition_group'?: UserCreatedEditionGroup | null;
@@ -1412,6 +1404,16 @@ export const Features = {
 export type Features = typeof Features[keyof typeof Features];
 
 
+export interface FetchMissingPublicRatings200Response {
+    'data': FetchMissingPublicRatingsResponse;
+    'side_effects': Array<SideEffect>;
+}
+export interface FetchMissingPublicRatingsResponse {
+    /**
+     * the (title group, external link, provider) rows created, the provider never having been asked about the link
+     */
+    'created_ratings_amount': number;
+}
 export interface FillTorrentRequest200Response {
     'data': TorrentRequestFillResponse;
     'side_effects': Array<SideEffect>;
@@ -3149,13 +3151,18 @@ export interface PublicProfile {
     'torrent_clients': Array<TorrentClient>;
     'user': PublicUser;
 }
+/**
+ * A title group\'s rating on an external website, on the scale of that website.
+ */
 export interface PublicRating {
+    'collected_at': string;
+    'external_link': string;
+    /**
+     * the average rating, on the scale of the website
+     */
     'rating': number;
-    'service': ExternalDB;
     'votes': number;
 }
-
-
 /**
  * A user\'s profile as seen by another user. Every statistic that the user can hide with their paranoia settings is optional, and is set to `None` when the requesting user is not allowed to see it.
  */
@@ -3849,6 +3856,9 @@ export interface TitleGroup {
     'original_release_date': string | null;
     'original_release_date_only_year_known': boolean;
     'platform'?: Platform | null;
+    /**
+     * the collected ratings of the title group on external websites
+     */
     'public_ratings': Array<PublicRating>;
     'screenshots': Array<string>;
     'series_id'?: number | null;
@@ -6998,6 +7008,17 @@ export const deleteEmptyTitleGroups = async (deleteEmptyTitleGroupsRequest: Dele
 };
 
 
+
+
+
+export const fetchMissingPublicRatings = async (options?: RawAxiosRequestConfig): Promise<FetchMissingPublicRatings200Response['data']> => {
+    const response = await globalAxios.request<FetchMissingPublicRatings200Response>({
+        url: '/api/maintenance-tools/fetch-missing-public-ratings',
+        method: 'POST',
+        ...options
+    });
+    return response.data.data;
+};
 
 export interface GetEmptyTitleGroupsRequest {
     'created_after'?: string | null;

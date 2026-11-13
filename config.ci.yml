@@ -39,6 +39,9 @@ periodic_tasks:
   announce_errors_cleanup_seconds: 900
   announce_errors_retention_seconds: 86400
   reseed_request_cleanup_seconds: 900
+  public_ratings_fetch_seconds: 600
+  public_ratings_retry_seconds: 86400
+  public_ratings_batch_size: 50
 
 frontend:
   api_base_url: http://127.0.0.1:8080

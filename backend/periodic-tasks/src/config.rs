@@ -1,3 +1,5 @@
+use std::num::NonZeroU64;
+
 use serde::Deserialize;
 
 /// The `periodic_tasks` section of the `config.yml` file. The service running the tasks owns the
@@ -29,6 +31,15 @@ pub struct PeriodicTasksConfig {
     /// Announce errors not seen again within this delay are considered stale and removed,
     /// in seconds. Must be longer than the tracker's announce interval.
     pub announce_errors_retention_seconds: u64,
+    /// Interval for asking the providers (TMDB and the scraper plugins) for the ratings due, in
+    /// seconds.
+    pub public_ratings_fetch_seconds: u64,
+    /// A rating is asked for again this long after the last attempt, whatever its outcome, in
+    /// seconds. The scraper plugins decide themselves whether their rating needs a refresh.
+    /// Non zero, or a rating would be due again as soon as it is asked for, and fetched endlessly.
+    pub public_ratings_retry_seconds: NonZeroU64,
+    /// Maximum amount of ratings asked for at each fetch.
+    pub public_ratings_batch_size: i64,
     /// Interval for removing the reseed requests of torrents that are healthy again, in seconds.
     #[serde(default = "default_reseed_request_cleanup_seconds")]
     pub reseed_request_cleanup_seconds: u64,

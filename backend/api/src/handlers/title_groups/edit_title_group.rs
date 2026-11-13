@@ -13,7 +13,12 @@ use arcadia_storage::{
 };
 
 use crate::{
-    Arcadia, middlewares::auth_middleware::Authdata, services::image_service::validate_trailer_urls,
+    Arcadia,
+    middlewares::auth_middleware::Authdata,
+    services::{
+        image_service::validate_trailer_urls,
+        public_rating_service::sync_title_group_public_ratings,
+    },
 };
 use arcadia_common::error::{Error, Result};
 
@@ -60,5 +65,12 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     }
 
     let updated_title_group = arc.pool.update_title_group(&form, title_group.id).await?;
+
+    sync_title_group_public_ratings(
+        &arc,
+        updated_title_group.id,
+        &updated_title_group.external_links,
+    )
+    .await;
     Ok(HttpResponse::Ok().json(updated_title_group))
 }

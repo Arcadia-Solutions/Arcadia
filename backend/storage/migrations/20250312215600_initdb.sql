@@ -707,7 +707,6 @@ CREATE TABLE title_groups (
     trailers TEXT [] NOT NULL,
     category title_group_category_enum,
     content_type content_type_enum NOT NULL,
-    public_ratings JSONB NOT NULL,
     screenshots TEXT[] NOT NULL,
     series_id BIGINT,
     -- mean of the ratings in title_group_ratings, NULL when there is none
@@ -1036,6 +1035,21 @@ CREATE TABLE title_group_ratings (
     UNIQUE (title_group_id, user_id)
 );
 CREATE INDEX title_group_ratings_user_id_index ON title_group_ratings (user_id);
+-- ratings of the title group on external websites, one row per external link and provider
+-- asked for it. The rating columns stay NULL until the provider answers with a rating.
+CREATE TABLE title_group_public_ratings (
+    title_group_id INT NOT NULL REFERENCES title_groups(id) ON DELETE CASCADE,
+    external_link TEXT NOT NULL,
+    -- 'tmdb' or the id of the scraper plugin
+    provider TEXT NOT NULL,
+    rating DOUBLE PRECISION,
+    votes BIGINT,
+    collected_at TIMESTAMP WITH TIME ZONE,
+    -- NULL until the provider is asked for the first time
+    last_tried_fetching_at TIMESTAMP WITH TIME ZONE,
+    PRIMARY KEY (title_group_id, external_link, provider)
+);
+CREATE INDEX title_group_public_ratings_last_tried_fetching_at_index ON title_group_public_ratings (last_tried_fetching_at NULLS FIRST);
 CREATE TABLE torrent_requests (
     id BIGSERIAL PRIMARY KEY,
     title_group_id INT NOT NULL,

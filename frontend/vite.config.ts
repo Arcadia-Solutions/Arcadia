@@ -22,6 +22,10 @@ if (!configuration?.frontend) {
 }
 
 const referrerAllowedDomains: string[] = configuration.frontend.referrer_allowed_domains ?? []
+// The websites the scraper plugins accept links from, displayed with their ratings
+const publicRatingWebsites = (configuration.scrapers ?? []).flatMap((plugin: { sources: Record<string, { domain: string; icon: string }> }) =>
+  Object.entries(plugin.sources).map(([name, website]) => ({ name, domain: website.domain, icon: website.icon })),
+)
 
 const customIconsPlugin = (): Plugin => {
   const virtualModuleId = 'virtual:custom-icons.css'
@@ -183,6 +187,7 @@ export default defineConfig({
   },
   define: {
     __ARCADIA_CONFIG__: JSON.stringify(configuration.frontend),
+    __PUBLIC_RATING_WEBSITES__: JSON.stringify(publicRatingWebsites),
   },
   resolve: {
     alias: {

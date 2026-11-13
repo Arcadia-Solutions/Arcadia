@@ -1,10 +1,10 @@
 -- Source title group (id=10) and target title group (id=11), both music
 -- Title group with different content type (id=12) for mismatch test
-INSERT INTO title_groups (id, name, name_aliases, created_at, updated_at, created_by_id, description, covers, external_links, trailers, content_type, public_ratings, screenshots)
+INSERT INTO title_groups (id, name, name_aliases, created_at, updated_at, created_by_id, description, covers, external_links, trailers, content_type, screenshots)
 VALUES
-  (10, 'Source Title Group', '{}', NOW(), NOW(), 1, 'Source description', '{https://source-cover.example.com,https://shared-cover.example.com}', '{https://source-only.example.com,https://shared.example.com}', '{https://shared-trailer.example.com,https://source-trailer.example.com}', 'music', '[]', '{}'),
-  (11, 'Target Title Group', '{}', NOW(), NOW(), 1, 'Target description', '{https://target-cover.example.com,https://shared-cover.example.com}', '{https://target-only.example.com,https://shared.example.com}', '{https://shared-trailer.example.com}', 'music', '[]', '{}'),
-  (12, 'Different Content Type Group', '{}', NOW(), NOW(), 1, 'Software description', '{}', '{}', '{}', 'software', '[]', '{}');
+  (10, 'Source Title Group', '{}', NOW(), NOW(), 1, 'Source description', '{https://source-cover.example.com,https://shared-cover.example.com}', '{https://source-only.example.com,https://shared.example.com}', '{https://shared-trailer.example.com,https://source-trailer.example.com}', 'music', '{}'),
+  (11, 'Target Title Group', '{}', NOW(), NOW(), 1, 'Target description', '{https://target-cover.example.com,https://shared-cover.example.com}', '{https://target-only.example.com,https://shared.example.com}', '{https://shared-trailer.example.com}', 'music', '{}'),
+  (12, 'Different Content Type Group', '{}', NOW(), NOW(), 1, 'Software description', '{}', '{}', '{}', 'software', '{}');
 
 -- Edition groups: one on source, one on target
 INSERT INTO edition_groups (id, title_group_id, name, release_date, release_date_only_year_known, created_at, updated_at, created_by_id, description, distributor, covers, external_links, source, additional_information)

@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{str::FromStr, sync::LazyLock};
 
 use crate::{
     Arcadia,
@@ -15,10 +15,7 @@ use arcadia_storage::{
     models::{
         artist::ArtistRole,
         edition_group::{UserCreatedEditionGroup, create_default_edition_group},
-        title_group::{
-            ContentType, ExternalDB, PublicRating, UserCreatedTitleGroup,
-            create_default_title_group,
-        },
+        title_group::{ContentType, UserCreatedTitleGroup, create_default_title_group},
         torrent::Language,
     },
     redis::RedisPoolInterface,
@@ -147,13 +144,9 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     if arc.api.tmdb_api_key.is_none() {
         return Err(Error::TMDBDataFetchingNotAvailable);
     }
-    let (media_type, id) = extract_media_type_and_id(url).unwrap();
+    let (media_type, id) = extract_media_type_and_id(url)?;
 
-    let client = Client::builder()
-        .with_executor(arc.http_client.clone())
-        .with_api_key(arc.api.tmdb_api_key.clone().unwrap())
-        .build()
-        .expect("Failed to build TMDB client");
+    let client = build_tmdb_client(&arc.http_client, arc.api.tmdb_api_key.clone().unwrap());
 
     let mut external_db_data = match media_type {
         ContentType::Movie => get_tmdb_movie_data(&client, id).await?,
@@ -191,60 +184,26 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     .await
 }
 
-pub async fn get_tmdb_rating(
-    http_client: &reqwest::Client,
-    tmdb_url: &str,
-    tmdb_api_key: String,
-) -> Result<PublicRating> {
-    let (media_type, id) = extract_media_type_and_id(tmdb_url).unwrap();
-
-    let client = Client::builder()
+pub fn build_tmdb_client(http_client: &reqwest::Client, api_key: String) -> Client<ReqwestClient> {
+    Client::builder()
         .with_executor(http_client.clone())
-        .with_api_key(tmdb_api_key)
+        .with_api_key(api_key)
         .build()
-        .expect("Failed to build TMDB client");
-
-    let rating = match media_type {
-        ContentType::Movie => {
-            let tmdb_movie = client
-                .get_movie_details(id, &Default::default())
-                .await
-                .unwrap();
-            PublicRating {
-                service: ExternalDB::Tmdb,
-                rating: tmdb_movie.inner.vote_average,
-                votes: tmdb_movie.inner.vote_count as i64,
-            }
-        }
-        ContentType::TVShow => {
-            let tmdb_tv_show = client
-                .get_tvshow_details(id, &Default::default())
-                .await
-                .unwrap();
-            PublicRating {
-                service: ExternalDB::Tmdb,
-                rating: tmdb_tv_show.inner.vote_average,
-                votes: tmdb_tv_show.inner.vote_count as i64,
-            }
-        }
-        _ => return Err(Error::InvalidTMDBUrl),
-    };
-
-    Ok(rating)
+        .expect("Failed to build TMDB client")
 }
 
-fn extract_media_type_and_id(tmdb_url: &str) -> Result<(ContentType, u64)> {
-    let re = Regex::new(r"themoviedb\.org/(movie|tv)/(\d+)(?:-|$)").unwrap();
-    let captures = re.captures(tmdb_url).unwrap();
+pub fn extract_media_type_and_id(tmdb_url: &str) -> Result<(ContentType, u64)> {
+    static TMDB_URL: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"themoviedb\.org/(movie|tv)/(\d+)(?:-|$)").unwrap());
+    let captures = TMDB_URL.captures(tmdb_url).ok_or(Error::InvalidTMDBUrl)?;
 
-    let media_type_str = captures.get(1).unwrap().as_str();
-    let media_type = match media_type_str {
+    let media_type = match &captures[1] {
         "movie" => ContentType::Movie,
-        "tv" => ContentType::TVShow,
-        _ => return Err(Error::InvalidTMDBUrl),
+        _ => ContentType::TVShow,
     };
-    let id_str = captures.get(2).unwrap().as_str();
-    let id = id_str.parse::<u64>().ok().unwrap();
+    let id = captures[2]
+        .parse::<u64>()
+        .map_err(|_| Error::InvalidTMDBUrl)?;
 
     Ok((media_type, id))
 }

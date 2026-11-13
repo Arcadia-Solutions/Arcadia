@@ -12,6 +12,8 @@ const LOVE_SINGLES_ONE_BADGE_ID: i32 = 802;
 const ADVENT_CALENDAR_BADGE_ID: i32 = 900;
 const ADVENT_CALENDAR_DAY_2_BADGE_ID: i32 = 901;
 const ACCOUNT_AGE_BADGE_ID: i32 = 950;
+const HIGH_RATER_BADGE_ID: i32 = 960;
+const TWO_LOVE_RATINGS_BADGE_ID: i32 = 961;
 const QUALIFYING_USER_ID: i32 = 100;
 const SEED_CREATOR_USER_ID: i32 = 1;
 
@@ -233,4 +235,22 @@ async fn test_awards_account_age_badge(pool: PgPool) {
 
     assert!(user_has_badge(&raw_pool, 101, ACCOUNT_AGE_BADGE_ID).await);
     assert!(!user_has_badge(&raw_pool, QUALIFYING_USER_ID, ACCOUNT_AGE_BADGE_ID).await);
+}
+
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_refreshed_title_group_hierarchy_lite",
+    "with_test_title_group_ratings",
+    "with_test_title_group_ratings_badges"
+))]
+async fn test_awards_title_group_ratings_badge(pool: PgPool) {
+    let raw_pool = pool.clone();
+    let conn_pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+
+    evaluate_user_badges_inner(conn_pool).await.unwrap();
+
+    assert!(user_has_badge(&raw_pool, QUALIFYING_USER_ID, HIGH_RATER_BADGE_ID).await);
+    // only title group 1 matches the name filter
+    assert!(!user_has_badge(&raw_pool, QUALIFYING_USER_ID, TWO_LOVE_RATINGS_BADGE_ID).await);
 }

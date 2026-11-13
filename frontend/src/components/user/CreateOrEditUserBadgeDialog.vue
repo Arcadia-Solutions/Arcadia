@@ -31,6 +31,7 @@
           { value: UserBadgeType.ForumThreads, label: t('user_badge.type_forum_threads') },
           { value: UserBadgeType.AdventCalendarDoors, label: t('user_badge.type_advent_calendar_doors') },
           { value: UserBadgeType.AccountAge, label: t('user_badge.type_account_age') },
+          { value: UserBadgeType.TitleGroupRatings, label: t('user_badge.type_title_group_ratings') },
         ]"
         optionLabel="label"
         optionValue="value"
@@ -131,6 +132,23 @@
       </FloatLabel>
     </template>
 
+    <template v-else-if="badge.badge_type === UserBadgeType.TitleGroupRatings && titleGroupRatingsCriteria">
+      <h3>{{ t('user_badge.criteria') }}</h3>
+      <FloatLabel>
+        <InputNumber v-model="titleGroupRatingsCriteria.minimum_rating_amount" :min="1" size="small" />
+        <label>{{ t('user_badge.minimum_rating_amount') }}</label>
+      </FloatLabel>
+      <FloatLabel>
+        <InputNumber v-model="titleGroupRatingsCriteria.minimum_rating" :min="0" :max="100" size="small" />
+        <label>{{ t('user_badge.minimum_rating') }}</label>
+      </FloatLabel>
+      <FloatLabel>
+        <InputNumber v-model="titleGroupRatingsCriteria.maximum_rating" :min="0" :max="100" size="small" />
+        <label>{{ t('user_badge.maximum_rating') }}</label>
+      </FloatLabel>
+      <TorrentSearchInputs :loading="false" :initialForm="titleGroupRatingsCriteria.search" displaySearchButton />
+    </template>
+
     <div class="wrapper-center" style="margin-top: 20px">
       <Button :label="t('general.confirm')" size="small" :loading="loading" :disabled="adventCalendarDoorsCriteria?.calendar_id === 0" @click="save()" />
     </div>
@@ -152,6 +170,7 @@ import {
   UserBadgeCriteriaOneOf2TypeEnum,
   UserBadgeCriteriaOneOf3TypeEnum,
   UserBadgeCriteriaOneOf4TypeEnum,
+  UserBadgeCriteriaOneOf5TypeEnum,
   type AdventCalendarLite,
   type UserBadge,
   type UserBadgeCategory,
@@ -160,6 +179,7 @@ import {
   type UserBadgeCriteriaOneOf2,
   type UserBadgeCriteriaOneOf3,
   type UserBadgeCriteriaOneOf4,
+  type UserBadgeCriteriaOneOf5,
   type UserCreatedUserBadge,
   type TorrentSearch,
 } from '@/services/api-schema'
@@ -225,6 +245,9 @@ const adventCalendarDoorsCriteria = computed<UserBadgeCriteriaOneOf3 | null>(() 
 )
 const accountAgeCriteria = computed<UserBadgeCriteriaOneOf4 | null>(() =>
   badge.value.badge_type === UserBadgeType.AccountAge ? (badge.value.criteria as UserBadgeCriteriaOneOf4) : null,
+)
+const titleGroupRatingsCriteria = computed<UserBadgeCriteriaOneOf5 | null>(() =>
+  badge.value.badge_type === UserBadgeType.TitleGroupRatings ? (badge.value.criteria as UserBadgeCriteriaOneOf5) : null,
 )
 
 // only fetched when needed, listing the calendars requires the permission to manage them
@@ -302,6 +325,15 @@ const onTypeChanged = (newType: typeof badge.value.badge_type) => {
     const c: UserBadgeCriteriaOneOf4 = {
       type: UserBadgeCriteriaOneOf4TypeEnum.AccountAge,
       minimum_account_age_in_days: 365,
+    }
+    badge.value.criteria = c
+  } else if (newType === UserBadgeType.TitleGroupRatings) {
+    const c: UserBadgeCriteriaOneOf5 = {
+      type: UserBadgeCriteriaOneOf5TypeEnum.TitleGroupRatings,
+      minimum_rating_amount: 1,
+      minimum_rating: 0,
+      maximum_rating: 100,
+      search: { ...defaultTorrentSearch(), title_group_include_empty_groups: true },
     }
     badge.value.criteria = c
   }

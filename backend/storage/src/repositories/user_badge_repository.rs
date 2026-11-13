@@ -437,10 +437,13 @@ impl ConnectionPool {
             .collect())
     }
 
-    pub async fn find_qualifying_uploader_ids(
+    /// Without a rating range, counts the matching title groups uploaded by each user.
+    /// With one, counts the matching title groups each user rated within that range (inclusive).
+    pub async fn find_qualifying_title_group_search_user_ids(
         &self,
         form: &TorrentSearch,
         minimum_title_group_amount: i64,
+        rating_range: Option<(i16, i16)>,
     ) -> Result<Vec<i32>> {
         let (name_filter, external_link_filter) = match &form.title_group_name {
             Some(s) => {
@@ -463,14 +466,10 @@ impl ConnectionPool {
 
         let ids = sqlx::query_scalar!(
             r#"
-            SELECT torrent_created_by_id AS "user_id!"
-            FROM title_group_hierarchy_lite tgh
-            WHERE tgh.torrent_created_by_id IS NOT NULL
-              AND EXISTS (
-                SELECT 1 FROM users u
-                WHERE u.id = tgh.torrent_created_by_id AND u.banned = FALSE
-              )
-              AND ($1::BOOLEAN IS NULL OR tgh.torrent_staff_checked = $1)
+            WITH matching AS (
+              SELECT DISTINCT tgh.title_group_id, tgh.torrent_created_by_id
+              FROM title_group_hierarchy_lite tgh
+              WHERE ($1::BOOLEAN IS NULL OR tgh.torrent_staff_checked = $1)
               AND ($2::BOOLEAN IS NULL OR tgh.torrent_reported = $2)
               AND ($17::BOOLEAN IS NULL OR (NULLIF(tgh.torrent_trumpable, '') IS NOT NULL) = $17)
               AND (
@@ -517,8 +516,22 @@ impl ConnectionPool {
                     AND NOT title_group_tag_names && COALESCE(ARRAY(SELECT jsonb_array_elements_text(clause->'exclude'))::varchar[], '{}')
                 )
               )
-            GROUP BY torrent_created_by_id
-            HAVING COUNT(DISTINCT title_group_id) >= $16
+            ),
+            contributions AS (
+              SELECT torrent_created_by_id AS user_id, title_group_id
+              FROM matching
+              WHERE $18::SMALLINT IS NULL AND torrent_created_by_id IS NOT NULL
+              UNION ALL
+              SELECT ratings.user_id, ratings.title_group_id
+              FROM title_group_ratings ratings
+              WHERE ratings.rating BETWEEN $18 AND $19
+                AND ratings.title_group_id IN (SELECT title_group_id FROM matching)
+            )
+            SELECT contributions.user_id AS "user_id!"
+            FROM contributions
+            JOIN users u ON u.id = contributions.user_id AND u.banned = FALSE
+            GROUP BY contributions.user_id
+            HAVING COUNT(DISTINCT contributions.title_group_id) >= $16
             "#,
             form.torrent_staff_checked,
             form.torrent_reported,
@@ -537,6 +550,8 @@ impl ConnectionPool {
             tag_filter_jsonb,
             minimum_title_group_amount,
             form.torrent_trumpable,
+            rating_range.map(|(minimum_rating, _)| minimum_rating),
+            rating_range.map(|(_, maximum_rating)| maximum_rating),
         )
         .fetch_all(&self.pool)
         .await

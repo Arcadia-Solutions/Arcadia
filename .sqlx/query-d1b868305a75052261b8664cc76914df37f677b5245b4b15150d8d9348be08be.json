@@ -126,7 +126,8 @@
                 "forum_posts",
                 "forum_threads",
                 "advent_calendar_doors",
-                "account_age"
+                "account_age",
+                "title_group_ratings"
               ]
             }
           }

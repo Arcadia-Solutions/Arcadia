@@ -1705,7 +1705,8 @@ CREATE TYPE user_badge_type_enum AS ENUM (
     'forum_posts',
     'forum_threads',
     'advent_calendar_doors',
-    'account_age'
+    'account_age',
+    'title_group_ratings'
 );
 CREATE TABLE user_badge_categories (
     id SERIAL PRIMARY KEY,

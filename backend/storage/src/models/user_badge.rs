@@ -15,6 +15,7 @@ pub enum UserBadgeType {
     ForumThreads,
     AdventCalendarDoors,
     AccountAge,
+    TitleGroupRatings,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
@@ -164,5 +165,13 @@ pub enum UserBadgeCriteria {
     },
     AccountAge {
         minimum_account_age_in_days: i32,
+    },
+    /// counts the ratings between minimum_rating and maximum_rating (inclusive)
+    /// given to title groups matching the search
+    TitleGroupRatings {
+        search: Box<TorrentSearch>,
+        minimum_rating: i16,
+        maximum_rating: i16,
+        minimum_rating_amount: i64,
     },
 }

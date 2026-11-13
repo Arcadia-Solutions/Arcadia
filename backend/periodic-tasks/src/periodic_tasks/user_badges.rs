@@ -110,8 +110,12 @@ async fn qualifying_user_ids(
             search,
             minimum_title_group_amount,
         } => {
-            pool.find_qualifying_uploader_ids(search, *minimum_title_group_amount)
-                .await
+            pool.find_qualifying_title_group_search_user_ids(
+                search,
+                *minimum_title_group_amount,
+                None,
+            )
+            .await
         }
         UserBadgeCriteria::ForumPosts {
             minimum_post_character_count,
@@ -154,6 +158,19 @@ async fn qualifying_user_ids(
         } => {
             pool.find_qualifying_account_age_user_ids(*minimum_account_age_in_days)
                 .await
+        }
+        UserBadgeCriteria::TitleGroupRatings {
+            search,
+            minimum_rating,
+            maximum_rating,
+            minimum_rating_amount,
+        } => {
+            pool.find_qualifying_title_group_search_user_ids(
+                search,
+                *minimum_rating_amount,
+                Some((*minimum_rating, *maximum_rating)),
+            )
+            .await
         }
     }
 }

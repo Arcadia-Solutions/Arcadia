@@ -1,18 +1,13 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT torrent_created_by_id AS \"user_id!\"\n            FROM title_group_hierarchy_lite tgh\n            WHERE tgh.torrent_created_by_id IS NOT NULL\n              AND EXISTS (\n                SELECT 1 FROM users u\n                WHERE u.id = tgh.torrent_created_by_id AND u.banned = FALSE\n              )\n              AND ($1::BOOLEAN IS NULL OR tgh.torrent_staff_checked = $1)\n              AND ($2::BOOLEAN IS NULL OR tgh.torrent_reported = $2)\n              AND ($17::BOOLEAN IS NULL OR (NULLIF(tgh.torrent_trumpable, '') IS NOT NULL) = $17)\n              AND (\n                $3::BIGINT IS NULL OR\n                EXISTS (SELECT 1 FROM affiliated_artists aa WHERE aa.title_group_id = tgh.title_group_id AND aa.artist_id = $3)\n              )\n              AND (\n                $4::TEXT IS NULL OR\n                tgh.title_group_name ILIKE '%' || $4 || '%' ESCAPE '\\' OR\n                tgh.title_group_series_name ILIKE '%' || $4 || '%' ESCAPE '\\' OR\n                EXISTS (SELECT 1 FROM unnest(tgh.title_group_name_aliases) alias WHERE alias ILIKE '%' || $4 || '%')\n              )\n              AND (\n                $5::TEXT IS NULL\n                OR EXISTS (\n                    SELECT 1 FROM unnest(tgh.title_group_external_links) link\n                    WHERE rtrim(link, '/') = $5\n                )\n              )\n              AND ($6::BOOLEAN IS TRUE OR tgh.torrent_id IS NOT NULL)\n              AND ($7::BIGINT IS NULL OR tgh.title_group_series_id = $7)\n              AND ($8::INT IS NULL OR\n                EXISTS (SELECT 1 FROM collage_entry ce WHERE ce.title_group_id = tgh.title_group_id AND ce.collage_id = $8)\n              )\n              AND (CARDINALITY($9::content_type_enum[]) = 0 OR tgh.title_group_content_type = ANY($9))\n              AND (CARDINALITY($10::title_group_category_enum[]) = 0 OR tgh.title_group_category = ANY($10))\n              AND (CARDINALITY($11::source_enum[]) = 0 OR tgh.edition_group_source = ANY($11))\n              AND (CARDINALITY($12::video_resolution_enum[]) = 0 OR tgh.torrent_video_resolution = ANY($12))\n              AND (CARDINALITY($13::language_enum[]) = 0 OR tgh.torrent_languages && $13)\n              AND (\n                $14::INT IS NULL OR\n                EXISTS (\n                    SELECT 1 FROM torrent_activities ta\n                    WHERE ta.torrent_id = tgh.torrent_id\n                      AND ta.user_id = $14\n                      AND ta.completed_at IS NOT NULL\n                )\n              )\n              AND (\n                $15::JSONB IS NULL OR\n                EXISTS (\n                    SELECT 1 FROM jsonb_array_elements($15) AS clause\n                    WHERE COALESCE(ARRAY(SELECT jsonb_array_elements_text(clause->'include'))::varchar[], '{}') <@ title_group_tag_names\n                    AND NOT title_group_tag_names && COALESCE(ARRAY(SELECT jsonb_array_elements_text(clause->'exclude'))::varchar[], '{}')\n                )\n              )\n            GROUP BY torrent_created_by_id\n            HAVING COUNT(DISTINCT title_group_id) >= $16\n            ",
+  "query": "\n            WITH matching AS (\n              SELECT DISTINCT tgh.title_group_id, tgh.torrent_created_by_id\n              FROM title_group_hierarchy_lite tgh\n              WHERE ($1::BOOLEAN IS NULL OR tgh.torrent_staff_checked = $1)\n              AND ($2::BOOLEAN IS NULL OR tgh.torrent_reported = $2)\n              AND ($17::BOOLEAN IS NULL OR (NULLIF(tgh.torrent_trumpable, '') IS NOT NULL) = $17)\n              AND (\n                $3::BIGINT IS NULL OR\n                EXISTS (SELECT 1 FROM affiliated_artists aa WHERE aa.title_group_id = tgh.title_group_id AND aa.artist_id = $3)\n              )\n              AND (\n                $4::TEXT IS NULL OR\n                tgh.title_group_name ILIKE '%' || $4 || '%' ESCAPE '\\' OR\n                tgh.title_group_series_name ILIKE '%' || $4 || '%' ESCAPE '\\' OR\n                EXISTS (SELECT 1 FROM unnest(tgh.title_group_name_aliases) alias WHERE alias ILIKE '%' || $4 || '%')\n              )\n              AND (\n                $5::TEXT IS NULL\n                OR EXISTS (\n                    SELECT 1 FROM unnest(tgh.title_group_external_links) link\n                    WHERE rtrim(link, '/') = $5\n                )\n              )\n              AND ($6::BOOLEAN IS TRUE OR tgh.torrent_id IS NOT NULL)\n              AND ($7::BIGINT IS NULL OR tgh.title_group_series_id = $7)\n              AND ($8::INT IS NULL OR\n                EXISTS (SELECT 1 FROM collage_entry ce WHERE ce.title_group_id = tgh.title_group_id AND ce.collage_id = $8)\n              )\n              AND (CARDINALITY($9::content_type_enum[]) = 0 OR tgh.title_group_content_type = ANY($9))\n              AND (CARDINALITY($10::title_group_category_enum[]) = 0 OR tgh.title_group_category = ANY($10))\n              AND (CARDINALITY($11::source_enum[]) = 0 OR tgh.edition_group_source = ANY($11))\n              AND (CARDINALITY($12::video_resolution_enum[]) = 0 OR tgh.torrent_video_resolution = ANY($12))\n              AND (CARDINALITY($13::language_enum[]) = 0 OR tgh.torrent_languages && $13)\n              AND (\n                $14::INT IS NULL OR\n                EXISTS (\n                    SELECT 1 FROM torrent_activities ta\n                    WHERE ta.torrent_id = tgh.torrent_id\n                      AND ta.user_id = $14\n                      AND ta.completed_at IS NOT NULL\n                )\n              )\n              AND (\n                $15::JSONB IS NULL OR\n                EXISTS (\n                    SELECT 1 FROM jsonb_array_elements($15) AS clause\n                    WHERE COALESCE(ARRAY(SELECT jsonb_array_elements_text(clause->'include'))::varchar[], '{}') <@ title_group_tag_names\n                    AND NOT title_group_tag_names && COALESCE(ARRAY(SELECT jsonb_array_elements_text(clause->'exclude'))::varchar[], '{}')\n                )\n              )\n            ),\n            contributions AS (\n              SELECT torrent_created_by_id AS user_id, title_group_id\n              FROM matching\n              WHERE $18::SMALLINT IS NULL AND torrent_created_by_id IS NOT NULL\n              UNION ALL\n              SELECT ratings.user_id, ratings.title_group_id\n              FROM title_group_ratings ratings\n              WHERE ratings.rating BETWEEN $18 AND $19\n                AND ratings.title_group_id IN (SELECT title_group_id FROM matching)\n            )\n            SELECT contributions.user_id AS \"user_id!\"\n            FROM contributions\n            JOIN users u ON u.id = contributions.user_id AND u.banned = FALSE\n            GROUP BY contributions.user_id\n            HAVING COUNT(DISTINCT contributions.title_group_id) >= $16\n            ",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
         "name": "user_id!",
         "type_info": "Int4",
-        "origin": {
-          "Table": {
-            "table": "title_group_hierarchy_lite",
-            "name": "torrent_created_by_id"
-          }
-        }
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -227,12 +222,14 @@
         "Int4",
         "Jsonb",
         "Int8",
-        "Bool"
+        "Bool",
+        "Int2",
+        "Int2"
       ]
     },
     "nullable": [
-      true
+      null
     ]
   },
-  "hash": "8d8744ff6ed83655e28620b5f9635d6a3e4c7cca0f6054516760a1b76371af02"
+  "hash": "c27c1b4e3cf456545418561401806d811dd9ec2856a4e620a49ea9142258fbae"
 }

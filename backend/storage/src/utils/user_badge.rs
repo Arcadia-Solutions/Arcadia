@@ -30,6 +30,9 @@ pub fn validate_badge_criteria_shape(
                 ) | (
                     UserBadgeType::AccountAge,
                     UserBadgeCriteria::AccountAge { .. }
+                ) | (
+                    UserBadgeType::TitleGroupRatings,
+                    UserBadgeCriteria::TitleGroupRatings { .. }
                 )
             );
             if shapes_match {

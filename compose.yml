@@ -139,7 +139,7 @@ services:
 
   otel-lgtm:
     profiles: [full, telemetry]
-    image: grafana/otel-lgtm:0.40.0
+    image: grafana/otel-lgtm:0.41.0
     ports:
       - 3000:3000 # Grafana UI
     volumes:
@@ -158,7 +158,7 @@ services:
 
   hostmetrics:
     profiles: [full, telemetry]
-    image: otel/opentelemetry-collector-contrib:0.164.0
+    image: otel/opentelemetry-collector-contrib:0.165.0
     restart: always
     pid: host
     privileged: true
@@ -174,7 +174,7 @@ services:
   # (`git submodule update --init`), and reads elysia/config.yml, see docs/src/image-host.md.
   elysia_database:
     profiles: [full, images]
-    image: postgres:18.6
+    image: postgres:18.7
     restart: always
     volumes:
       - elysia_database:/var/lib/postgresql/

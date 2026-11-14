@@ -57,20 +57,16 @@ fn rating_providers<R: RedisPoolInterface>(arc: &Arcadia<R>) -> Vec<String> {
         .collect()
 }
 
-/// The providers asked for the rating of the link: TMDB for its own links when its API key is set,
-/// and the plugins collecting ratings for the links on the domains of their websites.
-fn link_providers<'a, R: RedisPoolInterface>(
-    arc: &'a Arcadia<R>,
-    link: &'a str,
-) -> impl Iterator<Item = &'a str> {
-    let tmdb = (arc.api.tmdb_api_key.is_some() && extract_media_type_and_id(link).is_ok())
-        .then_some(TMDB_PROVIDER);
-    let plugins = arc
-        .scrapers
+/// The provider asked for the rating of the link: TMDB for its own links when its API key is set,
+/// else the first plugin collecting ratings for the links on the domains of its websites.
+fn link_provider<'a, R: RedisPoolInterface>(arc: &'a Arcadia<R>, link: &str) -> Option<&'a str> {
+    if arc.api.tmdb_api_key.is_some() && extract_media_type_and_id(link).is_ok() {
+        return Some(TMDB_PROVIDER);
+    }
+    arc.scrapers
         .iter()
-        .filter(move |plugin| plugin.ratings_url.is_some() && plugin.accepts_link(link))
-        .map(|plugin| plugin.id.as_str());
-    tmdb.into_iter().chain(plugins)
+        .find(|plugin| plugin.ratings_url.is_some() && plugin.accepts_link(link))
+        .map(|plugin| plugin.id.as_str())
 }
 
 /// Creates the ratings to fetch for the links of the given title groups. Returns how many were
@@ -84,7 +80,7 @@ pub async fn create_public_ratings_to_fetch<R: RedisPoolInterface>(
     let mut providers = Vec::new();
     for (title_group_id, links) in title_groups_external_links {
         for link in links {
-            for provider in link_providers(arc, link) {
+            if let Some(provider) = link_provider(arc, link) {
                 title_group_ids.push(*title_group_id);
                 external_links.push(link.clone());
                 providers.push(provider.to_string());
@@ -142,6 +138,9 @@ pub async fn fetch_all_due_public_ratings<R: RedisPoolInterface>(
     title_group_id: Option<i32>,
 ) -> Result<u64> {
     let providers = rating_providers(arc);
+    // a rating claimed during this run is not due again before it ends, however long it takes
+    let run_started_at = Utc::now();
+    let batch_size = arc.periodic_tasks.public_ratings_batch_size.get();
     let mut asked_amount = 0;
     loop {
         // claiming a rating marks it as tried, so it is out of the next batches
@@ -151,7 +150,8 @@ pub async fn fetch_all_due_public_ratings<R: RedisPoolInterface>(
                 title_group_id,
                 &providers,
                 arc.periodic_tasks.public_ratings_retry_seconds.get() as f64,
-                arc.periodic_tasks.public_ratings_batch_size,
+                run_started_at,
+                batch_size,
             )
             .await?;
 
@@ -165,7 +165,7 @@ pub async fn fetch_all_due_public_ratings<R: RedisPoolInterface>(
         .collect::<Result<()>>()?;
 
         asked_amount += ratings_to_fetch.len() as u64;
-        if ratings_to_fetch.len() < arc.periodic_tasks.public_ratings_batch_size as usize {
+        if (ratings_to_fetch.len() as i64) < batch_size {
             return Ok(asked_amount);
         }
     }

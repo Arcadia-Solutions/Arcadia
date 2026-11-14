@@ -408,8 +408,9 @@ pub fn spawn_http_server(
                 "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
                 body.len()
             );
-            let _ = stream.write_all(response.as_bytes());
+            // recorded before answering, so the client never gets the answer before it is recorded
             let _ = sender.send(String::from_utf8_lossy(&request).into_owned());
+            let _ = stream.write_all(response.as_bytes());
         }
     });
 

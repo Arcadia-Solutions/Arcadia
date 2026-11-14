@@ -121,9 +121,10 @@ stack trace or an internal identifier.
 
 ## Collecting ratings
 
-When a title group is created or edited, the `ratings_url` endpoint of every plugin declaring one is
+When a title group is created or edited, the `ratings_url` endpoint of a plugin declaring one is
 asked for the rating of each external link of the title group on the `domain` (or a subdomain) of
-one of its websites, in the background. Then, every
+one of its websites, in the background. Each link is asked about to a single provider: TMDB for its
+own links when its API key is set, else the first plugin in the `scrapers` section accepting it. Then, every
 `public_ratings_fetch_seconds` (in the `periodic_tasks` section), it is asked again about each link
 at most once every `public_ratings_retry_seconds`, whatever it answered last time. The
 `Fetch missing public ratings` maintenance tool asks about the links of the title groups created

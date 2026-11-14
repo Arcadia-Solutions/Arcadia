@@ -3,6 +3,7 @@ use crate::{
     models::title_group_public_rating::{CollectedPublicRating, PublicRatingToFetch},
 };
 use arcadia_common::error::Result;
+use chrono::{DateTime, Utc};
 
 impl ConnectionPool {
     /// Creates the rows of the given (title group, external link, provider) triples, the existing
@@ -50,7 +51,7 @@ impl ConnectionPool {
     }
 
     /// Claims up to `limit` ratings of the given providers that were never asked for, or not for
-    /// `retry_seconds`, the least recently asked first, by marking them as tried now. Ratings
+    /// `retry_seconds` before `run_started_at`, the least recently asked first, by marking them as tried now. Ratings
     /// claimed by a concurrent fetch are skipped. Restricted to one title group when
     /// `title_group_id` is set.
     pub async fn claim_public_ratings_to_fetch(
@@ -58,6 +59,7 @@ impl ConnectionPool {
         title_group_id: Option<i32>,
         providers: &[String],
         retry_seconds: f64,
+        run_started_at: DateTime<Utc>,
         limit: i64,
     ) -> Result<Vec<PublicRatingToFetch>> {
         let ratings = sqlx::query_as!(
@@ -72,7 +74,7 @@ impl ConnectionPool {
                   AND provider = ANY($2)
                   AND (
                       last_tried_fetching_at IS NULL
-                      OR last_tried_fetching_at < NOW() - make_interval(secs => $3)
+                      OR last_tried_fetching_at < $5::TIMESTAMPTZ - make_interval(secs => $3)
                   )
                 ORDER BY last_tried_fetching_at NULLS FIRST
                 LIMIT $4
@@ -80,7 +82,6 @@ impl ConnectionPool {
             ) due
             WHERE rating.title_group_id = due.title_group_id
               AND rating.external_link = due.external_link
-              AND rating.provider = due.provider
             RETURNING
                 rating.title_group_id, rating.external_link, rating.provider, rating.collected_at,
                 (
@@ -91,7 +92,8 @@ impl ConnectionPool {
             title_group_id,
             providers,
             retry_seconds,
-            limit
+            limit,
+            run_started_at
         )
         .fetch_all(&self.pool)
         .await?;

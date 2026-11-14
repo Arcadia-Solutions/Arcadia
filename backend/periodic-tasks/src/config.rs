@@ -1,4 +1,4 @@
-use std::num::NonZeroU64;
+use std::num::{NonZeroI64, NonZeroU64};
 
 use serde::Deserialize;
 
@@ -38,8 +38,8 @@ pub struct PeriodicTasksConfig {
     /// seconds. The scraper plugins decide themselves whether their rating needs a refresh.
     /// Non zero, or a rating would be due again as soon as it is asked for, and fetched endlessly.
     pub public_ratings_retry_seconds: NonZeroU64,
-    /// Maximum amount of ratings asked for at each fetch.
-    pub public_ratings_batch_size: i64,
+    /// Maximum amount of ratings asked for at each fetch. Non zero, or a fetch would never end.
+    pub public_ratings_batch_size: NonZeroI64,
     /// Interval for removing the reseed requests of torrents that are healthy again, in seconds.
     #[serde(default = "default_reseed_request_cleanup_seconds")]
     pub reseed_request_cleanup_seconds: u64,

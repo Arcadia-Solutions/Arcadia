@@ -1371,7 +1371,7 @@ impl ConnectionPool {
         .execute(&mut *transaction)
         .await?;
 
-        // Move title_group_public_ratings (PK on title_group_id, external_link, provider)
+        // Move title_group_public_ratings (PK on title_group_id, external_link)
         sqlx::query!(
             r#"
             UPDATE title_group_public_ratings source
@@ -1381,7 +1381,6 @@ impl ConnectionPool {
                   SELECT 1 FROM title_group_public_ratings target
                   WHERE target.title_group_id = $2
                     AND target.external_link = source.external_link
-                    AND target.provider = source.provider
               )
             "#,
             source_title_group_id,

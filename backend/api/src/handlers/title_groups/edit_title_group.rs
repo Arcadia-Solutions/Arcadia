@@ -72,5 +72,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         &updated_title_group.external_links,
     )
     .await;
+    // the ratings of the removed links were deleted by the sync
+    let updated_title_group = arc.pool.find_title_group(title_group.id).await?;
     Ok(HttpResponse::Ok().json(updated_title_group))
 }

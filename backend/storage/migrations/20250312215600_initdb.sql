@@ -1035,8 +1035,8 @@ CREATE TABLE title_group_ratings (
     UNIQUE (title_group_id, user_id)
 );
 CREATE INDEX title_group_ratings_user_id_index ON title_group_ratings (user_id);
--- ratings of the title group on external websites, one row per external link and provider
--- asked for it. The rating columns stay NULL until the provider answers with a rating.
+-- ratings of the title group on external websites, one row per external link, asked to the single
+-- provider handling it. The rating columns stay NULL until the provider answers with a rating.
 CREATE TABLE title_group_public_ratings (
     title_group_id INT NOT NULL REFERENCES title_groups(id) ON DELETE CASCADE,
     external_link TEXT NOT NULL,
@@ -1047,7 +1047,7 @@ CREATE TABLE title_group_public_ratings (
     collected_at TIMESTAMP WITH TIME ZONE,
     -- NULL until the provider is asked for the first time
     last_tried_fetching_at TIMESTAMP WITH TIME ZONE,
-    PRIMARY KEY (title_group_id, external_link, provider)
+    PRIMARY KEY (title_group_id, external_link)
 );
 CREATE INDEX title_group_public_ratings_last_tried_fetching_at_index ON title_group_public_ratings (last_tried_fetching_at NULLS FIRST);
 CREATE TABLE torrent_requests (

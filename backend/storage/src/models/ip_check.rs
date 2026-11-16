@@ -12,6 +12,7 @@ pub enum IpCheckProvider {
     IpapiIs,
     Ipqualityscore,
     Vpnapi,
+    Vpndetection,
 }
 
 /// What a provider tells about an ip address. Each field is `None` when the provider does not

@@ -2086,7 +2086,8 @@ export const IpCheckProvider = {
     Proxycheck: 'proxycheck',
     IpapiIs: 'ipapi_is',
     Ipqualityscore: 'ipqualityscore',
-    Vpnapi: 'vpnapi'
+    Vpnapi: 'vpnapi',
+    Vpndetection: 'vpndetection'
 } as const;
 
 export type IpCheckProvider = typeof IpCheckProvider[keyof typeof IpCheckProvider];

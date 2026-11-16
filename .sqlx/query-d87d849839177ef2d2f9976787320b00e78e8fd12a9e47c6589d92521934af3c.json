@@ -26,7 +26,8 @@
                 "proxycheck",
                 "ipapi_is",
                 "ipqualityscore",
-                "vpnapi"
+                "vpnapi",
+                "vpndetection"
               ]
             }
           }

@@ -1118,6 +1118,7 @@ export interface EditedForumSubCategory {
 export interface EditedForumThread {
     'forum_sub_category_id': number;
     'id': number;
+    'locked': boolean;
     'name': string;
 }
 export interface EditedSeries {

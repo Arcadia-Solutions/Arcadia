@@ -318,8 +318,8 @@ impl ConnectionPool {
             r#"
             WITH updated_row AS (
                 UPDATE forum_threads
-                SET name = $1, forum_sub_category_id = $2
-                WHERE id = $3
+                SET name = $1, forum_sub_category_id = $2, locked = $3
+                WHERE id = $4
                 RETURNING id, forum_sub_category_id, name, created_at, created_by_id, posts_amount, pinned, locked, views_count
             )
             SELECT
@@ -343,10 +343,11 @@ impl ConnectionPool {
                 forum_categories AS fc ON fsc.forum_category_id = fc.id
             LEFT JOIN
                 subscriptions_forum_thread_posts AS sft
-                ON sft.forum_thread_id = ur.id AND sft.user_id = $4
+                ON sft.forum_thread_id = ur.id AND sft.user_id = $5
             "#,
             edited_thread.name,
             edited_thread.forum_sub_category_id,
+            edited_thread.locked,
             edited_thread.id,
             user_id
         )

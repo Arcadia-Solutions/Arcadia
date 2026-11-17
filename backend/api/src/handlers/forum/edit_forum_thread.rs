@@ -1,6 +1,6 @@
 use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use actix_web::{
-    HttpResponse,
+    HttpRequest, HttpResponse,
     web::{Data, Json},
 };
 use arcadia_common::error::{Error, Result};
@@ -27,6 +27,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     arc: Data<Arcadia<R>>,
     user: Authdata,
     edited_forum_thread: Json<EditedForumThread>,
+    req: HttpRequest,
 ) -> Result<HttpResponse> {
     let original_thread = arc
         .pool
@@ -40,6 +41,14 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         && original_thread.created_by_id != user.sub
     {
         return Err(Error::from(UserPermission::EditForumThread));
+    }
+
+    // intentionally checked again: being the thread's author is enough to edit it,
+    // but (un)locking requires the explicit edit_forum_thread permission
+    if original_thread.locked != edited_forum_thread.locked {
+        arc.pool
+            .require_permission(user.sub, &UserPermission::EditForumThread, req.path())
+            .await?;
     }
 
     if let Some(edits) = compute_diff(&original_thread, &edited_forum_thread, &["id"]) {

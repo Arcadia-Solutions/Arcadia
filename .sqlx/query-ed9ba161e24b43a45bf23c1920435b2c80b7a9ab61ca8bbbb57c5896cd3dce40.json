@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            WITH updated_row AS (\n                UPDATE forum_threads\n                SET name = $1, forum_sub_category_id = $2\n                WHERE id = $3\n                RETURNING id, forum_sub_category_id, name, created_at, created_by_id, posts_amount, pinned, locked, views_count\n            )\n            SELECT\n                ur.id,\n                ur.forum_sub_category_id,\n                ur.name,\n                ur.created_at,\n                ur.created_by_id,\n                ur.posts_amount,\n                ur.pinned,\n                ur.locked,\n                ur.views_count,\n                fsc.name AS forum_sub_category_name,\n                fc.name AS forum_category_name,\n                fc.id AS forum_category_id,\n                (sft.id IS NOT NULL) AS \"is_subscribed!\"\n            FROM updated_row ur\n            JOIN\n                forum_sub_categories AS fsc ON ur.forum_sub_category_id = fsc.id\n            JOIN\n                forum_categories AS fc ON fsc.forum_category_id = fc.id\n            LEFT JOIN\n                subscriptions_forum_thread_posts AS sft\n                ON sft.forum_thread_id = ur.id AND sft.user_id = $4\n            ",
+  "query": "\n            WITH updated_row AS (\n                UPDATE forum_threads\n                SET name = $1, forum_sub_category_id = $2, locked = $3\n                WHERE id = $4\n                RETURNING id, forum_sub_category_id, name, created_at, created_by_id, posts_amount, pinned, locked, views_count\n            )\n            SELECT\n                ur.id,\n                ur.forum_sub_category_id,\n                ur.name,\n                ur.created_at,\n                ur.created_by_id,\n                ur.posts_amount,\n                ur.pinned,\n                ur.locked,\n                ur.views_count,\n                fsc.name AS forum_sub_category_name,\n                fc.name AS forum_category_name,\n                fc.id AS forum_category_id,\n                (sft.id IS NOT NULL) AS \"is_subscribed!\"\n            FROM updated_row ur\n            JOIN\n                forum_sub_categories AS fsc ON ur.forum_sub_category_id = fsc.id\n            JOIN\n                forum_categories AS fc ON fsc.forum_category_id = fc.id\n            LEFT JOIN\n                subscriptions_forum_thread_posts AS sft\n                ON sft.forum_thread_id = ur.id AND sft.user_id = $5\n            ",
   "describe": {
     "columns": [
       {
@@ -146,6 +146,7 @@
       "Left": [
         "Text",
         "Int4",
+        "Bool",
         "Int8",
         "Int4"
       ]
@@ -166,5 +167,5 @@
       null
     ]
   },
-  "hash": "c1e1b8d8057932ad5676a1e09112c3fa4935407f1f3ad2eb2817bae0620a6eec"
+  "hash": "ed9ba161e24b43a45bf23c1920435b2c80b7a9ab61ca8bbbb57c5896cd3dce40"
 }

@@ -143,6 +143,7 @@ pub struct EditedForumThread {
     pub id: i64,
     pub forum_sub_category_id: i32,
     pub name: String,
+    pub locked: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow, ToSchema)]

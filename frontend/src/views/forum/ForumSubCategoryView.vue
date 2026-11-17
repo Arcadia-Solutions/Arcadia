@@ -40,7 +40,12 @@
       <Column style="width: 1em">
         <template #body="slotProps">
           <div class="left-icon" v-tooltip.top="threadTooltip(slotProps.data)">
-            <i :class="[slotProps.data.pinned ? 'pi pi-thumbtack' : 'pi pi-align-left', { unread: slotProps.data.has_new_posts }]" />
+            <i
+              :class="[
+                slotProps.data.locked ? 'pi pi-lock' : slotProps.data.pinned ? 'pi pi-thumbtack' : 'pi pi-align-left',
+                { unread: slotProps.data.has_new_posts },
+              ]"
+            />
             <i class="pi pi-sparkles" v-if="!slotProps.data.ever_opened" />
           </div>
         </template>
@@ -127,6 +132,7 @@ onMounted(async () => {
 const threadTooltip = (thread: ForumThreadHierarchy) =>
   [
     thread.pinned && t('forum.pinned'),
+    thread.locked && t('forum.locked'),
     !thread.ever_opened && t('forum.new'),
     thread.has_new_posts && t('forum.unread'),
     !thread.has_new_posts && t('forum.read'),

@@ -10,6 +10,11 @@
       <label for="subcategory">{{ t('forum.subcategory') }}</label>
     </FloatLabel>
 
+    <div v-if="userStore.permissions.includes('edit_forum_thread')" class="checkbox-row">
+      <Checkbox v-model="editedThread.locked" binary inputId="thread-locked" size="small" />
+      <label for="thread-locked">{{ t('general.locked') }}</label>
+    </div>
+
     <Button :label="t('general.submit')" :loading="submitting" @click="submitEdit" class="submit-button" />
   </div>
 </template>
@@ -17,7 +22,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Button, FloatLabel, InputNumber, InputText } from 'primevue'
+import { Button, Checkbox, FloatLabel, InputNumber, InputText } from 'primevue'
+import { useUserStore } from '@/stores/user'
 import { editForumThread, type EditedForumThread, type ForumThreadEnriched } from '@/services/api-schema'
 
 const props = defineProps<{
@@ -29,11 +35,13 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const userStore = useUserStore()
 
 const editedThread = ref<EditedForumThread>({
   id: props.forumThread.id,
   name: props.forumThread.name,
   forum_sub_category_id: props.forumThread.forum_sub_category_id,
+  locked: props.forumThread.locked,
 })
 
 const submitting = ref(false)
@@ -56,12 +64,6 @@ const submitEdit = async () => {
 
 .thread-name-input {
   width: 100%;
-}
-
-.staff-options {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
 }
 
 .checkbox-row {

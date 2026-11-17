@@ -216,6 +216,7 @@
     "read": "read",
     "new": "new",
     "pinned": "pinned",
+    "locked": "locked",
     "manage_allowed_posters": "Manage allowed posters",
     "add_allowed_poster": "Add allowed poster",
     "allowed_poster_added": "Allowed poster added successfully",

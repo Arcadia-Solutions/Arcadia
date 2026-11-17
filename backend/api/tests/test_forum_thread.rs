@@ -259,6 +259,7 @@ async fn test_owner_can_edit_thread_name(pool: PgPool) {
         id: 100,
         forum_sub_category_id: 100,
         name: "Updated Thread Name".into(),
+        locked: false,
     };
 
     let req = test::TestRequest::put()
@@ -290,6 +291,7 @@ async fn test_owner_can_move_thread_to_different_sub_category(pool: PgPool) {
         id: 100,
         forum_sub_category_id: 101, // Move to different sub-category
         name: "Test Thread".into(),
+        locked: false,
     };
 
     let req = test::TestRequest::put()
@@ -346,6 +348,7 @@ async fn test_non_owner_cannot_edit_thread(pool: PgPool) {
         id: thread.id, // Thread owned by user 101 (staff)
         forum_sub_category_id: 100,
         name: "Unauthorized Edit Attempt".into(),
+        locked: false,
     };
 
     let req = test::TestRequest::put()
@@ -378,6 +381,7 @@ async fn test_staff_can_edit_any_thread(pool: PgPool) {
         id: 100, // Thread owned by user 100
         forum_sub_category_id: 100,
         name: "Staff Edited Thread".into(),
+        locked: false,
     };
 
     let req = test::TestRequest::put()
@@ -401,6 +405,63 @@ async fn test_staff_can_edit_any_thread(pool: PgPool) {
     "with_test_forum_thread",
     "with_test_forum_post"
 ))]
+async fn test_edit_permission_can_lock_and_unlock_thread(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::EditForumThread).await;
+
+    for locked in [true, false] {
+        let req = test::TestRequest::put()
+            .uri("/api/forum/thread")
+            .insert_header(auth_header(&user.token))
+            .set_json(&EditedForumThread {
+                id: 100,
+                forum_sub_category_id: 100,
+                name: "Test Thread".into(),
+                locked,
+            })
+            .to_request();
+
+        let edited: ForumThreadEnriched =
+            common::call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
+        assert_eq!(edited.locked, locked);
+    }
+}
+
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post"
+))]
+async fn test_owner_without_edit_permission_cannot_lock_thread(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+
+    let req = test::TestRequest::put()
+        .uri("/api/forum/thread")
+        .insert_header(auth_header(&user.token))
+        .set_json(&EditedForumThread {
+            id: 100,
+            forum_sub_category_id: 100,
+            name: "Test Thread".into(),
+            locked: true,
+        })
+        .to_request();
+
+    let resp = test::call_service(&service, req).await;
+    assert_eq!(resp.status(), StatusCode::FORBIDDEN);
+}
+
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_forum_category",
+    "with_test_forum_sub_category",
+    "with_test_forum_thread",
+    "with_test_forum_post"
+))]
 async fn test_edit_thread_without_auth(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let service = common::create_test_app(pool, MockRedisPool::default()).await;
@@ -409,6 +470,7 @@ async fn test_edit_thread_without_auth(pool: PgPool) {
         id: 100,
         forum_sub_category_id: 100,
         name: "Should Fail".into(),
+        locked: false,
     };
 
     let req = test::TestRequest::put()
@@ -430,6 +492,7 @@ async fn test_edit_nonexistent_thread(pool: PgPool) {
         id: 999, // Non-existent thread
         forum_sub_category_id: 100,
         name: "Should Fail".into(),
+        locked: false,
     };
 
     let req = test::TestRequest::put()
@@ -458,6 +521,7 @@ async fn test_edit_thread_with_empty_name(pool: PgPool) {
         id: 100,
         forum_sub_category_id: 100,
         name: "".into(), // Empty name
+        locked: false,
     };
 
     let req = test::TestRequest::put()
@@ -556,6 +620,7 @@ async fn test_create_thread_add_posts_edit_thread_flow(pool: PgPool) {
         id: thread_id,
         forum_sub_category_id: 100,
         name: "Updated Integration Test Thread".into(),
+        locked: false,
     };
 
     let req = test::TestRequest::put()
@@ -667,6 +732,7 @@ async fn test_move_thread_with_posts_between_sub_categories(pool: PgPool) {
         id: thread.id,
         forum_sub_category_id: 101,
         name: "Thread to Move".into(),
+        locked: false,
     };
 
     let req = test::TestRequest::put()

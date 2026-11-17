@@ -116,6 +116,7 @@ async fn test_non_allowed_user_cannot_move_thread_into_restricted_sub_category(p
             id: thread.id,
             forum_sub_category_id: 102,
             name: thread.name,
+            locked: false,
         })
         .to_request();
     let resp = test::call_service(&service, req).await;

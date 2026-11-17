@@ -8,7 +8,7 @@ pub struct VpndetectionConfig {
     pub priority: u32,
 }
 
-#[derive(Default, Deserialize)]
+#[derive(Deserialize)]
 struct Location {
     country: Option<String>,
     country_name: Option<String>,
@@ -25,11 +25,11 @@ struct Asn {
 
 #[derive(Deserialize)]
 struct Response {
-    is_vpn: Option<bool>,
-    is_tor: Option<bool>,
-    #[serde(default)]
+    is_vpn: bool,
+    is_relay: bool,
+    is_tor: bool,
     location: Location,
-    asn: Option<Asn>,
+    asn: Asn,
 }
 
 pub async fn check(client: &reqwest::Client, ip: IpAddr) -> ProviderResult {
@@ -45,7 +45,7 @@ pub async fn check(client: &reqwest::Client, ip: IpAddr) -> ProviderResult {
 }
 
 fn into_result(response: Response) -> IpCheckResult {
-    let asn = response.asn;
+    let Asn { asn, name, kind } = response.asn;
     IpCheckResult {
         country_code: non_empty(response.location.country),
         country: non_empty(response.location.country_name),
@@ -53,15 +53,15 @@ fn into_result(response: Response) -> IpCheckResult {
         city: None,
         latitude: None,
         longitude: None,
+        // unknown networks are sent as asn 0 with empty strings
         asn: asn
-            .as_ref()
-            .and_then(|asn| asn.asn)
+            .filter(|number| *number != 0)
             .map(|number| format!("AS{number}")),
-        organization: asn.as_ref().and_then(|asn| non_empty(asn.name.clone())),
-        is_vpn: response.is_vpn,
-        is_proxy: None,
-        is_tor: response.is_tor,
-        is_hosting: asn.and_then(|asn| asn.kind).map(|kind| kind == "hosting"),
+        organization: non_empty(name),
+        is_vpn: Some(response.is_vpn),
+        is_proxy: Some(response.is_relay),
+        is_tor: Some(response.is_tor),
+        is_hosting: non_empty(kind).map(|kind| kind == "hosting"),
     }
 }
 
@@ -81,15 +81,18 @@ mod tests {
         assert_eq!(result.organization.as_deref(), Some("31173 Services AB"));
         assert_eq!(result.is_vpn, Some(true));
         assert_eq!(result.is_hosting, Some(false));
-        assert_eq!(result.is_proxy, None);
+        assert_eq!(result.is_proxy, Some(false));
     }
 
     #[test]
-    fn missing_network_is_unknown() {
-        let response =
-            serde_json::from_str(r#"{"ip":"2001:db8::1","is_vpn":false,"is_tor":false}"#).unwrap();
+    fn unknown_network_is_unknown() {
+        let response = serde_json::from_str(
+            r#"{"ip":"10.0.0.1","is_bogon":true,"is_vpn":false,"is_relay":false,"is_tor":false,"relay":{},"tor":{},"location":{"country":"","country_name":""},"asn":{"asn":0,"name":"","domain":"","type":"","prefix":""}}"#,
+        )
+        .unwrap();
         let result = into_result(response);
         assert_eq!(result.asn, None);
+        assert_eq!(result.organization, None);
         assert_eq!(result.is_hosting, None);
         assert_eq!(result.country_code, None);
     }

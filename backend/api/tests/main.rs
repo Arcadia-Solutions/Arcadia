@@ -45,6 +45,7 @@ mod test_notifications;
 mod test_oauth_flow;
 mod test_page_size_cap;
 mod test_paranoia_settings;
+mod test_public_ratings;
 mod test_recompute_cached_amounts;
 mod test_reseed_request;
 mod test_search_conversations;

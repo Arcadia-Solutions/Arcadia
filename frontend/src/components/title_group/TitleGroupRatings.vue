@@ -1,6 +1,14 @@
 <template>
   <ContentContainer :containerTitle="t('title_group.rating', 2)">
     <div class="ratings-component">
+      <div class="rating" v-for="rating in publicRatingsWithWebsite" :key="rating.external_link">
+        <a class="logo-and-note" :href="rating.external_link" target="_blank" v-tooltip.top="rating.website.name">
+          <img v-if="rating.website.icon" :src="rating.website.icon" :alt="rating.website.name" class="logo" />
+          <span v-else>{{ rating.website.name }}</span>
+          <span>{{ rating.rating.toLocaleString(undefined, { maximumFractionDigits: 1 }) }}</span>
+        </a>
+        <span class="votes vote-count">({{ formatNumber(rating.votes) }} {{ t('title_group.vote', rating.votes) }})</span>
+      </div>
       <div class="rating">
         <div class="logo-and-note" :class="{ 'cursor-pointer': userRatingCount > 0 }" @click="userRatingCount > 0 && openRatings()">
           <img :src="averageIcon?.icon_url ?? '/favicon.ico'" alt="rating icon" class="logo" />
@@ -18,15 +26,6 @@
           />
         </div>
       </div>
-      <template v-for="rating in publicRatings" :key="rating.service">
-        <div class="rating" v-if="rating.service === 'tmdb'">
-          <div class="logo-and-note">
-            <img src="/logos/external_links/tmdb.svg" alt="tmdb logo" class="logo" />
-            <span>{{ rating.rating * 10 }}%</span>
-          </div>
-          <span class="votes vote-count">({{ formatNumber(rating.votes) }} {{ t('title_group.vote', 2) }})</span>
-        </div>
-      </template>
     </div>
     <Dialog closeOnEscape modal :header="t('title_group.rating', 2)" v-model:visible="ratingsVisible" class="ratings-dialog">
       <TitleGroupRatingFilters v-model="filters" :loading @search="fetchRatings(1)" />
@@ -58,6 +57,7 @@ import PaginatedResults from '../PaginatedResults.vue'
 import { useI18n } from 'vue-i18n'
 import { formatNumber, getRatingIcon } from '@/services/helpers'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
+import { publicRatingWebsites, type PublicRatingWebsite } from '@/config'
 import { useUserStore } from '@/stores/user'
 import UserRatingDisplay from './UserRatingDisplay.vue'
 import TitleGroupRatingList from './TitleGroupRatingList.vue'
@@ -78,6 +78,17 @@ const props = defineProps<{
 }>()
 
 const averageIcon = computed(() => getRatingIcon(publicArcadiaSettings.rating_icons, props.userRatingAverage))
+
+// TMDB ratings are collected by arcadia itself, the other websites come from config.yml
+const ratingWebsites: PublicRatingWebsite[] = [{ name: 'TMDB', domain: 'themoviedb.org', icon: '/logos/external_links/tmdb.svg' }, ...publicRatingWebsites]
+
+// a link matching no website (e.g. its domain was removed from config.yml) is displayed with its host name
+const ratingWebsite = (link: string): Pick<PublicRatingWebsite, 'name'> & Partial<PublicRatingWebsite> => {
+  const host = new URL(link).hostname
+  return ratingWebsites.find(({ domain }) => host === domain || host.endsWith(`.${domain}`)) ?? { name: host }
+}
+
+const publicRatingsWithWebsite = computed(() => props.publicRatings.map((rating) => ({ ...rating, website: ratingWebsite(rating.external_link) })))
 
 const emit = defineEmits<{
   ownRatingSaved: [TitleGroupRating]

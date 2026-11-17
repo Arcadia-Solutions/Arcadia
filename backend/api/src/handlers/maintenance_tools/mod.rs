@@ -1,5 +1,6 @@
 pub mod check_missing_registration_ips;
 pub mod delete_empty_title_groups;
+pub mod fetch_missing_public_ratings;
 pub mod get_empty_title_groups;
 pub mod recompute_cached_amounts;
 pub mod rehash_torrents;
@@ -23,5 +24,9 @@ pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {
     cfg.service(
         resource("/delete-empty-title-groups")
             .route(post().to(self::delete_empty_title_groups::exec::<R>)),
+    );
+    cfg.service(
+        resource("/fetch-missing-public-ratings")
+            .route(post().to(self::fetch_missing_public_ratings::exec::<R>)),
     );
 }

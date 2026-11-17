@@ -265,6 +265,13 @@ periodic_tasks:
   announce_errors_retention_seconds: 86400
   # Removing the reseed requests of torrents that have seeders again and no waiting leecher.
   reseed_request_cleanup_seconds: 900
+  # Asking the providers (TMDB and the scraper plugins) for the ratings due.
+  public_ratings_fetch_seconds: 600
+  # A rating is asked for again this long after the last attempt, whatever its outcome.
+  # The scraper plugins decide themselves whether their rating needs a refresh.
+  public_ratings_retry_seconds: 86400
+  # Maximum amount of ratings asked for at each fetch (not in seconds).
+  public_ratings_batch_size: 50
 
 # Optional: emails are skipped entirely when this section is incomplete.
 # Production: configure so users can verify accounts, receive invites, and reset passwords.
@@ -349,17 +356,27 @@ frontend:
 # scrapers:
 #   - id: anime
 #     placeholder: Anime url
-#     # The websites the endpoint accepts links from, each with the content types it supports.
-#     # A single endpoint may serve several websites, dispatching on the link it is given.
+#     # The websites the plugin accepts links from, each with the content types it supports, and
+#     # the domain whose links the plugin is asked the ratings of, displayed with the website's name
+#     # and icon (both added to the frontend at build time).
+#     # A single plugin may serve several websites, dispatching on the link it is given.
 #     # They are listed in a tooltip next to the input on the upload page, once there are
 #     # several of them. The source is offered for every content type at least one of them supports.
 #     sources:
 #       AniDB:
-#         - tv_show
+#         content_types:
+#           - tv_show
+#         domain: anidb.net
+#         icon: https://anidb.net/favicon.ico
 #       MyAnimeList:
-#         - tv_show
-#         - movie
-#     url: http://anime-plugin:9000/scrape
+#         content_types:
+#           - tv_show
+#           - movie
+#         domain: myanimelist.net
+#         icon: https://myanimelist.net/favicon.ico
+#     title_url: http://anime-plugin:9000/scrape
+#     # Optional: asked for the rating of the title groups' external links on its websites' domains.
+#     ratings_url: http://anime-plugin:9000/ratings
 #     timeout_seconds: 30
 
 # Optional: lets Elysia SSO its users via Arcadia's OpenID Connect provider (authorization

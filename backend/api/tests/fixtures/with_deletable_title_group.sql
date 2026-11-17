@@ -1,6 +1,6 @@
 -- Title group 3 with edition groups and soft-deleted torrents (deletable)
-INSERT INTO title_groups (id, name, name_aliases, created_by_id, description, original_language, country_from, covers, external_links, trailers, category, content_type, public_ratings, screenshots)
-VALUES (3, 'Deletable Title Group', '{}', 100, 'A title group that can be deleted', 'English', 'US', '{}', '{}', '{}', NULL, 'music', '[]', '{}');
+INSERT INTO title_groups (id, name, name_aliases, created_by_id, description, original_language, country_from, covers, external_links, trailers, category, content_type, screenshots)
+VALUES (3, 'Deletable Title Group', '{}', 100, 'A title group that can be deleted', 'English', 'US', '{}', '{}', '{}', NULL, 'music', '{}');
 
 -- Edition groups for title_group 3
 INSERT INTO edition_groups (id, title_group_id, name, created_by_id, covers, external_links)
@@ -22,8 +22,8 @@ INSERT INTO affiliated_artists (id, title_group_id, artist_id, roles, nickname, 
 VALUES (2, 3, 2, '{main}', NULL, 100);
 
 -- Title group 4 with soft-deleted torrent only (also deletable, no affiliated artists)
-INSERT INTO title_groups (id, name, name_aliases, created_by_id, description, original_language, country_from, covers, external_links, trailers, category, content_type, public_ratings, screenshots)
-VALUES (4, 'Title Group With Deleted Torrent', '{}', 100, 'Has only soft-deleted torrents', 'English', 'US', '{}', '{}', '{}', NULL, 'music', '[]', '{}');
+INSERT INTO title_groups (id, name, name_aliases, created_by_id, description, original_language, country_from, covers, external_links, trailers, category, content_type, screenshots)
+VALUES (4, 'Title Group With Deleted Torrent', '{}', 100, 'Has only soft-deleted torrents', 'English', 'US', '{}', '{}', '{}', NULL, 'music', '{}');
 
 INSERT INTO edition_groups (id, title_group_id, name, created_by_id, covers, external_links)
 VALUES (3, 4, 'Deleted Edition', 100, '{}', '{}');

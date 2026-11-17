@@ -19,7 +19,6 @@ INSERT INTO
     trailers,
     category,
     content_type,
-    public_ratings,
     series_id,
     screenshots
   )
@@ -46,7 +45,6 @@ B - P.S. I Love You',
     '{}',
     'Single',
     'music',
-    '[]',
     NULL,
     '{}'
   ),
@@ -70,7 +68,6 @@ B - P.S. I Love You',
     '{}',
     'Game',
     'software',
-    '[]'::JSONB,
     NULL,
     '{}'
   );

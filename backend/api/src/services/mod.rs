@@ -8,3 +8,4 @@ pub mod image_service;
 pub mod ip_check;
 pub mod irc_service;
 pub mod oauth;
+pub mod public_rating_service;

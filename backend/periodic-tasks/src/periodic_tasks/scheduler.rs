@@ -24,7 +24,7 @@ fn instruments() -> &'static PeriodicTaskInstruments {
 }
 
 /// A job running `task` every `interval_seconds`, instrumented under `task_name`.
-fn repeated_job<Task, TaskFuture, TaskError>(
+pub fn repeated_job<Task, TaskFuture, TaskError>(
     pool: &Arc<ConnectionPool>,
     interval_seconds: u64,
     task_name: &'static str,

@@ -5,16 +5,14 @@ use actix_web::{
     App, Error,
     dev::{Service, ServiceResponse},
     http::StatusCode,
-    test, web,
+    test,
 };
-use arcadia_api::{
-    Arcadia,
-    config::{Config, ExternalSourcePlugin},
-};
+use arcadia_api::config::ExternalSourcePlugin;
 use arcadia_storage::{connection_pool::ConnectionPool, models::title_group::ContentType};
 use common::{
-    TestUser, auth_header, call_and_read_body_json, call_and_read_body_json_with_status,
-    create_test_app_and_login, login_as, spawn_http_server,
+    TestUser, arcadia_with_plugin, auth_header, call_and_read_body_json,
+    call_and_read_body_json_with_status, create_test_app_and_login, login_as, spawn_http_server,
+    website,
 };
 use mocks::mock_redis::MockRedisPool;
 use serde::Deserialize;
@@ -62,24 +60,13 @@ struct ErrorResponse {
     error: String,
 }
 
-/// The plugins are loaded from the configuration file at startup, tests declare them by hand instead.
 async fn create_test_app_with_plugin(
     pool: Arc<ConnectionPool>,
     plugin: ExternalSourcePlugin,
 ) -> impl Service<Request, Response = ServiceResponse, Error = Error> {
-    let mut config = arcadia_shared::config::load::<Config>();
-    config.scrapers = vec![plugin];
-    let settings = pool
-        .get_arcadia_settings()
-        .await
-        .expect("failed to load arcadia settings from database");
-
-    let arc =
-        Arcadia::<MockRedisPool>::new(pool, Arc::new(MockRedisPool::default()), config, settings);
-
     test::init_service(
         App::new()
-            .app_data(web::Data::new(arc))
+            .app_data(arcadia_with_plugin(pool, plugin).await)
             .configure(arcadia_api::routes::init::<MockRedisPool>),
     )
     .await
@@ -164,8 +151,9 @@ async fn test_getting_data_from_a_plugin(pool: PgPool) {
         ExternalSourcePlugin {
             id: String::from("example"),
             placeholder: String::from("Example url"),
-            sources: BTreeMap::from([(String::from("Example"), vec![ContentType::Movie])]),
-            url: format!("{plugin_url}/scrape"),
+            sources: BTreeMap::from([(String::from("Example"), website(vec![ContentType::Movie]))]),
+            title_url: format!("{plugin_url}/scrape"),
+            ratings_url: None,
             timeout_seconds: 30,
         },
     )
@@ -213,8 +201,9 @@ async fn test_the_error_a_plugin_answers_with_is_given_to_the_uploader(pool: PgP
         ExternalSourcePlugin {
             id: String::from("example"),
             placeholder: String::from("Example url"),
-            sources: BTreeMap::from([(String::from("Example"), vec![ContentType::Movie])]),
-            url: format!("{plugin_url}/scrape"),
+            sources: BTreeMap::from([(String::from("Example"), website(vec![ContentType::Movie]))]),
+            title_url: format!("{plugin_url}/scrape"),
+            ratings_url: None,
             timeout_seconds: 30,
         },
     )
@@ -245,13 +234,14 @@ async fn test_upload_information_lists_the_websites_declared_by_a_plugin(pool: P
             id: String::from("example"),
             placeholder: String::from("Example url"),
             sources: BTreeMap::from([
-                (String::from("Example"), vec![ContentType::Movie]),
+                (String::from("Example"), website(vec![ContentType::Movie])),
                 (
                     String::from("Other Example"),
-                    vec![ContentType::Movie, ContentType::TVShow],
+                    website(vec![ContentType::Movie, ContentType::TVShow]),
                 ),
             ]),
-            url: String::from("http://127.0.0.1:1/scrape"),
+            title_url: String::from("http://127.0.0.1:1/scrape"),
+            ratings_url: None,
             timeout_seconds: 30,
         },
     )

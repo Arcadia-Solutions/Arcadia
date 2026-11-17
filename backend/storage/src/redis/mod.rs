@@ -4,7 +4,7 @@ use self::error::{RedisError, Result};
 use deadpool_redis::{Config, Connection, Pool, Runtime};
 use redis::{ToRedisArgs, cmd};
 
-pub trait RedisPoolInterface {
+pub trait RedisPoolInterface: Send + Sync {
     fn connection(&self) -> impl Future<Output = Result<impl RedisInterface>> + Send;
 }
 

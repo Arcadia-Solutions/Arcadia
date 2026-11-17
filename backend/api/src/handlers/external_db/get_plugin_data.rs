@@ -8,6 +8,7 @@ use crate::{
         check_if_existing_title_group_with_link_exists, create_affiliated_artists,
         respond_with_scraped_data,
     },
+    services::public_rating_service::save_scraped_public_rating,
 };
 use actix_web::{HttpResponse, web::Data};
 use arcadia_common::error::{Error, Result};
@@ -52,7 +53,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         log::warn!(
             "external source plugin '{}' ({}) failed: {error}",
             plugin.id,
-            plugin.url
+            plugin.title_url
         );
         Error::ExternalSourcePluginError(plugin.id.clone())
     };
@@ -60,7 +61,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     // plugins run alongside arcadia, so their requests must never go through the outbound proxy
     let response = arc
         .internal_http_client
-        .get(&plugin.url)
+        .get(&plugin.title_url)
         .query(&PluginQuery { url, content_type })
         .timeout(Duration::from_secs(plugin.timeout_seconds))
         .send()
@@ -85,6 +86,10 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 
     let scraped_data = serde_json::from_slice::<ScrapedExternalData>(&body)
         .map_err(|error| plugin_error(error.to_string()))?;
+
+    if let Some(scraped_rating) = &scraped_data.public_rating {
+        save_scraped_public_rating(arc, &plugin.id, scraped_rating).await;
+    }
 
     let external_db_data = ExternalDBData {
         title_group: scraped_data.title_group,

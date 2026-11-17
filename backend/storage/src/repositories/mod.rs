@@ -25,6 +25,7 @@ pub mod stats_repository;
 pub mod subscriptions_repository;
 pub mod title_group_bookmark_repository;
 pub mod title_group_comment_repository;
+pub mod title_group_public_rating_repository;
 pub mod title_group_rating_repository;
 pub mod title_group_repository;
 pub mod title_group_stats_repository;

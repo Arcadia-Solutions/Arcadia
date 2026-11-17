@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO public_ratings (external_link, provider)\n            SELECT * FROM unnest($1::TEXT[], $2::TEXT[])\n            ON CONFLICT (external_link) DO UPDATE SET\n                provider = EXCLUDED.provider\n            WHERE public_ratings.provider <> EXCLUDED.provider\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "TextArray",
+        "TextArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a761d5c5e36db86de2d5ecd2bd4766073409e916366a6f195e5a3503ed22514e"
+}

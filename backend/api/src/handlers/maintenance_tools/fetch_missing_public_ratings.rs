@@ -11,8 +11,8 @@ use utoipa::ToSchema;
 
 #[derive(Serialize, ToSchema)]
 pub struct FetchMissingPublicRatingsResponse {
-    /// the (external link, provider) rows created, the provider never having been asked about the
-    /// link
+    /// the (external link, provider) rows created or reassigned to another provider, the provider
+    /// never having been asked about the link
     pub created_ratings_amount: u64,
 }
 

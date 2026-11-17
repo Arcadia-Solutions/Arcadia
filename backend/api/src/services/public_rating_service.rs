@@ -72,8 +72,8 @@ fn link_provider<'a, R: RedisPoolInterface>(arc: &'a Arcadia<R>, link: &str) -> 
         .map(|plugin| plugin.id.as_str())
 }
 
-/// Creates the ratings to fetch for the given links, those no provider handles are skipped. Returns
-/// how many were created.
+/// Creates the ratings to fetch for the given links, or reassigns them when their provider changed,
+/// those no provider handles are skipped. Returns how many were created or reassigned.
 pub async fn create_public_ratings_to_fetch<R: RedisPoolInterface>(
     arc: &Arcadia<R>,
     external_links: &[String],

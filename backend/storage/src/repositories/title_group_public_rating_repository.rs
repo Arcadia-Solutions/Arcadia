@@ -6,8 +6,9 @@ use arcadia_common::error::Result;
 use chrono::{DateTime, Utc};
 
 impl ConnectionPool {
-    /// Creates the rows of the given (external link, provider) pairs, the existing ones are left
-    /// untouched. Returns how many were created.
+    /// Creates the rows of the given (external link, provider) pairs. An existing row of another
+    /// provider is reassigned to the given one, which asks for it at its next retry, the other
+    /// existing rows are left untouched. Returns how many were created or reassigned.
     pub async fn create_public_ratings_to_fetch(
         &self,
         external_links: &[String],
@@ -17,7 +18,9 @@ impl ConnectionPool {
             r#"
             INSERT INTO public_ratings (external_link, provider)
             SELECT * FROM unnest($1::TEXT[], $2::TEXT[])
-            ON CONFLICT DO NOTHING
+            ON CONFLICT (external_link) DO UPDATE SET
+                provider = EXCLUDED.provider
+            WHERE public_ratings.provider <> EXCLUDED.provider
             "#,
             external_links,
             providers

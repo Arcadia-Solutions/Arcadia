@@ -183,3 +183,27 @@ async fn test_a_scraped_rating_is_kept_until_a_title_group_lists_its_link(pool: 
     assert_eq!(pool.delete_unlisted_public_ratings(60.0).await.unwrap(), 0);
     assert_eq!(pool.delete_unlisted_public_ratings(-60.0).await.unwrap(), 1);
 }
+
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group"))]
+async fn test_the_ratings_of_a_replaced_provider_are_reassigned(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let links = pool
+        .find_title_group(TITLE_GROUP_ID)
+        .await
+        .unwrap()
+        .external_links;
+    let removed_providers = vec![String::from("removed_plugin"); links.len()];
+    pool.create_public_ratings_to_fetch(&links, &removed_providers)
+        .await
+        .unwrap();
+
+    let (reassigned_ratings_amount, public_ratings, _) = fetch_ratings_from_plugin(
+        Arc::clone(&pool),
+        &["musicbrainz.org", "discogs.com"],
+        json!({"status": "rated", "rating": 8.2, "votes": 1234}),
+    )
+    .await;
+
+    assert_eq!(reassigned_ratings_amount, 2);
+    assert_eq!(public_ratings.as_array().unwrap().len(), 2);
+}

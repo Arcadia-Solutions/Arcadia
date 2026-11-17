@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            DELETE FROM public_ratings\n            WHERE external_link = $1 AND provider = $2\n              AND collected_at IS NOT DISTINCT FROM $3\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "212c143aa0788ae80656a493ff569113aa5919683d5fb1552ce9143118a1c107"
+}

@@ -118,9 +118,11 @@ impl ConnectionPool {
             r#"
             DELETE FROM public_ratings
             WHERE external_link = $1 AND provider = $2
+              AND collected_at IS NOT DISTINCT FROM $3
             "#,
             rating_to_fetch.external_link,
-            rating_to_fetch.provider
+            rating_to_fetch.provider,
+            rating_to_fetch.collected_at
         )
         .execute(&self.pool)
         .await?;

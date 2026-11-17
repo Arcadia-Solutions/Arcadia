@@ -194,7 +194,8 @@ pub fn build_tmdb_client(http_client: &reqwest::Client, api_key: String) -> Clie
 
 pub fn extract_media_type_and_id(tmdb_url: &str) -> Result<(ContentType, u64)> {
     static TMDB_URL: LazyLock<Regex> = LazyLock::new(|| {
-        Regex::new(r"^(?:https?://)?(?:www\.)?themoviedb\.org/(movie|tv)/(\d+)(?:-|$)").unwrap()
+        Regex::new(r"^(?:https?://)?(?:www\.)?themoviedb\.org/(movie|tv)/(\d+)(?:[-/?#]|$)")
+            .unwrap()
     });
     let captures = TMDB_URL.captures(tmdb_url).ok_or(Error::InvalidTMDBUrl)?;
 

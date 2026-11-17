@@ -11,8 +11,8 @@ use utoipa::ToSchema;
 
 #[derive(Serialize, ToSchema)]
 pub struct FetchMissingPublicRatingsResponse {
-    /// the (title group, external link, provider) rows created, the provider never having been
-    /// asked about the link
+    /// the (external link, provider) rows created, the provider never having been asked about the
+    /// link
     pub created_ratings_amount: u64,
 }
 
@@ -37,9 +37,8 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .require_permission(user.sub, &UserPermission::UseMaintenanceTools, req.path())
         .await?;
 
-    let title_groups_external_links = arc.pool.find_title_groups_external_links().await?;
-    let created_ratings_amount =
-        create_public_ratings_to_fetch(&arc, &title_groups_external_links).await?;
+    let external_links = arc.pool.find_all_title_groups_external_links().await?;
+    let created_ratings_amount = create_public_ratings_to_fetch(&arc, &external_links).await?;
     spawn_public_ratings_fetch(arc.clone(), None);
 
     Ok(HttpResponse::Ok().json(FetchMissingPublicRatingsResponse {

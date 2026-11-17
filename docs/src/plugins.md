@@ -85,12 +85,15 @@ It must answer with JSON:
       "roles": ["director"],
       "nickname": null
     }
-  ]
+  ],
+  "public_rating": { "external_link": "https://anidb.net/anime/1234", "rating": 8.2, "votes": 1234 }
 }
 ```
 
 `title_group` follows the `UserCreatedTitleGroup` schema and `edition_group` the
-`UserCreatedEditionGroup` one; both are documented in the OpenAPI specification. All three fields are optional.
+`UserCreatedEditionGroup` one; both are documented in the OpenAPI specification. All four fields are
+optional. `public_rating` is the rating found on the scraped page, see
+[Collecting ratings](#collecting-ratings).
 
 Artists are given **by name**: arcadia creates them, merges the roles of an artist appearing several
 times, and returns real affiliated artists to
@@ -151,3 +154,10 @@ decides on its own whether the rating needs a refresh, and answers with one of:
 
 A failure (an unreachable plugin, a status outside the `2xx` range, an answer arcadia cannot read)
 is only logged, and treated like `retry_later`.
+
+Ratings are stored by link, and shown on every title group listing it. As the rating is often on the
+page scraped for the title, the `title_url` endpoint can also answer with it in `public_rating`, so
+it is saved right away instead of being asked for once the title group is created. Its
+`external_link` must be exactly the link put in the title group's `external_links`, and the plugin
+must be the one asked about it, otherwise it is ignored. A rating whose link no title group lists
+is deleted after `public_ratings_retry_seconds`, e.g. when the upload was abandoned.

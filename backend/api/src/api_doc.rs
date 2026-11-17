@@ -553,6 +553,7 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         crate::handlers::oauth::OAuthErrorResponse,
         // exported here for the scraper plugins to use
         crate::handlers::scrapers::ScrapedExternalData,
+        crate::handlers::scrapers::ScrapedPublicRating,
         crate::handlers::scrapers::ScrapedAffiliatedArtist,
     ),)
 )]

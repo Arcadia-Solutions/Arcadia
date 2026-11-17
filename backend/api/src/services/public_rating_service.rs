@@ -15,7 +15,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     Arcadia,
-    handlers::external_db::get_tmdb_data::{build_tmdb_client, extract_media_type_and_id},
+    handlers::{
+        external_db::get_tmdb_data::{build_tmdb_client, extract_media_type_and_id},
+        scrapers::ScrapedPublicRating,
+    },
 };
 
 /// The provider of the built in TMDB ratings.
@@ -69,73 +72,98 @@ fn link_provider<'a, R: RedisPoolInterface>(arc: &'a Arcadia<R>, link: &str) -> 
         .map(|plugin| plugin.id.as_str())
 }
 
-/// Creates the ratings to fetch for the links of the given title groups. Returns how many were
-/// created.
+/// Creates the ratings to fetch for the given links, those no provider handles are skipped. Returns
+/// how many were created.
 pub async fn create_public_ratings_to_fetch<R: RedisPoolInterface>(
     arc: &Arcadia<R>,
-    title_groups_external_links: &[(i32, Vec<String>)],
+    external_links: &[String],
 ) -> Result<u64> {
-    let mut title_group_ids = Vec::new();
-    let mut external_links = Vec::new();
-    let mut providers = Vec::new();
-    for (title_group_id, links) in title_groups_external_links {
-        for link in links {
-            if let Some(provider) = link_provider(arc, link) {
-                title_group_ids.push(*title_group_id);
-                external_links.push(link.clone());
-                providers.push(provider.to_string());
-            }
-        }
-    }
+    let (external_links, providers): (Vec<String>, Vec<String>) = external_links
+        .iter()
+        .filter_map(|link| Some((link.clone(), link_provider(arc, link)?.to_string())))
+        .unzip();
 
     arc.pool
-        .create_public_ratings_to_fetch(&title_group_ids, &external_links, &providers)
+        .create_public_ratings_to_fetch(&external_links, &providers)
         .await
 }
 
-/// Matches the title group's ratings to its links, then fetches the new ones in the background.
+/// Saves the rating a plugin found while scraping a title, when it is the provider of the link. A
+/// failure is only logged, the rating is asked for once the title group is created.
+pub async fn save_scraped_public_rating<R: RedisPoolInterface>(
+    arc: &Arcadia<R>,
+    plugin_id: &str,
+    scraped_rating: &ScrapedPublicRating,
+) {
+    if link_provider(arc, &scraped_rating.external_link) != Some(plugin_id) {
+        log::warn!(
+            "plugin '{plugin_id}' answered with the rating of '{}', a link it does not collect the ratings of",
+            scraped_rating.external_link
+        );
+        return;
+    }
+    let collected_rating = CollectedPublicRating {
+        rating: scraped_rating.rating,
+        votes: scraped_rating.votes,
+    };
+    if let Err(error) = arc
+        .pool
+        .save_public_rating(&scraped_rating.external_link, plugin_id, &collected_rating)
+        .await
+    {
+        log::error!(
+            "could not save the rating of '{}' scraped by '{plugin_id}': {error}",
+            scraped_rating.external_link
+        );
+    }
+}
+
+/// Creates the ratings of the title group's links, then fetches the new ones in the background.
 /// The title group is saved already, so a failure is only logged: its ratings are created again at
 /// its next edit or by the maintenance tool.
-pub async fn sync_title_group_public_ratings<R: RedisPoolInterface + 'static>(
+pub async fn fetch_title_group_public_ratings<R: RedisPoolInterface + 'static>(
     arc: &Data<Arcadia<R>>,
     title_group_id: i32,
     external_links: &[String],
 ) {
-    let result = async {
-        arc.pool
-            .delete_public_ratings_of_removed_links(title_group_id, external_links)
-            .await?;
-        create_public_ratings_to_fetch(arc, &[(title_group_id, external_links.to_vec())]).await
-    }
-    .await;
-
-    match result {
-        Ok(_) => spawn_public_ratings_fetch(arc.clone(), Some(title_group_id)),
+    match create_public_ratings_to_fetch(arc, external_links).await {
+        Ok(_) => spawn_public_ratings_fetch(arc.clone(), Some(external_links.to_vec())),
         Err(error) => log::error!(
-            "could not sync the public ratings of title group {title_group_id}: {error}"
+            "could not create the public ratings of title group {title_group_id}: {error}"
         ),
     }
 }
 
-/// Fetches every rating due in the background. Restricted to one title group when
-/// `title_group_id` is set.
+/// Fetches every rating due in the background. Restricted to the given links when
+/// `external_links` is set.
 pub fn spawn_public_ratings_fetch<R: RedisPoolInterface + 'static>(
     arc: Data<Arcadia<R>>,
-    title_group_id: Option<i32>,
+    external_links: Option<Vec<String>>,
 ) {
     tokio::spawn(async move {
-        if let Err(error) = fetch_all_due_public_ratings(&arc, title_group_id).await {
+        if let Err(error) = fetch_all_due_public_ratings(&arc, external_links.as_deref()).await {
             log::error!("could not fetch the public ratings: {error}");
         }
     });
 }
 
+/// Deletes the ratings of the links no title group lists anymore, then fetches every rating due.
+pub async fn run_public_ratings_periodic_task<R: RedisPoolInterface>(
+    arc: &Arcadia<R>,
+) -> Result<u64> {
+    // a rating scraped with a title stays this long for the title to be uploaded
+    arc.pool
+        .delete_unlisted_public_ratings(arc.periodic_tasks.public_ratings_retry_seconds.get() as f64)
+        .await?;
+    fetch_all_due_public_ratings(arc, None).await
+}
+
 /// Asks the providers for every rating that was never asked for, or not for
-/// `public_ratings_retry_seconds`, `public_ratings_batch_size` at a time. Restricted to one title
-/// group when `title_group_id` is set. Returns how many were asked for.
+/// `public_ratings_retry_seconds`, `public_ratings_batch_size` at a time. Restricted to the given
+/// links when `external_links` is set. Returns how many were asked for.
 pub async fn fetch_all_due_public_ratings<R: RedisPoolInterface>(
     arc: &Arcadia<R>,
-    title_group_id: Option<i32>,
+    external_links: Option<&[String]>,
 ) -> Result<u64> {
     let providers = rating_providers(arc);
     // a rating claimed during this run is not due again before it ends, however long it takes
@@ -147,7 +175,7 @@ pub async fn fetch_all_due_public_ratings<R: RedisPoolInterface>(
         let ratings_to_fetch = arc
             .pool
             .claim_public_ratings_to_fetch(
-                title_group_id,
+                external_links,
                 &providers,
                 arc.periodic_tasks.public_ratings_retry_seconds.get() as f64,
                 run_started_at,
@@ -185,7 +213,11 @@ async fn fetch_public_rating<R: RedisPoolInterface>(
     match answer {
         Ok(RatingAnswer::Rated(collected_rating)) => {
             arc.pool
-                .save_public_rating(rating_to_fetch, &collected_rating)
+                .save_public_rating(
+                    &rating_to_fetch.external_link,
+                    &rating_to_fetch.provider,
+                    &collected_rating,
+                )
                 .await
         }
         Ok(RatingAnswer::Unsupported) => arc.pool.delete_public_rating(rating_to_fetch).await,
@@ -235,7 +267,7 @@ async fn ask_tmdb<R: RedisPoolInterface>(
 ) -> std::result::Result<RatingAnswer, String> {
     // the rating of a recent release still moves a lot, an older one barely does
     let is_recent_release = rating_to_fetch
-        .title_group_original_release_date
+        .original_release_date
         .is_some_and(|release_date| Utc::now().date_naive() - release_date < TimeDelta::days(30));
     let refresh_after = if is_recent_release {
         TimeDelta::days(1)

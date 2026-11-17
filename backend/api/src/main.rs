@@ -1,7 +1,7 @@
 use actix_cors::Cors;
 use actix_web::{App, HttpServer, web::Data};
 use arcadia_api::routes::init;
-use arcadia_api::services::public_rating_service::fetch_all_due_public_ratings;
+use arcadia_api::services::public_rating_service::run_public_ratings_periodic_task;
 use arcadia_api::{Arcadia, api_doc::ApiDoc, config::Config};
 use arcadia_periodic_tasks::periodic_tasks::scheduler::{repeated_job, run_periodic_tasks};
 use arcadia_storage::connection_pool::ConnectionPool;
@@ -118,7 +118,7 @@ async fn main() -> std::io::Result<()> {
                 "public_ratings_fetch",
                 move |_pool| {
                     let arc = ratings_arc.clone();
-                    async move { fetch_all_due_public_ratings(&arc, None).await }
+                    async move { run_public_ratings_periodic_task(&arc).await }
                 },
             )
             .expect("Failed to create the public ratings fetch task"),

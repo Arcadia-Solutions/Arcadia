@@ -721,6 +721,8 @@ CREATE TABLE title_groups (
 );
 -- lets the catalog stats of a series count its title groups without scanning the whole table
 CREATE INDEX title_groups_series_id_index ON title_groups (series_id);
+-- finds the title groups listing a link, only with `external_links @> ARRAY[link]` (`link = ANY(external_links)` cannot use it)
+CREATE INDEX title_groups_external_links_index ON title_groups USING GIN (external_links);
 CREATE TABLE similar_title_groups (
     group_1_id INT NOT NULL,
     group_2_id INT NOT NULL,
@@ -1035,21 +1037,21 @@ CREATE TABLE title_group_ratings (
     UNIQUE (title_group_id, user_id)
 );
 CREATE INDEX title_group_ratings_user_id_index ON title_group_ratings (user_id);
--- ratings of the title group on external websites, one row per external link, asked to the single
--- provider handling it. The rating columns stay NULL until the provider answers with a rating.
-CREATE TABLE title_group_public_ratings (
-    title_group_id INT NOT NULL REFERENCES title_groups(id) ON DELETE CASCADE,
-    external_link TEXT NOT NULL,
+-- ratings of external links on their website, shared by every title group listing the link, asked
+-- to the single provider handling it. A row may be created before any title group lists its link
+-- (the plugin scraping a title can answer with its rating), and is deleted once none has for a while.
+-- The rating columns stay NULL until the provider answers with a rating.
+CREATE TABLE public_ratings (
+    external_link TEXT PRIMARY KEY,
     -- 'tmdb' or the id of the scraper plugin
     provider TEXT NOT NULL,
     rating DOUBLE PRECISION,
     votes BIGINT,
     collected_at TIMESTAMP WITH TIME ZONE,
     -- NULL until the provider is asked for the first time
-    last_tried_fetching_at TIMESTAMP WITH TIME ZONE,
-    PRIMARY KEY (title_group_id, external_link)
+    last_tried_fetching_at TIMESTAMP WITH TIME ZONE
 );
-CREATE INDEX title_group_public_ratings_last_tried_fetching_at_index ON title_group_public_ratings (last_tried_fetching_at NULLS FIRST);
+CREATE INDEX public_ratings_last_tried_fetching_at_index ON public_ratings (last_tried_fetching_at NULLS FIRST);
 CREATE TABLE torrent_requests (
     id BIGSERIAL PRIMARY KEY,
     title_group_id INT NOT NULL,

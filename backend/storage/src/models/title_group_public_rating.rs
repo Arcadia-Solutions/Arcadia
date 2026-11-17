@@ -16,12 +16,12 @@ pub struct PublicRating {
 /// A rating a provider (TMDB or a scraper plugin) has to be asked for.
 #[derive(Debug)]
 pub struct PublicRatingToFetch {
-    pub title_group_id: i32,
     pub external_link: String,
     pub provider: String,
     /// when the stored rating was collected, `None` if none has been yet
     pub collected_at: Option<DateTime<Utc>>,
-    pub title_group_original_release_date: Option<NaiveDate>,
+    /// the latest original release date of the title groups listing the link
+    pub original_release_date: Option<NaiveDate>,
 }
 
 /// A rating answered by a provider.

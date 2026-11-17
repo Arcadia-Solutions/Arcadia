@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO public_ratings (\n                external_link, provider, rating, votes, collected_at, last_tried_fetching_at\n            )\n            VALUES ($1, $2, $3, $4, NOW(), NOW())\n            ON CONFLICT (external_link) DO UPDATE SET\n                provider = EXCLUDED.provider,\n                rating = EXCLUDED.rating,\n                votes = EXCLUDED.votes,\n                collected_at = EXCLUDED.collected_at,\n                last_tried_fetching_at = EXCLUDED.last_tried_fetching_at\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Float8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "82a83f7eec1eb192d31cff2076258a1030cf1731c4ae0fc221bbe29bcf7d6ab4"
+}

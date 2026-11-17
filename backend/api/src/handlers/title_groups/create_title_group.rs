@@ -15,7 +15,7 @@ use crate::{
     middlewares::auth_middleware::Authdata,
     services::{
         image_service::validate_trailer_urls,
-        public_rating_service::sync_title_group_public_ratings,
+        public_rating_service::fetch_title_group_public_ratings,
     },
 };
 use arcadia_common::error::{Error, Result};
@@ -50,7 +50,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 
     let created_title_group = arc.pool.create_title_group(&form, user.sub).await?;
 
-    sync_title_group_public_ratings(
+    fetch_title_group_public_ratings(
         &arc,
         created_title_group.id,
         &created_title_group.external_links,

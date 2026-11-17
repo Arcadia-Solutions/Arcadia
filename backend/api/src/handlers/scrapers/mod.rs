@@ -37,6 +37,18 @@ pub struct ScrapedExternalData {
     pub edition_group: Option<UserCreatedEditionGroup>,
     #[serde(default)]
     pub affiliated_artists: Vec<ScrapedAffiliatedArtist>,
+    /// The rating found on the scraped page, saved before the title group is created so it does
+    /// not have to be asked for again.
+    pub public_rating: Option<ScrapedPublicRating>,
+}
+
+/// A rating returned by an external source plugin along with the title.
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct ScrapedPublicRating {
+    /// one of the title group's `external_links`, as cleaned by the plugin
+    pub external_link: String,
+    pub rating: f64,
+    pub votes: i64,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]

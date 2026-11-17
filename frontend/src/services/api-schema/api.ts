@@ -1410,7 +1410,7 @@ export interface FetchMissingPublicRatings200Response {
 }
 export interface FetchMissingPublicRatingsResponse {
     /**
-     * the (title group, external link, provider) rows created, the provider never having been asked about the link
+     * the (external link, provider) rows created, the provider never having been asked about the link
      */
     'created_ratings_amount': number;
 }
@@ -3310,7 +3310,22 @@ export interface ScrapedAffiliatedArtist {
 export interface ScrapedExternalData {
     'affiliated_artists'?: Array<ScrapedAffiliatedArtist>;
     'edition_group'?: UserCreatedEditionGroup | null;
+    /**
+     * The rating found on the scraped page, saved before the title group is created so it does not have to be asked for again.
+     */
+    'public_rating'?: ScrapedPublicRating | null;
     'title_group'?: UserCreatedTitleGroup | null;
+}
+/**
+ * A rating returned by an external source plugin along with the title.
+ */
+export interface ScrapedPublicRating {
+    /**
+     * one of the title group\'s `external_links`, as cleaned by the plugin
+     */
+    'external_link': string;
+    'rating': number;
+    'votes': number;
 }
 export interface SearchArtists200Response {
     'data': PaginatedResultsArtistSearchResult;

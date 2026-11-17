@@ -997,8 +997,9 @@ impl ConnectionPool {
                             'rating', r.rating,
                             'votes', r.votes, 'collected_at', r.collected_at
                         ) ORDER BY r.external_link)
-                        FROM title_group_public_ratings r
-                        WHERE r.title_group_id = title_groups.id AND r.rating IS NOT NULL
+                        FROM public_ratings r
+                        WHERE r.external_link = ANY(title_groups.external_links)
+                          AND r.rating IS NOT NULL
                     ),
                     '[]'
                 ) AS "public_ratings!: _"
@@ -1364,24 +1365,6 @@ impl ConnectionPool {
             UPDATE notifications_artist_title_groups
             SET title_group_id = $2
             WHERE title_group_id = $1
-            "#,
-            source_title_group_id,
-            target_title_group_id
-        )
-        .execute(&mut *transaction)
-        .await?;
-
-        // Move title_group_public_ratings (PK on title_group_id, external_link)
-        sqlx::query!(
-            r#"
-            UPDATE title_group_public_ratings source
-            SET title_group_id = $2
-            WHERE source.title_group_id = $1
-              AND NOT EXISTS (
-                  SELECT 1 FROM title_group_public_ratings target
-                  WHERE target.title_group_id = $2
-                    AND target.external_link = source.external_link
-              )
             "#,
             source_title_group_id,
             target_title_group_id

@@ -192,7 +192,8 @@ CREATE TYPE ip_check_provider_enum AS ENUM (
     'proxycheck',
     'ipapi_is',
     'ipqualityscore',
-    'vpnapi'
+    'vpnapi',
+    'vpndetection'
 );
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,

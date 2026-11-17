@@ -113,6 +113,11 @@ api:
   #   # WARNING: its free tier is http only, the ips of the users are sent unencrypted.
   #   ip_api:
   #     priority: 5
+  #   # vpndetection.io: no key required (terms: https://vpndetection.io/terms, privacy:
+  #   # https://vpndetection.io/privacy). Its datacenter flag comes from the network's type, its
+  #   # proxy flag covers relays like iCloud Private Relay, and it has no region or city.
+  #   vpndetection:
+  #     priority: 6
 
   # Optional: header provided by the reverse proxy that contains the original ip address of
   # the client, stored as the registration/application ip. The last address of the comma

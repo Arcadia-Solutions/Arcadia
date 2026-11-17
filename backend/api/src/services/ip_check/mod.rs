@@ -3,6 +3,7 @@ pub mod ipapi_is;
 pub mod ipqualityscore;
 pub mod proxycheck;
 pub mod vpnapi;
+pub mod vpndetection;
 
 use arcadia_common::error::{Error, Result};
 use arcadia_storage::models::ip_check::{IpCheck, IpCheckProvider, IpCheckResult};
@@ -21,6 +22,7 @@ pub struct IpCheckProvidersConfig {
     pub ipapi_is: Option<ipapi_is::IpapiIsConfig>,
     pub ipqualityscore: Option<ipqualityscore::IpqualityscoreConfig>,
     pub vpnapi: Option<vpnapi::VpnapiConfig>,
+    pub vpndetection: Option<vpndetection::VpndetectionConfig>,
 }
 
 enum Provider<'a> {
@@ -29,6 +31,7 @@ enum Provider<'a> {
     IpapiIs(&'a ipapi_is::IpapiIsConfig),
     Ipqualityscore(&'a ipqualityscore::IpqualityscoreConfig),
     Vpnapi(&'a vpnapi::VpnapiConfig),
+    Vpndetection,
 }
 
 impl Provider<'_> {
@@ -39,6 +42,7 @@ impl Provider<'_> {
             Provider::IpapiIs(_) => IpCheckProvider::IpapiIs,
             Provider::Ipqualityscore(_) => IpCheckProvider::Ipqualityscore,
             Provider::Vpnapi(_) => IpCheckProvider::Vpnapi,
+            Provider::Vpndetection => IpCheckProvider::Vpndetection,
         }
     }
 
@@ -49,6 +53,7 @@ impl Provider<'_> {
             Provider::IpapiIs(config) => ipapi_is::check(client, config, ip).await,
             Provider::Ipqualityscore(config) => ipqualityscore::check(client, config, ip).await,
             Provider::Vpnapi(config) => vpnapi::check(client, config, ip).await,
+            Provider::Vpndetection => vpndetection::check(client, ip).await,
         }
     }
 }
@@ -75,6 +80,9 @@ impl IpCheckProvidersConfig {
             self.vpnapi
                 .as_ref()
                 .map(|config| (config.priority, Provider::Vpnapi(config))),
+            self.vpndetection
+                .as_ref()
+                .map(|config| (config.priority, Provider::Vpndetection)),
         ]
         .into_iter()
         .flatten()

@@ -1410,7 +1410,7 @@ export interface FetchMissingPublicRatings200Response {
 }
 export interface FetchMissingPublicRatingsResponse {
     /**
-     * the (external link, provider) rows created, the provider never having been asked about the link
+     * the (external link, provider) rows created or reassigned to another provider, the provider never having been asked about the link
      */
     'created_ratings_amount': number;
 }

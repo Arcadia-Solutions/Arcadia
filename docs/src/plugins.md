@@ -134,10 +134,13 @@ at most once every `public_ratings_retry_seconds`, whatever it answered last tim
 before the plugin was configured.
 
 ```
-GET http://anime-plugin:9000/ratings?url=https://anidb.net/anime/1234&last_collected_at=2026-10-01T12:00:00Z
+GET http://anime-plugin:9000/ratings?url=https://anidb.net/anime/1234&last_collected_at=2026-10-01T12:00:00Z&last_asked_at=2026-11-01T12:00:00Z&original_release_date=2026-04-12
 ```
 
-`last_collected_at` is when the stored rating was collected, absent when none was yet. The plugin
+`last_collected_at` is when the stored rating was collected, absent when none was yet.
+`last_asked_at` is when the plugin was last asked about the link (or answered with its rating while
+scraping), whatever it answered, absent when it never was. `original_release_date` is the latest
+original release date of the title groups listing the link, absent when none has one. The plugin
 decides on its own whether the rating needs a refresh, and answers with one of:
 
 ```json

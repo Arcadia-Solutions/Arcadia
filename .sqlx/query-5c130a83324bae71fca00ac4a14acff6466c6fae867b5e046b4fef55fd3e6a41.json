@@ -1,0 +1,75 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE public_ratings rating\n            SET last_tried_fetching_at = NOW()\n            FROM (\n                SELECT external_link, last_tried_fetching_at\n                FROM public_ratings\n                WHERE ($1::TEXT[] IS NULL OR external_link = ANY($1))\n                  AND provider = ANY($2)\n                  AND (\n                      last_tried_fetching_at IS NULL\n                      OR last_tried_fetching_at < $5::TIMESTAMPTZ - make_interval(secs => $3)\n                  )\n                  AND EXISTS (\n                      SELECT 1 FROM title_groups\n                      WHERE external_links @> ARRAY[public_ratings.external_link]\n                  )\n                ORDER BY last_tried_fetching_at NULLS FIRST\n                LIMIT $4\n                FOR UPDATE SKIP LOCKED\n            ) due\n            WHERE rating.external_link = due.external_link\n            RETURNING\n                rating.external_link, rating.provider, rating.collected_at,\n                due.last_tried_fetching_at,\n                (\n                    SELECT MAX(original_release_date) FROM title_groups\n                    WHERE external_links @> ARRAY[rating.external_link]\n                ) AS \"original_release_date?\"\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "external_link",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "public_ratings",
+            "name": "external_link"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "provider",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "public_ratings",
+            "name": "provider"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "collected_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "public_ratings",
+            "name": "collected_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "last_tried_fetching_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "public_ratings",
+            "name": "last_tried_fetching_at"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "original_release_date?",
+        "type_info": "Date",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "TextArray",
+        "TextArray",
+        "Float8",
+        "Int8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      null
+    ]
+  },
+  "hash": "5c130a83324bae71fca00ac4a14acff6466c6fae867b5e046b4fef55fd3e6a41"
+}

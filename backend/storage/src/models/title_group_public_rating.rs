@@ -20,6 +20,8 @@ pub struct PublicRatingToFetch {
     pub provider: String,
     /// when the stored rating was collected, `None` if none has been yet
     pub collected_at: Option<DateTime<Utc>>,
+    /// when the provider was last asked about the link before this time, `None` if it never was
+    pub last_tried_fetching_at: Option<DateTime<Utc>>,
     /// the latest original release date of the title groups listing the link
     pub original_release_date: Option<NaiveDate>,
 }

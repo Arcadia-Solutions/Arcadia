@@ -89,9 +89,12 @@ async fn test_the_rating_a_plugin_answers_with_is_stored(pool: PgPool) {
     assert_eq!(public_ratings.as_array().unwrap().len(), 2);
     assert_eq!(public_ratings[0]["rating"], 8.2);
     assert_eq!(public_ratings[0]["votes"], 1234);
-    // never collected before, so the plugin is not given a date
+    // never collected nor asked about before, so the plugin is only given the release date
     assert!(requests.iter().all(|request| {
-        request.starts_with("GET /ratings?url=https") && !request.contains("last_collected_at")
+        request.starts_with("GET /ratings?url=https")
+            && !request.contains("last_collected_at")
+            && !request.contains("last_asked_at")
+            && request.contains("original_release_date=1962-01-01")
     }));
 }
 

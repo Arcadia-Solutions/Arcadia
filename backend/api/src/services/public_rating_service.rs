@@ -9,7 +9,7 @@ use arcadia_storage::{
     },
     redis::RedisPoolInterface,
 };
-use chrono::{DateTime, TimeDelta, Utc};
+use chrono::{DateTime, NaiveDate, TimeDelta, Utc};
 use futures::future::join_all;
 use serde::{Deserialize, Serialize};
 
@@ -42,6 +42,12 @@ struct PluginRatingQuery<'a> {
     /// absent when no rating was collected yet
     #[serde(skip_serializing_if = "Option::is_none")]
     last_collected_at: Option<DateTime<Utc>>,
+    /// absent when the plugin was never asked about the link
+    #[serde(skip_serializing_if = "Option::is_none")]
+    last_asked_at: Option<DateTime<Utc>>,
+    /// absent when no title group listing the link has one
+    #[serde(skip_serializing_if = "Option::is_none")]
+    original_release_date: Option<NaiveDate>,
 }
 
 /// TMDB when its API key is set, and the scraper plugins collecting ratings.
@@ -250,6 +256,8 @@ async fn ask_plugin<R: RedisPoolInterface>(
         .query(&PluginRatingQuery {
             url: &rating_to_fetch.external_link,
             last_collected_at: rating_to_fetch.collected_at,
+            last_asked_at: rating_to_fetch.last_tried_fetching_at,
+            original_release_date: rating_to_fetch.original_release_date,
         })
         .timeout(Duration::from_secs(timeout_seconds))
         .send()

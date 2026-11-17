@@ -49,7 +49,7 @@ impl ConnectionPool {
             UPDATE public_ratings rating
             SET last_tried_fetching_at = NOW()
             FROM (
-                SELECT external_link
+                SELECT external_link, last_tried_fetching_at
                 FROM public_ratings
                 WHERE ($1::TEXT[] IS NULL OR external_link = ANY($1))
                   AND provider = ANY($2)
@@ -68,6 +68,7 @@ impl ConnectionPool {
             WHERE rating.external_link = due.external_link
             RETURNING
                 rating.external_link, rating.provider, rating.collected_at,
+                due.last_tried_fetching_at,
                 (
                     SELECT MAX(original_release_date) FROM title_groups
                     WHERE external_links @> ARRAY[rating.external_link]

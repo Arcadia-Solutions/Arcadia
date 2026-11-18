@@ -23,6 +23,7 @@ scrapers:
         domain: anidb.net
         icon: https://anidb.net/favicon.ico
         abbreviation: ADB
+        rating_scale: / 10
       MyAnimeList:
         content_types:
           - tv_show
@@ -30,6 +31,7 @@ scrapers:
         domain: myanimelist.net
         icon: https://myanimelist.net/favicon.ico
         abbreviation: MAL
+        rating_scale: "%"
     title_url: http://anime-plugin:9000/scrape
     ratings_url: http://anime-plugin:9000/ratings
     timeout_seconds: 30
@@ -39,13 +41,13 @@ scrapers:
 | --- | --- |
 | `id` | Identifier used in the route `/api/external-sources/<id>`. Must not clash with a built in source (`tmdb`, `musicbrainz`, `isbn`, `comic-vine`). |
 | `placeholder` | Placeholder of the input field displayed in the interface, also used as the source's display name. |
-| `sources` | The websites the plugin accepts links from, by name, each with the `content_types` it supports (`movie`, `video`, `tv_show`, `music`, `podcast`, `software`, `book`, `live_performance`, `collection`) and the `domain`, `icon` and `abbreviation` of the website: the plugin is only asked for the ratings of the links on that domain (or one of its subdomains), displayed with the website's name and icon on the title group page, and with its abbreviation in the lists of title groups (e.g. the torrent search results). A single plugin may serve several websites, dispatching on the link it is given. They are listed in a tooltip next to the input on the upload page once there are several of them, and the source is offered for every content type at least one of them supports. |
+| `sources` | The websites the plugin accepts links from, by name, each with the `content_types` it supports (`movie`, `video`, `tv_show`, `music`, `podcast`, `software`, `book`, `live_performance`, `collection`) and the `domain`, `icon` and `abbreviation` of the website: the plugin is only asked for the ratings of the links on that domain (or one of its subdomains), displayed with the website's name and icon on the title group page, and with its abbreviation in the lists of title groups (e.g. the torrent search results). The optional `rating_scale` (e.g. `/ 10` or `%`) is appended to the ratings on the title group page. A single plugin may serve several websites, dispatching on the link it is given. They are listed in a tooltip next to the input on the upload page once there are several of them, and the source is offered for every content type at least one of them supports. |
 | `title_url` | Endpoint scraping a title, see [Writing a scraper plugin](#writing-a-scraper-plugin). |
 | `ratings_url` | Optional, endpoint collecting ratings, see [Collecting ratings](#collecting-ratings). |
 | `timeout_seconds` | Optional, defaults to `30`. |
 
 `config.yml` is read once at startup. When the `scrapers` section is absent, no plugin is
-registered. The icons and abbreviations are added to the frontend at build time, so it has to be rebuilt after changing
+registered. The icons, abbreviations and rating scales are added to the frontend at build time, so it has to be rebuilt after changing
 them.
 
 Both `config.yml` and `compose.override.yml` are git ignored. `compose.yml` already mounts

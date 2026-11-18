@@ -36,6 +36,8 @@ export interface PublicRatingWebsite {
   /** The ratings of the links on this domain or one of its subdomains belong to the website. */
   domain: string
   icon: string
+  /** Appended to the ratings on the title group page, e.g. `/ 10` or `%`. */
+  rating_scale?: string
 }
 
 declare const __PUBLIC_RATING_WEBSITES__: PublicRatingWebsite[]

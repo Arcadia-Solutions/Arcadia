@@ -24,12 +24,13 @@ if (!configuration?.frontend) {
 const referrerAllowedDomains: string[] = configuration.frontend.referrer_allowed_domains ?? []
 // The websites whose ratings are displayed: TMDB, collected by arcadia itself, and the ones the scraper plugins accept links from
 const publicRatingWebsites = [
-  { name: 'TMDB', abbreviation: 'TMDB', domain: 'themoviedb.org', icon: '/logos/external_links/tmdb.svg' },
-  ...(configuration.scrapers ?? []).flatMap((plugin: { sources: Record<string, { abbreviation?: string; domain: string; icon: string }> }) =>
-    Object.entries(plugin.sources).map(([name, website]) => {
-      if (!website.abbreviation) throw new Error(`no 'abbreviation' set for the scraper source '${name}' in ${configurationPath}`)
-      return { name, abbreviation: website.abbreviation, domain: website.domain, icon: website.icon }
-    }),
+  { name: 'TMDB', abbreviation: 'TMDB', domain: 'themoviedb.org', icon: '/logos/external_links/tmdb.svg', rating_scale: '/ 10' },
+  ...(configuration.scrapers ?? []).flatMap(
+    (plugin: { sources: Record<string, { abbreviation?: string; domain: string; icon: string; rating_scale?: string }> }) =>
+      Object.entries(plugin.sources).map(([name, website]) => {
+        if (!website.abbreviation) throw new Error(`no 'abbreviation' set for the scraper source '${name}' in ${configurationPath}`)
+        return { name, abbreviation: website.abbreviation, domain: website.domain, icon: website.icon, rating_scale: website.rating_scale }
+      }),
   ),
 ]
 

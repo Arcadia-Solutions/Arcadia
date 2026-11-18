@@ -10,7 +10,7 @@
           <span v-else>{{ rating.website.name }}</span>
         </a>
         <div class="votes">
-          <span>{{ rating.rating.toLocaleString(undefined, { maximumFractionDigits: 1 }) }}</span>
+          <span>{{ rating.rating.toLocaleString(undefined, { maximumFractionDigits: 1 }) }} {{ rating.website.rating_scale }}</span>
           <span class="vote-count">({{ formatNumber(rating.votes) }} {{ t('title_group.vote', rating.votes) }})</span>
         </div>
       </div>

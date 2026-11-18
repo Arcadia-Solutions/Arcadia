@@ -57,7 +57,7 @@ import PaginatedResults from '../PaginatedResults.vue'
 import { useI18n } from 'vue-i18n'
 import { formatNumber, getRatingIcon } from '@/services/helpers'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
-import { publicRatingWebsites, type PublicRatingWebsite } from '@/config'
+import { publicRatingWebsite } from '@/config'
 import { useUserStore } from '@/stores/user'
 import UserRatingDisplay from './UserRatingDisplay.vue'
 import TitleGroupRatingList from './TitleGroupRatingList.vue'
@@ -79,16 +79,7 @@ const props = defineProps<{
 
 const averageIcon = computed(() => getRatingIcon(publicArcadiaSettings.rating_icons, props.userRatingAverage))
 
-// TMDB ratings are collected by arcadia itself, the other websites come from config.yml
-const ratingWebsites: PublicRatingWebsite[] = [{ name: 'TMDB', domain: 'themoviedb.org', icon: '/logos/external_links/tmdb.svg' }, ...publicRatingWebsites]
-
-// a link matching no website (e.g. its domain was removed from config.yml) is displayed with its host name
-const ratingWebsite = (link: string): Pick<PublicRatingWebsite, 'name'> & Partial<PublicRatingWebsite> => {
-  const host = new URL(link).hostname
-  return ratingWebsites.find(({ domain }) => host === domain || host.endsWith(`.${domain}`)) ?? { name: host }
-}
-
-const publicRatingsWithWebsite = computed(() => props.publicRatings.map((rating) => ({ ...rating, website: ratingWebsite(rating.external_link) })))
+const publicRatingsWithWebsite = computed(() => props.publicRatings.map((rating) => ({ ...rating, website: publicRatingWebsite(rating.external_link) })))
 
 const emit = defineEmits<{
   ownRatingSaved: [TitleGroupRating]

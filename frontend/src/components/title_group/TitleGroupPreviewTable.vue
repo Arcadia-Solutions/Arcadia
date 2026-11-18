@@ -19,11 +19,22 @@
           <span
             v-if="title_group.user_rating_average != null"
             v-tooltip.top="`${formatNumber(title_group.user_rating_count)} ${t('title_group.vote', title_group.user_rating_count)}`"
-            class="user-rating"
+            class="rating"
           >
             <span v-if="publicArcadiaSettings.user_rating_label">{{ publicArcadiaSettings.user_rating_label }}:</span>
-            <UserRatingDisplay :rating="title_group.user_rating_average" />
+            <UserRatingDisplay :rating="title_group.user_rating_average" hideIcon />
           </span>
+          <a
+            v-for="rating in title_group.public_ratings"
+            :key="rating.external_link"
+            :href="rating.external_link"
+            target="_blank"
+            v-tooltip.top="`${formatNumber(rating.votes)} ${t('title_group.vote', rating.votes)}`"
+            class="rating"
+          >
+            {{ publicRatingWebsite(rating.external_link).abbreviation }}:
+            {{ rating.rating.toLocaleString(undefined, { maximumFractionDigits: 1 }) }}
+          </a>
           <span>
             <template v-for="(tag, index) in title_group.tags" :key="tag">
               <RouterLink :to="{ path: '/torrents', query: { title_group_tags: tag } }" @click="scrollToTop">{{ tag }}</RouterLink>
@@ -49,6 +60,7 @@ import UserRatingDisplay from './UserRatingDisplay.vue'
 import { useI18n } from 'vue-i18n'
 import { formatNumber } from '@/services/helpers'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
+import { publicRatingWebsite } from '@/config'
 
 defineProps<{
   title_group: TitleGroupHierarchyLite
@@ -79,12 +91,16 @@ const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
   margin-top: -5px;
   font-size: 1.4em;
 }
-.user-rating {
+.rating {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  padding: 1px 6px;
+  background-color: var(--color-background-primary);
+  border-radius: 4px;
   font-weight: bold;
   font-style: normal;
+  white-space: nowrap;
 }
 .tags {
   display: flex;

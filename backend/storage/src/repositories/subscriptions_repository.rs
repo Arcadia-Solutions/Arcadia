@@ -186,7 +186,8 @@ impl ConnectionPool {
                         ELSE NULL
                     END AS "series: _",
                     tg.user_rating_average,
-                    tg.user_rating_count
+                    tg.user_rating_count,
+                    '[]'::jsonb AS "public_ratings!: _"
                 FROM subscriptions_title_group_torrents s
                 JOIN title_group_hierarchy_lite tgh ON tgh.title_group_id = s.title_group_id
                 JOIN title_groups tg ON tg.id = tgh.title_group_id
@@ -252,7 +253,8 @@ impl ConnectionPool {
                         ELSE NULL
                     END AS "series: _",
                     tg.user_rating_average,
-                    tg.user_rating_count
+                    tg.user_rating_count,
+                    '[]'::jsonb AS "public_ratings!: _"
                 FROM subscriptions_title_group_comments s
                 JOIN title_group_hierarchy_lite tgh ON tgh.title_group_id = s.title_group_id
                 JOIN title_groups tg ON tg.id = tgh.title_group_id

@@ -77,8 +77,9 @@ async fn fetch_ratings_from_plugin(
 
 #[sqlx::test(fixtures("with_test_users", "with_test_title_group"))]
 async fn test_the_rating_a_plugin_answers_with_is_stored(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (created_ratings_amount, public_ratings, requests) = fetch_ratings_from_plugin(
-        Arc::new(ConnectionPool::with_pg_pool(pool)),
+        Arc::clone(&pool),
         &["musicbrainz.org", "discogs.com"],
         json!({"status": "rated", "rating": 8.2, "votes": 1234}),
     )
@@ -87,6 +88,9 @@ async fn test_the_rating_a_plugin_answers_with_is_stored(pool: PgPool) {
     // discogs.com also accepts the links of www.discogs.com
     assert_eq!(created_ratings_amount, 2);
     assert_eq!(public_ratings.as_array().unwrap().len(), 2);
+    // title group lists show the same ratings as the title group page
+    let title_groups = pool.find_empty_title_groups(None, None).await.unwrap();
+    assert_eq!(title_groups[0].public_ratings, public_ratings);
     assert_eq!(public_ratings[0]["rating"], 8.2);
     assert_eq!(public_ratings[0]["votes"], 1234);
     // never collected nor asked about before, so the plugin is only given the release date

@@ -774,6 +774,7 @@ impl ConnectionPool {
                     series: row.series,
                     user_rating_average: row.user_rating_average,
                     user_rating_count: row.user_rating_count,
+                    public_ratings: serde_json::Value::Array(vec![]),
                 },
             })
             .collect();

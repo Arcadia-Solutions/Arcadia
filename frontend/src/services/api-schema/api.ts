@@ -2749,6 +2749,10 @@ export interface PaginatedResultsTitleGroupHierarchyLiteResultsInner {
     'original_release_date': string | null;
     'original_release_date_only_year_known': boolean;
     'platform'?: Platform | null;
+    /**
+     * the collected ratings of the title group on external websites
+     */
+    'public_ratings': Array<PublicRating>;
     'series'?: SeriesLite | null;
     'tags': Array<string>;
     'user_rating_average'?: number | null;
@@ -4052,6 +4056,10 @@ export interface TitleGroupHierarchyLite {
     'original_release_date': string | null;
     'original_release_date_only_year_known': boolean;
     'platform'?: Platform | null;
+    /**
+     * the collected ratings of the title group on external websites
+     */
+    'public_ratings': Array<PublicRating>;
     'series'?: SeriesLite | null;
     'tags': Array<string>;
     'user_rating_average'?: number | null;

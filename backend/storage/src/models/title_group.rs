@@ -234,6 +234,9 @@ pub struct TitleGroupHierarchyLite {
     pub series: Option<Json<SeriesLite>>,
     pub user_rating_average: Option<f32>,
     pub user_rating_count: i32,
+    /// the collected ratings of the title group on external websites
+    #[schema(value_type = Vec<PublicRating>)]
+    pub public_ratings: Value,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]

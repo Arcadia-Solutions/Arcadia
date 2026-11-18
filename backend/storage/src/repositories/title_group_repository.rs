@@ -1473,7 +1473,15 @@ impl ConnectionPool {
                     WHEN s.id IS NOT NULL THEN jsonb_build_object('id', s.id, 'name', s.name)
                 END AS "series: _",
                 tg.user_rating_average,
-                tg.user_rating_count
+                tg.user_rating_count,
+                COALESCE((
+                    SELECT jsonb_agg(jsonb_build_object(
+                        'external_link', r.external_link, 'rating', r.rating,
+                        'votes', r.votes, 'collected_at', r.collected_at
+                    ) ORDER BY r.external_link)
+                    FROM public_ratings r
+                    WHERE r.external_link = ANY(tg.external_links) AND r.rating IS NOT NULL
+                ), '[]') AS "public_ratings!: _"
             FROM title_groups tg
             LEFT JOIN series s ON s.id = tg.series_id
             WHERE ($1::TIMESTAMPTZ IS NULL OR tg.created_at >= $1)

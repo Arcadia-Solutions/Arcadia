@@ -46,9 +46,7 @@ const userStore = useUserStore()
 }
 .avatar {
   width: 5em;
-  height: 5em;
   border-radius: 7px;
-  object-fit: cover;
 }
 .author {
   display: flex;

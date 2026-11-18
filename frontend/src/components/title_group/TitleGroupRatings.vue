@@ -8,16 +8,18 @@
         <a class="logo-and-note" :href="rating.external_link" target="_blank" v-tooltip.top="rating.website.name">
           <img v-if="rating.website.icon" :src="rating.website.icon" :alt="rating.website.name" class="logo" />
           <span v-else>{{ rating.website.name }}</span>
-          <span>{{ rating.rating.toLocaleString(undefined, { maximumFractionDigits: 1 }) }}</span>
         </a>
-        <span class="votes vote-count">({{ formatNumber(rating.votes) }} {{ t('title_group.vote', rating.votes) }})</span>
+        <div class="votes">
+          <span>{{ rating.rating.toLocaleString(undefined, { maximumFractionDigits: 1 }) }}</span>
+          <span class="vote-count">({{ formatNumber(rating.votes) }} {{ t('title_group.vote', rating.votes) }})</span>
+        </div>
       </div>
       <div class="rating">
         <div class="logo-and-note" :class="{ 'cursor-pointer': userRatingCount > 0 }" @click="userRatingCount > 0 && openRatings()">
           <img :src="averageIcon?.icon_url ?? '/favicon.ico'" alt="rating icon" class="logo" />
-          <UserRatingDisplay :rating="userRatingAverage" hideIcon />
         </div>
         <div class="votes">
+          <UserRatingDisplay :rating="userRatingAverage" hideIcon />
           <a v-if="userRatingCount > 0" class="vote-count cursor-pointer" @click="openRatings">
             ({{ formatNumber(userRatingCount) }} {{ t('title_group.vote', userRatingCount) }})
           </a>

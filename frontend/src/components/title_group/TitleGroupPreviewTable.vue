@@ -29,7 +29,7 @@
             :key="rating.external_link"
             :href="rating.external_link"
             target="_blank"
-            v-tooltip.top="`${formatNumber(rating.votes)} ${t('title_group.vote', rating.votes)}`"
+            v-tooltip.top="`${publicRatingWebsite(rating.external_link).name}: ${formatNumber(rating.votes)} ${t('title_group.vote', rating.votes)}`"
             class="rating"
           >
             {{ publicRatingWebsite(rating.external_link).abbreviation }}:

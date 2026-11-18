@@ -7,7 +7,8 @@ use arcadia_api::{
     config::ExternalSourcePlugin,
     handlers::scrapers::ScrapedPublicRating,
     services::public_rating_service::{
-        create_public_ratings_to_fetch, fetch_all_due_public_ratings, save_scraped_public_rating,
+        create_public_ratings_to_fetch, fetch_all_due_public_ratings, refetch_public_ratings,
+        save_scraped_public_rating,
     },
 };
 use arcadia_storage::{connection_pool::ConnectionPool, models::title_group::ContentType};
@@ -213,4 +214,47 @@ async fn test_the_ratings_of_a_replaced_provider_are_reassigned(pool: PgPool) {
 
     assert_eq!(reassigned_ratings_amount, 2);
     assert_eq!(public_ratings.as_array().unwrap().len(), 2);
+}
+
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group"))]
+async fn test_a_manual_refetch_asks_again_right_away(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (plugin_url, requests) = spawn_http_server(
+        "200 OK",
+        json!({"status": "rated", "rating": 8.2, "votes": 1234}).to_string(),
+    );
+    let arc = arcadia_with_rating_plugin(
+        Arc::clone(&pool),
+        &["musicbrainz.org", "discogs.com"],
+        &plugin_url,
+    )
+    .await;
+    let links = pool
+        .find_title_group(TITLE_GROUP_ID)
+        .await
+        .unwrap()
+        .external_links;
+    create_public_ratings_to_fetch(&arc, &links).await.unwrap();
+    fetch_all_due_public_ratings(&arc, None).await.unwrap();
+    let periodic_requests: Vec<String> = requests.try_iter().collect();
+    assert!(!periodic_requests.is_empty());
+    assert!(
+        periodic_requests
+            .iter()
+            .all(|request| !request.contains("manual_fetch"))
+    );
+
+    let unprovided_link = "https://example.com/title".to_string();
+    assert!(
+        refetch_public_ratings(&arc, &[links[0].clone(), unprovided_link])
+            .await
+            .is_err()
+    );
+    assert_eq!(requests.try_iter().count(), 0);
+
+    refetch_public_ratings(&arc, &links[..1]).await.unwrap();
+
+    let requests: Vec<String> = requests.try_iter().collect();
+    assert_eq!(requests.len(), 1);
+    assert!(requests[0].contains("manual_fetch=true"));
 }

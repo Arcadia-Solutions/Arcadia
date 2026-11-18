@@ -11,6 +11,7 @@ pub mod get_title_group;
 pub mod get_title_group_info_lite;
 pub mod link_similar_title_groups;
 pub mod merge_title_groups;
+pub mod refetch_title_group_public_ratings;
 pub mod unlink_similar_title_groups;
 
 use actix_web::web::{ServiceConfig, delete, get, post, put, resource};
@@ -38,6 +39,10 @@ pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {
         resource("/comments/{id}")
             .route(put().to(self::edit_title_group_comment::exec::<R>))
             .route(delete().to(self::delete_title_group_comment::exec::<R>)),
+    );
+    cfg.service(
+        resource("/public-ratings/refetch")
+            .route(post().to(self::refetch_title_group_public_ratings::exec::<R>)),
     );
     cfg.service(resource("/ratings").route(post().to(self::create_title_group_rating::exec::<R>)));
     cfg.service(

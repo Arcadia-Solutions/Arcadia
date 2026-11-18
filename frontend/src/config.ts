@@ -48,3 +48,6 @@ export const publicRatingWebsite = (link: string): Pick<PublicRatingWebsite, 'na
   const host = new URL(link).hostname
   return publicRatingWebsites.find(({ domain }) => host === domain || host.endsWith(`.${domain}`)) ?? { name: host, abbreviation: host }
 }
+
+/** Whether the link is on a known rating website, so a provider can be asked for its rating. */
+export const isRatableLink = (link: string) => publicRatingWebsite(link).domain !== undefined

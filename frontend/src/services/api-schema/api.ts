@@ -3226,6 +3226,17 @@ export interface RatingIcon {
     'icon_url': string;
     'minimum_rating': number;
 }
+export interface RefetchTitleGroupPublicRatings200Response {
+    'data': Array<PublicRating>;
+    'side_effects': Array<SideEffect>;
+}
+export interface RefetchTitleGroupPublicRatingsRequest {
+    /**
+     * the links of the title group to refetch the ratings of, the others are ignored
+     */
+    'external_links': Array<string>;
+    'title_group_id': number;
+}
 export interface RefreshToken {
     'refresh_token': string;
 }
@@ -8458,6 +8469,19 @@ export const mergeTitleGroups = async (request: MergeTitleGroupsRequest, options
     });
     return response.data;
 };
+
+
+
+export const refetchTitleGroupPublicRatings = async (refetchTitleGroupPublicRatingsRequest: RefetchTitleGroupPublicRatingsRequest, options?: RawAxiosRequestConfig): Promise<RefetchTitleGroupPublicRatings200Response['data']> => {
+    const response = await globalAxios.request<RefetchTitleGroupPublicRatings200Response>({
+        url: '/api/title-groups/public-ratings/refetch',
+        method: 'POST',
+        data: refetchTitleGroupPublicRatingsRequest,
+        ...options
+    });
+    return response.data.data;
+};
+
 
 
 

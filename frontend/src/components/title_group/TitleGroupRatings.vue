@@ -1,5 +1,8 @@
 <template>
   <ContentContainer :containerTitle="t('title_group.rating', 2)">
+    <template v-if="userStore.permissions.includes('use_maintenance_tools') && ratableLinks.length > 0" #top-right>
+      <i v-tooltip.top="t('title_group.refetch_public_ratings')" class="pi pi-refresh cursor-pointer" @click="openRefetchDialog" />
+    </template>
     <div class="ratings-component">
       <div class="rating" v-for="rating in publicRatingsWithWebsite" :key="rating.external_link">
         <a class="logo-and-note" :href="rating.external_link" target="_blank" v-tooltip.top="rating.website.name">
@@ -34,6 +37,17 @@
       </PaginatedResults>
       <ProgressSpinner v-else />
     </Dialog>
+    <Dialog closeOnEscape modal :header="t('title_group.refetch_public_ratings')" v-model:visible="refetchDialogVisible">
+      <div class="refetch-links">
+        <div v-for="link in ratableLinks" :key="link">
+          <Checkbox v-model="linksToRefetch" :value="link" :inputId="link" />
+          <label :for="link">{{ publicRatingWebsite(link).name }}: {{ link }}</label>
+        </div>
+      </div>
+      <div class="wrapper-center">
+        <Button :label="t('title_group.refetch')" :loading="refetching" :disabled="linksToRefetch.length === 0" @click="refetch" />
+      </div>
+    </Dialog>
     <Dialog closeOnEscape modal :header="t('title_group.your_rating')" v-model:visible="voteFormVisible">
       <TitleGroupVoteForm :titleGroupId :ownRating @saved="ownRatingSaved" />
     </Dialog>
@@ -42,10 +56,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { Dialog } from 'primevue'
+import { Button, Checkbox, Dialog } from 'primevue'
 import ProgressSpinner from 'primevue/progressspinner'
 import {
   OrderByDirection,
+  refetchTitleGroupPublicRatings,
   searchTitleGroupRatings,
   TitleGroupRatingSearchOrderByColumn,
   type PublicRating,
@@ -57,7 +72,7 @@ import PaginatedResults from '../PaginatedResults.vue'
 import { useI18n } from 'vue-i18n'
 import { formatNumber, getRatingIcon } from '@/services/helpers'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
-import { publicRatingWebsite } from '@/config'
+import { isRatableLink, publicRatingWebsite } from '@/config'
 import { useUserStore } from '@/stores/user'
 import UserRatingDisplay from './UserRatingDisplay.vue'
 import TitleGroupRatingList from './TitleGroupRatingList.vue'
@@ -75,15 +90,19 @@ const props = defineProps<{
   userRatingAverage: number | null
   userRatingCount: number
   ownRating: TitleGroupRating | null
+  externalLinks: string[]
 }>()
 
 const averageIcon = computed(() => getRatingIcon(publicArcadiaSettings.rating_icons, props.userRatingAverage))
+
+const ratableLinks = computed(() => props.externalLinks.filter(isRatableLink))
 
 const publicRatingsWithWebsite = computed(() => props.publicRatings.map((rating) => ({ ...rating, website: publicRatingWebsite(rating.external_link) })))
 
 const emit = defineEmits<{
   ownRatingSaved: [TitleGroupRating]
   ratingDeleted: [TitleGroupRatingHierarchy]
+  publicRatingsRefetched: [PublicRating[]]
 }>()
 
 const pageSize = 25
@@ -101,6 +120,24 @@ const ratings = ref<TitleGroupRatingHierarchy[]>()
 const loading = ref(false)
 const ratingsVisible = ref(false)
 const voteFormVisible = ref(false)
+const refetchDialogVisible = ref(false)
+const linksToRefetch = ref<string[]>([])
+const refetching = ref(false)
+
+const openRefetchDialog = () => {
+  linksToRefetch.value = [...ratableLinks.value]
+  refetchDialogVisible.value = true
+}
+
+const refetch = () => {
+  refetching.value = true
+  refetchTitleGroupPublicRatings({ title_group_id: props.titleGroupId, external_links: linksToRefetch.value })
+    .then((publicRatings) => {
+      emit('publicRatingsRefetched', publicRatings)
+      refetchDialogVisible.value = false
+    })
+    .finally(() => (refetching.value = false))
+}
 
 const fetchRatings = (newPage: number) => {
   page.value = newPage
@@ -167,6 +204,15 @@ onMounted(() => {
 }
 .vote-count {
   font-weight: bold;
+}
+.refetch-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+  label {
+    margin-left: 7px;
+  }
 }
 .vote-link {
   margin-top: 5px;

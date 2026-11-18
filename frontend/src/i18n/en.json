@@ -405,6 +405,8 @@
     "your_rating": "Your rating",
     "add_your_rating": "Add your rating",
     "edit_your_rating": "Edit your rating",
+    "refetch_public_ratings": "Refetch the public ratings",
+    "refetch": "Refetch",
     "comment": "Comment",
     "comment_optional": "Comment (optional)",
     "rating_saved_success": "Rating saved",

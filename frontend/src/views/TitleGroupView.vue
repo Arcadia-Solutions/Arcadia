@@ -129,7 +129,8 @@
         v-if="
           titleGroupAndAssociatedData.title_group.public_ratings.length > 0 ||
           titleGroupAndAssociatedData.title_group.user_rating_count > 0 ||
-          userStore.permissions.includes('rate_title_groups')
+          userStore.permissions.includes('rate_title_groups') ||
+          (userStore.permissions.includes('use_maintenance_tools') && titleGroupAndAssociatedData.title_group.external_links.some(isRatableLink))
         "
         :key="titleGroupAndAssociatedData.title_group.id"
         :titleGroupId="titleGroupAndAssociatedData.title_group.id"
@@ -137,9 +138,11 @@
         :userRatingAverage="titleGroupAndAssociatedData.title_group.user_rating_average ?? null"
         :userRatingCount="titleGroupAndAssociatedData.title_group.user_rating_count"
         :ownRating="titleGroupAndAssociatedData.own_rating ?? null"
+        :externalLinks="titleGroupAndAssociatedData.title_group.external_links"
         class="ratings"
         @ownRatingSaved="ownRatingSaved"
         @ratingDeleted="ratingDeleted"
+        @publicRatingsRefetched="titleGroupAndAssociatedData.title_group.public_ratings = $event"
       />
       <ContentContainer
         v-if="userStore.permissions.includes('link_similar_title_group') || titleGroupAndAssociatedData.similar_title_groups.length != 0"
@@ -242,7 +245,7 @@
 </template>
 
 <script setup lang="ts">
-import { config } from '@/config'
+import { config, isRatableLink } from '@/config'
 import { defineAsyncComponent, ref, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
 import BBCodeRenderer from '@/components/community/BBCodeRenderer.vue'

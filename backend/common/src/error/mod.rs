@@ -825,6 +825,9 @@ pub enum Error {
     #[error("only public ip addresses can be checked")]
     IpNotPublic,
 
+    #[error("no provider collects the rating of '{0}'")]
+    NoPublicRatingProvider(String),
+
     #[error("could not create site highlight")]
     CouldNotCreateSiteHighlight(#[source] sqlx::Error),
 
@@ -975,7 +978,8 @@ impl actix_web::ResponseError for Error {
             | Error::EmojiDisabled
             | Error::TitleGroupRatingOutOfRange
             | Error::TitleGroupRatingRangeInverted
-            | Error::IpNotPublic => StatusCode::BAD_REQUEST,
+            | Error::IpNotPublic
+            | Error::NoPublicRatingProvider(_) => StatusCode::BAD_REQUEST,
 
             // 401 Unauthorized
             Error::InvalidOrExpiredRefreshToken | Error::InvalidatedToken => {

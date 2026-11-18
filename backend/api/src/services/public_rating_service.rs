@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use actix_web::web::Data;
-use arcadia_common::error::Result;
+use arcadia_common::error::{Error, Result};
 use arcadia_storage::{
     models::{
         title_group::ContentType,
@@ -48,6 +48,10 @@ struct PluginRatingQuery<'a> {
     /// absent when no title group listing the link has one
     #[serde(skip_serializing_if = "Option::is_none")]
     original_release_date: Option<NaiveDate>,
+    /// present when a user asked for the rating, the plugin should then not answer `retry_later`
+    /// because the stored rating is recent
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    manual_fetch: bool,
 }
 
 /// TMDB when its API key is set, and the scraper plugins collecting ratings.
@@ -192,7 +196,7 @@ pub async fn fetch_all_due_public_ratings<R: RedisPoolInterface>(
         join_all(
             ratings_to_fetch
                 .iter()
-                .map(|rating_to_fetch| fetch_public_rating(arc, rating_to_fetch)),
+                .map(|rating_to_fetch| fetch_public_rating(arc, rating_to_fetch, false)),
         )
         .await
         .into_iter()
@@ -205,15 +209,51 @@ pub async fn fetch_all_due_public_ratings<R: RedisPoolInterface>(
     }
 }
 
-/// A provider failing is only logged, the rating is asked for again at the next retry.
+/// Asks the providers for the ratings of the given links right away, however recently they were
+/// asked, creating the missing ones. Errors when no provider handles one of the links.
+pub async fn refetch_public_ratings<R: RedisPoolInterface>(
+    arc: &Arcadia<R>,
+    external_links: &[String],
+) -> Result<()> {
+    if let Some(link) = external_links
+        .iter()
+        .find(|link| link_provider(arc, link).is_none())
+    {
+        return Err(Error::NoPublicRatingProvider(link.clone()));
+    }
+    create_public_ratings_to_fetch(arc, external_links).await?;
+    let ratings_to_fetch = arc
+        .pool
+        .claim_public_ratings_to_fetch(
+            Some(external_links),
+            &rating_providers(arc),
+            0.0,
+            Utc::now(),
+            external_links.len() as i64,
+        )
+        .await?;
+
+    join_all(
+        ratings_to_fetch
+            .iter()
+            .map(|rating_to_fetch| fetch_public_rating(arc, rating_to_fetch, true)),
+    )
+    .await
+    .into_iter()
+    .collect()
+}
+
+/// A provider failing is only logged, the rating is asked for again at the next retry. `manual`
+/// makes the provider refresh the rating even when the stored one is recent.
 async fn fetch_public_rating<R: RedisPoolInterface>(
     arc: &Arcadia<R>,
     rating_to_fetch: &PublicRatingToFetch,
+    manual: bool,
 ) -> Result<()> {
     let answer = if rating_to_fetch.provider == TMDB_PROVIDER {
-        ask_tmdb(arc, rating_to_fetch).await
+        ask_tmdb(arc, rating_to_fetch, manual).await
     } else {
-        ask_plugin(arc, rating_to_fetch).await
+        ask_plugin(arc, rating_to_fetch, manual).await
     };
 
     match answer {
@@ -242,6 +282,7 @@ async fn fetch_public_rating<R: RedisPoolInterface>(
 async fn ask_plugin<R: RedisPoolInterface>(
     arc: &Arcadia<R>,
     rating_to_fetch: &PublicRatingToFetch,
+    manual_fetch: bool,
 ) -> std::result::Result<RatingAnswer, String> {
     let (ratings_url, timeout_seconds) = arc
         .scrapers
@@ -258,6 +299,7 @@ async fn ask_plugin<R: RedisPoolInterface>(
             last_collected_at: rating_to_fetch.collected_at,
             last_asked_at: rating_to_fetch.last_tried_fetching_at,
             original_release_date: rating_to_fetch.original_release_date,
+            manual_fetch,
         })
         .timeout(Duration::from_secs(timeout_seconds))
         .send()
@@ -272,6 +314,7 @@ async fn ask_plugin<R: RedisPoolInterface>(
 async fn ask_tmdb<R: RedisPoolInterface>(
     arc: &Arcadia<R>,
     rating_to_fetch: &PublicRatingToFetch,
+    manual: bool,
 ) -> std::result::Result<RatingAnswer, String> {
     // the rating of a recent release still moves a lot, an older one barely does
     let is_recent_release = rating_to_fetch
@@ -282,9 +325,10 @@ async fn ask_tmdb<R: RedisPoolInterface>(
     } else {
         TimeDelta::days(60)
     };
-    if rating_to_fetch
-        .collected_at
-        .is_some_and(|collected_at| Utc::now() - collected_at < refresh_after)
+    if !manual
+        && rating_to_fetch
+            .collected_at
+            .is_some_and(|collected_at| Utc::now() - collected_at < refresh_after)
     {
         return Ok(RatingAnswer::RetryLater);
     }

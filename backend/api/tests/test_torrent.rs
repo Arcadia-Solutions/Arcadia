@@ -468,6 +468,7 @@ async fn test_find_torrents_by_external_link(pool: PgPool) {
         page: 1,
         page_size: 50,
         order_by_column: TorrentSearchOrderByColumn::TorrentCreatedAt,
+        order_by_public_rating_domain: None,
         order_by_direction: OrderByDirection::Desc,
         series_id: None,
         user_id_bookmarks: None,
@@ -524,6 +525,7 @@ async fn test_find_torrents_by_external_link_with_trailing_slash(pool: PgPool) {
         page: 1,
         page_size: 50,
         order_by_column: TorrentSearchOrderByColumn::TorrentCreatedAt,
+        order_by_public_rating_domain: None,
         order_by_direction: OrderByDirection::Desc,
         series_id: None,
         user_id_bookmarks: None,
@@ -580,6 +582,7 @@ async fn test_find_torrents_by_name(pool: PgPool) {
         page: 1,
         page_size: 50,
         order_by_column: TorrentSearchOrderByColumn::TorrentCreatedAt,
+        order_by_public_rating_domain: None,
         order_by_direction: OrderByDirection::Desc,
         series_id: None,
         user_id_bookmarks: None,
@@ -636,6 +639,7 @@ async fn test_find_torrents_no_link_or_name_provided(pool: PgPool) {
         page: 1,
         page_size: 50,
         order_by_column: TorrentSearchOrderByColumn::TorrentCreatedAt,
+        order_by_public_rating_domain: None,
         order_by_direction: OrderByDirection::Desc,
         series_id: None,
         user_id_bookmarks: None,
@@ -659,6 +663,61 @@ async fn test_find_torrents_no_link_or_name_provided(pool: PgPool) {
         ids.contains(&1) && ids.contains(&2),
         "expected unfiltered results to include both title_group id=1 and id=2"
     );
+}
+
+#[sqlx::test(fixtures(
+    "with_test_users",
+    "with_test_title_group",
+    "with_test_edition_group",
+    "with_test_torrent",
+    "with_test_public_ratings",
+    "with_refreshed_title_group_hierarchy_lite"
+))]
+async fn test_sort_torrents_by_the_public_rating_of_a_website(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, user) =
+        common::create_test_app_and_login(pool, MockRedisPool::default(), TestUser::Standard).await;
+
+    // title group 1 is rated 3.0 on musicbrainz.org and 9.0 on www.discogs.com, title group 2 is rated 5.0 on en.wikipedia.org.
+    // Without the sort, title group 1 comes first (older release date), and in both directions the unrated one comes last
+    for direction in [OrderByDirection::Asc, OrderByDirection::Desc] {
+        let query = TorrentSearch {
+            title_group_name: None,
+            title_group_content_type: vec![],
+            title_group_category: vec![],
+            title_group_tags: None,
+            title_group_include_empty_groups: true,
+            edition_group_source: vec![],
+            torrent_video_resolution: vec![],
+            torrent_language: vec![],
+            torrent_reported: None,
+            torrent_staff_checked: None,
+            torrent_trumpable: None,
+            torrent_created_by_id: None,
+            torrent_snatched_by_id: None,
+            artist_id: None,
+            collage_id: None,
+            page: 1,
+            page_size: 50,
+            order_by_column: TorrentSearchOrderByColumn::TitleGroupPublicRating,
+            order_by_public_rating_domain: Some("wikipedia.org".to_string()),
+            order_by_direction: direction,
+            series_id: None,
+            user_id_bookmarks: None,
+        };
+        let req = test::TestRequest::get()
+            .uri(&format!(
+                "/api/search/torrents/lite?{}",
+                serde_qs::to_string(&query).unwrap()
+            ))
+            .insert_header(auth_header(&user.token))
+            .to_request();
+        let results: PaginatedResults<TitleGroupHierarchyLite> =
+            common::call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
+
+        let ids: Vec<i32> = results.results.iter().map(|g| g.id).collect();
+        assert_eq!(ids, [2, 1]);
+    }
 }
 
 #[sqlx::test(fixtures(
@@ -1196,6 +1255,7 @@ async fn test_search_torrents_by_own_bookmarks(pool: PgPool) {
         page: 1,
         page_size: 50,
         order_by_column: TorrentSearchOrderByColumn::TorrentCreatedAt,
+        order_by_public_rating_domain: None,
         order_by_direction: OrderByDirection::Desc,
         series_id: None,
         user_id_bookmarks: Some(100),
@@ -1255,6 +1315,7 @@ async fn test_create_bookmark_then_search(pool: PgPool) {
         page: 1,
         page_size: 50,
         order_by_column: TorrentSearchOrderByColumn::TorrentCreatedAt,
+        order_by_public_rating_domain: None,
         order_by_direction: OrderByDirection::Desc,
         series_id: None,
         user_id_bookmarks: Some(100),
@@ -1345,6 +1406,7 @@ async fn test_search_torrents_by_other_user_bookmarks_forbidden(pool: PgPool) {
         page: 1,
         page_size: 50,
         order_by_column: TorrentSearchOrderByColumn::TorrentCreatedAt,
+        order_by_public_rating_domain: None,
         order_by_direction: OrderByDirection::Desc,
         series_id: None,
         user_id_bookmarks: Some(999),
@@ -1398,6 +1460,7 @@ async fn test_search_torrents_ordered_by_bonus_points_snatch_cost(pool: PgPool) 
         page: 1,
         page_size: 50,
         order_by_column: TorrentSearchOrderByColumn::TorrentBonusPointsSnatchCost,
+        order_by_public_rating_domain: None,
         order_by_direction: OrderByDirection::Asc,
         series_id: None,
         user_id_bookmarks: None,
@@ -1480,6 +1543,7 @@ async fn test_search_torrents_by_trumpable(pool: PgPool) {
         page: 1,
         page_size: 50,
         order_by_column: TorrentSearchOrderByColumn::TorrentCreatedAt,
+        order_by_public_rating_domain: None,
         order_by_direction: OrderByDirection::Desc,
         series_id: None,
         user_id_bookmarks: None,

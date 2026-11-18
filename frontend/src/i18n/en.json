@@ -448,7 +448,7 @@
     "confirm_merge_title_group": "Are you sure you want to merge these title groups? All torrents from the source will be moved to the target, and the source will be deleted.",
     "merge_title_group_success": "Title groups merged successfully",
     "include_empty_title_groups": "Include empty title groups",
-    "user_rating": "User rating",
+    "rating_of": "{name} rating",
     "similar_titles": "Similar titles",
     "link_similar_title": "Link a similar title",
     "unlink_similar_title": "Unlink this similar title",

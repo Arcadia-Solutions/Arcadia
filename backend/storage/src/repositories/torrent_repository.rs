@@ -748,6 +748,11 @@ impl ConnectionPool {
 
              FROM title_group_hierarchy_lite tgh
              JOIN title_groups tg ON tg.id = tgh.title_group_id
+             LEFT JOIN LATERAL (
+                 SELECT MAX(r.rating) AS rating
+                 FROM public_ratings r, substring(r.external_link FROM '^[a-zA-Z]+://([^/:?#]+)') host
+                 WHERE r.external_link = ANY(tg.external_links) AND (host = $25 OR host LIKE '%.' || $25)
+             ) public_rating ON $1 = 'title_group_public_rating'
 
              WHERE ($4::BOOLEAN IS NULL OR tgh.torrent_staff_checked = $4)
              AND ($5::BOOLEAN IS NULL OR tgh.torrent_reported = $5)
@@ -820,7 +825,7 @@ impl ConnectionPool {
             GROUP BY title_group_id, title_group_name, title_group_covers, title_group_category,
             title_group_content_type, title_group_tag_names, title_group_original_release_date,
             title_group_original_release_date_only_year_known, title_group_platform,
-            tgh.title_group_series_id, tgh.title_group_series_name, tg.id
+            tgh.title_group_series_id, tgh.title_group_series_name, tg.id, public_rating.rating
 
             ORDER BY
                 CASE WHEN $1 = 'title_group_original_release_date' AND $6 = 'asc' THEN title_group_original_release_date END ASC NULLS LAST,
@@ -849,6 +854,8 @@ impl ConnectionPool {
                 END DESC NULLS LAST,
                 CASE WHEN $1 = 'title_group_user_rating_average' AND $6 = 'asc' THEN tg.user_rating_average END ASC NULLS LAST,
                 CASE WHEN $1 = 'title_group_user_rating_average' AND $6 = 'desc' THEN tg.user_rating_average END DESC NULLS LAST,
+                CASE WHEN $6 = 'asc' THEN public_rating.rating END ASC NULLS LAST,
+                CASE WHEN $6 = 'desc' THEN public_rating.rating END DESC NULLS LAST,
                 title_group_original_release_date ASC,
                 title_group_name ASC
 
@@ -877,7 +884,8 @@ impl ConnectionPool {
             tag_filter_jsonb.clone() as Option<serde_json::Value>,
             form.user_id_bookmarks,
             can_see_anonymous_uploads,
-            form.torrent_trumpable
+            form.torrent_trumpable,
+            form.order_by_public_rating_domain
         )
         .fetch_all(&self.pool)
         .await

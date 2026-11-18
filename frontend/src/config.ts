@@ -41,7 +41,7 @@ export interface PublicRatingWebsite {
 declare const __PUBLIC_RATING_WEBSITES__: PublicRatingWebsite[]
 
 /** TMDB and the websites the scraper plugins accept links from, from the `scrapers` section of config.yml. */
-const publicRatingWebsites: PublicRatingWebsite[] = __PUBLIC_RATING_WEBSITES__
+export const publicRatingWebsites: PublicRatingWebsite[] = __PUBLIC_RATING_WEBSITES__
 
 /** The website of a rated link. A link matching none (e.g. its domain was removed from config.yml) is displayed with its host name. */
 export const publicRatingWebsite = (link: string): Pick<PublicRatingWebsite, 'name' | 'abbreviation'> & Partial<PublicRatingWebsite> => {

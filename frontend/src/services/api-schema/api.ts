@@ -4608,6 +4608,10 @@ export interface TorrentSearch {
     'edition_group_source'?: Array<Source>;
     'order_by_column': TorrentSearchOrderByColumn;
     'order_by_direction': OrderByDirection;
+    /**
+     * the domain of the website whose ratings are sorted by with `title_group_public_rating`, ignored otherwise
+     */
+    'order_by_public_rating_domain'?: string | null;
     'page': number;
     'page_size': number;
     'series_id'?: number | null;
@@ -4637,7 +4641,8 @@ export const TorrentSearchOrderByColumn = {
     TorrentLeechers: 'torrent_leechers',
     TorrentSnatched: 'torrent_snatched',
     TorrentBonusPointsSnatchCost: 'torrent_bonus_points_snatch_cost',
-    TitleGroupUserRatingAverage: 'title_group_user_rating_average'
+    TitleGroupUserRatingAverage: 'title_group_user_rating_average',
+    TitleGroupPublicRating: 'title_group_public_rating'
 } as const;
 
 export type TorrentSearchOrderByColumn = typeof TorrentSearchOrderByColumn[keyof typeof TorrentSearchOrderByColumn];
@@ -7514,6 +7519,7 @@ export interface SearchTorrentsRequest {
     'collage_id'?: number | null;
     'series_id'?: number | null;
     'user_id_bookmarks'?: number | null;
+    'order_by_public_rating_domain'?: string | null;
 }
 
 
@@ -7522,7 +7528,7 @@ export const searchTorrents = async (request: SearchTorrentsRequest, options?: R
     const response = await globalAxios.request<SearchTorrents200Response>({
         url: `/api/search/torrents/lite`,
         method: 'GET',
-        params: { 'title_group_name': request['title_group_name'], 'title_group_content_type': request['title_group_content_type'], 'title_group_category': request['title_group_category'], 'title_group_tags': request['title_group_tags'], 'title_group_include_empty_groups': request['title_group_include_empty_groups'], 'edition_group_source': request['edition_group_source'], 'torrent_video_resolution': request['torrent_video_resolution'], 'torrent_language': request['torrent_language'], 'torrent_reported': request['torrent_reported'], 'torrent_staff_checked': request['torrent_staff_checked'], 'torrent_trumpable': request['torrent_trumpable'], 'torrent_created_by_id': request['torrent_created_by_id'], 'torrent_snatched_by_id': request['torrent_snatched_by_id'], 'artist_id': request['artist_id'], 'collage_id': request['collage_id'], 'series_id': request['series_id'], 'user_id_bookmarks': request['user_id_bookmarks'], 'page': request['page'], 'page_size': request['page_size'], 'order_by_column': request['order_by_column'], 'order_by_direction': request['order_by_direction'] },
+        params: { 'title_group_name': request['title_group_name'], 'title_group_content_type': request['title_group_content_type'], 'title_group_category': request['title_group_category'], 'title_group_tags': request['title_group_tags'], 'title_group_include_empty_groups': request['title_group_include_empty_groups'], 'edition_group_source': request['edition_group_source'], 'torrent_video_resolution': request['torrent_video_resolution'], 'torrent_language': request['torrent_language'], 'torrent_reported': request['torrent_reported'], 'torrent_staff_checked': request['torrent_staff_checked'], 'torrent_trumpable': request['torrent_trumpable'], 'torrent_created_by_id': request['torrent_created_by_id'], 'torrent_snatched_by_id': request['torrent_snatched_by_id'], 'artist_id': request['artist_id'], 'collage_id': request['collage_id'], 'series_id': request['series_id'], 'user_id_bookmarks': request['user_id_bookmarks'], 'page': request['page'], 'page_size': request['page_size'], 'order_by_column': request['order_by_column'], 'order_by_direction': request['order_by_direction'], 'order_by_public_rating_domain': request['order_by_public_rating_domain'] },
         ...options
     });
     return response.data.data;

@@ -48,6 +48,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         page: 1,
         page_size: 5,
         order_by_column: TorrentSearchOrderByColumn::TorrentCreatedAt,
+        order_by_public_rating_domain: None,
         order_by_direction: OrderByDirection::Desc,
         artist_id: None,
         collage_id: None,

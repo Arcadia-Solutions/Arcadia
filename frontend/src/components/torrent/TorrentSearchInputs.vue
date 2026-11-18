@@ -110,14 +110,7 @@
       </div>
       <div class="line">
         <FloatLabel>
-          <Dropdown
-            v-model="searchForm.order_by_column"
-            :options="sortByOptions"
-            optionLabel="label"
-            optionValue="value"
-            size="small"
-            input-id="sortByDropdown"
-          />
+          <Dropdown v-model="sortBy" :options="sortByOptions" optionLabel="label" size="small" input-id="sortByDropdown" />
           <label for="sortByDropdown">{{ t('general.sort_by') }}</label>
         </FloatLabel>
         <FloatLabel>
@@ -203,6 +196,7 @@ import { searchTitleGroupTagsLite, TorrentSearchOrderByColumn, type TitleGroupTa
 import { getOrderByDirectionOptions, getSelectableContentTypes, getSelectableVideoResolutions, getLanguages } from '@/services/helpers'
 import { Source, TitleGroupCategory } from '@/services/api-schema'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
+import { publicRatingWebsites } from '@/config'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -243,6 +237,7 @@ const searchForm = ref<TorrentSearch>({
   page_size: 4,
   order_by_column: 'torrent_created_at',
   order_by_direction: 'desc',
+  order_by_public_rating_domain: null,
 })
 // the tag query supports boolean operators, so the autocompletion only completes the tag under the cursor
 const tagSeparators = '&|!() \t\n'
@@ -316,24 +311,46 @@ const onTagQueryKeydown = (event: KeyboardEvent) => {
   }
 }
 
+// the public ratings are sorted by website, so an option is a column and the domain of a website
 const sortByOptions = computed(() => {
-  const options: { label: string; value: TorrentSearchOrderByColumn }[] = [
-    { label: t('torrent.created_at'), value: TorrentSearchOrderByColumn.TorrentCreatedAt },
-    { label: t('torrent.size'), value: TorrentSearchOrderByColumn.TorrentSize },
-    { label: t('title_group.original_release_date'), value: TorrentSearchOrderByColumn.TitleGroupOriginalReleaseDate },
-    { label: t('torrent.snatched'), value: TorrentSearchOrderByColumn.TorrentSnatched },
-    { label: t('torrent.seeders'), value: TorrentSearchOrderByColumn.TorrentSeeders },
-    { label: t('torrent.leecher', 2), value: TorrentSearchOrderByColumn.TorrentLeechers },
-    { label: t('title_group.user_rating'), value: TorrentSearchOrderByColumn.TitleGroupUserRatingAverage },
+  const options: { label: string; column: TorrentSearchOrderByColumn; domain: string | null }[] = [
+    { label: t('torrent.created_at'), column: TorrentSearchOrderByColumn.TorrentCreatedAt, domain: null },
+    { label: t('torrent.size'), column: TorrentSearchOrderByColumn.TorrentSize, domain: null },
+    { label: t('title_group.original_release_date'), column: TorrentSearchOrderByColumn.TitleGroupOriginalReleaseDate, domain: null },
+    { label: t('torrent.snatched'), column: TorrentSearchOrderByColumn.TorrentSnatched, domain: null },
+    { label: t('torrent.seeders'), column: TorrentSearchOrderByColumn.TorrentSeeders, domain: null },
+    { label: t('torrent.leecher', 2), column: TorrentSearchOrderByColumn.TorrentLeechers, domain: null },
+    {
+      label: t('title_group.rating_of', { name: publicArcadiaSettings.user_rating_label }),
+      column: TorrentSearchOrderByColumn.TitleGroupUserRatingAverage,
+      domain: null,
+    },
+    ...publicRatingWebsites.map(({ name, domain }) => ({
+      label: t('title_group.rating_of', { name }),
+      column: TorrentSearchOrderByColumn.TitleGroupPublicRating,
+      domain,
+    })),
     {
       label: `${publicArcadiaSettings.bonus_points_alias} ${t('torrent.snatch_cost')}`,
-      value: TorrentSearchOrderByColumn.TorrentBonusPointsSnatchCost,
+      column: TorrentSearchOrderByColumn.TorrentBonusPointsSnatchCost,
+      domain: null,
     },
   ]
   if (searchForm.value.torrent_snatched_by_id != null) {
-    options.push({ label: t('torrent.snatched_at'), value: TorrentSearchOrderByColumn.TorrentSnatchedAt })
+    options.push({ label: t('torrent.snatched_at'), column: TorrentSearchOrderByColumn.TorrentSnatchedAt, domain: null })
   }
   return options
+})
+const sortBy = computed({
+  get: () =>
+    sortByOptions.value.find(
+      ({ column, domain }) => column === searchForm.value.order_by_column && domain === (searchForm.value.order_by_public_rating_domain ?? null),
+    ),
+  set: (option) => {
+    if (!option) return
+    searchForm.value.order_by_column = option.column
+    searchForm.value.order_by_public_rating_domain = option.domain
+  },
 })
 
 const changePage = (page: number) => {

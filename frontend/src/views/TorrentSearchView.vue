@@ -69,6 +69,7 @@ const loadFormFromUrl = () => {
     order_by_column: route.query.order_by_column ? (route.query.order_by_column as string) : 'torrent_created_at',
     // @ts-expect-error what is placed in this query always comes from the form, so there shouldn't be a wrong value
     order_by_direction: route.query.order_by_direction ? (route.query.order_by_direction as string) : 'desc',
+    order_by_public_rating_domain: route.query.order_by_public_rating_domain?.toString() ?? null,
     title_group_include_empty_groups: route.query.title_group_include_empty_groups === 'true' ? true : false,
     // @ts-expect-error what is placed in this query always comes from the form, so there shouldn't be a wrong value
     title_group_content_type: parseArrayParam(route.query.title_group_content_type as string | string[]),

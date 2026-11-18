@@ -29,6 +29,9 @@ const icon = computed(() => getRatingIcon(settings.rating_icons, props.rating))
   align-items: center;
   gap: 4px;
 }
+.user-rating span {
+  font-weight: inherit;
+}
 .icon {
   height: 1.2em;
 }

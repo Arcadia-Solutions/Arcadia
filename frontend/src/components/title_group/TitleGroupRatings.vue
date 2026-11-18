@@ -10,7 +10,7 @@
           <span v-else>{{ rating.website.name }}</span>
         </a>
         <div class="votes">
-          <span>{{ rating.rating.toLocaleString(undefined, { maximumFractionDigits: 1 }) }} {{ rating.website.rating_scale }}</span>
+          <span class="rating-value">{{ rating.rating.toLocaleString(undefined, { maximumFractionDigits: 1 }) }} {{ rating.website.rating_scale }}</span>
           <span class="vote-count">({{ formatNumber(rating.votes) }} {{ t('title_group.vote', rating.votes) }})</span>
         </div>
       </div>
@@ -19,7 +19,7 @@
           <img :src="averageIcon?.icon_url ?? '/favicon.ico'" alt="rating icon" class="logo" />
         </div>
         <div class="votes">
-          <UserRatingDisplay :rating="userRatingAverage" hideIcon />
+          <UserRatingDisplay :rating="userRatingAverage" hideIcon class="rating-value" />
           <a v-if="userRatingCount > 0" class="vote-count cursor-pointer" @click="openRatings">
             ({{ formatNumber(userRatingCount) }} {{ t('title_group.vote', userRatingCount) }})
           </a>
@@ -204,7 +204,8 @@ onMounted(() => {
   align-items: center;
   font-size: 0.9em;
 }
-.vote-count {
+.vote-count,
+.rating-value {
   font-weight: bold;
 }
 .refetch-links {

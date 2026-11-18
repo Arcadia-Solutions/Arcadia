@@ -12,7 +12,7 @@
       :hasDeletePermission="userStore.permissions.includes('delete_title_group_comment')"
     >
       <template #top-right>
-        <UserRatingDisplay v-if="comment.author_rating != null" :rating="comment.author_rating" />
+        <UserRatingDisplay v-if="comment.author_rating != null" :rating="comment.author_rating" class="author-rating" />
       </template>
     </GeneralComment>
   </div>
@@ -149,5 +149,8 @@ const sendComment = async () => {
   align-items: center;
   gap: 5px;
   margin-left: 5px;
+}
+.author-rating {
+  font-weight: bold;
 }
 </style>

@@ -24,10 +24,10 @@ struct PluginQuery<'a> {
     content_type: Option<ContentType>,
 }
 
-/// What a plugin may answer a failed request with, to explain the failure to the uploader.
+/// What a plugin may answer a failed request with, to explain the failure to the user.
 #[derive(Deserialize)]
-struct PluginFailure {
-    error: String,
+pub struct PluginFailure {
+    pub error: String,
 }
 
 pub async fn exec<R: RedisPoolInterface + 'static>(

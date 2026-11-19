@@ -3170,6 +3170,16 @@ export interface PublicRating {
     'votes': number;
 }
 /**
+ * A rating a provider failed to answer with when it was refetched.
+ */
+export interface PublicRatingFetchFailure {
+    /**
+     * the message of the provider, or why it could not be asked
+     */
+    'error': string;
+    'external_link': string;
+}
+/**
  * A user\'s profile as seen by another user. Every statistic that the user can hide with their paranoia settings is optional, and is set to `None` when the requesting user is not allowed to see it.
  */
 export interface PublicUser {
@@ -3227,7 +3237,7 @@ export interface RatingIcon {
     'minimum_rating': number;
 }
 export interface RefetchTitleGroupPublicRatings200Response {
-    'data': Array<PublicRating>;
+    'data': RefetchTitleGroupPublicRatingsResponse;
     'side_effects': Array<SideEffect>;
 }
 export interface RefetchTitleGroupPublicRatingsRequest {
@@ -3236,6 +3246,16 @@ export interface RefetchTitleGroupPublicRatingsRequest {
      */
     'external_links': Array<string>;
     'title_group_id': number;
+}
+export interface RefetchTitleGroupPublicRatingsResponse {
+    /**
+     * the links whose provider failed, their stored rating, if any, is kept
+     */
+    'failures': Array<PublicRatingFetchFailure>;
+    /**
+     * every rating of the title group, including the ones refetched successfully
+     */
+    'public_ratings': Array<PublicRating>;
 }
 export interface RefreshToken {
     'refresh_token': string;

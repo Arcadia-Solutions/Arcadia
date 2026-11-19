@@ -407,6 +407,8 @@
     "edit_your_rating": "Edit your rating",
     "refetch_public_ratings": "Refetch the public ratings",
     "refetch": "Refetch",
+    "public_rating_refetched": "Refetched",
+    "public_rating_refetch_failed": "Failed: {0}",
     "comment": "Comment",
     "comment_optional": "Comment (optional)",
     "rating_saved_success": "Rating saved",

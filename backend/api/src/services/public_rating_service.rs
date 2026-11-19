@@ -12,11 +12,15 @@ use arcadia_storage::{
 use chrono::{DateTime, NaiveDate, TimeDelta, Utc};
 use futures::future::join_all;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 use crate::{
     Arcadia,
     handlers::{
-        external_db::get_tmdb_data::{build_tmdb_client, extract_media_type_and_id},
+        external_db::{
+            get_plugin_data::PluginFailure,
+            get_tmdb_data::{build_tmdb_client, extract_media_type_and_id},
+        },
         scrapers::ScrapedPublicRating,
     },
 };
@@ -33,6 +37,14 @@ enum RatingAnswer {
     RetryLater,
     /// The provider does not handle the link, its rating is deleted.
     Unsupported,
+}
+
+/// A rating a provider failed to answer with when it was refetched.
+#[derive(Serialize, ToSchema)]
+pub struct PublicRatingFetchFailure {
+    pub external_link: String,
+    /// the message of the provider, or why it could not be asked
+    pub error: String,
 }
 
 /// What a scraper plugin is asked the rating of.
@@ -200,7 +212,7 @@ pub async fn fetch_all_due_public_ratings<R: RedisPoolInterface>(
         )
         .await
         .into_iter()
-        .collect::<Result<()>>()?;
+        .collect::<Result<Vec<_>>>()?;
 
         asked_amount += ratings_to_fetch.len() as u64;
         if (ratings_to_fetch.len() as i64) < batch_size {
@@ -210,11 +222,12 @@ pub async fn fetch_all_due_public_ratings<R: RedisPoolInterface>(
 }
 
 /// Asks the providers for the ratings of the given links right away, however recently they were
-/// asked, creating the missing ones. Errors when no provider handles one of the links.
+/// asked, creating the missing ones. Errors when no provider handles one of the links, returns the
+/// links whose provider failed otherwise.
 pub async fn refetch_public_ratings<R: RedisPoolInterface>(
     arc: &Arcadia<R>,
     external_links: &[String],
-) -> Result<()> {
+) -> Result<Vec<PublicRatingFetchFailure>> {
     if let Some(link) = external_links
         .iter()
         .find(|link| link_provider(arc, link).is_none())
@@ -233,23 +246,32 @@ pub async fn refetch_public_ratings<R: RedisPoolInterface>(
         )
         .await?;
 
-    join_all(
-        ratings_to_fetch
-            .iter()
-            .map(|rating_to_fetch| fetch_public_rating(arc, rating_to_fetch, true)),
-    )
-    .await
-    .into_iter()
-    .collect()
+    let mut failures = Vec::new();
+    for (rating_to_fetch, result) in ratings_to_fetch.iter().zip(
+        join_all(
+            ratings_to_fetch
+                .iter()
+                .map(|rating_to_fetch| fetch_public_rating(arc, rating_to_fetch, true)),
+        )
+        .await,
+    ) {
+        if let Some(error) = result? {
+            failures.push(PublicRatingFetchFailure {
+                external_link: rating_to_fetch.external_link.clone(),
+                error,
+            });
+        }
+    }
+    Ok(failures)
 }
 
-/// A provider failing is only logged, the rating is asked for again at the next retry. `manual`
-/// makes the provider refresh the rating even when the stored one is recent.
+/// A provider failing is only logged and returned, the rating is asked for again at the next
+/// retry. `manual` makes the provider refresh the rating even when the stored one is recent.
 async fn fetch_public_rating<R: RedisPoolInterface>(
     arc: &Arcadia<R>,
     rating_to_fetch: &PublicRatingToFetch,
     manual: bool,
-) -> Result<()> {
+) -> Result<Option<String>> {
     let answer = if rating_to_fetch.provider == TMDB_PROVIDER {
         ask_tmdb(arc, rating_to_fetch, manual).await
     } else {
@@ -264,19 +286,20 @@ async fn fetch_public_rating<R: RedisPoolInterface>(
                     &rating_to_fetch.provider,
                     &collected_rating,
                 )
-                .await
+                .await?
         }
-        Ok(RatingAnswer::Unsupported) => arc.pool.delete_public_rating(rating_to_fetch).await,
-        Ok(RatingAnswer::RetryLater) => Ok(()),
+        Ok(RatingAnswer::Unsupported) => arc.pool.delete_public_rating(rating_to_fetch).await?,
+        Ok(RatingAnswer::RetryLater) => {}
         Err(error) => {
             log::warn!(
                 "could not get the rating of '{}' from '{}': {error}",
                 rating_to_fetch.external_link,
                 rating_to_fetch.provider
             );
-            Ok(())
+            return Ok(Some(error));
         }
     }
+    Ok(None)
 }
 
 async fn ask_plugin<R: RedisPoolInterface>(
@@ -292,7 +315,8 @@ async fn ask_plugin<R: RedisPoolInterface>(
         .ok_or("the plugin no longer collects ratings")?;
 
     // plugins run alongside arcadia, so their requests must never go through the outbound proxy
-    arc.internal_http_client
+    let response = arc
+        .internal_http_client
         .get(ratings_url)
         .query(&PluginRatingQuery {
             url: &rating_to_fetch.external_link,
@@ -304,11 +328,17 @@ async fn ask_plugin<R: RedisPoolInterface>(
         .timeout(Duration::from_secs(timeout_seconds))
         .send()
         .await
-        .and_then(|response| response.error_for_status())
-        .map_err(|error| error.to_string())?
-        .json::<RatingAnswer>()
-        .await
-        .map_err(|error| error.to_string())
+        .map_err(|error| error.to_string())?;
+
+    let status = response.status();
+    let body = response.bytes().await.map_err(|error| error.to_string())?;
+    if !status.is_success() {
+        return Err(match serde_json::from_slice::<PluginFailure>(&body) {
+            Ok(failure) if !failure.error.trim().is_empty() => failure.error,
+            _ => format!("answered with {status}"),
+        });
+    }
+    serde_json::from_slice::<RatingAnswer>(&body).map_err(|error| error.to_string())
 }
 
 async fn ask_tmdb<R: RedisPoolInterface>(

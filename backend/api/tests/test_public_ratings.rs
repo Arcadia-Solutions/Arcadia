@@ -282,3 +282,30 @@ async fn test_a_manual_refetch_asks_again_right_away(pool: PgPool) {
     assert_eq!(requests.len(), 1);
     assert!(requests[0].contains("manual_fetch=true"));
 }
+
+#[sqlx::test(fixtures("with_test_users", "with_test_title_group"))]
+async fn test_a_manual_refetch_returns_the_failure_of_the_plugin(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (plugin_url, _) = spawn_http_server(
+        "503 Service Unavailable",
+        json!({"error": "musicbrainz.org is down"}).to_string(),
+    );
+    let arc =
+        arcadia_with_rating_plugin(Arc::clone(&pool), &["musicbrainz.org"], &plugin_url).await;
+    let links = pool
+        .find_title_group(TITLE_GROUP_ID)
+        .await
+        .unwrap()
+        .external_links;
+    let link = links
+        .iter()
+        .find(|link| link.contains("musicbrainz.org"))
+        .unwrap();
+
+    let failures = refetch_public_ratings(&arc, std::slice::from_ref(link))
+        .await
+        .unwrap();
+    assert_eq!(failures.len(), 1);
+    assert_eq!(&failures[0].external_link, link);
+    assert_eq!(failures[0].error, "musicbrainz.org is down");
+}

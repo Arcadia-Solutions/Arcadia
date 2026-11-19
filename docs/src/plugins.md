@@ -163,7 +163,9 @@ refresh, and answers with one of:
   group is edited or the `Fetch missing public ratings` maintenance tool is run.
 
 A failure (an unreachable plugin, a status outside the `2xx` range, an answer arcadia cannot read)
-is only logged, and treated like `retry_later`.
+is logged, and treated like `retry_later`. When the ratings were refetched from the title group's
+page, the outcome of each link is shown in the refetch dialog, a failure with the message of its
+`{ "error": "..." }` body as described in [Reporting a failure](#reporting-a-failure).
 
 Ratings are stored by link, and shown on every title group listing it. As the rating is often on the
 page scraped for the title, the `title_url` endpoint can also answer with it in `public_rating`, so

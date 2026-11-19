@@ -543,6 +543,8 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         crate::handlers::maintenance_tools::delete_empty_title_groups::DeleteEmptyTitleGroupsResponse,
         crate::handlers::maintenance_tools::fetch_missing_public_ratings::FetchMissingPublicRatingsResponse,
         crate::handlers::title_groups::refetch_title_group_public_ratings::RefetchTitleGroupPublicRatingsRequest,
+        crate::handlers::title_groups::refetch_title_group_public_ratings::RefetchTitleGroupPublicRatingsResponse,
+        crate::services::public_rating_service::PublicRatingFetchFailure,
         Emoji,
         EmojiUsage,
         ReorderEmojis,

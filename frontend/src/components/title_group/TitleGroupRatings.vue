@@ -44,6 +44,9 @@
         <div v-for="link in ratableLinks" :key="link">
           <Checkbox v-model="linksToRefetch" :value="link" :inputId="link" />
           <label :for="link">{{ publicRatingWebsite(link).name }}: {{ link }}</label>
+          <Message v-if="link in refetchErrors" :severity="refetchErrors[link] === null ? 'success' : 'error'" size="small" variant="simple">
+            {{ refetchErrors[link] === null ? t('title_group.public_rating_refetched') : t('title_group.public_rating_refetch_failed', [refetchErrors[link]]) }}
+          </Message>
         </div>
       </div>
       <div class="wrapper-center">
@@ -58,7 +61,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { Button, Checkbox, Dialog } from 'primevue'
+import { Button, Checkbox, Dialog, Message } from 'primevue'
 import ProgressSpinner from 'primevue/progressspinner'
 import {
   OrderByDirection,
@@ -125,18 +128,28 @@ const voteFormVisible = ref(false)
 const refetchDialogVisible = ref(false)
 const linksToRefetch = ref<string[]>([])
 const refetching = ref(false)
+// the outcome of the last refetch of each link: the error of its provider, or null when it succeeded
+const refetchErrors = ref<Record<string, string | null>>({})
 
 const openRefetchDialog = () => {
   linksToRefetch.value = [...ratableLinks.value]
+  refetchErrors.value = {}
   refetchDialogVisible.value = true
 }
 
 const refetch = () => {
   refetching.value = true
   refetchTitleGroupPublicRatings({ title_group_id: props.titleGroupId, external_links: linksToRefetch.value })
-    .then((publicRatings) => {
-      emit('publicRatingsRefetched', publicRatings)
-      refetchDialogVisible.value = false
+    .then(({ public_ratings, failures }) => {
+      emit('publicRatingsRefetched', public_ratings)
+      if (failures.length === 0) {
+        refetchDialogVisible.value = false
+        return
+      }
+      refetchErrors.value = Object.fromEntries(linksToRefetch.value.map((link) => [link, null]))
+      failures.forEach((failure) => (refetchErrors.value[failure.external_link] = failure.error))
+      // only the failed links are left selected, to retry them
+      linksToRefetch.value = failures.map((failure) => failure.external_link)
     })
     .finally(() => (refetching.value = false))
 }

@@ -22,5 +22,6 @@ pub struct HomeStats {
     pub forum_threads: i64,
     pub forum_posts: i64,
     pub title_group_comments: i64,
+    pub title_group_ratings: i64,
     pub torrent_request_comments: i64,
 }

@@ -4,7 +4,11 @@ use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 use utoipa::{IntoParams, ToSchema};
 
-use super::{common::OrderByDirection, title_group::TitleGroupHierarchyLite, user::UserLiteAvatar};
+use super::{
+    common::OrderByDirection,
+    title_group::TitleGroupHierarchyLite,
+    user::{UserLite, UserLiteAvatar},
+};
 
 /// A user's rating (percentage from 0 to 100) of a title group, optionally explained by a
 /// BBCode comment. A user has at most one per title group.
@@ -46,12 +50,12 @@ pub struct TitleGroupRatingHierarchy {
     pub created_by: UserLiteAvatar,
 }
 
-/// A rating displayed outside of its title group, on the profile of its author.
+/// A rating displayed outside of its title group.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TitleGroupRatingWithTitleGroup {
     pub id: i64,
     pub title_group: TitleGroupHierarchyLite,
-    pub user_id: i32,
+    pub created_by: UserLite,
     pub rating: i16,
     pub comment: Option<String>,
     #[schema(value_type = String, format = DateTime)]
@@ -60,13 +64,14 @@ pub struct TitleGroupRatingWithTitleGroup {
     pub updated_at: DateTime<Utc>,
 }
 
-/// Query of the paginated ratings written by a user, filtered like [`TitleGroupRatingSearchQuery`].
+/// Query of the paginated ratings of every title group, optionally only the ones written by
+/// `user_id`, filtered like [`TitleGroupRatingSearchQuery`] (no `content` matches every rating).
 #[derive(Debug, Deserialize, Serialize, ToSchema, IntoParams)]
-pub struct UserTitleGroupRatingSearchQuery {
-    pub user_id: i32,
+pub struct SiteWideTitleGroupRatingSearchQuery {
+    pub user_id: Option<i32>,
     pub minimum_rating: i16,
     pub maximum_rating: i16,
-    pub content: String,
+    pub content: Option<String>,
     pub order_by_column: TitleGroupRatingSearchOrderByColumn,
     pub order_by_direction: OrderByDirection,
     pub page: u32,

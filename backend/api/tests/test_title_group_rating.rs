@@ -39,7 +39,7 @@ fn get_title_group_request(token: &str, title_group_id: i32) -> actix_http::Requ
 fn search_ratings_request(token: &str, parameters: &str) -> actix_http::Request {
     test::TestRequest::get()
         .uri(&format!(
-            "/api/search/title-group-ratings?page=1&page_size=10&order_by_column=created_at&order_by_direction=desc&{parameters}"
+            "/api/search/title-group-ratings/title-group?page=1&page_size=10&order_by_column=created_at&order_by_direction=desc&{parameters}"
         ))
         .insert_header(auth_header(token))
         .to_request()
@@ -115,13 +115,14 @@ async fn test_create_and_edit_rating_updates_aggregates(pool: PgPool) {
     assert_eq!(ratings.results[0].id, rating.id);
 
     let req = test::TestRequest::get()
-        .uri("/api/search/title-group-ratings/user?user_id=100&minimum_rating=0&maximum_rating=100&content=&order_by_column=created_at&order_by_direction=desc&page=1&page_size=10")
+        .uri("/api/search/title-group-ratings?user_id=100&minimum_rating=0&maximum_rating=100&order_by_column=created_at&order_by_direction=desc&page=1&page_size=10")
         .insert_header(auth_header(&user.token))
         .to_request();
     let user_ratings: PaginatedResults<TitleGroupRatingWithTitleGroup> =
         common::call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
     assert_eq!(user_ratings.total_items, 1);
     assert_eq!(user_ratings.results[0].title_group.id, 1);
+    assert_eq!(user_ratings.results[0].created_by.id, 100);
 }
 
 #[sqlx::test(fixtures("with_test_users", "with_test_title_group"))]

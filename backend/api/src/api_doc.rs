@@ -33,8 +33,8 @@ use arcadia_storage::models::title_group_comment::{
     TitleGroupCommentSearchQuery, UserTitleGroupCommentSearchQuery,
 };
 use arcadia_storage::models::title_group_rating::{
-    TitleGroupRatingSearchOrderByColumn, TitleGroupRatingSearchQuery,
-    UserTitleGroupRatingSearchQuery,
+    SiteWideTitleGroupRatingSearchQuery, TitleGroupRatingSearchOrderByColumn,
+    TitleGroupRatingSearchQuery,
 };
 use arcadia_storage::models::title_group_tag::{
     SearchTitleGroupAppliedTagsQuery, SearchTitleGroupTagsQuery,
@@ -255,8 +255,8 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         crate::handlers::search::search_forum_posts::exec,
         crate::handlers::search::search_title_group_comments::exec,
         crate::handlers::search::search_user_title_group_comments::exec,
+        crate::handlers::search::search_title_group_ratings_of_title_group::exec,
         crate::handlers::search::search_title_group_ratings::exec,
-        crate::handlers::search::search_user_title_group_ratings::exec,
         crate::handlers::search::search_user_torrent_request_comments::exec,
         crate::handlers::search::search_users::exec,
         crate::handlers::search::search_users_lite::exec,
@@ -413,7 +413,7 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         TitleGroupCommentSearchQuery,
         UserTitleGroupCommentSearchQuery,
         TitleGroupRatingSearchQuery,
-        UserTitleGroupRatingSearchQuery,
+        SiteWideTitleGroupRatingSearchQuery,
         UserTorrentRequestCommentSearchQuery,
         DeleteForumCategoryQuery,
         DeleteForumSubCategoryQuery,

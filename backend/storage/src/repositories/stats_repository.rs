@@ -25,6 +25,7 @@ impl ConnectionPool {
                 (SELECT COUNT(*) FROM forum_threads)::BIGINT AS "forum_threads!",
                 (SELECT COUNT(*) FROM forum_posts)::BIGINT AS "forum_posts!",
                 (SELECT COUNT(*) FROM title_group_comments)::BIGINT AS "title_group_comments!",
+                (SELECT COUNT(*) FROM title_group_ratings)::BIGINT AS "title_group_ratings!",
                 (SELECT COUNT(*) FROM torrent_request_comments)::BIGINT AS "torrent_request_comments!"
             "#,
         )

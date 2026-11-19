@@ -6,11 +6,11 @@ use crate::{
         series::SeriesLite,
         title_group::{ContentType, Platform, TitleGroupCategory, TitleGroupHierarchyLite},
         title_group_rating::{
-            EditedTitleGroupRating, TitleGroupRating, TitleGroupRatingHierarchy,
-            TitleGroupRatingSearchQuery, TitleGroupRatingWithTitleGroup,
-            UserCreatedTitleGroupRating, UserTitleGroupRatingSearchQuery,
+            EditedTitleGroupRating, SiteWideTitleGroupRatingSearchQuery, TitleGroupRating,
+            TitleGroupRatingHierarchy, TitleGroupRatingSearchQuery, TitleGroupRatingWithTitleGroup,
+            UserCreatedTitleGroupRating,
         },
-        user::UserLiteAvatar,
+        user::{UserLite, UserLiteAvatar},
     },
 };
 use arcadia_common::error::{Error, Result};
@@ -283,10 +283,10 @@ impl ConnectionPool {
         })
     }
 
-    /// The ratings written by a user matching the query, ties broken by the most recent first.
-    pub async fn search_user_title_group_ratings(
+    /// The ratings of every title group matching the query, ties broken by the most recent first.
+    pub async fn search_title_group_ratings_site_wide(
         &self,
-        form: &UserTitleGroupRatingSearchQuery,
+        form: &SiteWideTitleGroupRatingSearchQuery,
     ) -> Result<PaginatedResults<TitleGroupRatingWithTitleGroup>> {
         let limit = form.page_size as i64;
         let offset = (form.page as i64 - 1).max(0) * limit;
@@ -294,7 +294,8 @@ impl ConnectionPool {
         let rows = sqlx::query!(
             r#"
                 SELECT
-                    r.id, r.user_id, r.rating, r.comment, r.created_at, r.updated_at,
+                    r.id, r.rating, r.comment, r.created_at, r.updated_at,
+                    ROW(u.id, u.username, u.warned, u.banned) AS "created_by!: UserLite",
                     tg.id AS title_group_id,
                     tg.name AS title_group_name,
                     tg.covers,
@@ -321,11 +322,12 @@ impl ConnectionPool {
                         THEN jsonb_build_object('id', s.id, 'name', s.name)
                     END AS "series: Json<SeriesLite>"
                 FROM title_group_ratings r
+                JOIN users u ON u.id = r.user_id
                 JOIN title_groups tg ON tg.id = r.title_group_id
                 LEFT JOIN series s ON s.id = tg.series_id
-                WHERE r.user_id = $1
+                WHERE ($1::INT IS NULL OR r.user_id = $1)
                   AND r.rating BETWEEN $2 AND $3
-                  AND COALESCE(r.comment, '') ILIKE '%' || $4 || '%'
+                  AND ($4::TEXT IS NULL OR COALESCE(r.comment, '') ILIKE '%' || $4 || '%')
                 ORDER BY
                     CASE WHEN $7 = 'created_at' AND $8 = 'asc' THEN r.created_at END ASC,
                     CASE WHEN $7 = 'created_at' AND $8 = 'desc' THEN r.created_at END DESC,
@@ -350,7 +352,7 @@ impl ConnectionPool {
             .into_iter()
             .map(|row| TitleGroupRatingWithTitleGroup {
                 id: row.id,
-                user_id: row.user_id,
+                created_by: row.created_by,
                 rating: row.rating,
                 comment: row.comment,
                 created_at: row.created_at,
@@ -380,9 +382,9 @@ impl ConnectionPool {
             r#"
                 SELECT COUNT(*) AS "count!"
                 FROM title_group_ratings
-                WHERE user_id = $1
+                WHERE ($1::INT IS NULL OR user_id = $1)
                   AND rating BETWEEN $2 AND $3
-                  AND COALESCE(comment, '') ILIKE '%' || $4 || '%'
+                  AND ($4::TEXT IS NULL OR COALESCE(comment, '') ILIKE '%' || $4 || '%')
             "#,
             form.user_id,
             form.minimum_rating,

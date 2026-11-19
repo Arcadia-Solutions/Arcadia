@@ -1994,6 +1994,7 @@ export interface HomePage {
     'bonus_points_alias': string;
     'latest_posts_in_threads': Array<ForumSearchResult>;
     'latest_title_group_comments': Array<TitleGroupCommentSearchResult>;
+    'latest_title_group_ratings': Array<TitleGroupRatingWithTitleGroup>;
     'latest_uploads': Array<TitleGroupLite>;
     'recent_announcements': Array<ForumPostAndThreadName>;
     'site_highlights': Array<SiteHighlightForHome>;
@@ -2011,6 +2012,7 @@ export interface HomeStats {
     'series': number;
     'snatches': number;
     'title_group_comments': number;
+    'title_group_ratings': number;
     'titles': number;
     'torrent_request_comments': number;
     'torrent_requests': number;
@@ -2781,16 +2783,16 @@ export interface PaginatedResultsTitleGroupRatingWithTitleGroup {
     'total_items': number;
 }
 /**
- * A rating displayed outside of its title group, on the profile of its author.
+ * A rating displayed outside of its title group.
  */
 export interface PaginatedResultsTitleGroupRatingWithTitleGroupResultsInner {
     'comment'?: string | null;
     'created_at': string;
+    'created_by': UserLite;
     'id': number;
     'rating': number;
     'title_group': TitleGroupHierarchyLite;
     'updated_at': string;
-    'user_id': number;
 }
 export interface PaginatedResultsTitleGroupTagEnriched {
     'page': number;
@@ -3544,6 +3546,10 @@ export interface SearchTitleGroupRatings200Response {
     'data': PaginatedResultsTitleGroupRatingHierarchy;
     'side_effects': Array<SideEffect>;
 }
+export interface SearchTitleGroupRatingsSiteWide200Response {
+    'data': PaginatedResultsTitleGroupRatingWithTitleGroup;
+    'side_effects': Array<SideEffect>;
+}
 export interface SearchTitleGroupTags200Response {
     'data': PaginatedResultsTitleGroupTagEnriched;
     'side_effects': Array<SideEffect>;
@@ -3621,10 +3627,6 @@ export interface SearchUserEditChangeLogsQuery {
 
 export interface SearchUserTitleGroupComments200Response {
     'data': PaginatedResultsTitleGroupCommentWithLocation;
-    'side_effects': Array<SideEffect>;
-}
-export interface SearchUserTitleGroupRatings200Response {
-    'data': PaginatedResultsTitleGroupRatingWithTitleGroup;
     'side_effects': Array<SideEffect>;
 }
 export interface SearchUserTorrentRequestComments200Response {
@@ -3803,6 +3805,21 @@ export const SiteHighlightItemType = {
 } as const;
 
 export type SiteHighlightItemType = typeof SiteHighlightItemType[keyof typeof SiteHighlightItemType];
+
+
+/**
+ * Query of the paginated ratings of every title group, optionally only the ones written by `user_id`, filtered like [`TitleGroupRatingSearchQuery`] (no `content` matches every rating).
+ */
+export interface SiteWideTitleGroupRatingSearchQuery {
+    'content'?: string | null;
+    'maximum_rating': number;
+    'minimum_rating': number;
+    'order_by_column': TitleGroupRatingSearchOrderByColumn;
+    'order_by_direction': OrderByDirection;
+    'page': number;
+    'page_size': number;
+    'user_id'?: number | null;
+}
 
 
 
@@ -4158,16 +4175,16 @@ export interface TitleGroupRatingSearchQuery {
 
 
 /**
- * A rating displayed outside of its title group, on the profile of its author.
+ * A rating displayed outside of its title group.
  */
 export interface TitleGroupRatingWithTitleGroup {
     'comment'?: string | null;
     'created_at': string;
+    'created_by': UserLite;
     'id': number;
     'rating': number;
     'title_group': TitleGroupHierarchyLite;
     'updated_at': string;
-    'user_id': number;
 }
 /**
  * Aggregates over every title group of a single catalog, be it an artist, a series or a collage, without any period filter: unlike the torrent stats, these describe the catalog of that entry rather than its upload activity.
@@ -5709,21 +5726,6 @@ export interface UserTitleGroupCommentSearchQuery {
     'page': number;
     'page_size': number;
 }
-/**
- * Query of the paginated ratings written by a user, filtered like [`TitleGroupRatingSearchQuery`].
- */
-export interface UserTitleGroupRatingSearchQuery {
-    'content': string;
-    'maximum_rating': number;
-    'minimum_rating': number;
-    'order_by_column': TitleGroupRatingSearchOrderByColumn;
-    'order_by_direction': OrderByDirection;
-    'page': number;
-    'page_size': number;
-    'user_id': number;
-}
-
-
 /**
  * Query of the paginated list of every torrent request comment written by a user.
  */
@@ -7455,9 +7457,33 @@ export interface SearchTitleGroupRatingsRequest {
 
 export const searchTitleGroupRatings = async (request: SearchTitleGroupRatingsRequest, options?: RawAxiosRequestConfig): Promise<SearchTitleGroupRatings200Response['data']> => {
     const response = await globalAxios.request<SearchTitleGroupRatings200Response>({
-        url: `/api/search/title-group-ratings`,
+        url: `/api/search/title-group-ratings/title-group`,
         method: 'GET',
         params: { 'title_group_id': request['title_group_id'], 'minimum_rating': request['minimum_rating'], 'maximum_rating': request['maximum_rating'], 'content': request['content'], 'order_by_column': request['order_by_column'], 'order_by_direction': request['order_by_direction'], 'page': request['page'], 'page_size': request['page_size'] },
+        ...options
+    });
+    return response.data.data;
+};
+
+
+export interface SearchTitleGroupRatingsSiteWideRequest {
+    'minimum_rating': number;
+    'maximum_rating': number;
+    'order_by_column': TitleGroupRatingSearchOrderByColumn;
+    'order_by_direction': OrderByDirection;
+    'page': number;
+    'page_size': number;
+    'user_id'?: number | null;
+    'content'?: string | null;
+}
+
+
+
+export const searchTitleGroupRatingsSiteWide = async (request: SearchTitleGroupRatingsSiteWideRequest, options?: RawAxiosRequestConfig): Promise<SearchTitleGroupRatingsSiteWide200Response['data']> => {
+    const response = await globalAxios.request<SearchTitleGroupRatingsSiteWide200Response>({
+        url: `/api/search/title-group-ratings`,
+        method: 'GET',
+        params: { 'user_id': request['user_id'], 'minimum_rating': request['minimum_rating'], 'maximum_rating': request['maximum_rating'], 'content': request['content'], 'order_by_column': request['order_by_column'], 'order_by_direction': request['order_by_direction'], 'page': request['page'], 'page_size': request['page_size'] },
         ...options
     });
     return response.data.data;
@@ -7579,30 +7605,6 @@ export const searchUserTitleGroupComments = async (request: SearchUserTitleGroup
         url: `/api/search/title-group-comments/user`,
         method: 'GET',
         params: { 'created_by_id': request['created_by_id'], 'page': request['page'], 'page_size': request['page_size'] },
-        ...options
-    });
-    return response.data.data;
-};
-
-
-export interface SearchUserTitleGroupRatingsRequest {
-    'user_id': number;
-    'minimum_rating': number;
-    'maximum_rating': number;
-    'content': string;
-    'order_by_column': TitleGroupRatingSearchOrderByColumn;
-    'order_by_direction': OrderByDirection;
-    'page': number;
-    'page_size': number;
-}
-
-
-
-export const searchUserTitleGroupRatings = async (request: SearchUserTitleGroupRatingsRequest, options?: RawAxiosRequestConfig): Promise<SearchUserTitleGroupRatings200Response['data']> => {
-    const response = await globalAxios.request<SearchUserTitleGroupRatings200Response>({
-        url: `/api/search/title-group-ratings/user`,
-        method: 'GET',
-        params: { 'user_id': request['user_id'], 'minimum_rating': request['minimum_rating'], 'maximum_rating': request['maximum_rating'], 'content': request['content'], 'order_by_column': request['order_by_column'], 'order_by_direction': request['order_by_direction'], 'page': request['page'], 'page_size': request['page_size'] },
         ...options
     });
     return response.data.data;

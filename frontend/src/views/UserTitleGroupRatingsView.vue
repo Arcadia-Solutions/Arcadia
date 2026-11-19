@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="page-title">{{ t('community.title_group_ratings') }}</div>
+    <div class="page-title">{{ t('community.title_ratings') }}</div>
     <TitleGroupRatingFilters v-model="filters" :loading hideSorting @search="fetchRatings(1)" />
     <PaginatedResults :totalItems :pageSize :initialPage="page" :totalPages @changePage="fetchRatings($event.page)">
       <DataTable :value="ratings" size="small" lazy :sortField="filters.order_by_column" :sortOrder @sort="onSort">
@@ -41,7 +41,7 @@
       <TitleGroupVoteForm
         v-if="ratingToEdit !== null"
         :titleGroupId="ratingToEdit.title_group.id"
-        :ownRating="{ ...ratingToEdit, title_group_id: ratingToEdit.title_group.id }"
+        :ownRating="{ ...ratingToEdit, title_group_id: ratingToEdit.title_group.id, user_id: ratingToEdit.created_by.id }"
         @saved="ratingSaved"
       />
     </Dialog>
@@ -74,7 +74,7 @@ import TitleGroupRatingFilters, { type TitleGroupRatingFilters as Filters } from
 import {
   deleteTitleGroupRating,
   OrderByDirection,
-  searchUserTitleGroupRatings,
+  searchTitleGroupRatingsSiteWide,
   TitleGroupRatingSearchOrderByColumn,
   type TitleGroupRating,
   type TitleGroupRatingWithTitleGroup,
@@ -115,7 +115,7 @@ const onSort = (event: DataTableSortEvent) => {
 const fetchRatings = (newPage: number) => {
   page.value = newPage
   loading.value = true
-  searchUserTitleGroupRatings({
+  searchTitleGroupRatingsSiteWide({
     user_id: parseInt(route.params.id.toString()),
     ...filters.value,
     page: newPage,

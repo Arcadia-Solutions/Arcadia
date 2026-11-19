@@ -3,11 +3,16 @@ use actix_web::{HttpResponse, web::Data};
 use arcadia_common::error::Result;
 use arcadia_storage::{
     models::{
+        common::OrderByDirection,
         forum::{ForumPostAndThreadName, ForumSearchQuery, ForumSearchResult},
         home_stats::HomeStats,
         site_highlight::SiteHighlightForHome,
         title_group::TitleGroupLite,
         title_group_comment::TitleGroupCommentSearchResult,
+        title_group_rating::{
+            SiteWideTitleGroupRatingSearchQuery, TitleGroupRatingSearchOrderByColumn,
+            TitleGroupRatingWithTitleGroup,
+        },
     },
     redis::RedisPoolInterface,
 };
@@ -22,6 +27,7 @@ pub struct HomePage {
     latest_uploads: Vec<TitleGroupLite>,
     latest_posts_in_threads: Vec<ForumSearchResult>,
     latest_title_group_comments: Vec<TitleGroupCommentSearchResult>,
+    latest_title_group_ratings: Vec<TitleGroupRatingWithTitleGroup>,
     bonus_points_alias: String,
     site_highlights: Vec<SiteHighlightForHome>,
 }
@@ -41,6 +47,16 @@ pub async fn exec<R: RedisPoolInterface + 'static>(arc: Data<Arcadia<R>>) -> Res
         page_size: 5,
         page: 1,
     };
+    let latest_ratings_form = SiteWideTitleGroupRatingSearchQuery {
+        user_id: None,
+        minimum_rating: 0,
+        maximum_rating: 100,
+        content: None,
+        order_by_column: TitleGroupRatingSearchOrderByColumn::CreatedAt,
+        order_by_direction: OrderByDirection::Desc,
+        page: 1,
+        page_size: 5,
+    };
     let title_group_filter = None;
 
     let (
@@ -49,6 +65,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(arc: Data<Arcadia<R>>) -> Res
         latest_uploads_in_title_groups,
         latest_posts_in_threads,
         latest_title_group_comments,
+        latest_title_group_ratings,
         site_highlights,
     ) = tokio::try_join!(
         arc.pool.find_first_thread_posts_in_sub_category(1, 5),
@@ -57,6 +74,8 @@ pub async fn exec<R: RedisPoolInterface + 'static>(arc: Data<Arcadia<R>>) -> Res
             .find_title_group_info_lite(None, Some(""), &title_group_filter, 5),
         arc.pool.search_forum_threads(&search_forum_threads_form),
         arc.pool.find_latest_title_group_comments(5),
+        arc.pool
+            .search_title_group_ratings_site_wide(&latest_ratings_form),
         arc.pool.find_enabled_site_highlights_for_home(),
     )?;
 
@@ -68,6 +87,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(arc: Data<Arcadia<R>>) -> Res
         "latest_uploads": latest_uploads_in_title_groups,
         "latest_posts_in_threads": latest_posts_in_threads.results,
         "latest_title_group_comments": latest_title_group_comments,
+        "latest_title_group_ratings": latest_title_group_ratings.results,
         "bonus_points_alias": bonus_points_alias,
         "site_highlights": site_highlights,
     })))

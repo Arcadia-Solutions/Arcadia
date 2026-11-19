@@ -14,7 +14,8 @@
       <Tabs value="0" size="small" style="margin: 10px 0">
         <TabList>
           <Tab value="0">{{ t('forum.latest_forum_post', 2) }}</Tab>
-          <Tab value="1">{{ t('title_group.latest_title_group_comment', 2) }}</Tab>
+          <Tab value="1">{{ t('title_group.latest_title_comment', 2) }}</Tab>
+          <Tab value="2">{{ t('title_group.latest_title_rating', 2) }}</Tab>
         </TabList>
         <TabPanels>
           <TabPanel value="0">
@@ -22,6 +23,9 @@
           </TabPanel>
           <TabPanel value="1">
             <TitleGroupCommentSearchResults :search-results="latestTitleGroupComments" />
+          </TabPanel>
+          <TabPanel value="2">
+            <TitleGroupRatingSearchResults :search-results="latestTitleGroupRatings" />
           </TabPanel>
         </TabPanels>
       </Tabs>
@@ -66,7 +70,8 @@
           <RouterLink to="/stats?tab=forum" v-if="userStore.permissions.includes('view_stats_details')"><i class="pi pi-chart-bar" /></RouterLink>
         </div>
         <div>{{ t('community.forum_posts') }}: {{ formatNumber(stats.forum_posts) }}</div>
-        <div>{{ t('community.title_group_comments') }}: {{ formatNumber(stats.title_group_comments) }}</div>
+        <div>{{ t('community.title_comments') }}: {{ formatNumber(stats.title_group_comments) }}</div>
+        <div>{{ t('community.title_ratings') }}: {{ formatNumber(stats.title_group_ratings) }}</div>
         <div>{{ t('community.request_comments') }}: {{ formatNumber(stats.torrent_request_comments) }}</div>
       </ContentContainer>
       <ContentContainer :containerTitle="t('statistics.library_stats')" v-if="stats" style="margin-top: 10px">
@@ -101,6 +106,7 @@ import { Tab, TabList, TabPanel, TabPanels, Tabs } from 'primevue'
 import LatestTorrents from '@/components/torrent/LatestTorrents.vue'
 import ForumSearchResults from '@/components/forum/ForumSearchResults.vue'
 import TitleGroupCommentSearchResults from '@/components/title_group/TitleGroupCommentSearchResults.vue'
+import TitleGroupRatingSearchResults from '@/components/title_group/TitleGroupRatingSearchResults.vue'
 import KiwiIrcChat from '@/components/irc/KiwiIrcChat.vue'
 import { useUserStore } from '@/stores/user'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
@@ -111,6 +117,7 @@ import {
   type HomeStats,
   type SiteHighlightForHome,
   type TitleGroupCommentSearchResult,
+  type TitleGroupRatingWithTitleGroup,
   type TitleGroupLite,
 } from '@/services/api-schema'
 import { siteHighlightLink, formatNumber } from '@/services/helpers'
@@ -126,6 +133,7 @@ const latestUploads = ref<TitleGroupLite[]>()
 const homeLoading = ref(true)
 const latestPostsInThreads = ref<ForumSearchResult[]>([])
 const latestTitleGroupComments = ref<TitleGroupCommentSearchResult[]>([])
+const latestTitleGroupRatings = ref<TitleGroupRatingWithTitleGroup[]>([])
 const siteHighlights = ref<SiteHighlightForHome[]>([])
 
 const fetchHome = async () => {
@@ -136,6 +144,7 @@ const fetchHome = async () => {
       latestUploads.value = data.latest_uploads
       latestPostsInThreads.value = data.latest_posts_in_threads
       latestTitleGroupComments.value = data.latest_title_group_comments
+      latestTitleGroupRatings.value = data.latest_title_group_ratings
       siteHighlights.value = data.site_highlights ?? []
     })
     .finally(() => (homeLoading.value = false))

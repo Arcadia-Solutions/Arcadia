@@ -22,13 +22,22 @@ if (!configuration?.frontend) {
 }
 
 const referrerAllowedDomains: string[] = configuration.frontend.referrer_allowed_domains ?? []
-// The websites whose ratings are displayed: TMDB, collected by arcadia itself, and the ones the scraper plugins accept links from
+// The websites whose ratings are displayed: TMDB, collected by arcadia itself when its API key is set, and the ones
+// the scraper plugins accept links from. Only the websites whose ratings are collected have a `rating_scale`.
 const publicRatingWebsites = [
-  { name: 'TMDB', abbreviation: 'TMDB', domain: 'themoviedb.org', icon: '/logos/external_links/tmdb.svg', rating_scale: '/ 10' },
+  {
+    name: 'TMDB',
+    abbreviation: 'TMDB',
+    domain: 'themoviedb.org',
+    icon: '/logos/external_links/tmdb.svg',
+    rating_scale: configuration.api?.tmdb_api_key ? '/ 10' : undefined,
+  },
   ...(configuration.scrapers ?? []).flatMap(
-    (plugin: { sources: Record<string, { abbreviation?: string; domain: string; icon: string; rating_scale?: string }> }) =>
+    (plugin: { ratings_url?: string; sources: Record<string, { abbreviation?: string; domain: string; icon: string; rating_scale?: string }> }) =>
       Object.entries(plugin.sources).map(([name, website]) => {
         if (!website.abbreviation) throw new Error(`no 'abbreviation' set for the scraper source '${name}' in ${configurationPath}`)
+        if (website.rating_scale && !plugin.ratings_url)
+          throw new Error(`'rating_scale' set for the scraper source '${name}' whose plugin has no 'ratings_url' in ${configurationPath}`)
         return { name, abbreviation: website.abbreviation, domain: website.domain, icon: website.icon, rating_scale: website.rating_scale }
       }),
   ),

@@ -31,7 +31,6 @@ scrapers:
         domain: myanimelist.net
         icon: https://myanimelist.net/favicon.ico
         abbreviation: MAL
-        rating_scale: "%"
     title_url: http://anime-plugin:9000/scrape
     ratings_url: http://anime-plugin:9000/ratings
     timeout_seconds: 30
@@ -41,7 +40,7 @@ scrapers:
 | --- | --- |
 | `id` | Identifier used in the route `/api/external-sources/<id>`. Must not clash with a built in source (`tmdb`, `musicbrainz`, `isbn`, `comic-vine`). |
 | `placeholder` | Placeholder of the input field displayed in the interface, also used as the source's display name. |
-| `sources` | The websites the plugin accepts links from, by name, each with the `content_types` it supports (`movie`, `video`, `tv_show`, `music`, `podcast`, `software`, `book`, `live_performance`, `collection`) and the `domain`, `icon` and `abbreviation` of the website: the plugin is only asked for the ratings of the links on that domain (or one of its subdomains), displayed with the website's name and icon on the title group page, and with its abbreviation in the lists of title groups (e.g. the torrent search results). The optional `rating_scale` (e.g. `/ 10` or `%`) is appended to the ratings on the title group page. A single plugin may serve several websites, dispatching on the link it is given. They are listed in a tooltip next to the input on the upload page once there are several of them, and the source is offered for every content type at least one of them supports. |
+| `sources` | The websites the plugin accepts links from, by name, each with the `content_types` it supports (`movie`, `video`, `tv_show`, `music`, `podcast`, `software`, `book`, `live_performance`, `collection`) and the `domain`, `icon` and `abbreviation` of the website: the links on that domain (or one of its subdomains) belong to the website, displayed with the website's name and icon on the title group page, and with its abbreviation in the lists of title groups (e.g. the torrent search results). `rating_scale` (e.g. `/ 10` or `%`) is set only for the websites whose ratings the plugin collects (it needs `ratings_url`): it is appended to their ratings on the title group page, and only those websites are offered to sort the torrent search by. A single plugin may serve several websites, dispatching on the link it is given. They are listed in a tooltip next to the input on the upload page once there are several of them, and the source is offered for every content type at least one of them supports. |
 | `title_url` | Endpoint scraping a title, see [Writing a scraper plugin](#writing-a-scraper-plugin). |
 | `ratings_url` | Optional, endpoint collecting ratings, see [Collecting ratings](#collecting-ratings). |
 | `timeout_seconds` | Optional, defaults to `30`. |
@@ -130,7 +129,7 @@ stack trace or an internal identifier.
 
 When a title group is created or edited, the `ratings_url` endpoint of a plugin declaring one is
 asked for the rating of each external link of the title group on the `domain` (or a subdomain) of
-one of its websites, in the background. Each link is asked about to a single provider: TMDB for its
+one of its websites with a `rating_scale`, in the background. Each link is asked about to a single provider: TMDB for its
 own links when its API key is set, else the first plugin in the `scrapers` section accepting it. Then, every
 `public_ratings_fetch_seconds` (in the `periodic_tasks` section), it is asked again about each link
 at most once every `public_ratings_retry_seconds`, whatever it answered last time. The

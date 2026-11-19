@@ -29,6 +29,7 @@ async fn arcadia_with_rating_plugin(
         .map(|domain| {
             let mut website = website(vec![ContentType::Music]);
             website.domain = domain.to_string();
+            website.rating_scale = Some(String::from("/ 10"));
             (domain.to_string(), website)
         })
         .collect::<BTreeMap<_, _>>();
@@ -115,6 +116,29 @@ async fn test_a_plugin_is_only_asked_about_the_links_of_its_websites(pool: PgPoo
     assert_eq!(created_ratings_amount, 1);
     assert_eq!(requests.len(), 1);
     assert!(requests[0].contains("musicbrainz.org"));
+}
+
+#[test]
+fn test_a_plugin_only_collects_the_ratings_of_its_websites_with_a_rating_scale() {
+    let mut rated_website = website(vec![ContentType::Music]);
+    rated_website.domain = String::from("musicbrainz.org");
+    rated_website.rating_scale = Some(String::from("/ 10"));
+    let mut unrated_website = website(vec![ContentType::Music]);
+    unrated_website.domain = String::from("discogs.com");
+    let plugin = ExternalSourcePlugin {
+        id: String::from("example"),
+        placeholder: String::from("Example url"),
+        sources: BTreeMap::from([
+            (String::from("MusicBrainz"), rated_website),
+            (String::from("Discogs"), unrated_website),
+        ]),
+        title_url: String::from("http://plugin/scrape"),
+        ratings_url: Some(String::from("http://plugin/ratings")),
+        timeout_seconds: 30,
+    };
+
+    assert!(plugin.collects_rating_of("https://musicbrainz.org/release/1"));
+    assert!(!plugin.collects_rating_of("https://www.discogs.com/release/1"));
 }
 
 #[sqlx::test(fixtures("with_test_users", "with_test_title_group"))]

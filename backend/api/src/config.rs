@@ -225,11 +225,13 @@ pub struct ExternalSourcePlugin {
 #[derive(Debug, Clone, Deserialize)]
 pub struct ExternalSourceWebsite {
     pub content_types: Vec<ContentType>,
-    /// The plugin is only asked for the ratings of the links on this domain (or one of its
-    /// subdomains), displayed with the website's name and icon. Both are added to the frontend at
-    /// build time.
+    /// The links on this domain (or one of its subdomains) belong to the website, displayed with
+    /// its name and icon. Both are added to the frontend at build time.
     pub domain: String,
     pub icon: String,
+    /// Appended to the ratings, e.g. `/ 10` or `%`. Set only for the websites whose ratings the
+    /// plugin collects, which needs `ratings_url`.
+    pub rating_scale: Option<String>,
 }
 
 impl ExternalSourcePlugin {
@@ -246,8 +248,12 @@ impl ExternalSourcePlugin {
         }
     }
 
-    /// Whether the link is on the domain (or a subdomain) of one of the plugin's websites.
-    pub fn accepts_link(&self, link: &str) -> bool {
+    /// Whether the plugin collects ratings and the link is on the domain (or a subdomain) of one of
+    /// its websites with a `rating_scale`.
+    pub fn collects_rating_of(&self, link: &str) -> bool {
+        if self.ratings_url.is_none() {
+            return false;
+        }
         let Some(host) = Url::parse(link)
             .ok()
             .and_then(|url| url.host_str().map(str::to_owned))
@@ -255,7 +261,8 @@ impl ExternalSourcePlugin {
             return false;
         };
         self.sources.values().any(|website| {
-            host == website.domain || host.ends_with(&format!(".{}", website.domain))
+            website.rating_scale.is_some()
+                && (host == website.domain || host.ends_with(&format!(".{}", website.domain)))
         })
     }
 }

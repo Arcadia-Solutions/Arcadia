@@ -422,6 +422,7 @@ pub fn website(content_types: Vec<ContentType>) -> ExternalSourceWebsite {
         content_types,
         domain: String::from("example.com"),
         icon: String::from("https://example.com/icon.svg"),
+        rating_scale: None,
     }
 }
 

@@ -364,7 +364,9 @@ frontend:
 #     # The websites the plugin accepts links from, each with the content types it supports, and
 #     # the domain whose links the plugin is asked the ratings of, displayed with the website's name
 #     # and icon, or its abbreviation in the lists of title groups (added to the frontend at build time).
-#     # The optional `rating_scale` is appended to the ratings on the title group page.
+#     # `rating_scale` is set only for the websites whose ratings the plugin collects (needs
+#     # `ratings_url`), it is appended to their ratings on the title group page and only those
+#     # websites are offered to sort the torrent search by.
 #     # A single plugin may serve several websites, dispatching on the link it is given.
 #     # They are listed in a tooltip next to the input on the upload page, once there are
 #     # several of them. The source is offered for every content type at least one of them supports.
@@ -383,9 +385,9 @@ frontend:
 #         domain: myanimelist.net
 #         icon: https://myanimelist.net/favicon.ico
 #         abbreviation: MAL
-#         rating_scale: "%"
 #     title_url: http://anime-plugin:9000/scrape
-#     # Optional: asked for the rating of the title groups' external links on its websites' domains.
+#     # Optional: asked for the rating of the title groups' external links on the domains of its
+#     # websites with a `rating_scale`.
 #     ratings_url: http://anime-plugin:9000/ratings
 #     timeout_seconds: 30
 

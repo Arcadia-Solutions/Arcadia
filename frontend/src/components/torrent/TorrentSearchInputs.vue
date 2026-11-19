@@ -325,11 +325,13 @@ const sortByOptions = computed(() => {
       column: TorrentSearchOrderByColumn.TitleGroupUserRatingAverage,
       domain: null,
     },
-    ...publicRatingWebsites.map(({ name, domain }) => ({
-      label: t('title_group.rating_of', { name }),
-      column: TorrentSearchOrderByColumn.TitleGroupPublicRating,
-      domain,
-    })),
+    ...publicRatingWebsites
+      .filter(({ rating_scale }) => rating_scale)
+      .map(({ name, domain }) => ({
+        label: t('title_group.rating_of', { name }),
+        column: TorrentSearchOrderByColumn.TitleGroupPublicRating,
+        domain,
+      })),
     {
       label: `${publicArcadiaSettings.bonus_points_alias} ${t('torrent.snatch_cost')}`,
       column: TorrentSearchOrderByColumn.TorrentBonusPointsSnatchCost,

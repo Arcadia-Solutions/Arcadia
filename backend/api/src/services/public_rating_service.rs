@@ -71,14 +71,14 @@ fn rating_providers<R: RedisPoolInterface>(arc: &Arcadia<R>) -> Vec<String> {
 }
 
 /// The provider asked for the rating of the link: TMDB for its own links when its API key is set,
-/// else the first plugin collecting ratings for the links on the domains of its websites.
+/// else the first plugin collecting the ratings of the link's website.
 fn link_provider<'a, R: RedisPoolInterface>(arc: &'a Arcadia<R>, link: &str) -> Option<&'a str> {
     if arc.api.tmdb_api_key.is_some() && extract_media_type_and_id(link).is_ok() {
         return Some(TMDB_PROVIDER);
     }
     arc.scrapers
         .iter()
-        .find(|plugin| plugin.ratings_url.is_some() && plugin.accepts_link(link))
+        .find(|plugin| plugin.collects_rating_of(link))
         .map(|plugin| plugin.id.as_str())
 }
 

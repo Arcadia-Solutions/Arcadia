@@ -680,7 +680,13 @@ async fn test_sort_torrents_by_the_public_rating_of_a_website(pool: PgPool) {
 
     // title group 1 is rated 3.0 on musicbrainz.org and 9.0 on www.discogs.com, title group 2 is rated 5.0 on en.wikipedia.org.
     // Without the sort, title group 1 comes first (older release date), and in both directions the unrated one comes last
-    for direction in [OrderByDirection::Asc, OrderByDirection::Desc] {
+    for (column, direction) in [
+        TorrentSearchOrderByColumn::TitleGroupPublicRating,
+        TorrentSearchOrderByColumn::TitleGroupPublicRatingVotes,
+    ]
+    .into_iter()
+    .flat_map(|column| [OrderByDirection::Asc, OrderByDirection::Desc].map(|d| (column.clone(), d)))
+    {
         let query = TorrentSearch {
             title_group_name: None,
             title_group_content_type: vec![],
@@ -699,7 +705,7 @@ async fn test_sort_torrents_by_the_public_rating_of_a_website(pool: PgPool) {
             collage_id: None,
             page: 1,
             page_size: 50,
-            order_by_column: TorrentSearchOrderByColumn::TitleGroupPublicRating,
+            order_by_column: column,
             order_by_public_rating_domain: Some("wikipedia.org".to_string()),
             order_by_direction: direction,
             series_id: None,

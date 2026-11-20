@@ -496,10 +496,17 @@ pub enum TorrentSearchOrderByColumn {
     #[serde(rename = "title_group_user_rating_average")]
     #[strum(serialize = "title_group_user_rating_average")]
     TitleGroupUserRatingAverage,
+    #[serde(rename = "title_group_user_rating_count")]
+    #[strum(serialize = "title_group_user_rating_count")]
+    TitleGroupUserRatingCount,
     /// the rating on the website of `order_by_public_rating_domain`
     #[serde(rename = "title_group_public_rating")]
     #[strum(serialize = "title_group_public_rating")]
     TitleGroupPublicRating,
+    /// the amount of votes of the rating on the website of `order_by_public_rating_domain`
+    #[serde(rename = "title_group_public_rating_votes")]
+    #[strum(serialize = "title_group_public_rating_votes")]
+    TitleGroupPublicRatingVotes,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
@@ -536,7 +543,7 @@ pub struct TorrentSearch {
     pub page_size: i64,
     pub order_by_column: TorrentSearchOrderByColumn,
     pub order_by_direction: OrderByDirection,
-    /// the domain of the website whose ratings are sorted by with `title_group_public_rating`, ignored otherwise
+    /// the domain of the website whose ratings are sorted by with `title_group_public_rating` or `title_group_public_rating_votes`, ignored otherwise
     pub order_by_public_rating_domain: Option<String>,
 }
 

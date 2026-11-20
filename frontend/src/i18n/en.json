@@ -454,6 +454,7 @@
     "merge_title_group_success": "Title groups merged successfully",
     "include_empty_title_groups": "Include empty title groups",
     "rating_of": "{name} rating",
+    "rating_votes_of": "{name} vote count",
     "similar_titles": "Similar titles",
     "link_similar_title": "Link a similar title",
     "unlink_similar_title": "Unlink this similar title",

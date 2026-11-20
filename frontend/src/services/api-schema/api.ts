@@ -4657,7 +4657,7 @@ export interface TorrentSearch {
     'order_by_column': TorrentSearchOrderByColumn;
     'order_by_direction': OrderByDirection;
     /**
-     * the domain of the website whose ratings are sorted by with `title_group_public_rating`, ignored otherwise
+     * the domain of the website whose ratings are sorted by with `title_group_public_rating` or `title_group_public_rating_votes`, ignored otherwise
      */
     'order_by_public_rating_domain'?: string | null;
     'page': number;
@@ -4690,7 +4690,9 @@ export const TorrentSearchOrderByColumn = {
     TorrentSnatched: 'torrent_snatched',
     TorrentBonusPointsSnatchCost: 'torrent_bonus_points_snatch_cost',
     TitleGroupUserRatingAverage: 'title_group_user_rating_average',
-    TitleGroupPublicRating: 'title_group_public_rating'
+    TitleGroupUserRatingCount: 'title_group_user_rating_count',
+    TitleGroupPublicRating: 'title_group_public_rating',
+    TitleGroupPublicRatingVotes: 'title_group_public_rating_votes'
 } as const;
 
 export type TorrentSearchOrderByColumn = typeof TorrentSearchOrderByColumn[keyof typeof TorrentSearchOrderByColumn];

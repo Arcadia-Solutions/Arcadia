@@ -311,7 +311,7 @@ const onTagQueryKeydown = (event: KeyboardEvent) => {
   }
 }
 
-// the public ratings are sorted by website, so an option is a column and the domain of a website
+// the public ratings and their votes are sorted by website, so an option is a column and the domain of a website
 const sortByOptions = computed(() => {
   const options: { label: string; column: TorrentSearchOrderByColumn; domain: string | null }[] = [
     { label: t('torrent.created_at'), column: TorrentSearchOrderByColumn.TorrentCreatedAt, domain: null },
@@ -325,13 +325,17 @@ const sortByOptions = computed(() => {
       column: TorrentSearchOrderByColumn.TitleGroupUserRatingAverage,
       domain: null,
     },
+    {
+      label: t('title_group.rating_votes_of', { name: publicArcadiaSettings.user_rating_label }),
+      column: TorrentSearchOrderByColumn.TitleGroupUserRatingCount,
+      domain: null,
+    },
     ...publicRatingWebsites
       .filter(({ rating_scale }) => rating_scale)
-      .map(({ name, domain }) => ({
-        label: t('title_group.rating_of', { name }),
-        column: TorrentSearchOrderByColumn.TitleGroupPublicRating,
-        domain,
-      })),
+      .flatMap(({ name, domain }) => [
+        { label: t('title_group.rating_of', { name }), column: TorrentSearchOrderByColumn.TitleGroupPublicRating, domain },
+        { label: t('title_group.rating_votes_of', { name }), column: TorrentSearchOrderByColumn.TitleGroupPublicRatingVotes, domain },
+      ]),
     {
       label: `${publicArcadiaSettings.bonus_points_alias} ${t('torrent.snatch_cost')}`,
       column: TorrentSearchOrderByColumn.TorrentBonusPointsSnatchCost,

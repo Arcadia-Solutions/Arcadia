@@ -34,12 +34,11 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BBCodeRenderer from '@/components/community/BBCodeRenderer.vue'
 import { openAdventCalendarDoor, type AdventCalendarDoorForUser, type AdventCalendarDoorOpeningResult } from '@/services/api-schema'
-import { bytesToReadable, formatBp, formatNumber } from '@/services/helpers'
-import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
+import { useAdventCalendarRewards } from '@/composables/useAdventCalendarRewards'
 import { useUserStore } from '@/stores/user'
 
 const { t } = useI18n()
-const publicArcadiaSettings = usePublicArcadiaSettingsStore()
+const formatRewards = useAdventCalendarRewards()
 const userStore = useUserStore()
 
 const props = defineProps<{
@@ -56,19 +55,7 @@ const opening = ref<AdventCalendarDoorOpeningResult | null>(props.door.opening ?
 const passphrase = ref('')
 const loading = ref(false)
 
-const receivedRewards = computed(() => {
-  if (!opening.value) return []
-  const rewards: string[] = []
-  if (opening.value.upload > 0) rewards.push(`${bytesToReadable(opening.value.upload)} ${t('advent_calendar.reward_upload').toLowerCase()}`)
-  if (opening.value.download_removed > 0)
-    rewards.push(`${bytesToReadable(opening.value.download_removed)} ${t('advent_calendar.reward_download_removed').toLowerCase()}`)
-  if (opening.value.bonus_points > 0)
-    rewards.push(`${formatBp(opening.value.bonus_points, publicArcadiaSettings.bonus_points_decimal_places)} ${publicArcadiaSettings.bonus_points_alias}`)
-  if (opening.value.freeleech_tokens > 0)
-    rewards.push(`${formatNumber(opening.value.freeleech_tokens)} ${t('advent_calendar.reward_freeleech_tokens').toLowerCase()}`)
-  if (opening.value.invitations > 0) rewards.push(`${formatNumber(opening.value.invitations)} ${t('advent_calendar.reward_invitations').toLowerCase()}`)
-  return rewards
-})
+const receivedRewards = computed(() => (opening.value ? formatRewards(opening.value) : []))
 
 const openDoor = () => {
   loading.value = true

@@ -87,10 +87,19 @@
             :disabled="doorBeingEditedIndex === calendar.doors.length - 1"
             @click="moveDoor(1)"
           />
+          <Button
+            v-if="doorBeingEdited.id"
+            :label="t('advent_calendar.door_stats')"
+            icon="pi pi-chart-bar"
+            size="small"
+            severity="secondary"
+            @click="doorIdForStats = doorBeingEdited.id"
+          />
           <Button :label="t('general.delete')" icon="pi pi-trash" size="small" severity="danger" @click="deleteDoor" />
         </div>
       </template>
     </Dialog>
+    <AdventCalendarDoorStats v-model:doorId="doorIdForStats" />
     <div class="wrapper-center" style="margin-top: 20px">
       <Button :label="t('general.save')" size="small" :loading="loading" @click="save" />
     </div>
@@ -103,6 +112,7 @@ import { computed, reactive, ref, toRaw } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BBCodeEditor from '@/components/community/BBCodeEditor.vue'
 import AdventCalendarDoorEditor from '@/components/staff/AdventCalendarDoorEditor.vue'
+import AdventCalendarDoorStats from '@/components/advent_calendar/AdventCalendarDoorStats.vue'
 import {
   AdventCalendarLateOpeningPolicy,
   AdventCalendarRewardDistribution,
@@ -205,6 +215,7 @@ const doorKey = (door: UserCreatedAdventCalendarDoor) => {
 
 const doorBeingEditedIndex = ref<number | null>(null)
 const doorBeingEdited = computed(() => (doorBeingEditedIndex.value === null ? undefined : calendar.doors[doorBeingEditedIndex.value]))
+const doorIdForStats = ref<number | null>(null)
 
 const addDoor = () => {
   calendar.doors.push(newDoor(calendar.doors.length))

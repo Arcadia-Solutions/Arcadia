@@ -2,12 +2,15 @@ use crate::{
     connection_pool::ConnectionPool,
     models::{
         advent_calendar::{
-            AdventCalendar, AdventCalendarDoor, AdventCalendarDoorOpening,
-            AdventCalendarDoorOpeningResult, AdventCalendarDoorSettings,
-            AdventCalendarLateOpeningPolicy, AdventCalendarLite, AdventCalendarRewardDistribution,
-            UserCreatedAdventCalendar,
+            AdventCalendar, AdventCalendarDoor, AdventCalendarDoorOpener,
+            AdventCalendarDoorOpening, AdventCalendarDoorOpeningResult,
+            AdventCalendarDoorRewardTotals, AdventCalendarDoorSettings, AdventCalendarDoorStats,
+            AdventCalendarDoorStatsQuery, AdventCalendarLateOpeningPolicy, AdventCalendarLite,
+            AdventCalendarRewardDistribution, UserCreatedAdventCalendar,
         },
         bonus_points_log::BonusPointsLogAction,
+        common::PaginatedResults,
+        user::UserLiteAvatar,
     },
     services::advent_calendar_service::check_advent_calendar_door_openable,
 };
@@ -484,5 +487,101 @@ impl ConnectionPool {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn find_advent_calendar_door_stats(
+        &self,
+        door_id: i32,
+        query: &AdventCalendarDoorStatsQuery,
+    ) -> Result<AdventCalendarDoorStats> {
+        let limit = query.page_size as i64;
+        let offset = (query.page as i64 - 1).max(0) * limit;
+
+        let counts = sqlx::query!(
+            r#"
+                SELECT
+                    COUNT(openings.user_id) as "opening_count!",
+                    COUNT(openings.user_id) FILTER (WHERE users.username ILIKE '%' || $2 || '%') as "matching_count!",
+                    COALESCE(SUM(openings.upload), 0)::BIGINT as "upload!",
+                    COALESCE(SUM(openings.download_removed), 0)::BIGINT as "download_removed!",
+                    COALESCE(SUM(openings.freeleech_tokens), 0)::BIGINT as "freeleech_tokens!",
+                    COALESCE(SUM(openings.invitations), 0)::BIGINT as "invitations!",
+                    COALESCE(SUM(openings.bonus_points), 0)::BIGINT as "bonus_points!"
+                FROM advent_calendar_doors doors
+                LEFT JOIN advent_calendar_door_openings openings ON openings.door_id = doors.id
+                LEFT JOIN users ON users.id = openings.user_id
+                WHERE doors.id = $1
+                GROUP BY doors.id
+            "#,
+            door_id,
+            query.username
+        )
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::AdventCalendarDoorNotFound)?;
+
+        let results = sqlx::query_as!(
+            AdventCalendarDoorOpener,
+            r#"
+                SELECT
+                    ROW(users.id, users.username, users.class_name, users.banned, users.avatar, users.warned, users.custom_title) as "user!: UserLiteAvatar",
+                    openings.opened_at,
+                    openings.upload,
+                    openings.download_removed,
+                    openings.freeleech_tokens,
+                    openings.invitations,
+                    openings.bonus_points
+                FROM advent_calendar_door_openings openings
+                JOIN users ON users.id = openings.user_id
+                WHERE openings.door_id = $1
+                    AND users.username ILIKE '%' || $2 || '%'
+                ORDER BY
+                    CASE WHEN $5 = 'opened_at' AND $6 = 'asc' THEN openings.opened_at END ASC,
+                    CASE WHEN $5 = 'opened_at' AND $6 = 'desc' THEN openings.opened_at END DESC,
+                    CASE WHEN $5 = 'username' AND $6 = 'asc' THEN LOWER(users.username) END ASC,
+                    CASE WHEN $5 = 'username' AND $6 = 'desc' THEN LOWER(users.username) END DESC,
+                    CASE WHEN $6 = 'asc' THEN CASE $5
+                        WHEN 'upload' THEN openings.upload
+                        WHEN 'download_removed' THEN openings.download_removed
+                        WHEN 'freeleech_tokens' THEN openings.freeleech_tokens
+                        WHEN 'invitations' THEN openings.invitations
+                        WHEN 'bonus_points' THEN openings.bonus_points
+                    END END ASC,
+                    CASE WHEN $6 = 'desc' THEN CASE $5
+                        WHEN 'upload' THEN openings.upload
+                        WHEN 'download_removed' THEN openings.download_removed
+                        WHEN 'freeleech_tokens' THEN openings.freeleech_tokens
+                        WHEN 'invitations' THEN openings.invitations
+                        WHEN 'bonus_points' THEN openings.bonus_points
+                    END END DESC,
+                    users.id
+                LIMIT $3 OFFSET $4
+            "#,
+            door_id,
+            query.username,
+            limit,
+            offset,
+            query.order_by_column.to_string(),
+            query.order_by_direction.to_string()
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(AdventCalendarDoorStats {
+            opening_count: counts.opening_count,
+            reward_totals: AdventCalendarDoorRewardTotals {
+                upload: counts.upload,
+                download_removed: counts.download_removed,
+                freeleech_tokens: counts.freeleech_tokens,
+                invitations: counts.invitations,
+                bonus_points: counts.bonus_points,
+            },
+            openers: PaginatedResults {
+                results,
+                page: query.page,
+                page_size: query.page_size,
+                total_items: counts.matching_count,
+            },
+        })
     }
 }

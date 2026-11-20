@@ -10,9 +10,9 @@ use arcadia_storage::{
     models::{
         advent_calendar::{
             AdventCalendar, AdventCalendarDoorOpeningAttempt, AdventCalendarDoorOpeningResult,
-            AdventCalendarDoorSettings, AdventCalendarDoorState, AdventCalendarLateOpeningPolicy,
-            AdventCalendarRewardDistribution, PublishedAdventCalendar, UserCreatedAdventCalendar,
-            UserCreatedAdventCalendarDoor,
+            AdventCalendarDoorSettings, AdventCalendarDoorState, AdventCalendarDoorStats,
+            AdventCalendarLateOpeningPolicy, AdventCalendarRewardDistribution,
+            PublishedAdventCalendar, UserCreatedAdventCalendar, UserCreatedAdventCalendarDoor,
         },
         bonus_points_log::{
             BonusPointsLogAction, BonusPointsLogOrderByColumn, SearchBonusPointsLogsQuery,
@@ -673,4 +673,94 @@ async fn test_reset_own_progress_allows_reopening(pool: PgPool) {
 
     let reopened = call_service(&service, open_request(&staff.token, door_id, None)).await;
     assert_eq!(reopened.status(), StatusCode::OK);
+}
+
+#[sqlx::test(fixtures("with_test_users", "with_test_advent_calendar_door_openings"))]
+async fn test_door_stats_lists_openers(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let (service, staff) = create_test_app_and_login(
+        pool,
+        MockRedisPool::default(),
+        TestUser::ManageAdventCalendars,
+    )
+    .await;
+    let user = login_as(&service, TestUser::Standard).await;
+
+    let stats_request = |token: &str, door_id: i32, query: &str| {
+        test::TestRequest::get()
+            .uri(&format!(
+                "/api/advent-calendars/doors/{door_id}/stats?{query}"
+            ))
+            .insert_header(auth_header(token))
+            .to_request()
+    };
+    let fetch_usernames = async |query: &str| -> Vec<String> {
+        let stats: AdventCalendarDoorStats = call_and_read_body_json_with_status(
+            &service,
+            stats_request(&staff.token, 910, query),
+            StatusCode::OK,
+        )
+        .await;
+        stats
+            .openers
+            .results
+            .into_iter()
+            .map(|opener| opener.user.username)
+            .collect()
+    };
+
+    let stats: AdventCalendarDoorStats = call_and_read_body_json_with_status(
+        &service,
+        stats_request(
+            &staff.token,
+            910,
+            "username=ADVENT&order_by_column=username&order_by_direction=desc&page=1&page_size=100",
+        ),
+        StatusCode::OK,
+    )
+    .await;
+    assert_eq!(stats.opening_count, 2);
+    assert_eq!(stats.reward_totals.bonus_points, 15);
+    assert_eq!(stats.openers.total_items, 1);
+    assert_eq!(stats.openers.results[0].user.username, "user_advent_cal");
+    assert_eq!(stats.openers.results[0].bonus_points, 10);
+
+    assert_eq!(
+        fetch_usernames(
+            "username=&order_by_column=username&order_by_direction=desc&page=1&page_size=100"
+        )
+        .await,
+        ["user_basic", "user_advent_cal"]
+    );
+    for (direction, expected_username) in [("asc", "user_advent_cal"), ("desc", "user_basic")] {
+        assert_eq!(
+            fetch_usernames(&format!(
+                "username=&order_by_column=bonus_points&order_by_direction={direction}&page=2&page_size=1"
+            ))
+            .await,
+            [expected_username]
+        );
+    }
+
+    let forbidden = call_service(
+        &service,
+        stats_request(
+            &user.token,
+            910,
+            "username=&order_by_column=username&order_by_direction=desc&page=1&page_size=100",
+        ),
+    )
+    .await;
+    assert_eq!(forbidden.status(), StatusCode::FORBIDDEN);
+
+    let not_found = call_service(
+        &service,
+        stats_request(
+            &staff.token,
+            999_999,
+            "username=&order_by_column=username&order_by_direction=desc&page=1&page_size=100",
+        ),
+    )
+    .await;
+    assert_eq!(not_found.status(), StatusCode::NOT_FOUND);
 }

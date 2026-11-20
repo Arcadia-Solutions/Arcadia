@@ -108,6 +108,29 @@ export interface AdventCalendarDoorForUser {
 }
 
 
+export interface AdventCalendarDoorOpener {
+    'bonus_points': number;
+    'download_removed': number;
+    'freeleech_tokens': number;
+    'invitations': number;
+    'opened_at': string;
+    'upload': number;
+    'user': UserLiteAvatar;
+}
+
+export const AdventCalendarDoorOpenerOrderByColumn = {
+    OpenedAt: 'opened_at',
+    Username: 'username',
+    Upload: 'upload',
+    DownloadRemoved: 'download_removed',
+    FreeleechTokens: 'freeleech_tokens',
+    Invitations: 'invitations',
+    BonusPoints: 'bonus_points'
+} as const;
+
+export type AdventCalendarDoorOpenerOrderByColumn = typeof AdventCalendarDoorOpenerOrderByColumn[keyof typeof AdventCalendarDoorOpenerOrderByColumn];
+
+
 export interface AdventCalendarDoorOpeningAttempt {
     'passphrase'?: string | null;
 }
@@ -117,6 +140,16 @@ export interface AdventCalendarDoorOpeningResult {
     'freeleech_tokens': number;
     'invitations': number;
     'opening_message': string;
+    'upload': number;
+}
+/**
+ * sums of the rewards granted by every opening of a door
+ */
+export interface AdventCalendarDoorRewardTotals {
+    'bonus_points': number;
+    'download_removed': number;
+    'freeleech_tokens': number;
+    'invitations': number;
     'upload': number;
 }
 
@@ -130,6 +163,14 @@ export const AdventCalendarDoorState = {
 export type AdventCalendarDoorState = typeof AdventCalendarDoorState[keyof typeof AdventCalendarDoorState];
 
 
+export interface AdventCalendarDoorStats {
+    'openers': PaginatedResultsAdventCalendarDoorOpener;
+    /**
+     * amount of users who opened the door, regardless of the username filter
+     */
+    'opening_count': number;
+    'reward_totals': AdventCalendarDoorRewardTotals;
+}
 
 export const AdventCalendarLateOpeningPolicy = {
     DuringDoorWindow: 'during_door_window',
@@ -1753,6 +1794,10 @@ export interface GetAPIKeys200Response {
     'data': Array<APIKey>;
     'side_effects': Array<SideEffect>;
 }
+export interface GetAdventCalendarDoorStats200Response {
+    'data': AdventCalendarDoorStats;
+    'side_effects': Array<SideEffect>;
+}
 export interface GetAllUserClasses200Response {
     'data': Array<UserClass>;
     'side_effects': Array<SideEffect>;
@@ -2462,6 +2507,21 @@ export const OrderByDirection = {
 export type OrderByDirection = typeof OrderByDirection[keyof typeof OrderByDirection];
 
 
+export interface PaginatedResultsAdventCalendarDoorOpener {
+    'page': number;
+    'page_size': number;
+    'results': Array<PaginatedResultsAdventCalendarDoorOpenerResultsInner>;
+    'total_items': number;
+}
+export interface PaginatedResultsAdventCalendarDoorOpenerResultsInner {
+    'bonus_points': number;
+    'download_removed': number;
+    'freeleech_tokens': number;
+    'invitations': number;
+    'opened_at': string;
+    'upload': number;
+    'user': UserLiteAvatar;
+}
 export interface PaginatedResultsArtistLite {
     'page': number;
     'page_size': number;
@@ -5875,6 +5935,28 @@ export const getAdventCalendar = async (id: number, options?: RawAxiosRequestCon
     return response.data.data;
 };
 
+
+
+export interface GetAdventCalendarDoorStatsRequest {
+    'door_id': number;
+    'username': string;
+    'order_by_column': AdventCalendarDoorOpenerOrderByColumn;
+    'order_by_direction': OrderByDirection;
+    'page': number;
+    'page_size': number;
+}
+
+
+
+export const getAdventCalendarDoorStats = async (request: GetAdventCalendarDoorStatsRequest, options?: RawAxiosRequestConfig): Promise<GetAdventCalendarDoorStats200Response['data']> => {
+    const response = await globalAxios.request<GetAdventCalendarDoorStats200Response>({
+        url: `/api/advent-calendars/doors/{door_id}/stats`.replace('{' + 'door_id' + '}', String(request['door_id'])),
+        method: 'GET',
+        params: { 'username': request['username'], 'order_by_column': request['order_by_column'], 'order_by_direction': request['order_by_direction'], 'page': request['page'], 'page_size': request['page_size'] },
+        ...options
+    });
+    return response.data.data;
+};
 
 
 

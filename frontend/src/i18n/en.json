@@ -1588,7 +1588,13 @@
     "missed": "Missed",
     "you_received": "You received",
     "nothing_received": "Nothing this time, but thanks for stopping by!",
-    "no_calendar": "There is no advent calendar right now"
+    "no_calendar": "There is no advent calendar right now",
+    "door_stats": "Door stats",
+    "opening_count": "Opened by {n} user | Opened by {n} users",
+    "opened_at": "Opened at",
+    "no_openers": "Nobody opened this door yet",
+    "rewards_granted": "Rewards granted",
+    "no_rewards": "none"
   },
   "maintenance_tools": {
     "maintenance_tools": "Maintenance tools",

@@ -1,0 +1,100 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    ROW(users.id, users.username, users.class_name, users.banned, users.avatar, users.warned, users.custom_title) as \"user!: UserLiteAvatar\",\n                    openings.opened_at,\n                    openings.upload,\n                    openings.download_removed,\n                    openings.freeleech_tokens,\n                    openings.invitations,\n                    openings.bonus_points\n                FROM advent_calendar_door_openings openings\n                JOIN users ON users.id = openings.user_id\n                WHERE openings.door_id = $1\n                    AND users.username ILIKE '%' || $2 || '%'\n                ORDER BY\n                    CASE WHEN $5 = 'opened_at' AND $6 = 'asc' THEN openings.opened_at END ASC,\n                    CASE WHEN $5 = 'opened_at' AND $6 = 'desc' THEN openings.opened_at END DESC,\n                    CASE WHEN $5 = 'username' AND $6 = 'asc' THEN LOWER(users.username) END ASC,\n                    CASE WHEN $5 = 'username' AND $6 = 'desc' THEN LOWER(users.username) END DESC,\n                    CASE WHEN $6 = 'asc' THEN CASE $5\n                        WHEN 'upload' THEN openings.upload\n                        WHEN 'download_removed' THEN openings.download_removed\n                        WHEN 'freeleech_tokens' THEN openings.freeleech_tokens\n                        WHEN 'invitations' THEN openings.invitations\n                        WHEN 'bonus_points' THEN openings.bonus_points\n                    END END ASC,\n                    CASE WHEN $6 = 'desc' THEN CASE $5\n                        WHEN 'upload' THEN openings.upload\n                        WHEN 'download_removed' THEN openings.download_removed\n                        WHEN 'freeleech_tokens' THEN openings.freeleech_tokens\n                        WHEN 'invitations' THEN openings.invitations\n                        WHEN 'bonus_points' THEN openings.bonus_points\n                    END END DESC,\n                    users.id\n                LIMIT $3 OFFSET $4\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user!: UserLiteAvatar",
+        "type_info": "Record",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "opened_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "opened_at"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "upload",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "upload"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "download_removed",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "download_removed"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "freeleech_tokens",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "freeleech_tokens"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "invitations",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "invitations"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "bonus_points",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "advent_calendar_door_openings",
+            "name": "bonus_points"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text",
+        "Int8",
+        "Int8",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "886e99fd78cf1f51791f5a213e63a9d401eff326d57e44375b91e4b64b338a1c"
+}

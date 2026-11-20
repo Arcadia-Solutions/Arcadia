@@ -1,0 +1,66 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    COUNT(openings.user_id) as \"opening_count!\",\n                    COUNT(openings.user_id) FILTER (WHERE users.username ILIKE '%' || $2 || '%') as \"matching_count!\",\n                    COALESCE(SUM(openings.upload), 0)::BIGINT as \"upload!\",\n                    COALESCE(SUM(openings.download_removed), 0)::BIGINT as \"download_removed!\",\n                    COALESCE(SUM(openings.freeleech_tokens), 0)::BIGINT as \"freeleech_tokens!\",\n                    COALESCE(SUM(openings.invitations), 0)::BIGINT as \"invitations!\",\n                    COALESCE(SUM(openings.bonus_points), 0)::BIGINT as \"bonus_points!\"\n                FROM advent_calendar_doors doors\n                LEFT JOIN advent_calendar_door_openings openings ON openings.door_id = doors.id\n                LEFT JOIN users ON users.id = openings.user_id\n                WHERE doors.id = $1\n                GROUP BY doors.id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "opening_count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "matching_count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "upload!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "download_removed!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "freeleech_tokens!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "invitations!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 6,
+        "name": "bonus_points!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "d2f0591f5e63513dc10264e4a608cde85a03254a29ba47f5acb69bd3871c06f3"
+}

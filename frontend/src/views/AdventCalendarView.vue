@@ -11,6 +11,17 @@
           :style="door.image_url ? { backgroundImage: `url(${JSON.stringify(door.image_url)})` } : undefined"
           @click="isClickable(door) && (doorBeingOpened = door)"
         >
+          <Button
+            v-if="userStore.permissions.includes('manage_advent_calendars')"
+            v-tooltip.top="t('advent_calendar.door_stats')"
+            :aria-label="t('advent_calendar.door_stats')"
+            icon="pi pi-chart-bar"
+            size="small"
+            text
+            rounded
+            class="door-stats-button"
+            @click.stop="doorIdForStats = door.id"
+          />
           <span class="door-name">{{ door.name }}</span>
           <span v-if="door.state === AdventCalendarDoorState.Locked" class="door-status"> <i class="pi pi-lock" /> <TimeAgo :date="door.starts_at" /> </span>
           <span v-else-if="door.state === AdventCalendarDoorState.Missed" class="door-status">{{ t('advent_calendar.missed') }}</span>
@@ -22,18 +33,21 @@
     <Dialog closeOnEscape modal :header="doorBeingOpened?.name" :visible="doorBeingOpened !== null" @update:visible="doorBeingOpened = null">
       <AdventCalendarDoorDialog v-if="doorBeingOpened" :door="doorBeingOpened" @opened="onDoorOpened" @failed="onDoorFailed" />
     </Dialog>
+    <AdventCalendarDoorStats v-model:doorId="doorIdForStats" />
   </div>
   <div v-else-if="notFound" class="wrapper-center">{{ t('advent_calendar.no_calendar') }}</div>
 </template>
 
 <script setup lang="ts">
-import { Dialog } from 'primevue'
+import { Button, Dialog } from 'primevue'
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BBCodeRenderer from '@/components/community/BBCodeRenderer.vue'
 import TimeAgo from '@/components/TimeAgo.vue'
 import ContentContainer from '@/components/ContentContainer.vue'
 import AdventCalendarDoorDialog from '@/components/advent_calendar/AdventCalendarDoorDialog.vue'
+import AdventCalendarDoorStats from '@/components/advent_calendar/AdventCalendarDoorStats.vue'
+import { useUserStore } from '@/stores/user'
 import {
   AdventCalendarDoorState,
   getPublishedAdventCalendar,
@@ -43,10 +57,12 @@ import {
 } from '@/services/api-schema'
 
 const { t } = useI18n()
+const userStore = useUserStore()
 
 const calendar = ref<PublishedAdventCalendar | null>(null)
 const notFound = ref(false)
 const doorBeingOpened = ref<AdventCalendarDoorForUser | null>(null)
+const doorIdForStats = ref<number | null>(null)
 
 const isClickable = (door: AdventCalendarDoorForUser) => door.state === AdventCalendarDoorState.Openable || door.state === AdventCalendarDoorState.Opened
 
@@ -92,6 +108,7 @@ onMounted(fetchCalendar)
   gap: 15px;
 }
 .door {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -127,6 +144,15 @@ onMounted(fetchCalendar)
 }
 .door-name {
   font-weight: bold;
+}
+.door-stats-button {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+}
+.door.with-image .door-stats-button {
+  background-color: rgba(0, 0, 0, 0.65);
+  color: white;
 }
 .door-status {
   font-size: 0.85em;

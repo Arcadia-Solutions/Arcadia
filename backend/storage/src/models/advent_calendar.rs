@@ -1,7 +1,12 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, types::Json};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
+
+use crate::models::{
+    common::{OrderByDirection, PaginatedResults},
+    user::UserLiteAvatar,
+};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, sqlx::Type, ToSchema)]
 #[serde(rename_all = "snake_case")]
@@ -180,4 +185,71 @@ pub struct AdventCalendarDoorOpening {
     pub freeleech_tokens: i32,
     pub invitations: i32,
     pub bonus_points: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema, strum::Display)]
+pub enum AdventCalendarDoorOpenerOrderByColumn {
+    #[serde(rename = "opened_at")]
+    #[strum(serialize = "opened_at")]
+    OpenedAt,
+    #[serde(rename = "username")]
+    #[strum(serialize = "username")]
+    Username,
+    #[serde(rename = "upload")]
+    #[strum(serialize = "upload")]
+    Upload,
+    #[serde(rename = "download_removed")]
+    #[strum(serialize = "download_removed")]
+    DownloadRemoved,
+    #[serde(rename = "freeleech_tokens")]
+    #[strum(serialize = "freeleech_tokens")]
+    FreeleechTokens,
+    #[serde(rename = "invitations")]
+    #[strum(serialize = "invitations")]
+    Invitations,
+    #[serde(rename = "bonus_points")]
+    #[strum(serialize = "bonus_points")]
+    BonusPoints,
+}
+
+/// `username` is a partial, case insensitive match on the users who opened the door (empty
+/// matches every user)
+#[derive(Debug, Deserialize, Serialize, ToSchema, IntoParams)]
+#[into_params(parameter_in = Query)]
+pub struct AdventCalendarDoorStatsQuery {
+    pub username: String,
+    pub order_by_column: AdventCalendarDoorOpenerOrderByColumn,
+    pub order_by_direction: OrderByDirection,
+    pub page: u32,
+    pub page_size: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct AdventCalendarDoorOpener {
+    pub user: UserLiteAvatar,
+    #[schema(value_type = String, format = DateTime)]
+    pub opened_at: DateTime<Utc>,
+    pub upload: i64,
+    pub download_removed: i64,
+    pub freeleech_tokens: i32,
+    pub invitations: i32,
+    pub bonus_points: i64,
+}
+
+/// sums of the rewards granted by every opening of a door
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct AdventCalendarDoorRewardTotals {
+    pub upload: i64,
+    pub download_removed: i64,
+    pub freeleech_tokens: i64,
+    pub invitations: i64,
+    pub bonus_points: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct AdventCalendarDoorStats {
+    /// amount of users who opened the door, regardless of the username filter
+    pub opening_count: i64,
+    pub reward_totals: AdventCalendarDoorRewardTotals,
+    pub openers: PaginatedResults<AdventCalendarDoorOpener>,
 }

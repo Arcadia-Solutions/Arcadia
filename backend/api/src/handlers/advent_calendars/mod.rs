@@ -2,6 +2,7 @@ pub mod create_advent_calendar;
 pub mod delete_advent_calendar;
 pub mod edit_advent_calendar;
 pub mod get_advent_calendar;
+pub mod get_advent_calendar_door_stats;
 pub mod get_published_advent_calendar;
 pub mod list_advent_calendars;
 pub mod open_advent_calendar_door;
@@ -23,6 +24,10 @@ pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {
     cfg.service(
         resource("/doors/{door_id}/open")
             .route(post().to(self::open_advent_calendar_door::exec::<R>)),
+    );
+    cfg.service(
+        resource("/doors/{door_id}/stats")
+            .route(get().to(self::get_advent_calendar_door_stats::exec::<R>)),
     );
     cfg.service(
         resource("/{id}/progress")

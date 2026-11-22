@@ -144,12 +144,17 @@ const publicArcadiaSettings = usePublicArcadiaSettingsStore()
   color: yellow;
 }
 
+.cell-actions {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
 .cell-stat {
   text-align: center;
 }
 
 .action {
-  margin-right: 4px;
   cursor: pointer;
 }
 </style>

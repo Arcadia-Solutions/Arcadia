@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import ContentContainer from '../ContentContainer.vue'
@@ -43,15 +43,7 @@ const props = defineProps<{
   initialForm: SearchTorrentRequestsRequest
 }>()
 
-const searchForm = ref<SearchTorrentRequestsRequest>({
-  title_group_name: null,
-  tags: null,
-  page: 1,
-  page_size: 25,
-  order_by: TorrentRequestSearchOrderBy.CreatedAt,
-  order_by_direction: OrderByDirection.Desc,
-  include_filled: false,
-})
+const searchForm = ref<SearchTorrentRequestsRequest>({ ...props.initialForm })
 
 const changePage = (page: number) => {
   searchForm.value.page = page
@@ -89,10 +81,6 @@ defineExpose({
   searchForm,
   changePage,
   setSort,
-})
-
-onMounted(async () => {
-  searchForm.value = props.initialForm
 })
 
 watch(

@@ -23,6 +23,7 @@ pub mod get_user_torrent_activities_overview;
 pub mod lock_user_class;
 pub mod remove_user_warnings;
 pub mod reset_irc_password;
+pub mod reset_passkey;
 pub mod search_bonus_points_logs;
 pub mod set_user_custom_title;
 pub mod set_user_registration_ip_check;
@@ -74,6 +75,7 @@ pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {
             .route(get().to(self::get_user_settings::exec::<R>))
             .route(put().to(self::update_user_settings::exec::<R>)),
     );
+    cfg.service(resource("/passkey").route(put().to(self::reset_passkey::exec::<R>)));
     cfg.service(resource("/password").route(put().to(self::change_user_password::exec::<R>)));
     cfg.service(
         resource("/uploaded-torrents-anonymity")

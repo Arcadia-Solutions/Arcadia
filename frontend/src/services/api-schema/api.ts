@@ -3388,6 +3388,13 @@ export interface ResetIRCPassword200Response {
     'data': IrcAccountResponse;
     'side_effects': Array<SideEffect>;
 }
+export interface ResetPasskey200Response {
+    'data': ResetPasskeyResponse;
+    'side_effects': Array<SideEffect>;
+}
+export interface ResetPasskeyResponse {
+    'passkey': string;
+}
 export interface RestoreTitleGroupTagRequest {
     'id': number;
 }
@@ -9431,6 +9438,17 @@ export const removeUserWarningsAndBans = async (id: number, options?: RawAxiosRe
 export const resetIRCPassword = async (options?: RawAxiosRequestConfig): Promise<ResetIRCPassword200Response['data']> => {
     const response = await globalAxios.request<ResetIRCPassword200Response>({
         url: '/api/users/irc',
+        method: 'PUT',
+        ...options
+    });
+    return response.data.data;
+};
+
+
+
+export const resetPasskey = async (options?: RawAxiosRequestConfig): Promise<ResetPasskey200Response['data']> => {
+    const response = await globalAxios.request<ResetPasskey200Response>({
+        url: '/api/users/passkey',
         method: 'PUT',
         ...options
     });

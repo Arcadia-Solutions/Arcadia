@@ -12,16 +12,17 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
+use arcadia_shared::tracker::models::user::APIInsertUser;
 use argon2::{
     Argon2,
     password_hash::{PasswordHash, PasswordVerifier},
 };
 use chrono::{DateTime, Duration, Utc};
 use rand::{
-    RngExt,
     distr::{Alphanumeric, SampleString},
     rng,
 };
+use reqwest::Method;
 use sha2::{Digest, Sha256};
 use sqlx::types::ipnetwork::IpNetwork;
 use std::sync::LazyLock;
@@ -59,14 +60,7 @@ impl ConnectionPool {
         invitation: &Option<Invitation>,
         arcadia_settings: &ArcadiaSettings,
     ) -> Result<User> {
-        let rng = rand::rng();
-
-        // TODO: check if the passkey already exists
-        let passkey: String = rng
-            .sample_iter(&Alphanumeric)
-            .take(32)
-            .map(char::from)
-            .collect();
+        let passkey = self.generate_unused_passkey().await?;
 
         // Check username availability first
         if self.does_username_exist(&user.username).await? {
@@ -525,6 +519,55 @@ impl ConnectionPool {
         .await?;
 
         Ok(())
+    }
+
+    async fn generate_unused_passkey(&self) -> Result<String> {
+        loop {
+            let passkey = Alphanumeric.sample_string(&mut rng(), 32);
+            let taken = sqlx::query_scalar!(
+                "SELECT EXISTS(SELECT 1 FROM users WHERE passkey = $1)",
+                passkey
+            )
+            .fetch_one(&self.pool)
+            .await?;
+            if taken != Some(true) {
+                return Ok(passkey);
+            }
+        }
+    }
+
+    /// Replaces the user's passkey with a new one and informs the tracker,
+    /// which stops accepting announces made with the previous passkey.
+    /// Banned users are refused so they can not get back on the tracker.
+    pub async fn reset_passkey(&self, user_id: i32) -> Result<String> {
+        let passkey = self.generate_unused_passkey().await?;
+
+        let max_snatches_per_day = sqlx::query_scalar!(
+            r#"
+            UPDATE users SET passkey = $2 WHERE id = $1 AND banned = false
+            RETURNING max_snatches_per_day
+            "#,
+            user_id,
+            passkey
+        )
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(Error::AccountBanned)?;
+
+        let payload = APIInsertUser {
+            id: user_id as u32,
+            passkey: passkey.parse().expect("invalid passkey format"),
+            max_snatches_per_day: max_snatches_per_day.map(|x| x as u32),
+        };
+        self.notify_tracker(
+            Method::PUT,
+            &["users"],
+            Some(&payload),
+            &format!("reset passkey of user {user_id}"),
+        )
+        .await;
+
+        Ok(passkey)
     }
 
     pub async fn find_user_by_username(&self, username: &str) -> Result<User> {

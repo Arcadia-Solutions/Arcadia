@@ -48,6 +48,7 @@ mod test_paranoia_settings;
 mod test_public_ratings;
 mod test_recompute_cached_amounts;
 mod test_reseed_request;
+mod test_reset_passkey;
 mod test_search_conversations;
 mod test_search_torrents_by_external_link;
 mod test_search_users;

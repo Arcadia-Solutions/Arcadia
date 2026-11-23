@@ -18,7 +18,12 @@ pub async fn exec(arc: Data<Tracker>, user: Json<APIInsertUser>) -> HttpResponse
         recent_leeches: Vec::new(),
     });
 
-    arc.passkey2id.write().insert(user.passkey, user.id);
+    let mut passkey2id = arc.passkey2id.write();
+    // drops the user's previous passkey when it was reset
+    // ponytail: full scan of the map, keep a reverse id->passkey index if resets become frequent
+    passkey2id.retain(|_, id| *id != user.id);
+    passkey2id.insert(user.passkey, user.id);
+    drop(passkey2id);
 
     debug!("inserted user: {:?}", user);
 

@@ -141,10 +141,13 @@ const PATH_PREFIXES_FORBIDDEN_FOR_EVERY_SCOPE: &[&str] =
 ///
 /// `PUT /api/users/{id}/permissions` lets the owner of the key grant themselves any
 /// permission, including the one needed by the password reset token endpoint above.
+///
+/// `PUT /api/users/passkey` invalidates the passkey of every torrent the user is seeding.
 const ENDPOINTS_FORBIDDEN_FOR_EVERY_SCOPE: &[(Method, &str)] = &[
     (Method::PUT, "/api/users"),
     (Method::POST, "/api/users/{id}/password-reset-token"),
     (Method::PUT, "/api/users/{id}/permissions"),
+    (Method::PUT, "/api/users/passkey"),
 ];
 
 /// The paths above are matched with the router of actix, so they support the same dynamic

@@ -140,6 +140,7 @@ use arcadia_storage::models::user_stats::{UserStatsDataPoint, UserStatsResponse}
         crate::handlers::maintenance_tools::check_missing_registration_ips::exec,
         crate::handlers::users::create_irc_account::exec,
         crate::handlers::users::reset_irc_password::exec,
+        crate::handlers::users::reset_passkey::exec,
         crate::handlers::users::get_user_torrent_activities::exec,
         crate::handlers::users::get_user_torrent_activities_overview::exec,
         crate::handlers::users::search_bonus_points_logs::exec,

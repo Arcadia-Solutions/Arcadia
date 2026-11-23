@@ -32,6 +32,10 @@
         {{ t('user_settings.api_keys') }}:
         <Button :label="t('user_settings.manage_api_keys')" size="small" style="margin-left: 5px" @click="apiKeysDialogVisible = true" />
       </div>
+      <div class="line" style="margin-top: 10px">
+        {{ t('user_settings.passkey') }}:
+        <Button :label="t('user_settings.reset_passkey')" size="small" severity="warn" style="margin-left: 5px" @click="resetPasskeyDialogVisible = true" />
+      </div>
     </ContentContainer>
     <ContentContainer class="section" :container-title="t('user_settings.privacy')">
       <div class="line anonymous" style="margin-bottom: 15px">
@@ -128,6 +132,13 @@
   <Dialog closeOnEscape modal :header="t('user.change_password')" v-model:visible="changePasswordDialogVisible">
     <ChangePasswordDialog v-if="changePasswordDialogVisible" @saved="changePasswordDialogVisible = false" />
   </Dialog>
+  <Dialog closeOnEscape modal :header="t('user_settings.reset_passkey')" v-model:visible="resetPasskeyDialogVisible">
+    <p>{{ t('user_settings.reset_passkey_confirm') }}</p>
+    <template #footer>
+      <Button :label="t('general.cancel')" severity="secondary" size="small" @click="resetPasskeyDialogVisible = false" />
+      <Button :label="t('general.confirm')" severity="warn" size="small" :loading="resettingPasskey" @click="confirmResetPasskey" />
+    </template>
+  </Dialog>
   <Dialog closeOnEscape modal :header="t('user_settings.api_keys')" v-model:visible="apiKeysDialogVisible">
     <ApiKeysDialog v-if="apiKeysDialogVisible" />
   </Dialog>
@@ -145,7 +156,7 @@ import ApiKeysDialog from '@/components/user/ApiKeysDialog.vue'
 import ParanoiaSettingsTable from '@/components/user/ParanoiaSettingsTable.vue'
 import { showToast } from '@/main'
 import { useRouter, useRoute } from 'vue-router'
-import { getUserSettings, updateUploadedTorrentsAnonymity, updateUserSettings, type CssSheet, type UserSettings } from '@/services/api-schema'
+import { getUserSettings, resetPasskey, updateUploadedTorrentsAnonymity, updateUserSettings, type CssSheet, type UserSettings } from '@/services/api-schema'
 import { useUserStore } from '@/stores/user'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
 
@@ -168,6 +179,8 @@ const ircDialogVisible = ref(false)
 const ircPasswordVisible = ref(false)
 const changePasswordDialogVisible = ref(false)
 const apiKeysDialogVisible = ref(false)
+const resetPasskeyDialogVisible = ref(false)
+const resettingPasskey = ref(false)
 
 const cssSheetChanged = (cssSheet: CssSheet) => {
   if (!updatedSettings.value) return
@@ -196,6 +209,18 @@ const setAllUploadsAnonymity = () => {
     })
     .finally(() => {
       updatingUploadsAnonymity.value = false
+    })
+}
+
+const confirmResetPasskey = () => {
+  resettingPasskey.value = true
+  resetPasskey()
+    .then(() => {
+      resetPasskeyDialogVisible.value = false
+      showToast('', t('user_settings.passkey_reset'), 'success', 5000)
+    })
+    .finally(() => {
+      resettingPasskey.value = false
     })
 }
 

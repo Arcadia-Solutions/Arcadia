@@ -355,12 +355,15 @@
     "conversation": "Conversation | Conversations",
     "last_message": "Last message",
     "locked": "Conversation locked",
-    "search_titles_only": "Search titles only",
+    "search_titles_only": "Subjects only",
+    "search_subjects": "Search subjects",
+    "search_subjects_and_messages": "Search subjects and messages",
     "all_conversations": "All conversations",
     "sender": "Sender",
     "receiver": "Receiver",
     "messages_amount": "Messages",
-    "filter_by_user": "Filter by user"
+    "with_user": "With user",
+    "involving_user": "Involving user"
   },
   "community": {
     "new_comment": "New comment",

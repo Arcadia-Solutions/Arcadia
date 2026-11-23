@@ -1,11 +1,13 @@
 <template>
   <div class="all-conversations-table">
     <ContentContainer class="search-form">
-      <div>
-        <FloatLabel>
-          <InputText v-model="searchForm.search_term" size="small" />
-          <label>{{ t('conversation.subject') }}</label>
-        </FloatLabel>
+      <div class="search-term">
+        <InputText
+          v-model="searchForm.search_term"
+          size="small"
+          :placeholder="searchForm.search_titles_only ? t('conversation.search_subjects') : t('conversation.search_subjects_and_messages')"
+          @keyup.enter="updateUrl"
+        />
         <div class="search-titles-only">
           <Checkbox v-model="searchForm.search_titles_only" :binary="true" inputId="all-conversations-search-titles-only" />
           <label for="all-conversations-search-titles-only">{{ t('conversation.search_titles_only') }}</label>
@@ -13,13 +15,13 @@
       </div>
       <UserSearchBar
         v-model="filterUsername"
-        :placeholder="t('conversation.filter_by_user')"
+        :placeholder="t('conversation.involving_user')"
         :clearInputOnSelect="false"
         :clickableUserLink="false"
         :initialValue="filterUsername"
         @userSelected="onUserSelected"
       />
-      <Button :label="t('general.search')" size="small" @click="updateUrl" />
+      <Button :label="t('general.search')" icon="pi pi-search" size="small" @click="updateUrl" />
     </ContentContainer>
     <PaginatedResults
       v-if="searchResults.length > 0"
@@ -101,26 +103,20 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
-import { ConversationSearchOrderByColumn, OrderByDirection, type UserLite } from '@/services/api-schema'
+import { ConversationSearchOrderByColumn, OrderByDirection } from '@/services/api-schema'
 import UsernameEnriched from '@/components/user/UsernameEnriched.vue'
 import UserSearchBar from '@/components/user/UserSearchBar.vue'
 import ContentContainer from '@/components/ContentContainer.vue'
 import PaginatedResults from '@/components/PaginatedResults.vue'
-import { Button, Checkbox, FloatLabel, InputText } from 'primevue'
+import { Button, Checkbox, InputText } from 'primevue'
 import { useConversationSearch } from '@/composables/useConversationSearch'
 
 const { t } = useI18n()
 
-const { searchForm, filterUsername, searchResults, totalResults, totalPages, updateUrl, onChangePage, onSort } = useConversationSearch({
+const { searchForm, filterUsername, searchResults, totalResults, totalPages, updateUrl, onChangePage, onSort, onUserSelected } = useConversationSearch({
   tab: 'allConversations',
-  withUserFilter: true,
   allConversations: true,
 })
-
-const onUserSelected = (user: UserLite) => {
-  searchForm.value.user_id = user.id
-  filterUsername.value = user.username
-}
 </script>
 
 <style scoped>
@@ -129,8 +125,12 @@ const onUserSelected = (user: UserLite) => {
 }
 .search-form :deep(.content-body) {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+}
+.search-term input {
+  width: 300px;
 }
 .all-conversations-table {
   margin-top: 20px;
@@ -139,5 +139,6 @@ const onUserSelected = (user: UserLite) => {
   display: flex;
   align-items: center;
   gap: 5px;
+  margin-top: 5px;
 }
 </style>

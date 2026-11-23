@@ -1,17 +1,27 @@
 <template>
   <div class="title">{{ t('conversation.conversation', 2) }}</div>
   <ContentContainer class="search-form">
-    <FloatLabel>
-      <InputText v-model="searchForm.search_term" size="small" />
-      <label>{{ t('general.search') }}</label>
-    </FloatLabel>
-    <div class="search-titles-only">
-      <Checkbox v-model="searchForm.search_titles_only" :binary="true" inputId="search-titles-only" />
-      <label for="search-titles-only">{{ t('conversation.search_titles_only') }}</label>
+    <div class="search-term">
+      <InputText
+        v-model="searchForm.search_term"
+        size="small"
+        :placeholder="searchForm.search_titles_only ? t('conversation.search_subjects') : t('conversation.search_subjects_and_messages')"
+        @keyup.enter="updateUrl"
+      />
+      <div class="search-titles-only">
+        <Checkbox v-model="searchForm.search_titles_only" :binary="true" inputId="search-titles-only" />
+        <label for="search-titles-only">{{ t('conversation.search_titles_only') }}</label>
+      </div>
     </div>
-    <div class="wrapper-center">
-      <Button :label="t('general.search')" size="small" @click="updateUrl" />
-    </div>
+    <UserSearchBar
+      v-model="filterUsername"
+      :placeholder="t('conversation.with_user')"
+      :clearInputOnSelect="false"
+      :clickableUserLink="false"
+      :initialValue="filterUsername"
+      @userSelected="onUserSelected"
+    />
+    <Button :label="t('general.search')" icon="pi pi-search" size="small" @click="updateUrl" />
   </ContentContainer>
   <PaginatedResults
     v-if="searchResults.length > 0"
@@ -82,15 +92,16 @@ import { useUserStore } from '@/stores/user'
 import { useNotificationsStore } from '@/stores/notifications'
 import { ConversationSearchOrderByColumn, OrderByDirection, type PaginatedResultsConversationSearchResultResultsInner } from '@/services/api-schema'
 import UsernameEnriched from '@/components/user/UsernameEnriched.vue'
+import UserSearchBar from '@/components/user/UserSearchBar.vue'
 import ContentContainer from '@/components/ContentContainer.vue'
 import PaginatedResults from '@/components/PaginatedResults.vue'
-import { Button, Checkbox, FloatLabel, InputText } from 'primevue'
+import { Button, Checkbox, InputText } from 'primevue'
 import { useConversationSearch } from '@/composables/useConversationSearch'
 
 const { t } = useI18n()
 const notificationsStore = useNotificationsStore()
 
-const { searchForm, searchResults, totalResults, totalPages, updateUrl, onChangePage, onSort } = useConversationSearch()
+const { searchForm, filterUsername, searchResults, totalResults, totalPages, updateUrl, onChangePage, onSort, onUserSelected } = useConversationSearch()
 
 const isConversationRead = (c: PaginatedResultsConversationSearchResultResultsInner) => {
   const userId = useUserStore().id
@@ -109,6 +120,15 @@ const isConversationRead = (c: PaginatedResultsConversationSearchResultResultsIn
 }
 .search-form {
   margin-bottom: 15px;
+}
+.search-form :deep(.content-body) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+}
+.search-term input {
+  width: 300px;
 }
 .search-titles-only {
   display: flex;

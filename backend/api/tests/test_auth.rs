@@ -39,13 +39,12 @@ struct RegisterResponse {
     id: i32,
     username: String,
     email: String,
-    registered_from_ip: String,
 }
 
 #[sqlx::test]
 async fn test_open_registration(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
-    let service = create_test_app(pool, MockRedisPool::default()).await;
+    let service = create_test_app(pool.clone(), MockRedisPool::default()).await;
 
     let req = TestRequest::post()
         .peer_addr("10.10.4.88:6881".parse().unwrap())
@@ -71,7 +70,14 @@ async fn test_open_registration(pool: PgPool) {
     assert_eq!(user.username, "test_user");
     assert_eq!(user.email, "test_email@testdomain.com");
     // TODO: strip unnecessary /32 host postfix
-    assert_eq!(user.registered_from_ip, "10.10.4.88/32");
+    assert_eq!(
+        pool.find_user_with_id(user.id)
+            .await
+            .unwrap()
+            .registered_from_ip
+            .to_string(),
+        "10.10.4.88/32"
+    );
 }
 
 #[sqlx::test]
@@ -98,16 +104,30 @@ async fn test_registration_ip_only_trusts_the_configured_proxy_header(pool: PgPo
     let resp = call_service(&service, register("direct_user", "direct@testdomain.com")).await;
     assert_eq!(resp.status(), StatusCode::CREATED);
     let user = read_body_json_data::<RegisterResponse, _>(resp).await;
-    assert_eq!(user.registered_from_ip, "10.10.4.88/32");
+    assert_eq!(
+        pool.find_user_with_id(user.id)
+            .await
+            .unwrap()
+            .registered_from_ip
+            .to_string(),
+        "10.10.4.88/32"
+    );
 
     // behind a reverse proxy, the address it appended last is used
     let mut config = arcadia_shared::config::load::<Config>();
     config.api.reverse_proxy_client_ip_header_name = Some("X-Forwarded-For".to_string());
-    let service = create_test_app_with_config(pool, MockRedisPool::default(), config).await;
+    let service = create_test_app_with_config(pool.clone(), MockRedisPool::default(), config).await;
     let resp = call_service(&service, register("proxied_user", "proxied@testdomain.com")).await;
     assert_eq!(resp.status(), StatusCode::CREATED);
     let user = read_body_json_data::<RegisterResponse, _>(resp).await;
-    assert_eq!(user.registered_from_ip, "10.10.4.90/32");
+    assert_eq!(
+        pool.find_user_with_id(user.id)
+            .await
+            .unwrap()
+            .registered_from_ip
+            .to_string(),
+        "10.10.4.90/32"
+    );
 }
 
 #[sqlx::test]
@@ -204,7 +224,7 @@ async fn test_closed_registration_failures(pool: PgPool) {
 #[sqlx::test(fixtures("with_test_users", "with_test_user_invite"))]
 async fn test_closed_registration_success(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
-    let service = create_test_app(pool, MockRedisPool::default()).await;
+    let service = create_test_app(pool.clone(), MockRedisPool::default()).await;
 
     let req = TestRequest::post()
         .peer_addr("10.10.4.88:6881".parse().unwrap())
@@ -230,7 +250,14 @@ async fn test_closed_registration_success(pool: PgPool) {
     assert_eq!(user.username, "test_user2");
     assert_eq!(user.email, "newuser@testdomain.com");
     // TODO: strip unnecessary /32 host postfix
-    assert_eq!(user.registered_from_ip, "10.10.4.88/32");
+    assert_eq!(
+        pool.find_user_with_id(user.id)
+            .await
+            .unwrap()
+            .registered_from_ip
+            .to_string(),
+        "10.10.4.88/32"
+    );
 
     // Try again with same key.  Should fail.
     let req = TestRequest::post()

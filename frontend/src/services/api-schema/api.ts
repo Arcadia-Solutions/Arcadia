@@ -3329,8 +3329,16 @@ export interface Register {
     'username': string;
 }
 export interface Register200Response {
-    'data': User;
+    'data': RegisteredUser;
     'side_effects': Array<SideEffect>;
+}
+/**
+ * Answered to a registration, without the password hash, passkey and other private columns of the user.
+ */
+export interface RegisteredUser {
+    'email': string;
+    'id': number;
+    'username': string;
 }
 export interface RehashTorrentsResponse {
     'updated_torrents_amount': number;

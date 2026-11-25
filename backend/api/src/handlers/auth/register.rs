@@ -12,7 +12,7 @@ use arcadia_shared::tracker::models::user::APIInsertUser;
 use arcadia_storage::{
     models::{
         invitation::Invitation,
-        user::{Register, User},
+        user::{Register, RegisteredUser},
     },
     redis::RedisPoolInterface,
 };
@@ -31,7 +31,7 @@ pub struct RegisterQuery {
     tag = "Auth",
     path = "/api/auth/register",
     responses(
-        (status = 200, description = "Successfully registered the user", body = User),
+        (status = 200, description = "Successfully registered the user", body = RegisteredUser),
     )
 )]
 pub async fn exec<R: RedisPoolInterface + 'static>(
@@ -176,5 +176,9 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         }
     }
 
-    Ok(HttpResponse::Created().json(serde_json::json!(user)))
+    Ok(HttpResponse::Created().json(RegisteredUser {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+    }))
 }

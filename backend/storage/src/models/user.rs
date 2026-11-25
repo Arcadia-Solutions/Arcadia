@@ -239,6 +239,15 @@ pub struct Register {
     pub email: String,
 }
 
+/// Answered to a registration, without the password hash, passkey and other private columns of
+/// the user.
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct RegisteredUser {
+    pub id: i32,
+    pub username: String,
+    pub email: String,
+}
+
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct Login {
     pub username: String,

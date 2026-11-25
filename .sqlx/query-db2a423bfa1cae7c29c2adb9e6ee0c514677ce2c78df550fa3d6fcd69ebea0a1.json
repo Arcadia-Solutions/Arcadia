@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO password_reset_tokens (value_hash, user_id, expires_at)\n            VALUES ($1, $2, $3)\n            ON CONFLICT (user_id) DO UPDATE\n            SET value_hash = EXCLUDED.value_hash, expires_at = EXCLUDED.expires_at, created_at = NOW()\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Bytea",
+        "Int4",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "db2a423bfa1cae7c29c2adb9e6ee0c514677ce2c78df550fa3d6fcd69ebea0a1"
+}

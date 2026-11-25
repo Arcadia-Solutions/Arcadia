@@ -31,9 +31,9 @@ pub const MAXIMUM_API_KEYS_PER_USER: i64 = 15;
 
 const API_KEY_LENGTH: usize = 40;
 
-/// API keys are never stored as is, only their sha256 hash is.
-fn hash_api_key(api_key: &str) -> [u8; 32] {
-    Sha256::digest(api_key.as_bytes()).into()
+/// API keys and password reset tokens are never stored as is, only their sha256 hash is.
+fn hash_secret(secret: &str) -> [u8; 32] {
+    Sha256::digest(secret.as_bytes()).into()
 }
 
 /// Verified against when the username of a login does not exist, so that answering takes as long
@@ -188,7 +188,7 @@ impl ConnectionPool {
         &self,
         api_key: &str,
     ) -> Result<(i32, Vec<APIKeyScope>)> {
-        let value_hash = hash_api_key(api_key);
+        let value_hash = hash_secret(api_key);
 
         let api_key = sqlx::query!(
             r#"
@@ -280,7 +280,7 @@ impl ConnectionPool {
         current_user_id: i32,
     ) -> Result<CreatedAPIKey> {
         let value: String = Alphanumeric.sample_string(&mut rng(), API_KEY_LENGTH);
-        let value_hash = hash_api_key(&value);
+        let value_hash = hash_secret(&value);
 
         // the insertion only happens while the user is below the maximum, so no row is
         // returned once they reached it
@@ -471,12 +471,12 @@ impl ConnectionPool {
 
         sqlx::query!(
             r#"
-            INSERT INTO password_reset_tokens (value, user_id, expires_at)
+            INSERT INTO password_reset_tokens (value_hash, user_id, expires_at)
             VALUES ($1, $2, $3)
             ON CONFLICT (user_id) DO UPDATE
-            SET value = EXCLUDED.value, expires_at = EXCLUDED.expires_at, created_at = NOW()
+            SET value_hash = EXCLUDED.value_hash, expires_at = EXCLUDED.expires_at, created_at = NOW()
             "#,
-            token,
+            &hash_secret(&token)[..],
             user_id,
             expires_at
         )
@@ -506,9 +506,9 @@ impl ConnectionPool {
     pub async fn find_password_reset_token_user(&self, token: &str) -> Result<i32> {
         sqlx::query_scalar!(
             r#"
-            SELECT user_id FROM password_reset_tokens WHERE value = $1 AND expires_at > NOW()
+            SELECT user_id FROM password_reset_tokens WHERE value_hash = $1 AND expires_at > NOW()
             "#,
-            token
+            &hash_secret(token)[..]
         )
         .fetch_optional(&self.pool)
         .await?

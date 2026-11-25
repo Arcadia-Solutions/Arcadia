@@ -417,7 +417,8 @@ CREATE TABLE password_reset_tokens (
     id BIGSERIAL PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    value VARCHAR(50) NOT NULL UNIQUE,
+    -- the token itself is never stored, only the sha256 hash of it
+    value_hash BYTEA NOT NULL UNIQUE,
     user_id INT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE
 );
 CREATE TYPE user_application_status_enum AS ENUM (

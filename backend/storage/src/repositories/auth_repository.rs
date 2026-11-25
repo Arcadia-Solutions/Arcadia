@@ -15,7 +15,7 @@ use arcadia_common::error::{Error, Result};
 use arcadia_shared::tracker::models::user::APIInsertUser;
 use argon2::{
     Argon2,
-    password_hash::{PasswordHash, PasswordVerifier},
+    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString, rand_core::OsRng},
 };
 use chrono::{DateTime, Duration, Utc};
 use rand::{
@@ -35,6 +35,15 @@ const API_KEY_LENGTH: usize = 40;
 fn hash_api_key(api_key: &str) -> [u8; 32] {
     Sha256::digest(api_key.as_bytes()).into()
 }
+
+/// Verified against when the username of a login does not exist, so that answering takes as long
+/// as for an existing user and the response time does not reveal which usernames exist.
+static DUMMY_PASSWORD_HASH: LazyLock<String> = LazyLock::new(|| {
+    Argon2::default()
+        .hash_password(b"dummy password", &SaltString::generate(&mut OsRng))
+        .unwrap()
+        .to_string()
+});
 
 pub static PASSWORD_RESET_TOKEN_DURATION: LazyLock<Duration> = LazyLock::new(|| Duration::days(1));
 
@@ -154,20 +163,19 @@ impl ConnectionPool {
             "#,
             login.username
         )
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|e| {
-            log::debug!("Error fetching user: {:?}", e);
-            Error::WrongUsernameOrPassword
-        })?;
+        .fetch_optional(&self.pool)
+        .await?;
 
-        let parsed_hash = PasswordHash::new(&user.password_hash);
-
+        let password_hash = user
+            .as_ref()
+            .map_or(DUMMY_PASSWORD_HASH.as_str(), |user| &user.password_hash);
+        let parsed_hash =
+            PasswordHash::new(password_hash).map_err(|_| Error::WrongUsernameOrPassword)?;
         Argon2::default()
-            .verify_password(login.password.as_bytes(), &parsed_hash.unwrap())
+            .verify_password(login.password.as_bytes(), &parsed_hash)
             .map_err(|_| Error::WrongUsernameOrPassword)?;
 
-        Ok(user)
+        user.ok_or(Error::WrongUsernameOrPassword)
     }
 
     /// Finds the user owning the given API key and the scopes granted to that key, while

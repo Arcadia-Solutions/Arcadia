@@ -324,6 +324,29 @@ async fn test_login_with_banned_user(pool: PgPool) {
 }
 
 #[sqlx::test]
+async fn test_login_answers_the_same_for_unknown_username_and_wrong_password(pool: PgPool) {
+    let service = create_test_app(
+        Arc::new(ConnectionPool::with_pg_pool(pool)),
+        MockRedisPool::default(),
+    )
+    .await;
+
+    for username in ["admin", "unknown_user"] {
+        let req = TestRequest::post()
+            .uri("/api/auth/login")
+            .set_json(serde_json::json!({
+                "username": username,
+                "password": "wrong_password",
+                "remember_me": false,
+            }))
+            .to_request();
+
+        let resp = call_service(&service, req).await;
+        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    }
+}
+
+#[sqlx::test]
 async fn test_login_with_schema_admin(pool: PgPool) {
     let service = create_test_app(
         Arc::new(ConnectionPool::with_pg_pool(pool)),

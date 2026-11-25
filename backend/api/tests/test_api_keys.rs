@@ -203,3 +203,19 @@ async fn test_unknown_api_key_is_rejected(pool: PgPool) {
     let response = test::call_service(&service, request).await;
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 }
+
+#[sqlx::test(fixtures("with_test_users"))]
+async fn test_non_ascii_api_key_is_rejected(pool: PgPool) {
+    let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
+    let service = create_test_app(pool, MockRedisPool::default()).await;
+
+    let request = test::TestRequest::get()
+        .uri("/api/users/me")
+        .insert_header((
+            "api-key",
+            actix_web::http::header::HeaderValue::from_bytes(b"\x80").unwrap(),
+        ))
+        .to_request();
+    let response = test::call_service(&service, request).await;
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+}

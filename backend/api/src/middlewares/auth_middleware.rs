@@ -59,7 +59,9 @@ pub async fn authenticate_user<R: RedisPoolInterface + 'static>(
     if let Some(bearer) = bearer {
         validate_bearer_auth::<R>(req, bearer).await
     } else if let Some(api_key) = req.headers().get("api-key") {
-        let api_key = api_key.to_str().expect("api_key malformed").to_owned();
+        let Ok(api_key) = api_key.to_str().map(str::to_owned) else {
+            return Err((ErrorUnauthorized("malformed API key"), req));
+        };
         validate_user_api_key::<R>(req, &api_key).await
     } else {
         Err((

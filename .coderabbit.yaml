@@ -1,6 +1,6 @@
 reviews:
   path_filters:
-    - "!.sqlx"
+    - "!.sqlx/**"
   auto_review:
     ignore_usernames:
       - "renovate[bot]"

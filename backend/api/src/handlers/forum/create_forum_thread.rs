@@ -4,6 +4,7 @@ use actix_web::{
     web::{Data, Json},
 };
 use arcadia_common::error::Result;
+use arcadia_storage::models::forum::ForumItemId;
 use arcadia_storage::{
     models::{
         forum::{ForumThread, UserCreatedForumThread},
@@ -32,6 +33,12 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 ) -> Result<HttpResponse> {
     arc.pool
         .require_permission(user.sub, &UserPermission::CreateForumThread, req.path())
+        .await?;
+    arc.pool
+        .ensure_forum_item_visible(
+            user.sub,
+            ForumItemId::SubCategory(forum_thread.forum_sub_category_id),
+        )
         .await?;
 
     let forum_thread = arc

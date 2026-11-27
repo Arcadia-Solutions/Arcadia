@@ -32,6 +32,10 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     user: Authdata,
 ) -> Result<HttpResponse> {
     arc.pool
+        .ensure_forum_thread_visible(user.sub, query.thread_id)
+        .await?;
+
+    arc.pool
         .create_subscription_forum_thread_posts(query.thread_id, user.sub)
         .await?;
 

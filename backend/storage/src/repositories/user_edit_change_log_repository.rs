@@ -9,24 +9,12 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
+use sqlx::PgConnection;
 
 impl ConnectionPool {
     pub async fn create_user_edit_change_log(&self, log: &NewUserEditChangeLog) -> Result<()> {
-        sqlx::query!(
-            r#"
-            INSERT INTO user_edit_change_logs (item_type, item_id, edited_by_id, edits)
-            VALUES ($1, $2, $3, $4)
-            "#,
-            log.item_type,
-            log.item_id,
-            log.edited_by_id,
-            log.edits
-        )
-        .execute(&self.pool)
-        .await
-        .map_err(Error::CouldNotCreateUserEditChangeLog)?;
-
-        Ok(())
+        let mut connection = self.pool.acquire().await?;
+        insert_user_edit_change_log(&mut connection, log).await
     }
 
     pub async fn delete_user_edit_change_log(&self, id: i64) -> Result<()> {
@@ -136,4 +124,26 @@ impl ConnectionPool {
             page_size: query.page_size as u32,
         })
     }
+}
+
+/// Lets the change log be written in the same transaction as the edit it describes
+pub(crate) async fn insert_user_edit_change_log(
+    connection: &mut PgConnection,
+    log: &NewUserEditChangeLog,
+) -> Result<()> {
+    sqlx::query!(
+        r#"
+        INSERT INTO user_edit_change_logs (item_type, item_id, edited_by_id, edits)
+        VALUES ($1, $2, $3, $4)
+        "#,
+        log.item_type,
+        log.item_id,
+        log.edited_by_id,
+        log.edits
+    )
+    .execute(connection)
+    .await
+    .map_err(Error::CouldNotCreateUserEditChangeLog)?;
+
+    Ok(())
 }

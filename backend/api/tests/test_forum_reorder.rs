@@ -28,7 +28,10 @@ async fn test_reorder_categories(pool: PgPool) {
     // Create three categories — they get incremental sort_order
     let mut category_ids = Vec::new();
     for name in ["Alpha", "Beta", "Gamma"] {
-        let body = UserCreatedForumCategory { name: name.into() };
+        let body = UserCreatedForumCategory {
+            name: name.into(),
+            allowed_user_ids: vec![],
+        };
         let req = test::TestRequest::post()
             .uri("/api/forum/category")
             .insert_header(auth_header(&staff.token))
@@ -133,6 +136,7 @@ async fn test_reorder_sub_categories(pool: PgPool) {
         let body = UserCreatedForumSubCategory {
             forum_category_id: 100,
             name: name.into(),
+            allowed_user_ids: vec![],
             new_threads_restricted: false,
         };
         let req = test::TestRequest::post()
@@ -250,6 +254,7 @@ async fn test_created_categories_get_incremental_sort_order(pool: PgPool) {
 
     let first = UserCreatedForumCategory {
         name: "First Category".into(),
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::post()
@@ -263,6 +268,7 @@ async fn test_created_categories_get_incremental_sort_order(pool: PgPool) {
 
     let second = UserCreatedForumCategory {
         name: "Second Category".into(),
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::post()
@@ -290,6 +296,7 @@ async fn test_created_sub_categories_get_incremental_sort_order(pool: PgPool) {
     let first = UserCreatedForumSubCategory {
         forum_category_id: 100,
         name: "First Sub Category".into(),
+        allowed_user_ids: vec![],
         new_threads_restricted: false,
     };
 
@@ -305,6 +312,7 @@ async fn test_created_sub_categories_get_incremental_sort_order(pool: PgPool) {
     let second = UserCreatedForumSubCategory {
         forum_category_id: 100,
         name: "Second Sub Category".into(),
+        allowed_user_ids: vec![],
         new_threads_restricted: false,
     };
 

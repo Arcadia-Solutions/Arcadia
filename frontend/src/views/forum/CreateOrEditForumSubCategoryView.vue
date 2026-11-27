@@ -1,7 +1,7 @@
 <template>
   <ContentContainer>
     <div class="title">{{ pageTitle }}</div>
-    <Form v-slot="$form" :initialValues="formData" :resolver @submit="onFormSubmit">
+    <Form v-if="!isEditMode || formData.id !== undefined" v-slot="$form" :initialValues="formData" :resolver @submit="onFormSubmit">
       <FloatLabel>
         <InputText v-model="formData.name" name="name" :class="{ 'p-invalid': $form.name?.invalid }" />
         <label for="name">{{ t('forum.subcategory_name') }}</label>
@@ -48,6 +48,11 @@
           <label for="thread_sort_direction">{{ t('forum.thread_sort_direction') }}</label>
         </FloatLabel>
       </div>
+      <div v-if="userStore.permissions.includes('edit_forum_sub_category')" class="allowed-users-field">
+        <ForumItemClassVisibility v-if="classVisibility" :classVisibility />
+        <div>{{ t('forum.allowed_users_sub_category') }}</div>
+        <AllowedUsersEditor v-model="allowedUsers" />
+      </div>
       <div class="actions">
         <Button type="submit" :label="isEditMode ? t('general.save') : t('general.create')" :loading="loading" />
       </div>
@@ -62,13 +67,22 @@ import { useI18n } from 'vue-i18n'
 import { Button, Checkbox, Dropdown, FloatLabel, InputText, Message } from 'primevue'
 import { Form, type FormResolverOptions, type FormSubmitEvent } from '@primevue/forms'
 import ContentContainer from '@/components/ContentContainer.vue'
+import AllowedUsersEditor from '@/components/forum/AllowedUsersEditor.vue'
+import ForumItemClassVisibility from '@/components/forum/ForumItemClassVisibility.vue'
+import { useUserStore } from '@/stores/user'
 import { createForumSubCategory, editForumSubCategory, getForumSubCategoryThreads } from '@/services/api-schema/api'
-import { ForumThreadSortBy, ForumThreadSortDirection } from '@/services/api-schema'
+import {
+  ForumThreadSortBy,
+  ForumThreadSortDirection,
+  type ForumItemClassVisibility as ForumItemClassVisibilityType,
+  type UserLite,
+} from '@/services/api-schema'
 import { showToast } from '@/main'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 
 const isEditMode = computed(() => route.path.includes('/edit'))
 const loading = ref(false)
@@ -86,6 +100,8 @@ const formData = ref<{
   thread_sort_by: ForumThreadSortBy.LatestPost,
   thread_sort_direction: ForumThreadSortDirection.Descending,
 })
+const allowedUsers = ref<UserLite[]>([])
+const classVisibility = ref<ForumItemClassVisibilityType | null>(null)
 
 const pageTitle = computed(() => {
   if (isEditMode.value) {
@@ -106,45 +122,45 @@ const resolver = ({ values }: FormResolverOptions) => {
   return { errors }
 }
 
-const onFormSubmit = async ({ valid }: FormSubmitEvent) => {
+const onFormSubmit = ({ valid }: FormSubmitEvent) => {
   if (!valid) return
   loading.value = true
-  try {
-    if (isEditMode.value) {
-      await editForumSubCategory({
+  const allowedUserIds = allowedUsers.value.map((user) => user.id)
+  const savedSubCategory = isEditMode.value
+    ? editForumSubCategory({
         id: formData.value.id!,
         name: formData.value.name,
         new_threads_restricted: formData.value.new_threads_restricted,
         thread_sort_by: formData.value.thread_sort_by,
         thread_sort_direction: formData.value.thread_sort_direction,
+        allowed_user_ids: allowedUserIds,
       })
-    } else {
-      await createForumSubCategory({
+    : createForumSubCategory({
         forum_category_id: formData.value.forum_category_id!,
         name: formData.value.name,
         new_threads_restricted: formData.value.new_threads_restricted,
+        allowed_user_ids: allowedUserIds,
       })
-    }
-    router.go(-1)
-  } catch {
-    loading.value = false
-  }
+  savedSubCategory.then(() => router.go(-1)).finally(() => (loading.value = false))
 }
 
-onMounted(async () => {
+onMounted(() => {
   if (isEditMode.value) {
-    const subCategoryId = Number(route.params.id)
-    const subCategory = await getForumSubCategoryThreads(subCategoryId)
-
-    formData.value = {
-      id: subCategory.id,
-      name: subCategory.name,
-      forum_category_id: subCategory.category.id,
-      new_threads_restricted: subCategory.new_threads_restricted,
-      thread_sort_by: subCategory.thread_sort_by,
-      thread_sort_direction: subCategory.thread_sort_direction,
-    }
-    categoryName.value = subCategory.category.name
+    getForumSubCategoryThreads(Number(route.params.id))
+      .then((subCategory) => {
+        formData.value = {
+          id: subCategory.id,
+          name: subCategory.name,
+          forum_category_id: subCategory.category.id,
+          new_threads_restricted: subCategory.new_threads_restricted,
+          thread_sort_by: subCategory.thread_sort_by,
+          thread_sort_direction: subCategory.thread_sort_direction,
+        }
+        allowedUsers.value = subCategory.allowed_users ?? []
+        classVisibility.value = subCategory.class_visibility ?? null
+        categoryName.value = subCategory.category.name
+      })
+      .catch(() => router.push('/forum'))
   } else {
     const categoryId = route.query.categoryId
     const catName = route.query.categoryName
@@ -173,6 +189,12 @@ onMounted(async () => {
 }
 .sort-direction-field {
   margin-top: 20px;
+}
+.allowed-users-field {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .actions {
   margin-top: 20px;

@@ -1,6 +1,6 @@
 <template>
   <ContentContainer :title="isEditMode ? t('forum.edit_category') : t('forum.create_category')">
-    <Form v-slot="$form" :initialValues="formData" :resolver @submit="onFormSubmit">
+    <Form v-if="!isEditMode || formData.id !== undefined" v-slot="$form" :initialValues="formData" :resolver @submit="onFormSubmit">
       <FloatLabel>
         <InputText v-model="formData.name" name="name" :class="{ 'p-invalid': $form.name?.invalid }" />
         <label for="name">{{ t('forum.category_name') }}</label>
@@ -8,6 +8,12 @@
       <Message v-if="$form.name?.invalid" severity="error" size="small" variant="simple">
         {{ $form.name.error?.message }}
       </Message>
+
+      <div v-if="userStore.permissions.includes('edit_forum_category')" class="allowed-users-field">
+        <ForumItemClassVisibility v-if="classVisibility" :classVisibility />
+        <div>{{ t('forum.allowed_users') }}</div>
+        <AllowedUsersEditor v-model="allowedUsers" />
+      </div>
 
       <div class="actions">
         <Button type="submit" :label="isEditMode ? t('general.save') : t('general.create')" :loading="loading" />
@@ -23,21 +29,32 @@ import { useI18n } from 'vue-i18n'
 import { Button, FloatLabel, InputText, Message } from 'primevue'
 import { Form, type FormResolverOptions, type FormSubmitEvent } from '@primevue/forms'
 import ContentContainer from '@/components/ContentContainer.vue'
-import { createForumCategory, editForumCategory, getForum, type EditedForumCategory, type UserCreatedForumCategory } from '@/services/api-schema/api'
-import { showToast } from '@/main'
+import AllowedUsersEditor from '@/components/forum/AllowedUsersEditor.vue'
+import ForumItemClassVisibility from '@/components/forum/ForumItemClassVisibility.vue'
+import { useUserStore } from '@/stores/user'
+import {
+  createForumCategory,
+  editForumCategory,
+  getForumCategory,
+  type ForumItemClassVisibility as ForumItemClassVisibilityType,
+  type UserLite,
+} from '@/services/api-schema/api'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 
 const isEditMode = computed(() => route.path.includes('/edit'))
 const loading = ref(false)
-const formData = ref<UserCreatedForumCategory | EditedForumCategory>({
+const formData = ref<{ id?: number; name: string }>({
   name: '',
 })
+const allowedUsers = ref<UserLite[]>([])
+const classVisibility = ref<ForumItemClassVisibilityType | null>(null)
 
 const resolver = ({ values }: FormResolverOptions) => {
-  const errors: Partial<Record<keyof UserCreatedForumCategory, { message: string }[]>> = {}
+  const errors: Record<string, { message: string }[]> = {}
 
   if (!values.name || values.name.trim().length === 0) {
     errors.name = [{ message: t('error.field_required') }]
@@ -48,43 +65,39 @@ const resolver = ({ values }: FormResolverOptions) => {
   return { errors }
 }
 
-const onFormSubmit = async ({ valid }: FormSubmitEvent) => {
+const onFormSubmit = ({ valid }: FormSubmitEvent) => {
   if (!valid) return
   loading.value = true
-  try {
-    if (isEditMode.value) {
-      await editForumCategory(formData.value as EditedForumCategory)
-    } else {
-      await createForumCategory(formData.value as UserCreatedForumCategory)
-    }
-    router.push('/forum')
-  } catch {
-    loading.value = false
-  }
+  const allowedUserIds = allowedUsers.value.map((user) => user.id)
+  const savedCategory = isEditMode.value
+    ? editForumCategory({ id: formData.value.id!, name: formData.value.name, allowed_user_ids: allowedUserIds })
+    : createForumCategory({ name: formData.value.name, allowed_user_ids: allowedUserIds })
+  savedCategory.then(() => router.push('/forum')).finally(() => (loading.value = false))
 }
 
-onMounted(async () => {
+onMounted(() => {
   if (isEditMode.value) {
-    const categoryId = Number(route.params.id)
-
-    // Fetch forum overview to get the category data
-    const forumOverview = await getForum()
-    const category = forumOverview.forum_categories.find((cat) => cat.id === categoryId)
-
-    if (category) {
-      formData.value = {
-        id: category.id,
-        name: category.name,
-      }
-    } else {
-      showToast('', 'forum category not found', 'error', 2000)
-      router.push('/forum')
-    }
+    getForumCategory(Number(route.params.id))
+      .then((category) => {
+        formData.value = {
+          id: category.id,
+          name: category.name,
+        }
+        allowedUsers.value = category.allowed_users
+        classVisibility.value = category.class_visibility
+      })
+      .catch(() => router.push('/forum'))
   }
 })
 </script>
 
 <style scoped>
+.allowed-users-field {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 .actions {
   margin-top: 20px;
   display: flex;

@@ -4,6 +4,7 @@ use crate::{
         CreateSiteHighlight, EditSiteHighlight, SiteHighlight, SiteHighlightForHome,
         SiteHighlightItemType,
     },
+    repositories::forum_access_repository::ensure_forum_thread_visible_with,
 };
 use arcadia_common::error::{Error, Result};
 
@@ -143,6 +144,7 @@ impl ConnectionPool {
         &self,
         id: i32,
         payload: &EditSiteHighlight,
+        user_id: i32,
     ) -> Result<SiteHighlight> {
         let mut tx = self.pool.begin().await?;
 
@@ -173,6 +175,18 @@ impl ConnectionPool {
         let new_item_type = payload.item_type.unwrap_or(existing.item_type);
         let new_item_id = payload.item_id.unwrap_or(existing.item_id);
         let new_forum_thread_id = payload.forum_thread_id.unwrap_or(existing.forum_thread_id);
+
+        let key_changed = existing.item_type != new_item_type
+            || existing.item_id != new_item_id
+            || existing.forum_thread_id != new_forum_thread_id;
+
+        // the threads whose related item links are touched must be visible to the editor
+        if key_changed || payload.forum_thread_id.is_some() {
+            ensure_forum_thread_visible_with(&mut tx, user_id, new_forum_thread_id).await?;
+        }
+        if key_changed && payload.remove_previous_related_thread {
+            ensure_forum_thread_visible_with(&mut tx, user_id, existing.forum_thread_id).await?;
+        }
 
         let (new_title_group_id, new_series_id, new_artist_id) =
             split_item_id(new_item_type, new_item_id);
@@ -215,10 +229,6 @@ impl ConnectionPool {
         .fetch_one(&mut *tx)
         .await
         .map_err(|e| map_site_highlight_write_error(e, Error::CouldNotEditSiteHighlight))?;
-
-        let key_changed = existing.item_type != new_item_type
-            || existing.item_id != new_item_id
-            || existing.forum_thread_id != new_forum_thread_id;
 
         if key_changed {
             if payload.remove_previous_related_thread {

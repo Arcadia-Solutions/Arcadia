@@ -3,7 +3,7 @@ use actix_web::{
     HttpRequest, HttpResponse,
     web::{Data, Json},
 };
-use arcadia_common::error::{Error, Result};
+use arcadia_common::error::Result;
 use arcadia_storage::{
     models::user::{UserClass, UserCreatedUserClass, UserPermission},
     redis::RedisPoolInterface,
@@ -32,15 +32,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .require_permission(user.sub, &UserPermission::CreateUserClass, req.path())
         .await?;
 
-    // name should be 3-30 characters
-    if form.name.len() < 3 || form.name.len() > 30 {
-        return Err(Error::InvalidUserClassName);
-    }
-
-    // name should be alphanumeric + underscores only
-    if !form.name.chars().all(|c| c.is_alphanumeric() || c == '_') {
-        return Err(Error::InvalidUserClassName);
-    }
+    super::validate_user_class_name(&form.name)?;
 
     let user_class = arc.pool.create_user_class(&form).await?;
 

@@ -33,6 +33,12 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     arc.pool
         .require_permission(user.sub, &UserPermission::CreateForumCategory, req.path())
         .await?;
+    // choosing the allowed users is part of editing the item
+    if !forum_category.allowed_user_ids.is_empty() {
+        arc.pool
+            .require_permission(user.sub, &UserPermission::EditForumCategory, req.path())
+            .await?;
+    }
 
     let created_category = arc
         .pool

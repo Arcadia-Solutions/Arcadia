@@ -25,8 +25,12 @@ use arcadia_storage::{
 pub async fn exec<R: RedisPoolInterface + 'static>(
     query: Query<GetForumPostReactionUsersQuery>,
     arc: Data<Arcadia<R>>,
-    _user: Authdata,
+    user: Authdata,
 ) -> Result<HttpResponse> {
+    arc.pool
+        .ensure_forum_post_visible(user.sub, query.forum_post_id)
+        .await?;
+
     let grouped_users = arc
         .pool
         .find_forum_post_reaction_users(query.forum_post_id)

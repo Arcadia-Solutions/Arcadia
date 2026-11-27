@@ -30,6 +30,9 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     arc.pool
         .require_permission(user.sub, &UserPermission::PinForumThread, req.path())
         .await?;
+    arc.pool
+        .ensure_forum_thread_visible(user.sub, form.thread_id)
+        .await?;
 
     arc.pool.pin_forum_thread(&form).await?;
 

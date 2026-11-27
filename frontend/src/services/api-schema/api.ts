@@ -1138,6 +1138,7 @@ export interface EditedEmojiForm {
     'unicode_character'?: string | null;
 }
 export interface EditedForumCategory {
+    'allowed_user_ids': Array<number>;
     'id': number;
     'name': string;
 }
@@ -1148,6 +1149,7 @@ export interface EditedForumPost {
     'sticky': boolean;
 }
 export interface EditedForumSubCategory {
+    'allowed_user_ids': Array<number>;
     'id': number;
     'name': string;
     'new_threads_restricted': boolean;
@@ -1282,6 +1284,10 @@ export interface EditedUserClass {
     'required_torrent_uploads': number;
     'required_torrent_uploads_in_unique_title_groups': number;
     'required_uploaded': number;
+}
+export interface EditedUserClassForbiddenForumItems {
+    'category_ids': Array<number>;
+    'sub_category_ids': Array<number>;
 }
 export interface EditedUserStaffNote {
     'content': string;
@@ -1467,6 +1473,18 @@ export interface ForumCategory {
     'name': string;
     'sort_order': number;
 }
+/**
+ * A forum category along with who can see it
+ */
+export interface ForumCategoryEnriched {
+    'created_at': string;
+    'created_by_id': number;
+    'id': number;
+    'name': string;
+    'sort_order': number;
+    'allowed_users': Array<UserLite>;
+    'class_visibility': ForumItemClassVisibility;
+}
 export interface ForumCategoryHierarchy {
     'id': number;
     'name': string;
@@ -1475,6 +1493,13 @@ export interface ForumCategoryHierarchy {
 export interface ForumCategoryLite {
     'id': number;
     'name': string;
+}
+/**
+ * The user classes that can and cannot see a forum item, a sub category being hidden from the classes its category is hidden from
+ */
+export interface ForumItemClassVisibility {
+    'hidden_from_class_names': Array<string>;
+    'visible_to_class_names': Array<string>;
 }
 export interface ForumOverview {
     'forum_categories': Array<ForumCategoryHierarchy>;
@@ -1638,7 +1663,6 @@ export interface ForumStatsResponse {
 export interface ForumSubCategory {
     'created_at': string;
     'created_by_id': number;
-    'forbidden_classes': Array<string>;
     'forum_category_id': number;
     'id': number;
     'name': string;
@@ -1656,8 +1680,15 @@ export interface ForumSubCategoryAllowedPoster {
     'user_id': number;
 }
 export interface ForumSubCategoryHierarchy {
+    /**
+     * only filled for users who can edit the sub category
+     */
+    'allowed_users'?: Array<UserLite> | null;
     'category': ForumCategoryLite;
-    'forbidden_classes': Array<string>;
+    /**
+     * only filled for users who can edit the sub category
+     */
+    'class_visibility'?: ForumItemClassVisibility | null;
     'id': number;
     'is_allowed_poster': boolean;
     'is_subscribed': boolean;
@@ -1850,6 +1881,10 @@ export interface GetForum200Response {
     'data': ForumOverview;
     'side_effects': Array<SideEffect>;
 }
+export interface GetForumCategory200Response {
+    'data': ForumCategoryEnriched;
+    'side_effects': Array<SideEffect>;
+}
 export interface GetForumPostReactionUsers200Response {
     'data': Array<ForumPostReactionUsers>;
     'side_effects': Array<SideEffect>;
@@ -1982,6 +2017,10 @@ export interface GetUserApplicationsQuery {
 }
 
 
+export interface GetUserClassForbiddenForumItems200Response {
+    'data': UserClassForbiddenForumItems;
+    'side_effects': Array<SideEffect>;
+}
 export interface GetUserPermissions200Response {
     'data': Array<UserPermission>;
     'side_effects': Array<SideEffect>;
@@ -5175,6 +5214,13 @@ export interface UserClass {
 export interface UserClassChange {
     'class_name': string;
 }
+/**
+ * Forum items hidden from a user class, limited to the ones the requesting user can see
+ */
+export interface UserClassForbiddenForumItems {
+    'categories': Array<ForumCategoryLite>;
+    'sub_categories': Array<ForumSubCategoryLite>;
+}
 export interface UserClassLockStatus {
     'class_locked': boolean;
 }
@@ -5298,6 +5344,7 @@ export interface UserCreatedEmojiForm {
     'unicode_character'?: string | null;
 }
 export interface UserCreatedForumCategory {
+    'allowed_user_ids': Array<number>;
     'name': string;
 }
 export interface UserCreatedForumPoll {
@@ -5318,6 +5365,7 @@ export interface UserCreatedForumPostReaction {
     'forum_post_id': number;
 }
 export interface UserCreatedForumSubCategory {
+    'allowed_user_ids': Array<number>;
     'forum_category_id': number;
     'name': string;
     'new_threads_restricted': boolean;
@@ -6946,6 +6994,19 @@ export const getForum = async (options?: RawAxiosRequestConfig): Promise<GetForu
     });
     return response.data.data;
 };
+
+
+export const getForumCategory = async (id: number, options?: RawAxiosRequestConfig): Promise<GetForumCategory200Response['data']> => {
+    const response = await globalAxios.request<GetForumCategory200Response>({
+        url: '/api/forum/category',
+        method: 'GET',
+        params: { 'id': id },
+        ...options
+    });
+    return response.data.data;
+};
+
+
 
 
 export const getForumPostReactionUsers = async (forumPostId: number, options?: RawAxiosRequestConfig): Promise<GetForumPostReactionUsers200Response['data']> => {
@@ -9809,6 +9870,24 @@ export const editUserClass = async (request: EditUserClassRequest, options?: Raw
 };
 
 
+export interface EditUserClassForbiddenForumItemsRequest {
+    'name': string;
+    'EditedUserClassForbiddenForumItems': EditedUserClassForbiddenForumItems;
+}
+
+
+
+export const editUserClassForbiddenForumItems = async (request: EditUserClassForbiddenForumItemsRequest, options?: RawAxiosRequestConfig): Promise<GetUserClassForbiddenForumItems200Response['data']> => {
+    const response = await globalAxios.request<GetUserClassForbiddenForumItems200Response>({
+        url: `/api/user-classes/{name}/forbidden-forum-items`.replace('{' + 'name' + '}', String(request['name'])),
+        method: 'PUT',
+        data: request['EditedUserClassForbiddenForumItems'],
+        ...options
+    });
+    return response.data.data;
+};
+
+
 
 
 export const getAllUserClasses = async (options?: RawAxiosRequestConfig): Promise<GetAllUserClasses200Response['data']> => {
@@ -9819,6 +9898,18 @@ export const getAllUserClasses = async (options?: RawAxiosRequestConfig): Promis
     });
     return response.data.data;
 };
+
+
+export const getUserClassForbiddenForumItems = async (name: string, options?: RawAxiosRequestConfig): Promise<GetUserClassForbiddenForumItems200Response['data']> => {
+    const response = await globalAxios.request<GetUserClassForbiddenForumItems200Response>({
+        url: `/api/user-classes/{name}/forbidden-forum-items`.replace('{' + 'name' + '}', String(name)),
+        method: 'GET',
+        ...options
+    });
+    return response.data.data;
+};
+
+
 
 
 

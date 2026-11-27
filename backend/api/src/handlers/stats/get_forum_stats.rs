@@ -32,7 +32,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .require_permission(user.sub, &UserPermission::ViewStatsDetails, req.path())
         .await?;
 
-    let response = arc.pool.get_forum_stats(&query).await?;
+    let response = arc.pool.get_forum_stats(&query, user.sub).await?;
 
     Ok(HttpResponse::Ok().json(response))
 }

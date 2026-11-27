@@ -38,6 +38,6 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .await?;
 
     let id = path.into_inner();
-    let edited = arc.pool.edit_site_highlight(id, &payload).await?;
+    let edited = arc.pool.edit_site_highlight(id, &payload, user.sub).await?;
     Ok(HttpResponse::Ok().json(edited))
 }

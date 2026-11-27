@@ -5,7 +5,10 @@ use actix_web::{
 };
 use arcadia_common::error::Result;
 use arcadia_storage::{
-    models::{forum::ForumSubCategoryAllowedPoster, user::UserPermission},
+    models::{
+        forum::{ForumItemId, ForumSubCategoryAllowedPoster},
+        user::UserPermission,
+    },
     redis::RedisPoolInterface,
 };
 
@@ -29,6 +32,12 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 ) -> Result<HttpResponse> {
     arc.pool
         .require_permission(user.sub, &UserPermission::EditForumSubCategory, req.path())
+        .await?;
+    arc.pool
+        .ensure_forum_item_visible(
+            user.sub,
+            ForumItemId::SubCategory(allowed_poster.forum_sub_category_id),
+        )
         .await?;
 
     arc.pool

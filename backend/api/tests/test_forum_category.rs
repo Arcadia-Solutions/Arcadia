@@ -27,6 +27,7 @@ async fn test_staff_can_create_category(pool: PgPool) {
 
     let create_body = UserCreatedForumCategory {
         name: "New Category".into(),
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::post()
@@ -50,6 +51,7 @@ async fn test_non_staff_cannot_create_category(pool: PgPool) {
 
     let create_body = UserCreatedForumCategory {
         name: "New Category".into(),
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::post()
@@ -69,6 +71,7 @@ async fn test_create_category_without_auth(pool: PgPool) {
 
     let create_body = UserCreatedForumCategory {
         name: "New Category".into(),
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::post()
@@ -90,7 +93,10 @@ async fn test_create_category_with_empty_name(pool: PgPool) {
     )
     .await;
 
-    let create_body = UserCreatedForumCategory { name: "".into() };
+    let create_body = UserCreatedForumCategory {
+        name: "".into(),
+        allowed_user_ids: vec![],
+    };
 
     let req = test::TestRequest::post()
         .uri("/api/forum/category")
@@ -112,7 +118,10 @@ async fn test_create_category_with_whitespace_only_name(pool: PgPool) {
     )
     .await;
 
-    let create_body = UserCreatedForumCategory { name: "   ".into() };
+    let create_body = UserCreatedForumCategory {
+        name: "   ".into(),
+        allowed_user_ids: vec![],
+    };
 
     let req = test::TestRequest::post()
         .uri("/api/forum/category")
@@ -138,6 +147,7 @@ async fn test_staff_can_edit_category(pool: PgPool) {
     let edit_body = EditedForumCategory {
         id: 100,
         name: "Updated Category Name".into(),
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()
@@ -162,6 +172,7 @@ async fn test_non_staff_cannot_edit_category(pool: PgPool) {
     let edit_body = EditedForumCategory {
         id: 100,
         name: "Updated Category Name".into(),
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()
@@ -182,6 +193,7 @@ async fn test_edit_category_without_auth(pool: PgPool) {
     let edit_body = EditedForumCategory {
         id: 100,
         name: "Updated Category Name".into(),
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()
@@ -203,6 +215,7 @@ async fn test_edit_nonexistent_category(pool: PgPool) {
     let edit_body = EditedForumCategory {
         id: 999,
         name: "Updated Category Name".into(),
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()
@@ -225,6 +238,7 @@ async fn test_edit_category_with_empty_name(pool: PgPool) {
     let edit_body = EditedForumCategory {
         id: 100,
         name: "".into(),
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()
@@ -247,6 +261,7 @@ async fn test_edit_category_with_whitespace_only_name(pool: PgPool) {
     let edit_body = EditedForumCategory {
         id: 100,
         name: "   ".into(),
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()
@@ -273,6 +288,7 @@ async fn test_create_and_edit_category_flow(pool: PgPool) {
     // Create a category
     let create_body = UserCreatedForumCategory {
         name: "Initial Category".into(),
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::post()
@@ -291,6 +307,7 @@ async fn test_create_and_edit_category_flow(pool: PgPool) {
     let edit_body = EditedForumCategory {
         id: category_id,
         name: "Edited Category".into(),
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()

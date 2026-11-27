@@ -25,6 +25,7 @@ mod test_edition_group;
 mod test_emojis;
 mod test_expired_warnings;
 mod test_external_sources;
+mod test_forum_access;
 mod test_forum_category;
 mod test_forum_delete;
 mod test_forum_poll;

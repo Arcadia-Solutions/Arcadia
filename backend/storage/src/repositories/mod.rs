@@ -9,6 +9,7 @@ pub mod css_sheet_repository;
 pub mod donation_repository;
 pub mod edition_group_repository;
 pub mod emojis_repository;
+pub mod forum_access_repository;
 pub mod forum_repository;
 pub mod forum_stats_repository;
 pub mod gift_repository;

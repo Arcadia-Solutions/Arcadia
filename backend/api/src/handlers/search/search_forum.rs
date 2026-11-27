@@ -1,4 +1,4 @@
-use crate::Arcadia;
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use actix_web::{
     HttpResponse,
     web::{Data, Query},
@@ -26,8 +26,9 @@ use arcadia_storage::{
 pub async fn exec<R: RedisPoolInterface + 'static>(
     query: Query<ForumSearchQuery>,
     arc: Data<Arcadia<R>>,
+    user: Authdata,
 ) -> Result<HttpResponse> {
-    let results = arc.pool.search_forum_threads(&query).await?;
+    let results = arc.pool.search_forum_threads(&query, user.sub).await?;
 
     Ok(HttpResponse::Ok().json(results))
 }

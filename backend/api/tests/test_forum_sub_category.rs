@@ -4,8 +4,8 @@ use actix_web::http::StatusCode;
 use actix_web::test;
 use arcadia_storage::connection_pool::ConnectionPool;
 use arcadia_storage::models::forum::{
-    EditedForumSubCategory, ForumSubCategory, ForumThreadSortBy, ForumThreadSortDirection,
-    UserCreatedForumSubCategory,
+    EditedForumSubCategory, ForumItemId, ForumSubCategory, ForumThreadSortBy,
+    ForumThreadSortDirection, UserCreatedForumSubCategory,
 };
 use common::{TestUser, auth_header, create_test_app_and_login};
 use mocks::mock_redis::MockRedisPool;
@@ -20,7 +20,7 @@ use std::sync::Arc;
 async fn test_staff_can_create_sub_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, staff) = create_test_app_and_login(
-        pool,
+        pool.clone(),
         MockRedisPool::default(),
         TestUser::CreateForumSubCategory,
     )
@@ -29,6 +29,7 @@ async fn test_staff_can_create_sub_category(pool: PgPool) {
     let create_body = UserCreatedForumSubCategory {
         forum_category_id: 100,
         name: "New Sub Category".into(),
+        allowed_user_ids: vec![],
         new_threads_restricted: false,
     };
 
@@ -44,6 +45,27 @@ async fn test_staff_can_create_sub_category(pool: PgPool) {
     assert_eq!(sub_category.name, "New Sub Category");
     assert_eq!(sub_category.forum_category_id, 100);
     assert_eq!(sub_category.created_by_id, 109);
+    assert!(
+        pool.find_forum_item_allowed_users(ForumItemId::SubCategory(sub_category.id))
+            .await
+            .unwrap()
+            .is_empty()
+    );
+
+    // choosing the allowed users requires edit_forum_sub_category
+    let create_body = UserCreatedForumSubCategory {
+        forum_category_id: 100,
+        name: "Restricted Sub Category".into(),
+        allowed_user_ids: vec![109],
+        new_threads_restricted: false,
+    };
+    let req = test::TestRequest::post()
+        .uri("/api/forum/sub-category")
+        .insert_header(auth_header(&staff.token))
+        .set_json(&create_body)
+        .to_request();
+    let resp = test::call_service(&service, req).await;
+    assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
 #[sqlx::test(fixtures("with_test_users", "with_test_forum_category"))]
@@ -55,6 +77,7 @@ async fn test_non_staff_cannot_create_sub_category(pool: PgPool) {
     let create_body = UserCreatedForumSubCategory {
         forum_category_id: 100,
         name: "New Sub Category".into(),
+        allowed_user_ids: vec![],
         new_threads_restricted: false,
     };
 
@@ -76,6 +99,7 @@ async fn test_create_sub_category_without_auth(pool: PgPool) {
     let create_body = UserCreatedForumSubCategory {
         forum_category_id: 100,
         name: "New Sub Category".into(),
+        allowed_user_ids: vec![],
         new_threads_restricted: false,
     };
 
@@ -101,6 +125,7 @@ async fn test_create_sub_category_with_empty_name(pool: PgPool) {
     let create_body = UserCreatedForumSubCategory {
         forum_category_id: 100,
         name: "".into(),
+        allowed_user_ids: vec![],
         new_threads_restricted: false,
     };
 
@@ -127,6 +152,7 @@ async fn test_create_sub_category_with_whitespace_only_name(pool: PgPool) {
     let create_body = UserCreatedForumSubCategory {
         forum_category_id: 100,
         name: "   ".into(),
+        allowed_user_ids: vec![],
         new_threads_restricted: false,
     };
 
@@ -164,6 +190,7 @@ async fn test_staff_can_edit_sub_category(pool: PgPool) {
         new_threads_restricted: false,
         thread_sort_by: ForumThreadSortBy::LatestPost,
         thread_sort_direction: ForumThreadSortDirection::Descending,
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()
@@ -195,6 +222,7 @@ async fn test_non_staff_cannot_edit_sub_category(pool: PgPool) {
         new_threads_restricted: false,
         thread_sort_by: ForumThreadSortBy::LatestPost,
         thread_sort_direction: ForumThreadSortDirection::Descending,
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()
@@ -222,6 +250,7 @@ async fn test_edit_sub_category_without_auth(pool: PgPool) {
         new_threads_restricted: false,
         thread_sort_by: ForumThreadSortBy::LatestPost,
         thread_sort_direction: ForumThreadSortDirection::Descending,
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()
@@ -249,6 +278,7 @@ async fn test_edit_nonexistent_sub_category(pool: PgPool) {
         new_threads_restricted: false,
         thread_sort_by: ForumThreadSortBy::LatestPost,
         thread_sort_direction: ForumThreadSortDirection::Descending,
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()
@@ -281,6 +311,7 @@ async fn test_edit_sub_category_with_empty_name(pool: PgPool) {
         new_threads_restricted: false,
         thread_sort_by: ForumThreadSortBy::LatestPost,
         thread_sort_direction: ForumThreadSortDirection::Descending,
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()
@@ -313,6 +344,7 @@ async fn test_edit_sub_category_with_whitespace_only_name(pool: PgPool) {
         new_threads_restricted: false,
         thread_sort_by: ForumThreadSortBy::LatestPost,
         thread_sort_direction: ForumThreadSortDirection::Descending,
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()
@@ -342,6 +374,7 @@ async fn test_new_sub_category_defaults_to_latest_post_sort(pool: PgPool) {
     let create_body = UserCreatedForumSubCategory {
         forum_category_id: 100,
         name: "New Sub Category".into(),
+        allowed_user_ids: vec![],
         new_threads_restricted: false,
     };
 
@@ -384,6 +417,7 @@ async fn test_staff_can_change_thread_sort_direction(pool: PgPool) {
         new_threads_restricted: false,
         thread_sort_by: ForumThreadSortBy::LatestPost,
         thread_sort_direction: ForumThreadSortDirection::Ascending,
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()
@@ -421,6 +455,7 @@ async fn test_staff_can_change_thread_sort_by(pool: PgPool) {
         new_threads_restricted: false,
         thread_sort_by: ForumThreadSortBy::PostsAmount,
         thread_sort_direction: ForumThreadSortDirection::Descending,
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()
@@ -456,6 +491,7 @@ async fn test_create_and_edit_sub_category_flow(pool: PgPool) {
     let create_body = UserCreatedForumSubCategory {
         forum_category_id: 100,
         name: "Initial Sub Category".into(),
+        allowed_user_ids: vec![],
         new_threads_restricted: false,
     };
 
@@ -479,6 +515,7 @@ async fn test_create_and_edit_sub_category_flow(pool: PgPool) {
         new_threads_restricted: false,
         thread_sort_by: ForumThreadSortBy::LatestPost,
         thread_sort_direction: ForumThreadSortDirection::Descending,
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()

@@ -51,20 +51,18 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
             .await?;
     }
 
-    if let Some(edits) = compute_diff(&original_thread, &edited_forum_thread, &["id"]) {
-        arc.pool
-            .create_user_edit_change_log(&NewUserEditChangeLog {
-                item_type: "forum_thread".to_string(),
-                item_id: original_thread.id,
-                edited_by_id: user.sub,
-                edits,
-            })
-            .await?;
-    }
+    let change_log = compute_diff(&original_thread, &edited_forum_thread, &["id"]).map(|edits| {
+        NewUserEditChangeLog {
+            item_type: "forum_thread".to_string(),
+            item_id: original_thread.id,
+            edited_by_id: user.sub,
+            edits,
+        }
+    });
 
     let updated_thread = arc
         .pool
-        .update_forum_thread(&edited_forum_thread, user.sub)
+        .update_forum_thread(&edited_forum_thread, user.sub, change_log.as_ref())
         .await?;
 
     Ok(HttpResponse::Ok().json(updated_thread))

@@ -46,7 +46,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         ));
     }
 
-    let results = arc.pool.search_forum_posts(&query).await?;
+    let results = arc.pool.search_forum_posts(&query, user.sub).await?;
 
     Ok(HttpResponse::Ok().json(results))
 }

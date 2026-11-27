@@ -30,6 +30,10 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     arc.pool
         .require_permission(user.sub, &UserPermission::EditForumCategory, req.path())
         .await?;
+    let category_ids: Vec<i32> = reorder.categories.iter().map(|entry| entry.id).collect();
+    arc.pool
+        .ensure_forum_items_visible(user.sub, &category_ids, &[])
+        .await?;
 
     arc.pool.reorder_forum_categories(&reorder).await?;
 

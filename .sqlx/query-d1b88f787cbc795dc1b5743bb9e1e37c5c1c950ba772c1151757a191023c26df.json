@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM forum_sub_category_allowed_users WHERE forum_sub_category_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d1b88f787cbc795dc1b5743bb9e1e37c5c1c950ba772c1151757a191023c26df"
+}

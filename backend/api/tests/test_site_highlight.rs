@@ -57,7 +57,10 @@ async fn test_create_site_highlight_inserts_related_thread(pool: PgPool) {
     assert_eq!(created.forum_thread_id, 1);
     assert!(created.enabled);
 
-    let related = pool.find_related_forum_threads_for_series(1).await.unwrap();
+    let related = pool
+        .find_related_forum_threads_for_series(1, 1)
+        .await
+        .unwrap();
     assert_eq!(related.len(), 1);
     assert_eq!(related[0].forum_thread_id, 1);
 }
@@ -87,7 +90,10 @@ async fn test_delete_site_highlight_keeps_related_thread(pool: PgPool) {
     let resp = call_service(&service, req).await;
     assert_eq!(resp.status(), StatusCode::OK);
 
-    let related = pool.find_related_forum_threads_for_series(1).await.unwrap();
+    let related = pool
+        .find_related_forum_threads_for_series(1, 1)
+        .await
+        .unwrap();
     assert_eq!(related.len(), 1);
 }
 
@@ -152,7 +158,10 @@ async fn test_edit_site_highlight_keeps_old_related_thread_when_toggle_off(pool:
     let _edited: SiteHighlight =
         call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
 
-    let related = pool.find_related_forum_threads_for_series(1).await.unwrap();
+    let related = pool
+        .find_related_forum_threads_for_series(1, 1)
+        .await
+        .unwrap();
     assert_eq!(related.len(), 2);
 }
 
@@ -201,7 +210,10 @@ async fn test_edit_site_highlight_removes_old_related_thread_by_default(pool: Pg
     let _edited: SiteHighlight =
         call_and_read_body_json_with_status(&service, req, StatusCode::OK).await;
 
-    let related = pool.find_related_forum_threads_for_series(1).await.unwrap();
+    let related = pool
+        .find_related_forum_threads_for_series(1, 1)
+        .await
+        .unwrap();
     assert_eq!(related.len(), 1);
     assert_eq!(related[0].forum_thread_id, 101);
 }

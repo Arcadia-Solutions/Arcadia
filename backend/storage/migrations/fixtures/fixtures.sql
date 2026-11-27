@@ -3750,12 +3750,12 @@ INSERT INTO public.forum_categories (id, name, sort_order, created_at, created_b
 -- Data for Name: forum_sub_categories; Type: TABLE DATA; Schema: public; Owner: arcadia
 --
 
-INSERT INTO public.forum_sub_categories (id, forum_category_id, name, sort_order, created_at, created_by_id, threads_amount, posts_amount, forbidden_classes, new_threads_restricted, thread_sort_by, thread_sort_direction) VALUES
-    (1, 1, 'Announcements', 1, '2025-09-17 12:42:13.702455+00', 1, 1, 1, '{}', false, DEFAULT, DEFAULT) ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.forum_sub_categories (id, forum_category_id, name, sort_order, created_at, created_by_id, threads_amount, posts_amount, new_threads_restricted, thread_sort_by, thread_sort_direction) VALUES
+    (1, 1, 'Announcements', 1, '2025-09-17 12:42:13.702455+00', 1, 1, 1, false, DEFAULT, DEFAULT) ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.forum_sub_categories (id, forum_category_id, name, sort_order, created_at, created_by_id, threads_amount, posts_amount, forbidden_classes, new_threads_restricted, thread_sort_by, thread_sort_direction) VALUES
-    (5, 3, 'Lounge', 1, '2025-05-22 08:02:15.125336+00', 1, 3, 7, '{}', false, DEFAULT, DEFAULT),
-    (7, 3, 'Technology', 2, '2025-05-22 08:05:01.192217+00', 1, 4, 10, '{}', false, DEFAULT, DEFAULT);
+INSERT INTO public.forum_sub_categories (id, forum_category_id, name, sort_order, created_at, created_by_id, threads_amount, posts_amount, new_threads_restricted, thread_sort_by, thread_sort_direction) VALUES
+    (5, 3, 'Lounge', 1, '2025-05-22 08:02:15.125336+00', 1, 3, 7, false, DEFAULT, DEFAULT),
+    (7, 3, 'Technology', 2, '2025-05-22 08:05:01.192217+00', 1, 4, 10, false, DEFAULT, DEFAULT);
 
 --
 -- Data for Name: forum_threads; Type: TABLE DATA; Schema: public; Owner: arcadia

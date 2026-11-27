@@ -1,4 +1,4 @@
-use crate::Arcadia;
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use actix_web::{HttpResponse, web::Data};
 use arcadia_common::error::Result;
 use arcadia_storage::{
@@ -41,7 +41,10 @@ pub struct HomePage {
         (status = 200, description = "Successfully got the home page", body=HomePage),
     )
 )]
-pub async fn exec<R: RedisPoolInterface + 'static>(arc: Data<Arcadia<R>>) -> Result<HttpResponse> {
+pub async fn exec<R: RedisPoolInterface + 'static>(
+    arc: Data<Arcadia<R>>,
+    user: Authdata,
+) -> Result<HttpResponse> {
     let search_forum_threads_form = ForumSearchQuery {
         thread_name: None,
         page_size: 5,
@@ -68,11 +71,13 @@ pub async fn exec<R: RedisPoolInterface + 'static>(arc: Data<Arcadia<R>>) -> Res
         latest_title_group_ratings,
         site_highlights,
     ) = tokio::try_join!(
-        arc.pool.find_first_thread_posts_in_sub_category(1, 5),
+        arc.pool
+            .find_first_thread_posts_in_sub_category(1, 5, user.sub),
         arc.pool.find_home_stats(),
         arc.pool
             .find_title_group_info_lite(None, Some(""), &title_group_filter, 5),
-        arc.pool.search_forum_threads(&search_forum_threads_form),
+        arc.pool
+            .search_forum_threads(&search_forum_threads_form, user.sub),
         arc.pool.find_latest_title_group_comments(5),
         arc.pool
             .search_title_group_ratings_site_wide(&latest_ratings_form),

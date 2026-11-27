@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT requested_user.id AS \"id!\"\n        FROM UNNEST($1::int[]) AS requested_user(id)\n        WHERE NOT EXISTS (SELECT 1 FROM users WHERE users.id = requested_user.id)\n        LIMIT 1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4Array"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "b34ae8035c710c6c6d933ef3ac692ea58022f12b5b411fd7a296bb289f3b645a"
+}

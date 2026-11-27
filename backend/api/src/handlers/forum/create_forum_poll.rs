@@ -33,6 +33,9 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     arc.pool
         .require_permission(user.sub, &UserPermission::CreateForumThread, req.path())
         .await?;
+    arc.pool
+        .ensure_forum_thread_visible(user.sub, forum_poll.forum_thread_id)
+        .await?;
 
     let forum_poll = arc.pool.create_forum_poll(&forum_poll, user.sub).await?;
 

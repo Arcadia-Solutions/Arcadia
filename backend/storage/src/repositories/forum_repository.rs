@@ -5,7 +5,7 @@ use crate::{
         forum::{
             CreateRelatedForumThread, DeleteRelatedForumThreadQuery, EditedForumCategory,
             EditedForumPost, EditedForumSubCategory, EditedForumThread, ForumCategory,
-            ForumCategoryHierarchy, ForumCategoryLite, ForumPoll, ForumPollHierarchy,
+            ForumCategoryHierarchy, ForumCategoryLite, ForumItemId, ForumPoll, ForumPollHierarchy,
             ForumPollOptionResult, ForumPost, ForumPostAndThreadName, ForumPostHierarchy,
             ForumPostSearchQuery, ForumPostWithLocation, ForumSearchQuery, ForumSearchResult,
             ForumSubCategory, ForumSubCategoryHierarchy, ForumThread, ForumThreadEnriched,
@@ -17,6 +17,11 @@ use crate::{
         },
         site_highlight::SiteHighlightItemType,
         user::{UserLite, UserLiteAvatar},
+        user_edit_change_log::NewUserEditChangeLog,
+    },
+    repositories::{
+        forum_access_repository::{is_forum_item_visible, replace_forum_item_allowed_users},
+        user_edit_change_log_repository::insert_user_edit_change_log,
     },
 };
 use arcadia_common::error::{Error, Result};
@@ -255,6 +260,7 @@ impl ConnectionPool {
         &self,
         edited_thread: &EditedForumThread,
         user_id: i32,
+        change_log: Option<&NewUserEditChangeLog>,
     ) -> Result<ForumThreadEnriched> {
         if edited_thread.name.trim().is_empty() {
             return Err(Error::ForumThreadNameEmpty);
@@ -273,6 +279,15 @@ impl ConnectionPool {
 
         // If sub-category is changing, update counters on both sub-categories
         if old_sub_category_id != edited_thread.forum_sub_category_id {
+            if !is_forum_item_visible(
+                &mut tx,
+                user_id,
+                ForumItemId::SubCategory(edited_thread.forum_sub_category_id),
+            )
+            .await?
+            {
+                return Err(Error::ForumSubCategoryNotFound);
+            }
             // moving a thread places it in the destination like creating it would
             ensure_user_can_create_threads_in_sub_category(
                 &mut tx,
@@ -355,6 +370,10 @@ impl ConnectionPool {
         .await
         .map_err(Error::CouldNotUpdateForumThread)?;
 
+        if let Some(change_log) = change_log {
+            insert_user_edit_change_log(&mut tx, change_log).await?;
+        }
+
         tx.commit().await?;
 
         Ok(updated_thread)
@@ -413,11 +432,15 @@ impl ConnectionPool {
         Ok(())
     }
 
-    pub async fn find_forum_cateogries_hierarchy(&self) -> Result<Vec<ForumCategoryHierarchy>> {
+    pub async fn find_forum_cateogries_hierarchy(
+        &self,
+        user_id: i32,
+    ) -> Result<Vec<ForumCategoryHierarchy>> {
         // Query all categories at once
         let categories = sqlx::query_as!(
             ForumCategoryLite,
-            "SELECT id, name FROM forum_categories ORDER BY sort_order, id"
+            "SELECT id, name FROM forum_categories WHERE id NOT IN (SELECT * FROM forum_hidden_category_ids($1)) ORDER BY sort_order, id",
+            user_id
         )
         .fetch_all(&self.pool)
         .await
@@ -426,7 +449,7 @@ impl ConnectionPool {
         // Query all subcategories with their latest posts in one query
         let sub_categories_data = sqlx::query!(
             r#"
-            SELECT fsc.id, fsc.name, fsc.threads_amount, fsc.posts_amount, fsc.forbidden_classes,
+            SELECT fsc.id, fsc.name, fsc.threads_amount, fsc.posts_amount,
                    fsc.new_threads_restricted, fsc.thread_sort_by AS "thread_sort_by: ForumThreadSortBy",
                    fsc.thread_sort_direction AS "thread_sort_direction: ForumThreadSortDirection",
                    fsc.forum_category_id, fc.name AS category_name,
@@ -443,8 +466,10 @@ impl ConnectionPool {
             ) AS fp ON TRUE
             LEFT JOIN forum_threads ft ON fp.forum_thread_id = ft.id
             LEFT JOIN users u ON fp.created_by_id = u.id
+            WHERE fsc.id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($1))
             ORDER BY fsc.forum_category_id, fsc.sort_order, fsc.id
-            "#
+            "#,
+            user_id
         )
         .fetch_all(&self.pool)
         .await
@@ -460,13 +485,14 @@ impl ConnectionPool {
                 name: sc.name,
                 threads_amount: sc.threads_amount,
                 posts_amount: sc.posts_amount,
-                forbidden_classes: sc.forbidden_classes,
                 new_threads_restricted: sc.new_threads_restricted,
                 thread_sort_by: sc.thread_sort_by,
                 thread_sort_direction: sc.thread_sort_direction,
                 // these are not needed on this endpoint, which saves us joins
                 is_allowed_poster: false,
                 is_subscribed: false,
+                allowed_users: None,
+                class_visibility: None,
                 latest_post_in_thread: match (
                     sc.latest_post_id,
                     sc.thread_id,
@@ -524,7 +550,6 @@ impl ConnectionPool {
                         'name', fsc.name,
                         'threads_amount', fsc.threads_amount,
                         'posts_amount', fsc.posts_amount,
-                        'forbidden_classes', fsc.forbidden_classes,
                         'new_threads_restricted', fsc.new_threads_restricted,
                         'thread_sort_by', fsc.thread_sort_by,
                         'thread_sort_direction', fsc.thread_sort_direction,
@@ -623,6 +648,7 @@ impl ConnectionPool {
                 forum_categories fc ON fsc.forum_category_id = fc.id
             WHERE
                 fsc.id = $1
+                AND fsc.id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($2))
             GROUP BY
                 fsc.id, fc.id;
             "#,
@@ -673,7 +699,8 @@ impl ConnectionPool {
                 subscriptions_forum_thread_posts AS sft
                 ON sft.forum_thread_id = ft.id AND sft.user_id = $2
             WHERE
-                ft.id = $1;
+                ft.id = $1
+                AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($2));
             "#,
             forum_thread_id,
             user_id
@@ -862,8 +889,9 @@ impl ConnectionPool {
         let mut tx = self.pool.begin().await?;
 
         let forum_thread_id = sqlx::query_scalar!(
-            r#"SELECT forum_thread_id FROM forum_polls WHERE id = $1"#,
-            vote.forum_poll_id
+            r#"SELECT fpo.forum_thread_id FROM forum_polls fpo JOIN forum_threads ft ON ft.id = fpo.forum_thread_id WHERE fpo.id = $1 AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($2))"#,
+            vote.forum_poll_id,
+            user_id
         )
         .fetch_one(&mut *tx)
         .await
@@ -1015,6 +1043,7 @@ impl ConnectionPool {
         &self,
         forum_sub_category_id: i32,
         limit: u32,
+        user_id: i32,
     ) -> Result<Vec<ForumPostAndThreadName>> {
         sqlx::query_as!(
             ForumPostAndThreadName,
@@ -1034,12 +1063,14 @@ impl ConnectionPool {
                 forum_posts AS fp ON ft.id = fp.forum_thread_id
             WHERE
                 ft.forum_sub_category_id = $1
+                AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($3))
             ORDER BY
                 ft.id DESC, fp.created_at ASC
             LIMIT $2
             "#,
             forum_sub_category_id,
-            limit as i32
+            limit as i32,
+            user_id
         )
         .fetch_all(&self.pool)
         .await
@@ -1049,6 +1080,7 @@ impl ConnectionPool {
     pub async fn search_forum_threads(
         &self,
         form: &ForumSearchQuery,
+        user_id: i32,
     ) -> Result<PaginatedResults<ForumSearchResult>> {
         let limit = form.page_size as i64;
         let offset = (form.page - 1) as i64 * form.page_size as i64;
@@ -1080,7 +1112,8 @@ impl ConnectionPool {
             JOIN forum_sub_categories s ON s.id = t.forum_sub_category_id
             JOIN forum_categories c ON c.id = s.forum_category_id
 
-            WHERE $1::TEXT IS NULL OR t.name ILIKE '%' || $1 || '%'
+            WHERE ($1::TEXT IS NULL OR t.name ILIKE '%' || $1 || '%')
+              AND t.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($4))
 
             ORDER BY p.created_at DESC
 
@@ -1088,15 +1121,17 @@ impl ConnectionPool {
             "#,
             form.thread_name,
             limit,
-            offset
+            offset,
+            user_id
         )
         .fetch_all(&self.pool)
         .await
         .map_err(Error::CouldNotFindForumThreadsFirstPost)?;
 
         let total_results = sqlx::query!(
-            "SELECT COUNT(*) AS total FROM forum_threads WHERE name ILIKE '%' || $1 || '%'",
-            form.thread_name
+            "SELECT COUNT(*) AS total FROM forum_threads ft WHERE ft.name ILIKE '%' || $1 || '%' AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($2))",
+            form.thread_name,
+            user_id
         )
         .fetch_one(&self.pool)
         .await
@@ -1116,6 +1151,7 @@ impl ConnectionPool {
     pub async fn search_forum_posts(
         &self,
         form: &ForumPostSearchQuery,
+        viewer_id: i32,
     ) -> Result<PaginatedResults<ForumPostWithLocation>> {
         let limit = form.page_size as i64;
         let offset = (form.page - 1) as i64 * form.page_size as i64;
@@ -1142,7 +1178,7 @@ impl ConnectionPool {
             JOIN forum_sub_categories s ON s.id = t.forum_sub_category_id
             JOIN forum_categories c ON c.id = s.forum_category_id
 
-            WHERE p.created_by_id = $1
+            WHERE p.created_by_id = $1 AND t.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($4))
 
             ORDER BY p.created_at DESC
 
@@ -1150,7 +1186,8 @@ impl ConnectionPool {
             "#,
             form.created_by_id,
             limit,
-            offset
+            offset,
+            viewer_id
         )
         .fetch_all(&self.pool)
         .await
@@ -1179,8 +1216,9 @@ impl ConnectionPool {
             .collect();
 
         let total_results = sqlx::query!(
-            "SELECT COUNT(*) AS total FROM forum_posts WHERE created_by_id = $1",
-            form.created_by_id
+            "SELECT COUNT(*) AS total FROM forum_posts fp JOIN forum_threads ft ON ft.id = fp.forum_thread_id WHERE fp.created_by_id = $1 AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($2))",
+            form.created_by_id,
+            viewer_id
         )
         .fetch_one(&self.pool)
         .await
@@ -1221,7 +1259,6 @@ impl ConnectionPool {
                 fsc.sort_order,
                 fsc.created_at,
                 fsc.created_by_id,
-                fsc.forbidden_classes,
                 fsc.new_threads_restricted,
                 fsc.thread_sort_by AS "thread_sort_by: ForumThreadSortBy",
                 fsc.thread_sort_direction AS "thread_sort_direction: ForumThreadSortDirection",
@@ -1246,6 +1283,8 @@ impl ConnectionPool {
             return Err(Error::ForumCategoryNameEmpty);
         }
 
+        let mut tx = self.pool.begin().await?;
+
         let created_category = sqlx::query_as!(
             ForumCategory,
             r#"
@@ -1256,20 +1295,38 @@ impl ConnectionPool {
             forum_category.name,
             current_user_id
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await
         .map_err(Error::CouldNotCreateForumCategory)?;
+
+        if !forum_category.allowed_user_ids.is_empty() {
+            replace_forum_item_allowed_users(
+                &mut tx,
+                ForumItemId::Category(created_category.id),
+                &forum_category.allowed_user_ids,
+                current_user_id,
+            )
+            .await?;
+        }
+
+        tx.commit().await?;
 
         Ok(created_category)
     }
 
+    /// `allowed_users_changed` tells whether the category's allowed users must be replaced
     pub async fn update_forum_category(
         &self,
         edited_category: &EditedForumCategory,
+        allowed_users_changed: bool,
+        editor_id: i32,
+        change_log: Option<&NewUserEditChangeLog>,
     ) -> Result<ForumCategory> {
         if edited_category.name.trim().is_empty() {
             return Err(Error::ForumCategoryNameEmpty);
         }
+
+        let mut tx = self.pool.begin().await?;
 
         let updated_category = sqlx::query_as!(
             ForumCategory,
@@ -1282,12 +1339,28 @@ impl ConnectionPool {
             edited_category.name,
             edited_category.id
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await
         .map_err(|e| match e {
             sqlx::Error::RowNotFound => Error::ForumCategoryNotFound,
             _ => Error::CouldNotUpdateForumCategory(e),
         })?;
+
+        if allowed_users_changed {
+            replace_forum_item_allowed_users(
+                &mut tx,
+                ForumItemId::Category(edited_category.id),
+                &edited_category.allowed_user_ids,
+                editor_id,
+            )
+            .await?;
+        }
+
+        if let Some(change_log) = change_log {
+            insert_user_edit_change_log(&mut tx, change_log).await?;
+        }
+
+        tx.commit().await?;
 
         Ok(updated_category)
     }
@@ -1301,32 +1374,52 @@ impl ConnectionPool {
             return Err(Error::ForumSubCategoryNameEmpty);
         }
 
+        let mut tx = self.pool.begin().await?;
+
         let created_sub_category = sqlx::query_as!(
             ForumSubCategory,
             r#"
                 INSERT INTO forum_sub_categories (name, forum_category_id, created_by_id, new_threads_restricted, sort_order)
                 VALUES ($1, $2, $3, $4, COALESCE((SELECT MAX(sort_order) FROM forum_sub_categories WHERE forum_category_id = $2), 0) + 1)
-                RETURNING id, forum_category_id, name, sort_order, created_at, created_by_id, threads_amount, posts_amount, forbidden_classes, new_threads_restricted, thread_sort_by AS "thread_sort_by: ForumThreadSortBy", thread_sort_direction AS "thread_sort_direction: ForumThreadSortDirection"
+                RETURNING id, forum_category_id, name, sort_order, created_at, created_by_id, threads_amount, posts_amount, new_threads_restricted, thread_sort_by AS "thread_sort_by: ForumThreadSortBy", thread_sort_direction AS "thread_sort_direction: ForumThreadSortDirection"
             "#,
             forum_sub_category.name,
             forum_sub_category.forum_category_id,
             current_user_id,
             forum_sub_category.new_threads_restricted
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await
         .map_err(Error::CouldNotCreateForumSubCategory)?;
+
+        if !forum_sub_category.allowed_user_ids.is_empty() {
+            replace_forum_item_allowed_users(
+                &mut tx,
+                ForumItemId::SubCategory(created_sub_category.id),
+                &forum_sub_category.allowed_user_ids,
+                current_user_id,
+            )
+            .await?;
+        }
+
+        tx.commit().await?;
 
         Ok(created_sub_category)
     }
 
+    /// `allowed_users_changed` tells whether the sub category's allowed users must be replaced
     pub async fn update_forum_sub_category(
         &self,
         edited_sub_category: &EditedForumSubCategory,
+        allowed_users_changed: bool,
+        editor_id: i32,
+        change_log: Option<&NewUserEditChangeLog>,
     ) -> Result<ForumSubCategory> {
         if edited_sub_category.name.trim().is_empty() {
             return Err(Error::ForumSubCategoryNameEmpty);
         }
+
+        let mut tx = self.pool.begin().await?;
 
         let updated_sub_category = sqlx::query_as!(
             ForumSubCategory,
@@ -1334,7 +1427,7 @@ impl ConnectionPool {
                 UPDATE forum_sub_categories
                 SET name = $1, new_threads_restricted = $2, thread_sort_by = $3, thread_sort_direction = $4
                 WHERE id = $5
-                RETURNING id, forum_category_id, name, sort_order, created_at, created_by_id, threads_amount, posts_amount, forbidden_classes, new_threads_restricted, thread_sort_by AS "thread_sort_by: ForumThreadSortBy", thread_sort_direction AS "thread_sort_direction: ForumThreadSortDirection"
+                RETURNING id, forum_category_id, name, sort_order, created_at, created_by_id, threads_amount, posts_amount, new_threads_restricted, thread_sort_by AS "thread_sort_by: ForumThreadSortBy", thread_sort_direction AS "thread_sort_direction: ForumThreadSortDirection"
             "#,
             edited_sub_category.name,
             edited_sub_category.new_threads_restricted,
@@ -1342,12 +1435,28 @@ impl ConnectionPool {
             edited_sub_category.thread_sort_direction as ForumThreadSortDirection,
             edited_sub_category.id
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await
         .map_err(|e| match e {
             sqlx::Error::RowNotFound => Error::ForumSubCategoryNotFound,
             _ => Error::CouldNotUpdateForumSubCategory(e),
         })?;
+
+        if allowed_users_changed {
+            replace_forum_item_allowed_users(
+                &mut tx,
+                ForumItemId::SubCategory(edited_sub_category.id),
+                &edited_sub_category.allowed_user_ids,
+                editor_id,
+            )
+            .await?;
+        }
+
+        if let Some(change_log) = change_log {
+            insert_user_edit_change_log(&mut tx, change_log).await?;
+        }
+
+        tx.commit().await?;
 
         Ok(updated_sub_category)
     }
@@ -1864,6 +1973,7 @@ impl ConnectionPool {
     pub async fn find_related_forum_threads_for_title_group(
         &self,
         title_group_id: i32,
+        user_id: i32,
     ) -> Result<Vec<RelatedForumThread>> {
         sqlx::query_as!(
             RelatedForumThread,
@@ -1874,10 +1984,11 @@ impl ConnectionPool {
                     rt.created_at
                 FROM title_group_related_threads rt
                 JOIN forum_threads ft ON ft.id = rt.forum_thread_id
-                WHERE rt.title_group_id = $1
+                WHERE rt.title_group_id = $1 AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($2))
                 ORDER BY rt.created_at DESC
             "#,
-            title_group_id
+            title_group_id,
+            user_id
         )
         .fetch_all(&self.pool)
         .await
@@ -1887,6 +1998,7 @@ impl ConnectionPool {
     pub async fn find_related_forum_threads_for_series(
         &self,
         series_id: i64,
+        user_id: i32,
     ) -> Result<Vec<RelatedForumThread>> {
         sqlx::query_as!(
             RelatedForumThread,
@@ -1897,10 +2009,11 @@ impl ConnectionPool {
                     rt.created_at
                 FROM series_related_threads rt
                 JOIN forum_threads ft ON ft.id = rt.forum_thread_id
-                WHERE rt.series_id = $1
+                WHERE rt.series_id = $1 AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($2))
                 ORDER BY rt.created_at DESC
             "#,
-            series_id
+            series_id,
+            user_id
         )
         .fetch_all(&self.pool)
         .await

@@ -176,6 +176,7 @@ async fn test_staff_can_enable_restriction_on_sub_category(pool: PgPool) {
         id: 100,
         name: "Test Sub Category".into(),
         new_threads_restricted: true,
+        allowed_user_ids: vec![],
         thread_sort_by: ForumThreadSortBy::LatestPost,
         thread_sort_direction: ForumThreadSortDirection::Descending,
     };
@@ -327,6 +328,7 @@ async fn test_restrict_sub_category_then_verify_enforcement(pool: PgPool) {
         id: 100,
         name: "Test Sub Category".into(),
         new_threads_restricted: true,
+        allowed_user_ids: vec![],
         thread_sort_by: ForumThreadSortBy::LatestPost,
         thread_sort_direction: ForumThreadSortDirection::Descending,
     };
@@ -353,6 +355,7 @@ async fn test_restrict_sub_category_then_verify_enforcement(pool: PgPool) {
         id: 100,
         name: "Test Sub Category".into(),
         new_threads_restricted: false,
+        allowed_user_ids: vec![],
         thread_sort_by: ForumThreadSortBy::LatestPost,
         thread_sort_direction: ForumThreadSortDirection::Descending,
     };

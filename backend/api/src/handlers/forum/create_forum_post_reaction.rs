@@ -30,6 +30,9 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     arc.pool
         .require_permission(user.sub, &UserPermission::ReactToContent, req.path())
         .await?;
+    arc.pool
+        .ensure_forum_post_visible(user.sub, reaction.forum_post_id)
+        .await?;
 
     arc.pool
         .create_forum_post_reaction(reaction.forum_post_id, reaction.emoji_id, user.sub)

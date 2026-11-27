@@ -307,7 +307,7 @@ impl ConnectionPool {
                         )
                         FROM artist_related_threads art
                         JOIN forum_threads ft ON ft.id = art.forum_thread_id
-                        WHERE art.artist_id = a.id
+                        WHERE art.artist_id = a.id AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($2))
                     ), '[]'::jsonb) AS "related_threads!: sqlx::types::Json<Vec<RelatedForumThread>>",
                     EXISTS (
                         SELECT 1

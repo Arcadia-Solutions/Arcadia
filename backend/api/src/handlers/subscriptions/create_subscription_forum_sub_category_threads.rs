@@ -4,6 +4,7 @@ use actix_web::{
     web::{Data, Query},
 };
 use arcadia_common::error::Result;
+use arcadia_storage::models::forum::ForumItemId;
 use arcadia_storage::redis::RedisPoolInterface;
 use serde::Deserialize;
 use utoipa::IntoParams;
@@ -31,6 +32,13 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     arc: Data<Arcadia<R>>,
     user: Authdata,
 ) -> Result<HttpResponse> {
+    arc.pool
+        .ensure_forum_item_visible(
+            user.sub,
+            ForumItemId::SubCategory(query.forum_sub_category_id),
+        )
+        .await?;
+
     arc.pool
         .create_subscription_forum_sub_category_threads(query.forum_sub_category_id, user.sub)
         .await?;

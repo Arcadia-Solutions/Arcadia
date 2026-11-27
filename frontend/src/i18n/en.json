@@ -241,7 +241,13 @@
     "blank_vote": "Blank vote",
     "votes": "no votes | {n} vote | {n} votes",
     "you_voted": "You voted",
-    "poll_created_success": "Poll created successfully"
+    "poll_created_success": "Poll created successfully",
+    "allowed_users": "Allowed users (see this regardless of their class)",
+    "allowed_users_sub_category": "Allowed users (see this regardless of their class, if they can see its category)",
+    "add_allowed_user": "Add allowed user",
+    "visible_to_all_user_classes": "Visible to all user classes",
+    "visible_to_user_classes": "Visible to: {classes}",
+    "hidden_from_user_classes": "Hidden from: {classes}"
   },
   "user": {
     "username": "Username",
@@ -961,7 +967,10 @@
     "user_class_created_success": "User class created successfully",
     "user_class_edited_success": "User class edited successfully",
     "max_snatches_per_day": "Max snatches per day",
-    "promotion_cost": "Promotion cost"
+    "promotion_cost": "Promotion cost",
+    "hidden_forum_items": "Hidden forum items",
+    "hidden_forum_categories": "Hidden forum categories",
+    "hidden_forum_sub_categories": "Hidden forum sub-categories"
   },
   "user_badge": {
     "user_badge": "Badge | Badges",

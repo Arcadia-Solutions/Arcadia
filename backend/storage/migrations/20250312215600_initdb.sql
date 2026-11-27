@@ -1261,7 +1261,6 @@ CREATE TABLE forum_sub_categories (
     created_by_id INT NOT NULL,
     threads_amount BIGINT NOT NULL DEFAULT 0,
     posts_amount BIGINT NOT NULL DEFAULT 0,
-    forbidden_classes VARCHAR(50) [] NOT NULL DEFAULT ARRAY[]::VARCHAR(50)[],
     new_threads_restricted BOOLEAN NOT NULL DEFAULT FALSE,
     thread_sort_by forum_thread_sort_by_enum NOT NULL DEFAULT 'latest_post',
     thread_sort_direction forum_thread_sort_direction_enum NOT NULL DEFAULT 'descending',
@@ -1294,6 +1293,66 @@ CREATE TABLE forum_threads (
 );
 CREATE INDEX forum_threads_forum_sub_category_id_index ON forum_threads (forum_sub_category_id);
 INSERT INTO forum_threads (created_by_id, forum_sub_category_id, name, posts_amount) VALUES (1, 1, 'Welcome to the site!', 1);
+-- forum access restrictions: each category and sub category can hide itself from some user
+-- classes, and let specific users in regardless of their class
+CREATE TABLE forum_category_forbidden_classes (
+    forum_category_id INT NOT NULL REFERENCES forum_categories(id) ON DELETE CASCADE,
+    user_class_name VARCHAR(30) NOT NULL REFERENCES user_classes(name) ON UPDATE CASCADE ON DELETE CASCADE,
+    PRIMARY KEY (user_class_name, forum_category_id)
+);
+CREATE TABLE forum_category_allowed_users (
+    forum_category_id INT NOT NULL REFERENCES forum_categories(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (forum_category_id, user_id)
+);
+CREATE TABLE forum_sub_category_forbidden_classes (
+    forum_sub_category_id INT NOT NULL REFERENCES forum_sub_categories(id) ON DELETE CASCADE,
+    user_class_name VARCHAR(30) NOT NULL REFERENCES user_classes(name) ON UPDATE CASCADE ON DELETE CASCADE,
+    PRIMARY KEY (user_class_name, forum_sub_category_id)
+);
+CREATE TABLE forum_sub_category_allowed_users (
+    forum_sub_category_id INT NOT NULL REFERENCES forum_sub_categories(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (forum_sub_category_id, user_id)
+);
+-- ids of the categories hidden from the user: the ones forbidden to their class, unless they are
+-- one of the category's allowed users. Users who can edit user classes see every category.
+CREATE FUNCTION forum_hidden_category_ids(p_user_id INT) RETURNS SETOF INT
+LANGUAGE sql STABLE AS $$
+    SELECT forbidden.forum_category_id
+    FROM forum_category_forbidden_classes forbidden
+    JOIN users u ON u.id = p_user_id AND u.class_name = forbidden.user_class_name
+    WHERE NOT 'edit_user_class' = ANY(u.permissions)
+      AND NOT EXISTS (
+        SELECT 1 FROM forum_category_allowed_users allowed
+        WHERE allowed.forum_category_id = forbidden.forum_category_id AND allowed.user_id = p_user_id
+    )
+$$;
+-- ids of the sub categories hidden from the user: every sub category of a hidden category (being
+-- allowed in the sub category doesn't override it), plus the ones forbidden to their class, unless
+-- they are one of the sub category's allowed users. Users who can edit user classes see every sub category.
+CREATE FUNCTION forum_hidden_sub_category_ids(p_user_id INT) RETURNS SETOF INT
+LANGUAGE sql STABLE AS $$
+    SELECT fsc.id
+    FROM forum_sub_categories fsc
+    WHERE fsc.forum_category_id IN (SELECT * FROM forum_hidden_category_ids(p_user_id))
+    UNION
+    SELECT forbidden.forum_sub_category_id
+    FROM forum_sub_category_forbidden_classes forbidden
+    JOIN users u ON u.id = p_user_id AND u.class_name = forbidden.user_class_name
+    WHERE NOT 'edit_user_class' = ANY(u.permissions)
+      AND NOT EXISTS (
+        SELECT 1 FROM forum_sub_category_allowed_users allowed
+        WHERE allowed.forum_sub_category_id = forbidden.forum_sub_category_id AND allowed.user_id = p_user_id
+    )
+$$;
+-- whether the thread's sub category is visible to the user, NULL when the thread does not exist
+CREATE FUNCTION forum_thread_visible(p_user_id INT, p_forum_thread_id BIGINT) RETURNS BOOLEAN
+LANGUAGE sql STABLE AS $$
+    SELECT ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids(p_user_id))
+    FROM forum_threads ft
+    WHERE ft.id = p_forum_thread_id
+$$;
 CREATE TABLE forum_posts (
     id BIGSERIAL PRIMARY KEY,
     forum_thread_id BIGINT NOT NULL,

@@ -502,6 +502,9 @@ pub enum Error {
     #[error("forum sub-category thread creation is restricted")]
     ForumSubCategoryNewThreadsRestricted,
 
+    #[error("this change would hide the forum item from you")]
+    ForumItemWouldBeHiddenFromEditor,
+
     #[error("could not reorder forum category")]
     CouldNotReorderForumCategory(#[source] sqlx::Error),
 
@@ -996,6 +999,7 @@ impl actix_web::ResponseError for Error {
             | Error::EditionGroupDeletionWindowExpired
             | Error::ForumThreadLocked
             | Error::ForumSubCategoryNewThreadsRestricted
+            | Error::ForumItemWouldBeHiddenFromEditor
             | Error::ConversationLocked
             | Error::StaffPmResolved
             | Error::UserClassLocked

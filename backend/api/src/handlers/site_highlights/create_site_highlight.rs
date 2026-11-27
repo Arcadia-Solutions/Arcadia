@@ -51,6 +51,10 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         ));
     }
 
+    arc.pool
+        .ensure_forum_thread_visible(user.sub, payload.forum_thread_id)
+        .await?;
+
     let created = arc.pool.create_site_highlight(&payload, user.sub).await?;
 
     Ok(HttpResponse::Ok().json(created))

@@ -164,11 +164,7 @@ async fn test_create_thread_with_invalid_sub_category(pool: PgPool) {
         .to_request();
 
     let resp = test::call_service(&service, req).await;
-    // Should fail due to foreign key constraint
-    assert!(
-        resp.status() == StatusCode::INTERNAL_SERVER_ERROR
-            || resp.status() == StatusCode::BAD_REQUEST
-    );
+    assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
 // ============================================================================
@@ -824,7 +820,7 @@ async fn test_get_thread_posts_success(pool: PgPool) {
     "with_test_forum_sub_category",
     "with_test_forum_thread",
     "with_test_forum_post",
-    "with_test_restricted_forum_sub_category"
+    "with_test_empty_forum_sub_category"
 ))]
 async fn test_get_forum_latest_post_in_sub_category(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
@@ -1126,6 +1122,7 @@ async fn set_thread_sort_by<S>(
         new_threads_restricted: false,
         thread_sort_by,
         thread_sort_direction,
+        allowed_user_ids: vec![],
     };
 
     let req = test::TestRequest::put()

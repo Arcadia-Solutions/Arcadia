@@ -10,7 +10,11 @@ impl ConnectionPool {
     /// Returns forum activity statistics (threads or posts) over the requested period,
     /// grouped by the requested dimension (category, sub-category, thread, user, user class, or none).
     /// Periods with no data are filled with zero values, starting from the earliest forum activity.
-    pub async fn get_forum_stats(&self, query: &ForumStatsQuery) -> Result<ForumStatsResponse> {
+    pub async fn get_forum_stats(
+        &self,
+        query: &ForumStatsQuery,
+        user_id: i32,
+    ) -> Result<ForumStatsResponse> {
         let data = match query.metric {
             ForumStatsMetric::Posts => {
                 sqlx::query_as!(
@@ -42,6 +46,7 @@ impl ConnectionPool {
                         JOIN forum_categories fc ON fsc.forum_category_id = fc.id
                         JOIN users u ON fp.created_by_id = u.id
                         WHERE fp.created_at >= $1::DATE
+                          AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($5))
                           AND fp.created_at < ($2::DATE + INTERVAL '1 day')
                         GROUP BY period, attribute_value
                     ),
@@ -70,6 +75,7 @@ impl ConnectionPool {
                     query.to,
                     &query.interval.to_string(),
                     &query.group_by.to_string(),
+                    user_id,
                 )
                 .fetch_all(&self.pool)
                 .await?
@@ -103,6 +109,7 @@ impl ConnectionPool {
                         JOIN forum_categories fc ON fsc.forum_category_id = fc.id
                         JOIN users u ON ft.created_by_id = u.id
                         WHERE ft.created_at >= $1::DATE
+                          AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($5))
                           AND ft.created_at < ($2::DATE + INTERVAL '1 day')
                         GROUP BY period, attribute_value
                     ),
@@ -131,6 +138,7 @@ impl ConnectionPool {
                     query.to,
                     &query.interval.to_string(),
                     &query.group_by.to_string(),
+                    user_id,
                 )
                 .fetch_all(&self.pool)
                 .await?
@@ -147,23 +155,27 @@ impl ConnectionPool {
                 t.total_threads_created AS "total_threads_created!"
             FROM
                 (SELECT
-                    COUNT(DISTINCT created_by_id)::BIGINT AS unique_posters,
+                    COUNT(DISTINCT fp.created_by_id)::BIGINT AS unique_posters,
                     COUNT(*)::BIGINT AS total_posts_created,
-                    COALESCE(SUM(LENGTH(content)), 0)::BIGINT AS total_content_length
-                 FROM forum_posts
-                 WHERE created_at >= $1::DATE
-                   AND created_at < ($2::DATE + INTERVAL '1 day')
+                    COALESCE(SUM(LENGTH(fp.content)), 0)::BIGINT AS total_content_length
+                 FROM forum_posts fp
+                 JOIN forum_threads ft ON ft.id = fp.forum_thread_id
+                 WHERE fp.created_at >= $1::DATE
+                   AND fp.created_at < ($2::DATE + INTERVAL '1 day')
+                   AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($3))
                 ) p,
                 (SELECT
-                    COUNT(DISTINCT created_by_id)::BIGINT AS unique_thread_creators,
+                    COUNT(DISTINCT ft.created_by_id)::BIGINT AS unique_thread_creators,
                     COUNT(*)::BIGINT AS total_threads_created
-                 FROM forum_threads
-                 WHERE created_at >= $1::DATE
-                   AND created_at < ($2::DATE + INTERVAL '1 day')
+                 FROM forum_threads ft
+                 WHERE ft.created_at >= $1::DATE
+                   AND ft.created_at < ($2::DATE + INTERVAL '1 day')
+                   AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($3))
                 ) t
             "#,
             query.from,
             query.to,
+            user_id,
         )
         .fetch_one(&self.pool)
         .await?;

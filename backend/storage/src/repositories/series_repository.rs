@@ -51,7 +51,11 @@ impl ConnectionPool {
         Ok(series)
     }
 
-    pub async fn find_series_enriched(&self, series_id: i64) -> Result<SeriesEnriched> {
+    pub async fn find_series_enriched(
+        &self,
+        series_id: i64,
+        user_id: i32,
+    ) -> Result<SeriesEnriched> {
         let row = sqlx::query!(
             r#"
                 SELECT
@@ -67,12 +71,13 @@ impl ConnectionPool {
                         )
                         FROM series_related_threads srt
                         JOIN forum_threads ft ON ft.id = srt.forum_thread_id
-                        WHERE srt.series_id = s.id
+                        WHERE srt.series_id = s.id AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($2))
                     ), '[]'::jsonb) AS "related_threads!: sqlx::types::Json<Vec<RelatedForumThread>>"
                 FROM series s
                 WHERE s.id = $1
             "#,
-            series_id
+            series_id,
+            user_id
         )
         .fetch_optional(&self.pool)
         .await?

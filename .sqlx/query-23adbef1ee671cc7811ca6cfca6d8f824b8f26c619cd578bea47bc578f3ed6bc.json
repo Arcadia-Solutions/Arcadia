@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT COUNT(*)::BIGINT\n                FROM subscriptions_forum_sub_category_threads s\n                WHERE s.user_id = $1 AND s.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($1))\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "23adbef1ee671cc7811ca6cfca6d8f824b8f26c619cd578bea47bc578f3ed6bc"
+}

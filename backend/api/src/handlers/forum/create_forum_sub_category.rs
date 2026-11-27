@@ -4,6 +4,7 @@ use actix_web::{
     web::{Data, Json},
 };
 use arcadia_common::error::Result;
+use arcadia_storage::models::forum::ForumItemId;
 use arcadia_storage::{
     models::{
         forum::{ForumSubCategory, UserCreatedForumSubCategory},
@@ -37,6 +38,18 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
             req.path(),
         )
         .await?;
+    arc.pool
+        .ensure_forum_item_visible(
+            user.sub,
+            ForumItemId::Category(forum_sub_category.forum_category_id),
+        )
+        .await?;
+    // choosing the allowed users is part of editing the item
+    if !forum_sub_category.allowed_user_ids.is_empty() {
+        arc.pool
+            .require_permission(user.sub, &UserPermission::EditForumSubCategory, req.path())
+            .await?;
+    }
 
     let created_sub_category = arc
         .pool

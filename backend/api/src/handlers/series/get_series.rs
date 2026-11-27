@@ -1,4 +1,4 @@
-use crate::Arcadia;
+use crate::{Arcadia, middlewares::auth_middleware::Authdata};
 use actix_web::{
     HttpResponse,
     web::{Data, Query},
@@ -26,8 +26,9 @@ pub struct GetSeriesQuery {
 pub async fn exec<R: RedisPoolInterface + 'static>(
     arc: Data<Arcadia<R>>,
     query: Query<GetSeriesQuery>,
+    user: Authdata,
 ) -> Result<HttpResponse> {
-    let enriched = arc.pool.find_series_enriched(query.id).await?;
+    let enriched = arc.pool.find_series_enriched(query.id, user.sub).await?;
 
     Ok(HttpResponse::Ok().json(enriched))
 }

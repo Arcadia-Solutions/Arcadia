@@ -4,6 +4,7 @@ use actix_web::{
     web::{Data, Query},
 };
 use arcadia_common::error::Result;
+use arcadia_storage::models::forum::ForumItemId;
 use arcadia_storage::{
     models::{forum::DeleteForumSubCategoryQuery, user::UserPermission},
     redis::RedisPoolInterface,
@@ -38,6 +39,9 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
             &UserPermission::DeleteForumSubCategory,
             req.path(),
         )
+        .await?;
+    arc.pool
+        .ensure_forum_item_visible(user.sub, ForumItemId::SubCategory(delete_request.id))
         .await?;
 
     arc.pool

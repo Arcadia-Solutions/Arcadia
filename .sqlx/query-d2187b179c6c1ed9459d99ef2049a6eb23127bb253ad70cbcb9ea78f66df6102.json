@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT requested.id AS \"id!\" FROM UNNEST($2::int[]) AS requested(id)\n            LEFT JOIN forum_sub_categories fsc ON fsc.id = requested.id\n            WHERE fsc.id IS NULL OR fsc.id IN (SELECT * FROM forum_hidden_sub_category_ids($1))\n            LIMIT 1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4Array"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "d2187b179c6c1ed9459d99ef2049a6eb23127bb253ad70cbcb9ea78f66df6102"
+}

@@ -4,8 +4,15 @@ use actix_web::{
     web::{Data, Query},
 };
 use arcadia_common::error::Result;
-use arcadia_storage::{models::forum::ForumSubCategoryHierarchy, redis::RedisPoolInterface};
+use arcadia_storage::{
+    models::{
+        forum::{ForumItemId, ForumSubCategoryHierarchy},
+        user::UserPermission,
+    },
+    redis::RedisPoolInterface,
+};
 use serde::Deserialize;
+use serde_json::json;
 use utoipa::IntoParams;
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -28,11 +35,22 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     query: Query<GetForumSubCategoryThreadsQuery>,
     user: Authdata,
 ) -> Result<HttpResponse> {
-    //TODO: restrict access to some sub_categories based on forbidden_classes
-    let threads = arc
+    let mut sub_category = arc
         .pool
         .find_forum_sub_category_threads(query.id, user.sub)
         .await?;
 
-    Ok(HttpResponse::Ok().json(threads))
+    if arc
+        .pool
+        .user_has_permission(user.sub, &UserPermission::EditForumSubCategory)
+        .await?
+    {
+        let item = ForumItemId::SubCategory(query.id);
+        let allowed_users = arc.pool.find_forum_item_allowed_users(item).await?;
+        let class_visibility = arc.pool.find_forum_item_class_visibility(item).await?;
+        sub_category["allowed_users"] = json!(allowed_users);
+        sub_category["class_visibility"] = json!(class_visibility);
+    }
+
+    Ok(HttpResponse::Ok().json(sub_category))
 }

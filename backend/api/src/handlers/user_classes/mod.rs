@@ -1,6 +1,8 @@
 pub mod create_user_class;
 pub mod delete_user_class;
 pub mod edit_user_class;
+pub mod edit_user_class_forbidden_forum_items;
+pub mod get_user_class_forbidden_forum_items;
 pub mod get_user_classes;
 
 use actix_web::web::{ServiceConfig, delete, get, post, put, resource};
@@ -16,5 +18,10 @@ pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {
         resource("/{name}")
             .route(put().to(self::edit_user_class::exec::<R>))
             .route(delete().to(self::delete_user_class::exec::<R>)),
+    );
+    cfg.service(
+        resource("/{name}/forbidden-forum-items")
+            .route(get().to(self::get_user_class_forbidden_forum_items::exec::<R>))
+            .route(put().to(self::edit_user_class_forbidden_forum_items::exec::<R>)),
     );
 }

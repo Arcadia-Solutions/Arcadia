@@ -36,7 +36,7 @@ impl ConnectionPool {
             FROM notifications_forum_sub_category_threads n
             JOIN forum_threads ft ON ft.id = n.forum_thread_id
             JOIN forum_sub_categories fsc ON fsc.id = n.forum_sub_category_id
-            WHERE n.user_id = $1
+            WHERE n.user_id = $1 AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($1))
             AND ($2::bool = TRUE OR n.read_status = FALSE)
             ORDER BY n.created_at DESC
             "#,
@@ -60,7 +60,7 @@ impl ConnectionPool {
             FROM notifications_forum_thread_posts n
             JOIN forum_posts p ON p.id = n.forum_post_id
             JOIN forum_threads t ON t.id = n.forum_thread_id
-            WHERE n.user_id = $1
+            WHERE n.user_id = $1 AND t.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($1))
             AND ($2::bool = TRUE OR n.read_status = FALSE)
             ORDER BY n.created_at DESC
             "#,
@@ -1075,6 +1075,7 @@ impl ConnectionPool {
                 (SELECT COUNT(*)
                  FROM forum_threads ft
                  WHERE ft.forum_sub_category_id = 1
+                   AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($1))
                    AND NOT EXISTS (
                        SELECT 1 FROM forum_thread_reads ftr
                        WHERE ftr.forum_thread_id = ft.id AND ftr.user_id = $1
@@ -1100,12 +1101,14 @@ impl ConnectionPool {
                    )
                 )::int4 AS "conversations!",
                 (SELECT COUNT(*)
-                 FROM notifications_forum_sub_category_threads
-                 WHERE user_id = $1 AND read_status = FALSE
+                 FROM notifications_forum_sub_category_threads n
+                 JOIN forum_threads ft ON ft.id = n.forum_thread_id
+                 WHERE n.user_id = $1 AND n.read_status = FALSE AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($1))
                 )::int4 AS "forum_sub_category_threads!",
                 (SELECT COUNT(*)
-                 FROM notifications_forum_thread_posts
-                 WHERE user_id = $1 AND read_status = FALSE
+                 FROM notifications_forum_thread_posts n
+                 JOIN forum_threads ft ON ft.id = n.forum_thread_id
+                 WHERE n.user_id = $1 AND n.read_status = FALSE AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($1))
                 )::int4 AS "forum_thread_posts!",
                 (SELECT COUNT(*)
                  FROM notifications_title_group_comments

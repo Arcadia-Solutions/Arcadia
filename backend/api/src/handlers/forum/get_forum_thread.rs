@@ -28,8 +28,6 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     query_id: Query<GetForumThreadQueryId>,
     user: Authdata,
 ) -> Result<HttpResponse> {
-    //TODO: restrict access to some sub_categories based on forbidden_classes
-
     let thread = arc
         .pool
         .find_forum_thread_with_poll(query_id.0.id, user.sub)

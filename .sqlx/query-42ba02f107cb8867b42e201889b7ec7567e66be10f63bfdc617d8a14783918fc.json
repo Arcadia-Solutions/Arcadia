@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    SELECT uc.name, (\n                        EXISTS (\n                            SELECT 1 FROM forum_sub_category_forbidden_classes forbidden\n                            WHERE forbidden.forum_sub_category_id = $1 AND forbidden.user_class_name = uc.name\n                        )\n                        OR EXISTS (\n                            SELECT 1 FROM forum_sub_categories fsc\n                            JOIN forum_category_forbidden_classes forbidden ON forbidden.forum_category_id = fsc.forum_category_id\n                            WHERE fsc.id = $1 AND forbidden.user_class_name = uc.name\n                        )\n                    ) AS \"hidden!\"\n                    FROM user_classes uc\n                    ORDER BY uc.name\n                    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "user_classes",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "hidden!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "42ba02f107cb8867b42e201889b7ec7567e66be10f63bfdc617d8a14783918fc"
+}

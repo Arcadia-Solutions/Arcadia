@@ -726,7 +726,7 @@ impl ConnectionPool {
             .collect();
 
         let (related_threads, similar_title_groups, own_rating) = tokio::try_join!(
-            self.find_related_forum_threads_for_title_group(title_group_id),
+            self.find_related_forum_threads_for_title_group(title_group_id, user_id),
             self.find_similar_title_groups(title_group_id),
             self.find_user_title_group_rating(user_id, title_group_id),
         )?;

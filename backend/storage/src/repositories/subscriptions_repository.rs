@@ -21,7 +21,7 @@ impl ConnectionPool {
             r#"
                 SELECT COUNT(*)::BIGINT
                 FROM subscriptions_forum_sub_category_threads s
-                WHERE s.user_id = $1
+                WHERE s.user_id = $1 AND s.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($1))
             "#,
             current_user_id
         )
@@ -36,7 +36,7 @@ impl ConnectionPool {
                 SELECT fsc.id, fsc.name
                 FROM subscriptions_forum_sub_category_threads s
                 JOIN forum_sub_categories fsc ON fsc.id = s.forum_sub_category_id
-                WHERE s.user_id = $1
+                WHERE s.user_id = $1 AND fsc.id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($1))
                 ORDER BY
                     CASE WHEN $4 = 'asc' THEN s.created_at END ASC,
                     CASE WHEN $4 = 'desc' THEN s.created_at END DESC
@@ -109,7 +109,8 @@ impl ConnectionPool {
             r#"
                 SELECT COUNT(*)::BIGINT
                 FROM subscriptions_forum_thread_posts s
-                WHERE s.user_id = $1
+                JOIN forum_threads ft ON ft.id = s.forum_thread_id
+                WHERE s.user_id = $1 AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($1))
             "#,
             current_user_id
         )
@@ -124,7 +125,7 @@ impl ConnectionPool {
                 SELECT ft.id, ft.forum_sub_category_id, ft.name
                 FROM subscriptions_forum_thread_posts s
                 JOIN forum_threads ft ON ft.id = s.forum_thread_id
-                WHERE s.user_id = $1
+                WHERE s.user_id = $1 AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($1))
                 ORDER BY
                     CASE WHEN $4 = 'asc' THEN s.created_at END ASC,
                     CASE WHEN $4 = 'desc' THEN s.created_at END DESC

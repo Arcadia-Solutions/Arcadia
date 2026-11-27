@@ -37,6 +37,12 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .require_permission(user.sub, &UserPermission::ManageSiteHighlights, req.path())
         .await?;
 
+    if let Some(forum_thread_id) = payload.forum_thread_id {
+        arc.pool
+            .ensure_forum_thread_visible(user.sub, forum_thread_id)
+            .await?;
+    }
+
     let id = path.into_inner();
     let edited = arc.pool.edit_site_highlight(id, &payload).await?;
     Ok(HttpResponse::Ok().json(edited))

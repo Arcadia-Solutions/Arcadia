@@ -31,6 +31,10 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     arc: Data<Arcadia<R>>,
     user: Authdata,
 ) -> Result<HttpResponse> {
+    arc.pool
+        .ensure_forum_post_visible(user.sub, edited_forum_post.id)
+        .await?;
+
     let original_forum_post = arc.pool.find_forum_post(edited_forum_post.id).await?;
 
     if (original_forum_post.created_by_id == user.sub && !original_forum_post.locked)

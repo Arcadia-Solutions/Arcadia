@@ -98,6 +98,10 @@
       />
       <label>{{ t('user_class.new_permissions') }}</label>
     </FloatLabel>
+    <template v-if="canEditForbiddenForumItems">
+      <h3 style="margin-top: 30px">{{ t('user_class.hidden_forum_items') }}</h3>
+      <ForbiddenForumItemsEditor v-model:categoryIds="forbiddenForumItems.category_ids" v-model:subCategoryIds="forbiddenForumItems.sub_category_ids" />
+    </template>
 
     <div class="wrapper-center" style="margin-top: 30px">
       <Button :label="t('general.confirm')" size="small" :loading="loading" @click="save()" />
@@ -110,12 +114,24 @@ import { FloatLabel, InputText, InputNumber, Checkbox, MultiSelect, Button, Sele
 import { ref, onMounted, computed, toRaw } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { rawToDisplayBp, displayToRawBp } from '@/services/helpers'
-import { createUserClass, editUserClass, UserPermission, type UserClass, type UserCreatedUserClass } from '@/services/api-schema'
+import ForbiddenForumItemsEditor from '@/components/forum/ForbiddenForumItemsEditor.vue'
+import {
+  createUserClass,
+  editUserClass,
+  editUserClassForbiddenForumItems,
+  getUserClassForbiddenForumItems,
+  UserPermission,
+  type EditedUserClassForbiddenForumItems,
+  type UserClass,
+  type UserCreatedUserClass,
+} from '@/services/api-schema'
 import { showToast } from '@/main'
 import { usePublicArcadiaSettingsStore } from '@/stores/publicArcadiaSettings'
+import { useUserStore } from '@/stores/user'
 
 const { t } = useI18n()
 const publicArcadiaSettings = usePublicArcadiaSettingsStore()
+const userStore = useUserStore()
 
 const props = defineProps<{
   initialUserClass?: UserClass
@@ -155,8 +171,14 @@ const displayPromotionCostBonusPoints = computed({
   },
 })
 
+const forbiddenForumItems = ref<EditedUserClassForbiddenForumItems>({
+  category_ids: [],
+  sub_category_ids: [],
+})
+
 const loading = ref(false)
 const isEditMode = computed(() => !!props.initialUserClass)
+const canEditForbiddenForumItems = computed(() => userStore.permissions.includes('edit_user_class'))
 
 const allPermissions = computed(() =>
   Object.values(UserPermission).map((permission) => ({
@@ -165,24 +187,34 @@ const allPermissions = computed(() =>
   })),
 )
 
-const save = async () => {
+const save = () => {
   loading.value = true
-  try {
-    const result =
-      isEditMode.value && props.initialUserClass
-        ? await editUserClass({ name: props.initialUserClass.name, EditedUserClass: userClass.value })
-        : await createUserClass(userClass.value)
-
-    showToast('Success', t(isEditMode.value ? 'user_class.user_class_edited_success' : 'user_class.user_class_created_success'), 'success', 4000)
-    emit('done', result)
-  } finally {
-    loading.value = false
-  }
+  const savedUserClass =
+    isEditMode.value && props.initialUserClass
+      ? editUserClass({ name: props.initialUserClass.name, EditedUserClass: userClass.value })
+      : createUserClass(userClass.value)
+  savedUserClass
+    .then(async (result) => {
+      if (canEditForbiddenForumItems.value) {
+        await editUserClassForbiddenForumItems({ name: result.name, EditedUserClassForbiddenForumItems: forbiddenForumItems.value })
+      }
+      showToast('Success', t(isEditMode.value ? 'user_class.user_class_edited_success' : 'user_class.user_class_created_success'), 'success', 4000)
+      emit('done', result)
+    })
+    .finally(() => (loading.value = false))
 }
 
 onMounted(() => {
   if (props.initialUserClass) {
     userClass.value = structuredClone(toRaw(props.initialUserClass))
+  }
+  if (props.initialUserClass && canEditForbiddenForumItems.value) {
+    getUserClassForbiddenForumItems(props.initialUserClass.name).then((items) => {
+      forbiddenForumItems.value = {
+        category_ids: items.categories.map((category) => category.id),
+        sub_category_ids: items.sub_categories.map((subCategory) => subCategory.id),
+      }
+    })
   }
 })
 </script>

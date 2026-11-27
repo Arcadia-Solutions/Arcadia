@@ -35,6 +35,9 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
             req.path(),
         )
         .await?;
+    arc.pool
+        .ensure_forum_thread_visible(user.sub, query.forum_thread_id)
+        .await?;
 
     arc.pool.delete_related_forum_thread(&query).await?;
 

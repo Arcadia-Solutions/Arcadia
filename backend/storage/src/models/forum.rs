@@ -43,12 +43,31 @@ pub struct ForumCategory {
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct UserCreatedForumCategory {
     pub name: String,
+    pub allowed_user_ids: Vec<i32>,
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct EditedForumCategory {
     pub id: i32,
     pub name: String,
+    pub allowed_user_ids: Vec<i32>,
+}
+
+/// A forum category along with who can see it
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct ForumCategoryEnriched {
+    #[serde(flatten)]
+    pub category: ForumCategory,
+    pub allowed_users: Vec<UserLite>,
+    pub class_visibility: ForumItemClassVisibility,
+}
+
+/// The user classes that can and cannot see a forum item, a sub category being hidden from the
+/// classes its category is hidden from
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct ForumItemClassVisibility {
+    pub visible_to_class_names: Vec<String>,
+    pub hidden_from_class_names: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow, ToSchema)]
@@ -62,7 +81,6 @@ pub struct ForumSubCategory {
     pub created_by_id: i32,
     pub threads_amount: i64,
     pub posts_amount: i64,
-    pub forbidden_classes: Vec<String>,
     pub new_threads_restricted: bool,
     pub thread_sort_by: ForumThreadSortBy,
     pub thread_sort_direction: ForumThreadSortDirection,
@@ -105,6 +123,7 @@ pub struct UserCreatedForumSubCategory {
     pub forum_category_id: i32,
     pub name: String,
     pub new_threads_restricted: bool,
+    pub allowed_user_ids: Vec<i32>,
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
@@ -114,6 +133,7 @@ pub struct EditedForumSubCategory {
     pub new_threads_restricted: bool,
     pub thread_sort_by: ForumThreadSortBy,
     pub thread_sort_direction: ForumThreadSortDirection,
+    pub allowed_user_ids: Vec<i32>,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow, ToSchema)]
@@ -232,12 +252,15 @@ pub struct ForumSubCategoryHierarchy {
     pub name: String,
     pub threads_amount: i64,
     pub posts_amount: i64,
-    pub forbidden_classes: Vec<String>,
     pub new_threads_restricted: bool,
     pub thread_sort_by: ForumThreadSortBy,
     pub thread_sort_direction: ForumThreadSortDirection,
     pub is_allowed_poster: bool,
     pub is_subscribed: bool,
+    /// only filled for users who can edit the sub category
+    pub allowed_users: Option<Vec<UserLite>>,
+    /// only filled for users who can edit the sub category
+    pub class_visibility: Option<ForumItemClassVisibility>,
     pub latest_post_in_thread: Option<ForumThreadPostLite>,
     pub threads: Option<Vec<ForumThreadHierarchy>>,
     pub category: ForumCategoryLite,
@@ -430,6 +453,26 @@ pub struct ForumSubCategoryAllowedPoster {
 #[derive(Debug, Deserialize, IntoParams, ToSchema)]
 pub struct GetForumSubCategoryAllowedPostersQuery {
     pub forum_sub_category_id: i32,
+}
+
+/// A forum item whose access can be restricted
+#[derive(Debug, Clone, Copy)]
+pub enum ForumItemId {
+    Category(i32),
+    SubCategory(i32),
+}
+
+/// Forum items hidden from a user class, limited to the ones the requesting user can see
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct UserClassForbiddenForumItems {
+    pub categories: Vec<ForumCategoryLite>,
+    pub sub_categories: Vec<ForumSubCategoryLite>,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct EditedUserClassForbiddenForumItems {
+    pub category_ids: Vec<i32>,
+    pub sub_category_ids: Vec<i32>,
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]

@@ -22,3 +22,17 @@ pub fn compute_diff<T: Serialize, U: Serialize>(
 
     (!edits.is_empty()).then(|| Value::Object(edits))
 }
+
+/// Same as `compute_diff`, for a forum item edit whose `new` side carries an `allowed_user_ids`
+/// list the stored item doesn't have as a field. Both id lists must be sorted for the comparison.
+pub fn compute_diff_with_allowed_users<T: Serialize, U: Serialize>(
+    old: &T,
+    old_allowed_user_ids: &[i32],
+    new: &U,
+    skip_fields: &[&str],
+) -> Option<Value> {
+    let mut old = serde_json::to_value(old).ok()?;
+    old.as_object_mut()?
+        .insert("allowed_user_ids".to_string(), json!(old_allowed_user_ids));
+    compute_diff(&old, new, skip_fields)
+}

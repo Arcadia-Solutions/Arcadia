@@ -34,6 +34,9 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     arc.pool
         .require_permission(user.sub, &UserPermission::DeleteForumThread, req.path())
         .await?;
+    arc.pool
+        .ensure_forum_thread_visible(user.sub, delete_request.id)
+        .await?;
 
     arc.pool.delete_forum_thread(delete_request.id).await?;
 

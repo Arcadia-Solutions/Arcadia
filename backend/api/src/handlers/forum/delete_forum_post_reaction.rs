@@ -34,6 +34,9 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     arc.pool
         .require_permission(user.sub, &UserPermission::ReactToContent, req.path())
         .await?;
+    arc.pool
+        .ensure_forum_post_visible(user.sub, deleted_reaction.forum_post_id)
+        .await?;
 
     arc.pool
         .delete_forum_post_reaction(

@@ -17,9 +17,11 @@ use crate::{
         },
         site_highlight::SiteHighlightItemType,
         user::{UserLite, UserLiteAvatar},
+        user_edit_change_log::NewUserEditChangeLog,
     },
-    repositories::forum_access_repository::{
-        is_forum_item_visible, replace_forum_item_allowed_users,
+    repositories::{
+        forum_access_repository::{is_forum_item_visible, replace_forum_item_allowed_users},
+        user_edit_change_log_repository::insert_user_edit_change_log,
     },
 };
 use arcadia_common::error::{Error, Result};
@@ -258,6 +260,7 @@ impl ConnectionPool {
         &self,
         edited_thread: &EditedForumThread,
         user_id: i32,
+        change_log: Option<&NewUserEditChangeLog>,
     ) -> Result<ForumThreadEnriched> {
         if edited_thread.name.trim().is_empty() {
             return Err(Error::ForumThreadNameEmpty);
@@ -366,6 +369,10 @@ impl ConnectionPool {
         .fetch_one(&mut *tx)
         .await
         .map_err(Error::CouldNotUpdateForumThread)?;
+
+        if let Some(change_log) = change_log {
+            insert_user_edit_change_log(&mut tx, change_log).await?;
+        }
 
         tx.commit().await?;
 
@@ -1313,6 +1320,7 @@ impl ConnectionPool {
         edited_category: &EditedForumCategory,
         allowed_users_changed: bool,
         editor_id: i32,
+        change_log: Option<&NewUserEditChangeLog>,
     ) -> Result<ForumCategory> {
         if edited_category.name.trim().is_empty() {
             return Err(Error::ForumCategoryNameEmpty);
@@ -1346,6 +1354,10 @@ impl ConnectionPool {
                 editor_id,
             )
             .await?;
+        }
+
+        if let Some(change_log) = change_log {
+            insert_user_edit_change_log(&mut tx, change_log).await?;
         }
 
         tx.commit().await?;
@@ -1401,6 +1413,7 @@ impl ConnectionPool {
         edited_sub_category: &EditedForumSubCategory,
         allowed_users_changed: bool,
         editor_id: i32,
+        change_log: Option<&NewUserEditChangeLog>,
     ) -> Result<ForumSubCategory> {
         if edited_sub_category.name.trim().is_empty() {
             return Err(Error::ForumSubCategoryNameEmpty);
@@ -1437,6 +1450,10 @@ impl ConnectionPool {
                 editor_id,
             )
             .await?;
+        }
+
+        if let Some(change_log) = change_log {
+            insert_user_edit_change_log(&mut tx, change_log).await?;
         }
 
         tx.commit().await?;

@@ -3,13 +3,22 @@
     <UserSearchBar :placeholder="t('forum.add_allowed_user')" :clickableUserLink="false" :clearInputOnSelect="true" modelValue="" @userSelected="addUser" />
     <div v-for="user in allowedUsers" :key="user.id" class="user-row">
       <UsernameEnriched :user="user" />
-      <i class="pi pi-times cursor-pointer" @click="removeUser(user)" />
+      <Button
+        type="button"
+        icon="pi pi-times"
+        size="small"
+        text
+        severity="secondary"
+        :aria-label="t('forum.remove_allowed_user', { username: user.username })"
+        @click="removeUser(user)"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import Button from 'primevue/button'
 import UserSearchBar from '@/components/user/UserSearchBar.vue'
 import UsernameEnriched from '@/components/user/UsernameEnriched.vue'
 import type { UserLite } from '@/services/api-schema'

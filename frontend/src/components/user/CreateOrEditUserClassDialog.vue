@@ -100,11 +100,15 @@
     </FloatLabel>
     <template v-if="canEditForbiddenForumItems">
       <h3 style="margin-top: 30px">{{ t('user_class.hidden_forum_items') }}</h3>
-      <ForbiddenForumItemsEditor v-model:categoryIds="forbiddenForumItems.category_ids" v-model:subCategoryIds="forbiddenForumItems.sub_category_ids" />
+      <ForbiddenForumItemsEditor
+        v-if="forbiddenForumItemsLoaded"
+        v-model:categoryIds="forbiddenForumItems.category_ids"
+        v-model:subCategoryIds="forbiddenForumItems.sub_category_ids"
+      />
     </template>
 
     <div class="wrapper-center" style="margin-top: 30px">
-      <Button :label="t('general.confirm')" size="small" :loading="loading" @click="save()" />
+      <Button :label="t('general.confirm')" size="small" :loading="loading" :disabled="!forbiddenForumItemsLoaded" @click="save()" />
     </div>
   </div>
 </template>
@@ -179,6 +183,10 @@ const forbiddenForumItems = ref<EditedUserClassForbiddenForumItems>({
 const loading = ref(false)
 const isEditMode = computed(() => !!props.initialUserClass)
 const canEditForbiddenForumItems = computed(() => userStore.permissions.includes('edit_user_class'))
+// saving before the current restrictions are loaded would replace them with empty ones
+const forbiddenForumItemsLoaded = ref(!isEditMode.value || !canEditForbiddenForumItems.value)
+// set once the class exists, so that a save retried after a failed restrictions update edits it instead of creating it again
+const savedUserClassName = ref(props.initialUserClass?.name)
 
 const allPermissions = computed(() =>
   Object.values(UserPermission).map((permission) => ({
@@ -189,12 +197,12 @@ const allPermissions = computed(() =>
 
 const save = () => {
   loading.value = true
-  const savedUserClass =
-    isEditMode.value && props.initialUserClass
-      ? editUserClass({ name: props.initialUserClass.name, EditedUserClass: userClass.value })
-      : createUserClass(userClass.value)
+  const savedUserClass = savedUserClassName.value
+    ? editUserClass({ name: savedUserClassName.value, EditedUserClass: userClass.value })
+    : createUserClass(userClass.value)
   savedUserClass
     .then(async (result) => {
+      savedUserClassName.value = result.name
       if (canEditForbiddenForumItems.value) {
         await editUserClassForbiddenForumItems({ name: result.name, EditedUserClassForbiddenForumItems: forbiddenForumItems.value })
       }
@@ -214,6 +222,7 @@ onMounted(() => {
         category_ids: items.categories.map((category) => category.id),
         sub_category_ids: items.sub_categories.map((subCategory) => subCategory.id),
       }
+      forbiddenForumItemsLoaded.value = true
     })
   }
 })

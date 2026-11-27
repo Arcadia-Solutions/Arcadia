@@ -37,6 +37,22 @@ Use the following procedure to migrate your data into the updated schema.
 > [!NOTE]
 > In the commands below, replace `arcadia` with your configured database username or database name if you modified defaults in `.env` (Docker) or `config.yml` (bare-metal).
 
+### Step 0: Drop Removed Columns
+
+The dump lists every column explicitly, so a column that the new schema no longer has makes the restore fail. Drop the removed columns from the current database before dumping (`IF EXISTS` makes this safe to run on any version):
+
+- `forum_sub_categories.forbidden_classes`: never enforced, replaced by the `forum_sub_category_forbidden_classes` table
+
+**Docker:**
+```bash
+docker compose exec -T db psql -U arcadia -d arcadia -c "ALTER TABLE forum_sub_categories DROP COLUMN IF EXISTS forbidden_classes;"
+```
+
+**Bare-Metal:**
+```bash
+psql -U arcadia -d arcadia -c "ALTER TABLE forum_sub_categories DROP COLUMN IF EXISTS forbidden_classes;"
+```
+
 ### Step 1: Dump Existing Data
 
 Create a data-only SQL dump with explicit column inserts, excluding the `_sqlx_migrations` table:

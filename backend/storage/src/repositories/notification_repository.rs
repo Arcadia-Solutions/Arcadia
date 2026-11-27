@@ -36,7 +36,10 @@ impl ConnectionPool {
             FROM notifications_forum_sub_category_threads n
             JOIN forum_threads ft ON ft.id = n.forum_thread_id
             JOIN forum_sub_categories fsc ON fsc.id = n.forum_sub_category_id
-            WHERE n.user_id = $1 AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($1))
+            WHERE n.user_id = $1
+            -- the thread may have moved since, neither its current nor its original sub category can be hidden
+            AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($1))
+            AND n.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($1))
             AND ($2::bool = TRUE OR n.read_status = FALSE)
             ORDER BY n.created_at DESC
             "#,
@@ -689,9 +692,12 @@ impl ConnectionPool {
                 WHERE NOT EXISTS (
                     SELECT 1
                     FROM notifications_forum_sub_category_threads n
+                    JOIN forum_threads ft ON ft.id = n.forum_thread_id
                     WHERE n.user_id = u.user_id
                       AND n.forum_sub_category_id = $1
                       AND n.read_status = FALSE
+                      -- a notification the user can't see doesn't count as pending
+                      AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids(u.user_id))
                 )
             "#,
             forum_sub_category_id,
@@ -1104,6 +1110,7 @@ impl ConnectionPool {
                  FROM notifications_forum_sub_category_threads n
                  JOIN forum_threads ft ON ft.id = n.forum_thread_id
                  WHERE n.user_id = $1 AND n.read_status = FALSE AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($1))
+                   AND n.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids($1))
                 )::int4 AS "forum_sub_category_threads!",
                 (SELECT COUNT(*)
                  FROM notifications_forum_thread_posts n

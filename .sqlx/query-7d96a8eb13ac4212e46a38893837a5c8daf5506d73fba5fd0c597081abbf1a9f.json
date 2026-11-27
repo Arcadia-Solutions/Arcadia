@@ -209,7 +209,6 @@
                       "lock_forum_thread",
                       "edit_forum_sub_category",
                       "edit_forum_category",
-                      "edit_forum_allowed_users",
                       "create_forum_category",
                       "create_forum_sub_category",
                       "create_forum_thread",

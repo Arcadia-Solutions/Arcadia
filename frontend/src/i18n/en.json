@@ -245,6 +245,7 @@
     "allowed_users": "Allowed users (see this regardless of their class)",
     "allowed_users_sub_category": "Allowed users (see this regardless of their class, if they can see its category)",
     "add_allowed_user": "Add allowed user",
+    "remove_allowed_user": "Remove {username} from the allowed users",
     "visible_to_all_user_classes": "Visible to all user classes",
     "visible_to_user_classes": "Visible to: {classes}",
     "hidden_from_user_classes": "Hidden from: {classes}"

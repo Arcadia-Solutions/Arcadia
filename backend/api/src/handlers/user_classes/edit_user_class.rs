@@ -3,7 +3,7 @@ use actix_web::{
     HttpRequest, HttpResponse,
     web::{Data, Json, Path},
 };
-use arcadia_common::error::{Error, Result};
+use arcadia_common::error::Result;
 use arcadia_storage::{
     models::user::{EditedUserClass, UserClass, UserPermission},
     redis::RedisPoolInterface,
@@ -37,10 +37,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .require_permission(user.sub, &UserPermission::EditUserClass, req.path())
         .await?;
 
-    // name should be 3-30 characters
-    if form.name.len() < 3 || form.name.len() > 30 {
-        return Err(Error::InvalidUserClassName);
-    }
+    super::validate_user_class_name(&form.name)?;
 
     let user_class = arc.pool.update_user_class(&name, &form).await?;
 

@@ -146,19 +146,21 @@ const onFormSubmit = ({ valid }: FormSubmitEvent) => {
 
 onMounted(() => {
   if (isEditMode.value) {
-    getForumSubCategoryThreads(Number(route.params.id)).then((subCategory) => {
-      formData.value = {
-        id: subCategory.id,
-        name: subCategory.name,
-        forum_category_id: subCategory.category.id,
-        new_threads_restricted: subCategory.new_threads_restricted,
-        thread_sort_by: subCategory.thread_sort_by,
-        thread_sort_direction: subCategory.thread_sort_direction,
-      }
-      allowedUsers.value = subCategory.allowed_users ?? []
-      classVisibility.value = subCategory.class_visibility ?? null
-      categoryName.value = subCategory.category.name
-    })
+    getForumSubCategoryThreads(Number(route.params.id))
+      .then((subCategory) => {
+        formData.value = {
+          id: subCategory.id,
+          name: subCategory.name,
+          forum_category_id: subCategory.category.id,
+          new_threads_restricted: subCategory.new_threads_restricted,
+          thread_sort_by: subCategory.thread_sort_by,
+          thread_sort_direction: subCategory.thread_sort_direction,
+        }
+        allowedUsers.value = subCategory.allowed_users ?? []
+        classVisibility.value = subCategory.class_visibility ?? null
+        categoryName.value = subCategory.category.name
+      })
+      .catch(() => router.push('/forum'))
   } else {
     const categoryId = route.query.categoryId
     const catName = route.query.categoryName

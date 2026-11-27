@@ -45,20 +45,8 @@ impl ConnectionPool {
         user_id: i32,
         forum_thread_id: i64,
     ) -> Result<()> {
-        let visible = sqlx::query_scalar!(
-            "SELECT forum_thread_visible($1, $2)",
-            user_id,
-            forum_thread_id
-        )
-        .fetch_one(&self.pool)
-        .await?
-        .unwrap_or(false);
-
-        if visible {
-            Ok(())
-        } else {
-            Err(Error::CouldNotFindForumThread(sqlx::Error::RowNotFound))
-        }
+        let mut connection = self.pool.acquire().await?;
+        ensure_forum_thread_visible_with(&mut connection, user_id, forum_thread_id).await
     }
 
     pub async fn ensure_forum_post_visible(&self, user_id: i32, forum_post_id: i64) -> Result<()> {
@@ -287,6 +275,27 @@ impl ConnectionPool {
         transaction.commit().await?;
 
         Ok(())
+    }
+}
+
+pub(crate) async fn ensure_forum_thread_visible_with(
+    connection: &mut PgConnection,
+    user_id: i32,
+    forum_thread_id: i64,
+) -> Result<()> {
+    let visible = sqlx::query_scalar!(
+        "SELECT forum_thread_visible($1, $2)",
+        user_id,
+        forum_thread_id
+    )
+    .fetch_one(connection)
+    .await?
+    .unwrap_or(false);
+
+    if visible {
+        Ok(())
+    } else {
+        Err(Error::CouldNotFindForumThread(sqlx::Error::RowNotFound))
     }
 }
 

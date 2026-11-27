@@ -55,26 +55,28 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     edited_sub_category.allowed_user_ids.dedup();
     let allowed_users_changed = original_allowed_user_ids != edited_sub_category.allowed_user_ids;
 
-    let updated_sub_category = arc
-        .pool
-        .update_forum_sub_category(&edited_sub_category, allowed_users_changed, user.sub)
-        .await?;
-
-    if let Some(edits) = compute_diff_with_allowed_users(
+    let change_log = compute_diff_with_allowed_users(
         &original_sub_category,
         &original_allowed_user_ids,
         &edited_sub_category,
         &["id"],
-    ) {
-        arc.pool
-            .create_user_edit_change_log(&NewUserEditChangeLog {
-                item_type: "forum_sub_category".to_string(),
-                item_id: original_sub_category.id as i64,
-                edited_by_id: user.sub,
-                edits,
-            })
-            .await?;
-    }
+    )
+    .map(|edits| NewUserEditChangeLog {
+        item_type: "forum_sub_category".to_string(),
+        item_id: original_sub_category.id as i64,
+        edited_by_id: user.sub,
+        edits,
+    });
+
+    let updated_sub_category = arc
+        .pool
+        .update_forum_sub_category(
+            &edited_sub_category,
+            allowed_users_changed,
+            user.sub,
+            change_log.as_ref(),
+        )
+        .await?;
 
     Ok(HttpResponse::Ok().json(updated_sub_category))
 }

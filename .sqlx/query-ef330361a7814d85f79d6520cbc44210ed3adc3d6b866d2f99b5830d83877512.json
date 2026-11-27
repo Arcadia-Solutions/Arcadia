@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                WITH user_ids AS (\n                    SELECT user_id\n                    FROM subscriptions_forum_sub_category_threads\n                    WHERE forum_sub_category_id = $1\n                    AND user_id != $3\n                    AND $1 NOT IN (SELECT * FROM forum_hidden_sub_category_ids(user_id))\n                )\n                INSERT INTO notifications_forum_sub_category_threads (user_id, forum_sub_category_id, forum_thread_id)\n                SELECT\n                    user_id,\n                    $1,\n                    $2\n                FROM user_ids u\n                WHERE NOT EXISTS (\n                    SELECT 1\n                    FROM notifications_forum_sub_category_threads n\n                    JOIN forum_threads ft ON ft.id = n.forum_thread_id\n                    WHERE n.user_id = u.user_id\n                      AND n.forum_sub_category_id = $1\n                      AND n.read_status = FALSE\n                      -- a notification the user can't see doesn't count as pending\n                      AND ft.forum_sub_category_id NOT IN (SELECT * FROM forum_hidden_sub_category_ids(u.user_id))\n                )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int8",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ef330361a7814d85f79d6520cbc44210ed3adc3d6b866d2f99b5830d83877512"
+}

@@ -682,6 +682,7 @@ impl ConnectionPool {
                     FROM subscriptions_forum_sub_category_threads
                     WHERE forum_sub_category_id = $1
                     AND user_id != $3
+                    AND $1 NOT IN (SELECT * FROM forum_hidden_sub_category_ids(user_id))
                 )
                 INSERT INTO notifications_forum_sub_category_threads (user_id, forum_sub_category_id, forum_thread_id)
                 SELECT

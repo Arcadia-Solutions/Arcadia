@@ -970,6 +970,7 @@
     "max_snatches_per_day": "Max snatches per day",
     "promotion_cost": "Promotion cost",
     "hidden_forum_items": "Hidden forum items",
+    "retry_loading_hidden_forum_items": "Retry loading the hidden forum items",
     "hidden_forum_categories": "Hidden forum categories",
     "hidden_forum_sub_categories": "Hidden forum sub-categories"
   },

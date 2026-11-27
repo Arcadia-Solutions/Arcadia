@@ -100,8 +100,15 @@
     </FloatLabel>
     <template v-if="canEditForbiddenForumItems">
       <h3 style="margin-top: 30px">{{ t('user_class.hidden_forum_items') }}</h3>
+      <Button
+        v-if="forbiddenForumItemsLoadFailed"
+        :label="t('user_class.retry_loading_hidden_forum_items')"
+        size="small"
+        severity="secondary"
+        @click="loadForbiddenForumItems()"
+      />
       <ForbiddenForumItemsEditor
-        v-if="forbiddenForumItemsLoaded"
+        v-else-if="forbiddenForumItemsLoaded"
         v-model:categoryIds="forbiddenForumItems.category_ids"
         v-model:subCategoryIds="forbiddenForumItems.sub_category_ids"
       />
@@ -187,6 +194,7 @@ const canEditForbiddenForumItems = computed(() => userStore.permissions.includes
 const forbiddenForumItemsLoaded = ref(!isEditMode.value || !canEditForbiddenForumItems.value)
 // set once the class exists, so that a save retried after a failed restrictions update edits it instead of creating it again
 const savedUserClassName = ref(props.initialUserClass?.name)
+const forbiddenForumItemsLoadFailed = ref(false)
 
 const allPermissions = computed(() =>
   Object.values(UserPermission).map((permission) => ({
@@ -212,18 +220,25 @@ const save = () => {
     .finally(() => (loading.value = false))
 }
 
-onMounted(() => {
-  if (props.initialUserClass) {
-    userClass.value = structuredClone(toRaw(props.initialUserClass))
-  }
-  if (props.initialUserClass && canEditForbiddenForumItems.value) {
-    getUserClassForbiddenForumItems(props.initialUserClass.name).then((items) => {
+const loadForbiddenForumItems = () => {
+  forbiddenForumItemsLoadFailed.value = false
+  getUserClassForbiddenForumItems(props.initialUserClass!.name)
+    .then((items) => {
       forbiddenForumItems.value = {
         category_ids: items.categories.map((category) => category.id),
         sub_category_ids: items.sub_categories.map((subCategory) => subCategory.id),
       }
       forbiddenForumItemsLoaded.value = true
     })
+    .catch(() => (forbiddenForumItemsLoadFailed.value = true))
+}
+
+onMounted(() => {
+  if (props.initialUserClass) {
+    userClass.value = structuredClone(toRaw(props.initialUserClass))
+  }
+  if (props.initialUserClass && canEditForbiddenForumItems.value) {
+    loadForbiddenForumItems()
   }
 })
 </script>

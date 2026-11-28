@@ -29,7 +29,7 @@ env:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
-    container: rust:1.94-bullseye
+    container: rust:1.98-bullseye
 
     # DATABASE_URL is only needed by the sqlx tooling, the services read config.yml
     env:
@@ -122,7 +122,7 @@ jobs:
 
   schema-check:
     runs-on: ubuntu-latest
-    container: rust:1.94-bullseye
+    container: rust:1.98-bullseye
     env:
       DATABASE_URL: postgresql://arcadia:password@arcadiadb:5432/arcadia
     defaults:

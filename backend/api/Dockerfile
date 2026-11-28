@@ -1,6 +1,6 @@
 # cargo-chef comes preinstalled here. Building it from source made every build that missed
 # the layer cache pay for compiling it first.
-FROM lukemathwalker/cargo-chef:latest-rust-1.94 AS base
+FROM lukemathwalker/cargo-chef:latest-rust-1.100 AS base
 
 FROM base AS planner
 

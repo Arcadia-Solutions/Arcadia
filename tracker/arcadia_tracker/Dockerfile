@@ -1,4 +1,4 @@
-FROM lukemathwalker/cargo-chef:latest-rust-1.94 AS base
+FROM lukemathwalker/cargo-chef:latest-rust-1.100 AS base
 
 FROM base AS planner
 
